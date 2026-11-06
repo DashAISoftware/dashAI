@@ -1,5 +1,6 @@
 """Shared base of the converters that turn text into dense vectors."""
 
+import gc
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import numpy as np
@@ -10,6 +11,11 @@ from DashAI.back.converters.category.advanced_preprocessing import (
 from DashAI.back.converters.hugging_face.pretrained_tool import (
     PretrainedTool,
     device_field,
+)
+from DashAI.back.converters.hugging_face.text_embedding_roles import (
+    PASSAGE,
+    QUERY,
+    ROLES,
 )
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -27,12 +33,11 @@ from DashAI.back.types.value_types import Float, Text
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
-PASSAGE = "passage"
-QUERY = "query"
-ROLES = (PASSAGE, QUERY)
 TRUNCATE = "truncate"
 AGGREGATE = "aggregate"
 SPECIAL_TOKENS = 2
+#: Keeps a vector of zeros from dividing by zero while normalizing.
+NORMALIZATION_EPSILON = 1e-12
 
 
 def same_label(text: str) -> MultilingualString:
@@ -85,6 +90,71 @@ def token_windows(model: Any, text: str, prompt: Optional[str]) -> List[str]:
         tokenizer.decode(ids[start : start + budget])
         for start in range(0, len(ids), budget)
     ]
+
+
+def pool_owner_vectors(
+    vectors: np.ndarray,
+    owners: List[int],
+    count: int,
+) -> np.ndarray:
+    """Average the encoded windows that belong to each original text.
+
+    Parameters
+    ----------
+    vectors : np.ndarray
+        ``(windows, dim)`` vectors, one row per token window.
+    owners : list of int
+        Index of the original text each window belongs to.
+    count : int
+        Number of original texts.
+
+    Returns
+    -------
+    np.ndarray
+        ``(count, dim)`` float32 array; a text with no window pools to zeros.
+    """
+    if count == 0:
+        return np.zeros((0, 0), dtype=np.float32)
+    owner_array = np.asarray(owners)
+    pooled = np.zeros((count, vectors.shape[1]), dtype=np.float32)
+    for index in range(count):
+        rows = vectors[owner_array == index]
+        if len(rows):
+            pooled[index] = rows.mean(axis=0)
+    return pooled
+
+
+def l2_normalize(vectors: np.ndarray) -> np.ndarray:
+    """Scale every row to unit length, leaving a zero row at zero."""
+    norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+    return (vectors / np.clip(norms, NORMALIZATION_EPSILON, None)).astype(np.float32)
+
+
+def text_values(texts: List[str]) -> List[str]:
+    """Validate and normalize the texts an ``encode`` call received.
+
+    Parameters
+    ----------
+    texts : list of str
+        Texts to encode; a ``None`` item becomes an empty string.
+
+    Returns
+    -------
+    list of str
+        The normalized texts.
+
+    Raises
+    ------
+    TypeError
+        If ``texts`` is a bare string or is not a list/tuple. A bare string
+        would otherwise be iterated character by character.
+    """
+    if isinstance(texts, str) or not isinstance(texts, (list, tuple)):
+        raise TypeError(
+            "encode() expects a list of strings, got "
+            f"{type(texts).__name__}; pass [text] for a single text."
+        )
+    return ["" if text is None else str(text) for text in texts]
 
 
 class TextEmbeddingSchema(BaseSchema):
@@ -175,6 +245,44 @@ class TextEmbeddingConverter(AdvancedPreprocessingConverter, PretrainedTool):
     QUERY_PROMPT: Optional[str] = None
     PASSAGE_PROMPT: Optional[str] = None
 
+    def close(self) -> None:
+        """Release the loaded checkpoint so the next ``encode`` reloads it.
+
+        Retrievers own their embedding model for the whole session, so a
+        retrieval stage that keeps it resident also keeps its VRAM occupied
+        while the generator runs. The pipeline calls this hook when the
+        retrieval stage ends; the checkpoint is loaded again on the next
+        ``encode``, and the persisted document matrices mean nothing has to be
+        re-indexed.
+
+        The call is idempotent: closing an unloaded converter is a no-op.
+        """
+        model = getattr(self, "_pretrained", None)
+        self._pretrained = None
+        if model is None:
+            return
+        close_model = getattr(model, "close", None)
+        try:
+            if callable(close_model):
+                close_model()
+        finally:
+            # The bound method would keep the model alive through gc.collect().
+            close_model = None
+            del model
+            gc.collect()
+        self._clear_accelerator_cache()
+
+    @staticmethod
+    def _clear_accelerator_cache() -> None:
+        """Ask PyTorch to release cached accelerator memory, when present."""
+        try:
+            import torch
+
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except Exception:  # a CPU-only torch build is the normal case here
+            pass
+
     def __init__(
         self,
         device: str = DEVICE_PLACEHOLDER,
@@ -205,6 +313,16 @@ class TextEmbeddingConverter(AdvancedPreprocessingConverter, PretrainedTool):
             raise ValueError(
                 f"Unknown overflow strategy '{overflow_strategy}', expected "
                 f"'{TRUNCATE}' or '{AGGREGATE}'."
+            )
+        if isinstance(batch_size, bool) or not isinstance(batch_size, int):
+            raise TypeError(
+                f"batch_size must be an integer, got {type(batch_size).__name__}."
+            )
+        if batch_size < 1:
+            raise ValueError(f"batch_size must be >= 1, got {batch_size}.")
+        if not isinstance(normalize, bool):
+            raise TypeError(
+                f"normalize must be a boolean, got {type(normalize).__name__}."
             )
         self.batch_size = batch_size
         self.normalize = normalize
@@ -271,8 +389,8 @@ class TextEmbeddingConverter(AdvancedPreprocessingConverter, PretrainedTool):
         """
         if role not in ROLES:
             raise ValueError(f"Unknown role '{role}', expected one of {ROLES}.")
+        values = text_values(texts)
         model = self.pretrained()
-        values = ["" if text is None else str(text) for text in texts]
         if not values:
             return np.zeros(
                 (0, model.get_sentence_embedding_dimension()), dtype=np.float32
@@ -287,6 +405,12 @@ class TextEmbeddingConverter(AdvancedPreprocessingConverter, PretrainedTool):
     ) -> np.ndarray:
         """Run the model on texts.
 
+        Normalization is applied here, on the float32 array, instead of asking
+        Sentence Transformers for it: a checkpoint stored in float16/bfloat16
+        is normalized in that dtype, and the rounding leaves row norms off unit
+        length by up to ~2e-3. Doing it in float32 keeps every row at unit
+        length to float32 precision, which is what cosine similarity expects.
+
         Parameters
         ----------
         model : SentenceTransformer
@@ -296,7 +420,7 @@ class TextEmbeddingConverter(AdvancedPreprocessingConverter, PretrainedTool):
         prompt : str, optional
             Prompt prepended by the model.
         normalize : bool
-            Whether the model scales vectors to unit length.
+            Whether to scale the returned vectors to unit length.
 
         Returns
         -------
@@ -307,11 +431,14 @@ class TextEmbeddingConverter(AdvancedPreprocessingConverter, PretrainedTool):
             texts,
             batch_size=self.batch_size,
             prompt=prompt,
-            normalize_embeddings=normalize,
+            normalize_embeddings=False,
             convert_to_numpy=True,
             show_progress_bar=False,
         )
-        return np.asarray(vectors, dtype=np.float32)
+        vectors = np.asarray(vectors, dtype=np.float32)
+        if normalize:
+            return l2_normalize(vectors)
+        return vectors
 
     def _encode_aggregated(
         self, model: Any, texts: List[str], prompt: Optional[str]
@@ -339,13 +466,9 @@ class TextEmbeddingConverter(AdvancedPreprocessingConverter, PretrainedTool):
             windows.extend(pieces)
             owners.extend([index] * len(pieces))
         vectors = self._encode(model, windows, prompt, False)
-        owner_array = np.asarray(owners)
-        pooled = np.stack(
-            [vectors[owner_array == index].mean(axis=0) for index in range(len(texts))]
-        )
+        pooled = pool_owner_vectors(vectors, owners, len(texts))
         if self.normalize:
-            norms = np.linalg.norm(pooled, axis=1, keepdims=True)
-            pooled = pooled / np.clip(norms, 1e-12, None)
+            pooled = l2_normalize(pooled)
         return pooled.astype(np.float32)
 
     def fit(

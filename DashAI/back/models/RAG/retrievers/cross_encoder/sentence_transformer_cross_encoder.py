@@ -11,7 +11,7 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.models.RAG.documents import Chunk, RAGDocument
+from DashAI.back.models.RAG.documents import Chunk, SourceDocument
 from DashAI.back.models.RAG.exceptions import RAGRetrieverError
 from DashAI.back.models.RAG.retrievers.cross_encoder.cross_encoder_retriever import (
     CrossEncoderRetriever,
@@ -383,7 +383,7 @@ class SentenceTransformerCrossEncoderRetriever(CrossEncoderRetriever):
         env_RAG_path: str,  # noqa: N803
         chunks: Dict[int, Dict[int, Chunk]],
         persistence: Any,
-        documents: Dict[int, RAGDocument] | None = None,
+        documents: Dict[int, SourceDocument] | None = None,
     ) -> None:
         """Inject runtime infrastructure and load the cross-encoder model.
 

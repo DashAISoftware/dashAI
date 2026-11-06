@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 from DashAI.back.core.schema_fields.utils import normalize_payload
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.RAG.documents.chunk import Chunk
-from DashAI.back.models.RAG.documents.rag_document import RAGDocument
+from DashAI.back.models.RAG.documents.source_document import SourceDocument
 from DashAI.back.models.RAG.exceptions import (
     RAGRetrieverEmptyChildrenError,
     RAGRetrieverError,
@@ -92,7 +92,7 @@ class RetrieverSetupService:
         chunk_set_id: int,
         pipeline_id: int,
         chunking_key: str,
-        documents: dict[int, RAGDocument] | None = None,
+        documents: dict[int, SourceDocument] | None = None,
     ):
         """Initialize the retriever setup service.
 
@@ -504,6 +504,11 @@ class RetrieverSetupService:
         document and embedding model reuse one ``embeddings.npy`` across
         sessions and ``compute_missing_embeddings`` skips re-embedding it.
 
+        A session indexed before the folders were addressed by content keeps
+        its matrices under ``doc_id-{doc}__chunk_set_id-{set}__…``. While the
+        content folder holds no matrix yet, that folder is used instead, so the
+        first answer after an upgrade does not embed the documents again.
+
         Args:
             embedding_model_id: FK to the embedding model record.
 
@@ -526,15 +531,46 @@ class RetrieverSetupService:
                 content_key,
                 embedding_model_id,
             )
-            matrix_dirs[doc_id] = os.path.join(
-                self._env_RAG_path,
-                "embeddings",
-                folder,
+            matrix_dirs[doc_id] = self._existing_matrix_dir(
+                os.path.join(self._env_RAG_path, "embeddings", folder),
+                doc_id,
+                embedding_model_id,
             )
         return DensePersistence(
             matrix_dirs=matrix_dirs,
             embedding_model_id=embedding_model_id,
         )
+
+    def _existing_matrix_dir(
+        self, content_dir: str, doc_id: int, embedding_model_id: int
+    ) -> str:
+        """Return the folder that already holds this document's matrix.
+
+        The content folder wins whenever it has a matrix. Otherwise a matrix
+        written for this very chunk set before the folders were addressed by
+        content is reused: the chunk set fixes the chunks, and they were
+        embedded in the same order (document position ascending), so its rows
+        line up. Without either, the content folder is where the matrix goes.
+
+        Args:
+            content_dir: The content-addressed folder of the matrix.
+            doc_id: Owning document id.
+            embedding_model_id: FK to the embedding model record.
+
+        Returns:
+            The folder to read the matrix from, or to write it into.
+        """
+        if os.path.isfile(os.path.join(content_dir, "embeddings.npy")):
+            return content_dir
+        legacy_dir = os.path.join(
+            self._env_RAG_path,
+            "embeddings",
+            f"doc_id-{doc_id}__chunk_set_id-{self._chunk_set_id}__"
+            f"embedding_model_id-{embedding_model_id}",
+        )
+        if os.path.isfile(os.path.join(legacy_dir, "embeddings.npy")):
+            return legacy_dir
+        return content_dir
 
     # ── Private: Persistence ───────────────────────────────────────────
 

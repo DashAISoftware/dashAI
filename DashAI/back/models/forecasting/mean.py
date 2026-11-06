@@ -60,6 +60,8 @@ class MeanForecaster(SingleSeriesForecastingModel):
         de="Mittelwert-Prognose",
         zh="均值预测",
     )
+    COLOR: str = "#78909C"
+    ICON: str = "Functions"
 
     SUPPORTS_INTERVALS = True
 

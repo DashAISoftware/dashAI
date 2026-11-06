@@ -1108,7 +1108,10 @@ describe("SplitDatasetRows: a strategy of any other kind", () => {
         "test",
       ]),
     );
-    expect(harness.splitPartitions).toEqual(["validation", "test"]);
+    // The spy runs before the state update renders the harness again.
+    await waitFor(() =>
+      expect(harness.splitPartitions).toEqual(["validation", "test"]),
+    );
   });
 
   it("shows the preview's seriesTooShort error under the form and is not ready", async () => {

@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Any, Dict, List, Mapping
 
-from DashAI.back.models.RAG.documents import Chunk, RAGDocument
+from DashAI.back.models.RAG.documents import Chunk, SourceDocument
 from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
     DOCUMENT_CHUNKS,
     DOCUMENT_ID,
@@ -28,7 +28,7 @@ class RetrievalContext:
 
     Parameters
     ----------
-    documents : Mapping[int, RAGDocument]
+    documents : Mapping[int, SourceDocument]
         Known documents keyed by document id.
     corpus : Mapping[int, Mapping[int, Chunk]]
         Full chunk corpus keyed by document id and chunk id.
@@ -36,10 +36,10 @@ class RetrievalContext:
 
     def __init__(
         self,
-        documents: Mapping[int, RAGDocument],
+        documents: Mapping[int, SourceDocument],
         corpus: Mapping[int, Mapping[int, Chunk]],
     ) -> None:
-        self._documents: Dict[int, RAGDocument] = dict(documents)
+        self._documents: Dict[int, SourceDocument] = dict(documents)
         self._corpus: Dict[int, Dict[int, Chunk]] = {}
         for document_id, document_chunks in corpus.items():
             self._corpus[document_id] = dict(document_chunks)
@@ -68,7 +68,7 @@ class RetrievalContext:
     @classmethod
     def _collect_documents(
         cls, retriever: Any, depth: int = 0
-    ) -> Dict[int, RAGDocument]:
+    ) -> Dict[int, SourceDocument]:
         """Collect documents from a retriever or, recursively, its children.
 
         Parameters
@@ -80,11 +80,11 @@ class RetrievalContext:
 
         Returns
         -------
-        Dict[int, RAGDocument]
+        Dict[int, SourceDocument]
             Merged document mapping keyed by document id. Entries owned by the
             current retriever win over descendant entries with the same id.
         """
-        collected: Dict[int, RAGDocument] = {}
+        collected: Dict[int, SourceDocument] = {}
         documents = getattr(retriever, "documents", None) or {}
         for document_id, document in documents.items():
             collected[document_id] = document
@@ -151,12 +151,12 @@ class RetrievalContext:
             frozen[document_id] = MappingProxyType(document_chunks)
         return MappingProxyType(frozen)
 
-    def documents(self) -> Mapping[int, RAGDocument]:
+    def documents(self) -> Mapping[int, SourceDocument]:
         """Return a read-only view of the document mapping.
 
         Returns
         -------
-        Mapping[int, RAGDocument]
+        Mapping[int, SourceDocument]
             The known documents keyed by document id.
         """
         return MappingProxyType(self._documents)
@@ -198,7 +198,9 @@ class RetrievalContext:
         payload: List[DocumentSummary] = []
         for document_id in document_ids:
             document = self._documents.get(document_id)
-            name = getattr(document, DOCUMENT_NAME, None)
+            # Pipeline documents are SourceDocument, which names a document
+            # by its file_name; the payload still exposes it as DOCUMENT_NAME.
+            name = getattr(document, "file_name", None)
             document_chunks = list(self._corpus.get(document_id, {}).values())
             max_page = 0
             for chunk in document_chunks:

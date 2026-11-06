@@ -6,6 +6,7 @@ import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import FormSchemaParameterContainer from "../../shared/FormSchemaParameterContainer";
 import FormSchemaRenderFields from "../../shared/FormSchemaRenderFields";
 import PromptFieldCard from "./PromptFieldCard";
+import RagLlmModelField, { LLM_MODEL_PARENT } from "./RagLlmModelField";
 import { isPromptFieldSchema } from "./promptSchema";
 import { getSchemaRules } from "../../../utils/schema";
 import { evaluateRules } from "../../../utils/ruleEngine";
@@ -17,27 +18,56 @@ const FIELD_SPACING = 1;
 const EMPTY_FIELDS = [];
 
 /**
- * Split the renderable schema keys into consecutive runs of prompt and
- * non-prompt fields.
+ * Whether a schema property is a nested LLM reference.
  *
- * Each run is drawn by one renderer — prompt runs as prompt cards, everything
- * else through `FormSchemaRenderFields` — so a prompt card keeps the position
- * of its own key instead of being hoisted above the rest of the form.
+ * RAG stages that need function calling declare their helper model this way.
+ * Matching on the declared parent keeps the special rendering schema-driven,
+ * so a renamed field still gets it and non-LLM component fields do not.
+ *
+ * @param {object} fieldSchema - The property schema to inspect.
+ * @returns {boolean} True for a nested text-generation component field.
+ */
+function isLlmModelFieldSchema(fieldSchema) {
+  // Mirror FormSchemaRenderFields' precedence: an optimizer or union field is
+  // never rendered by the generic nested-component branch either.
+  return Boolean(
+    fieldSchema?.type === "object" &&
+    fieldSchema?.parent === LLM_MODEL_PARENT &&
+    fieldSchema?.placeholder?.optimize === undefined &&
+    !fieldSchema?.anyOf,
+  );
+}
+
+/**
+ * Split the renderable schema keys into consecutive runs of prompt, nested LLM
+ * and generic fields.
+ *
+ * Each run is drawn by one renderer — prompt runs as prompt cards, LLM runs as
+ * RAG LLM fields, everything else through `FormSchemaRenderFields` — so a
+ * special field keeps the position of its own key instead of being hoisted
+ * above the rest of the form.
  *
  * @param {string[]} keys - Renderable schema keys, in declaration order.
  * @param {Set<string>} promptKeys - The subset of keys holding a prompt ref.
- * @returns {Array<{prompt: boolean, keys: string[]}>} The ordered segments.
+ * @param {Set<string>} llmKeys - The subset of keys holding a nested LLM ref.
+ * @returns {Array<{kind: "prompt"|"llm"|"fields", keys: string[]}>} The ordered
+ *   segments.
  */
-function buildFieldSegments(keys, promptKeys) {
+function buildFieldSegments(keys, promptKeys, llmKeys) {
   const segments = [];
 
   for (const key of keys) {
-    const prompt = promptKeys.has(key);
+    let kind = "fields";
+    if (promptKeys.has(key)) {
+      kind = "prompt";
+    } else if (llmKeys.has(key)) {
+      kind = "llm";
+    }
     const current = segments[segments.length - 1];
-    if (current && current.prompt === prompt) {
+    if (current && current.kind === kind) {
       current.keys.push(key);
     } else {
-      segments.push({ prompt, keys: [key] });
+      segments.push({ kind, keys: [key] });
     }
   }
 
@@ -49,11 +79,13 @@ function buildFieldSegments(keys, promptKeys) {
  *
  * The schema is walked in declaration order and split into consecutive runs:
  * prompt-typed properties become same-level prompt cards (selector, template
- * preview, create/edit actions) at the exact position of their key, and every
- * other run is delegated to `FormSchemaRenderFields`, so optimizers, unions,
- * nested component references, relevance rules and autosave behave exactly as
- * they do in `FormSchema`. Any schema therefore gains the richer prompt editor
- * without per-schema code.
+ * preview, create/edit actions) at the exact position of their key, nested
+ * text-generation properties become `RagLlmModelField` (which seeds the model
+ * with the owner's function-calling budget), and every other run is delegated
+ * to `FormSchemaRenderFields`, so optimizers, unions, nested component
+ * references, relevance rules and autosave behave exactly as they do in
+ * `FormSchema`. Any schema therefore gains the richer prompt editor without
+ * per-schema code.
  *
  * @param {object}   props
  * @param {string}   props.model - The configurable object to render.
@@ -113,14 +145,26 @@ function FormSchemaWithPrompts({
     [orderedKeys, modelSchema],
   );
 
+  const llmModelKeys = useMemo(
+    () =>
+      orderedKeys.filter((key) => isLlmModelFieldSchema(modelSchema?.[key])),
+    [orderedKeys, modelSchema],
+  );
+
   const segments = useMemo(
-    () => buildFieldSegments(orderedKeys, new Set(promptKeys)),
-    [orderedKeys, promptKeys],
+    () =>
+      buildFieldSegments(
+        orderedKeys,
+        new Set(promptKeys),
+        new Set(llmModelKeys),
+      ),
+    [orderedKeys, promptKeys, llmModelKeys],
   );
 
   // The same relevance pass `FormSchemaRenderFields` runs for every other
-  // field: a prompt card has to honour "hide"/"omit" and "disable" too, or a
-  // rule that hides a prompt would only apply to whatever renders it next.
+  // field: a prompt card or nested LLM has to honour "hide"/"omit" and
+  // "disable" too, or a rule that hides one would only apply to whatever
+  // renders it next.
   const relevance = useMemo(
     () =>
       evaluateRules(getSchemaRules(modelSchema), formik?.values ?? {})
@@ -129,12 +173,36 @@ function FormSchemaWithPrompts({
   );
 
   /**
-   * Store a prompt field value and let the form report the change.
+   * Resolve the presentation a special field shares across renderers.
    *
-   * @param {string} key - The prompt field name.
+   * @param {string} key - The field name.
+   * @returns {{fieldSchema: object, description: string|undefined,
+   *   disabled: boolean}|null} Null when a relevance rule hides the field.
+   */
+  const fieldPresentation = (key) => {
+    const fieldState = relevance[key];
+    const isIrrelevant = fieldState !== undefined && !fieldState.relevant;
+    // "hide" and "omit" both mean "do not render"; "disable" keeps the field
+    // visible but inert and explains the rule underneath it.
+    if (isIrrelevant && fieldState.effect !== "disable") return null;
+    const disabled = isIrrelevant && fieldState.effect === "disable";
+
+    const fieldSchema = modelSchema[key];
+    const description =
+      disabled && fieldState.reason
+        ? `${fieldSchema.description ?? ""}\n\n_${fieldState.reason}_`
+        : fieldSchema.description;
+
+    return { fieldSchema, description, disabled };
+  };
+
+  /**
+   * Store a prompt or nested LLM value and let the form report the change.
+   *
+   * @param {string} key - The field name.
    * @param {object} value - The canonical `{component, params}` reference.
    */
-  const handlePromptChange = useCallback(
+  const handleEmbeddedFieldChange = useCallback(
     (key, value) => {
       formik.setFieldValue(key, value, true);
       handleUpdateSchema(
@@ -152,18 +220,9 @@ function FormSchemaWithPrompts({
    * @returns {JSX.Element|null} The prompt card.
    */
   const renderPromptCard = (key) => {
-    const fieldState = relevance[key];
-    const isIrrelevant = fieldState !== undefined && !fieldState.relevant;
-    // "hide" and "omit" both mean "do not render"; "disable" keeps the card
-    // visible but inert and explains the rule underneath it.
-    if (isIrrelevant && fieldState.effect !== "disable") return null;
-    const disabled = isIrrelevant && fieldState.effect === "disable";
-
-    const fieldSchema = modelSchema[key];
-    const description =
-      disabled && fieldState.reason
-        ? `${fieldSchema.description ?? ""}\n\n_${fieldState.reason}_`
-        : fieldSchema.description;
+    const presentation = fieldPresentation(key);
+    if (!presentation) return null;
+    const { fieldSchema, description, disabled } = presentation;
 
     return (
       <PromptFieldCard
@@ -175,9 +234,39 @@ function FormSchemaWithPrompts({
         field={{
           value: formik.values?.[key],
           error: formik.errors?.[key],
-          onChange: (value) => handlePromptChange(key, value),
+          onChange: (value) => handleEmbeddedFieldChange(key, value),
         }}
         promptFilter={promptFilter}
+      />
+    );
+  };
+
+  /**
+   * Draw one nested LLM field, or nothing when the schema rules take it away.
+   *
+   * @param {string} key - The field name.
+   * @returns {JSX.Element|null} The RAG LLM field.
+   */
+  const renderLlmModelField = (key) => {
+    const presentation = fieldPresentation(key);
+    if (!presentation) return null;
+    const { fieldSchema, description, disabled } = presentation;
+    const fieldError = formik.errors?.[key];
+    const errorMessage =
+      errorsMessage?.[key]?.message ??
+      (typeof fieldError === "string" ? fieldError : fieldError?.message);
+
+    return (
+      <RagLlmModelField
+        key={key}
+        ownerComponent={model}
+        value={formik.values?.[key]}
+        onChange={(value) => handleEmbeddedFieldChange(key, value)}
+        label={fieldSchema.title}
+        description={description}
+        errorMessage={errorMessage}
+        disabled={disabled}
+        required={Boolean(fieldSchema.required)}
       />
     );
   };
@@ -193,10 +282,14 @@ function FormSchemaWithPrompts({
     >
       <FormSchemaParameterContainer showBorder={showBorder}>
         <Stack spacing={FIELD_SPACING}>
-          {segments.map((segment) =>
-            segment.prompt ? (
-              segment.keys.map((key) => renderPromptCard(key))
-            ) : (
+          {segments.map((segment) => {
+            if (segment.kind === "prompt") {
+              return segment.keys.map((key) => renderPromptCard(key));
+            }
+            if (segment.kind === "llm") {
+              return segment.keys.map((key) => renderLlmModelField(key));
+            }
+            return (
               <FormSchemaRenderFields
                 key={`fields-${segment.keys[0]}`}
                 modelSchema={modelSchema}
@@ -213,8 +306,8 @@ function FormSchemaWithPrompts({
                   ...orderedKeys.filter((key) => !segment.keys.includes(key)),
                 ]}
               />
-            ),
-          )}
+            );
+          })}
         </Stack>
       </FormSchemaParameterContainer>
 

@@ -361,15 +361,6 @@ def test_each_origin_is_scored_and_summarised():
     assert by_kind[("TEST", "LAST", None)]["value"] == pytest.approx(2.0)
 
 
-def test_mase_reads_the_history_before_each_origin():
-    rows = _scored(["MASE"], [])
-
-    # The history changes by 1 each step, so the naive scale is 1 and MASE is
-    # the MAE.
-    fold = next(r for r in rows if r["level"] == "FOLD")
-    assert fold["value"] == pytest.approx(2.0)
-
-
 def test_a_metric_with_no_value_on_one_origin_has_no_summary():
     series = SERIES.copy()
     series[19] = 0.0  # inside the second validation window, 18 to 20

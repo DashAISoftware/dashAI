@@ -112,6 +112,9 @@ _BAG_OF_WORDS_PARAMS: Dict[str, Any] = {
     "upper_bound_ngrams": 1,
     "min_df": 0.0,
     "max_df": 1.0,
+    # The retriever only fits the converter and never applies it to a dataset,
+    # so this flag of every column-adding converter has nothing to drop here.
+    "drop_source_columns": False,
 }
 
 #: Complete keyword retriever parameters, before applying ``top_k``.

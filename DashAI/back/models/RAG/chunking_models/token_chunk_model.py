@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from pydantic import field_validator
 
@@ -12,7 +12,10 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
     BaseChunkingModel,
 )
-from DashAI.back.models.RAG.exceptions import RAGChunkingOverlapError
+from DashAI.back.models.RAG.exceptions import (
+    RAGChunkingError,
+    RAGChunkingOverlapError,
+)
 
 
 class TokenChunkModelSchema(BaseSchema):
@@ -112,8 +115,9 @@ if TYPE_CHECKING:
 class TokenChunkModel(BaseChunkingModel):
     """Chunking model that splits text into chunks based on token count.
 
-    Uses a HuggingFace ``AutoTokenizer`` to tokenize the text and splits at
-    token boundaries with configurable overlap.
+    Uses a fast HuggingFace ``AutoTokenizer`` to find token boundaries and
+    splits at them with configurable overlap. Each chunk is a verbatim slice
+    of the source text.
     """
 
     SCHEMA = TokenChunkModelSchema
@@ -178,33 +182,126 @@ class TokenChunkModel(BaseChunkingModel):
         if self._tokenizer is None:
             from transformers import AutoTokenizer
 
-            self._tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_name)
+            self._tokenizer = AutoTokenizer.from_pretrained(
+                self.tokenizer_name, use_fast=True
+            )
         return self._tokenizer
 
     def chunk_text(self, text: str) -> List[str]:
         """Split text into chunks based on token count.
 
-        Args:
-            text: The input text to be chunked.
+        Each chunk is a verbatim slice of ``text``. The tokens of a window are
+        used only to find the characters that window covers, never to rebuild
+        the string: decoding tokens back to text loses the original casing and
+        spacing, and the resulting pieces cannot be located in the source
+        document, which is how :meth:`BaseChunkingModel.chunk` derives each
+        chunk's pages and sources.
 
-        Returns:
-            List[str]: A list of text chunks, each converted back to a string
-                from its constituent tokens.
+        Parameters
+        ----------
+        text : str
+            The input text to be chunked.
 
-        Raises:
-            RAGChunkingOverlapError: If chunk_overlap is not less than chunk_size.
+        Returns
+        -------
+        list of str
+            The chunks in order, each one a substring of ``text``. A window
+            that holds only whitespace is skipped, as is an empty text.
+
+        Raises
+        ------
+        RAGChunkingOverlapError
+            If ``chunk_overlap`` is not less than ``chunk_size``.
+        RAGChunkingError
+            If the configured tokenizer cannot report character offsets,
+            which slow tokenizers cannot.
         """
         if self.chunk_overlap >= self.chunk_size:
             raise RAGChunkingOverlapError(
                 f"chunk_overlap ({self.chunk_overlap}) must be less than "
                 f"chunk_size ({self.chunk_size})"
             )
-        tokens = self.tokenizer.tokenize(text)
+        if not text.strip():
+            return []
+        offsets = self._token_offsets(text)
+        step = self.chunk_size - self.chunk_overlap
+        chunks: List[str] = []
+        for start in range(0, len(offsets), step):
+            span = _window_span(offsets[start : start + self.chunk_size])
+            if span is None:
+                continue
+            piece = text[span[0] : span[1]]
+            if piece.strip():
+                chunks.append(piece)
+        return chunks
 
-        token_chunks = []
-        while len(tokens) > 0:
-            chunk = tokens[: self.chunk_size]
-            token_chunks.append(self.tokenizer.convert_tokens_to_string(chunk))
-            tokens = tokens[self.chunk_size - self.chunk_overlap :]
+    def _token_offsets(self, text: str) -> List[Tuple[int, int]]:
+        """Return the character span of every token of a text.
 
-        return token_chunks
+        Parameters
+        ----------
+        text : str
+            The text to tokenize.
+
+        Returns
+        -------
+        list of tuple of int
+            ``(start, end)`` character offsets, one per token, in order.
+
+        Raises
+        ------
+        RAGChunkingError
+            If the tokenizer cannot report character offsets.
+        """
+        tokenizer = self.tokenizer
+        if not getattr(tokenizer, "is_fast", False):
+            raise self._missing_offsets_error()
+        try:
+            encoding = tokenizer(
+                text, add_special_tokens=False, return_offsets_mapping=True
+            )
+            offsets = encoding["offset_mapping"]
+        except (KeyError, NotImplementedError) as error:
+            raise self._missing_offsets_error() from error
+        return [(int(start), int(end)) for start, end in offsets]
+
+    def _missing_offsets_error(self) -> RAGChunkingError:
+        """Build the error raised when the tokenizer cannot report offsets.
+
+        Returns
+        -------
+        RAGChunkingError
+            An error naming the tokenizer and the requirement it misses.
+        """
+        return RAGChunkingError(
+            f"Tokenizer '{self.tokenizer_name}' cannot report character "
+            "offsets. TokenChunkModel needs an offset-capable (fast) "
+            "tokenizer so every chunk stays a verbatim slice of the source "
+            "text; pick a fast tokenizer or another chunking model."
+        )
+
+
+def _window_span(window: List[Tuple[int, int]]) -> Optional[Tuple[int, int]]:
+    """Return the characters covered by a window of token offsets.
+
+    Empty spans, which some tokenizers emit for special or added tokens, are
+    ignored so they cannot widen the window.
+
+    Parameters
+    ----------
+    window : list of tuple of int
+        ``(start, end)`` offsets of the window's tokens, in order.
+
+    Returns
+    -------
+    tuple of int, optional
+        ``(first_start, last_end)`` of the non-empty spans, or ``None`` when
+        the window holds none.
+    """
+    spans: List[Tuple[int, int]] = []
+    for start, end in window:
+        if end > start:
+            spans.append((start, end))
+    if not spans:
+        return None
+    return spans[0][0], spans[-1][1]

@@ -22,6 +22,7 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
+from DashAI.back.dataloaders.classes.dashai_document import DashAIDocument
 from DashAI.back.dependencies.database.models import (
     GenerativeSession,
     RAGPipeline,
@@ -29,7 +30,7 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.lazy_llm import LazyLLM
-from DashAI.back.models.RAG.documents import Chunk, RAGDocument
+from DashAI.back.models.RAG.documents import Chunk, SourceDocument
 from DashAI.back.models.RAG.exceptions import RAGRetrieverEvaluationError
 from DashAI.back.models.RAG.prompts.evaluation import (
     CustomRetrievalSufficiencyPrompt,
@@ -135,15 +136,22 @@ class _LeafRetriever(CompositeRetriever):
         return 1
 
 
+def _source_document(document_id: int, name: str) -> SourceDocument:
+    """Build a pipeline document with no content, as retrievers receive them."""
+    return SourceDocument(
+        id=document_id, file_name=name, content=DashAIDocument(contents={})
+    )
+
+
 class _DocumentedLeafRetriever(_LeafRetriever):
     """Composite child that carries documents without infrastructure injection."""
 
     def __init__(self, **kwargs: Any) -> None:
-        """Store the supplied document names as ``RAGDocument`` instances."""
+        """Store the supplied document names as ``SourceDocument`` instances."""
         document_names = kwargs.pop("document_names", [])
         super().__init__(**kwargs)
         self.documents = {
-            index: RAGDocument(id=index, name=name, segments=[])
+            index: _source_document(index, name)
             for index, name in enumerate(document_names, start=1)
         }
 
@@ -334,16 +342,16 @@ def test_context_merges_partial_parent_documents_with_children():
     }
     model = factory.create("LLMEvaluatedDepthRetriever", copy.deepcopy(params)).model
     model.documents = {
-        1: RAGDocument(id=1, name="parent-doc", segments=[]),
-        3: RAGDocument(id=3, name="parent-doc-3", segments=[]),
+        1: _source_document(1, "parent-doc"),
+        3: _source_document(3, "parent-doc-3"),
     }
 
     context = RetrievalContext.from_retriever(model)
     documents = context.documents()
 
-    assert documents[1].name == "parent-doc"
-    assert documents[2].name == "child-doc-2"
-    assert documents[3].name == "parent-doc-3"
+    assert documents[1].file_name == "parent-doc"
+    assert documents[2].file_name == "child-doc-2"
+    assert documents[3].file_name == "parent-doc-3"
 
 
 def test_pure_factory_builds_ensemble_retriever_with_resolved_refs():

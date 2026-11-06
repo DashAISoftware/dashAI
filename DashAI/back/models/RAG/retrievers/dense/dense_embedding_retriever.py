@@ -4,10 +4,9 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances
 
-from DashAI.back.converters.hugging_face.text_embedding.base import (
+from DashAI.back.converters.hugging_face.text_embedding_roles import (
     PASSAGE,
     QUERY,
-    TextEmbeddingConverter,
 )
 from DashAI.back.core.atomic import atomic_open
 from DashAI.back.core.schema_fields import (
@@ -149,6 +148,10 @@ class DenseEmbeddingRetriever(UnitRetriever):
         TypeError
             If ``embedding_model`` is not a ``TextEmbeddingConverter``.
         """
+        from DashAI.back.converters.hugging_face.text_embedding.base import (
+            TextEmbeddingConverter,
+        )
+
         embedding_model = kwargs.pop("embedding_model")
         if not isinstance(embedding_model, TextEmbeddingConverter):
             raise TypeError(
@@ -171,6 +174,21 @@ class DenseEmbeddingRetriever(UnitRetriever):
         """
         self.compute_missing_embeddings()
         self.init_similarity_matrix()
+
+    def close(self) -> None:
+        """Release the embedding model at the end of the retrieval stage.
+
+        The retriever owns the converter for the whole session, so without this
+        hook the checkpoint stays resident and the generator cannot be offloaded
+        next to it. The persisted per-document matrices mean the next
+        ``retrieve`` only has to load the model again, not re-index.
+
+        The call is idempotent and safe when the converter has no ``close``
+        hook of its own.
+        """
+        close_embedding = getattr(self.embedding_model, "close", None)
+        if callable(close_embedding):
+            close_embedding()
 
     def compute_missing_embeddings(self):
         """Compute and persist embeddings for chunks that lack them.
