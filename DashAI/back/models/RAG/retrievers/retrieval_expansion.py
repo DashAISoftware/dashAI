@@ -11,7 +11,7 @@ The options live in this module instead of in each retriever so the semantics,
 the defaults and the user-facing labels stay identical across all retrievers.
 """
 
-from typing import Any, Dict, Final, Tuple
+from typing import Any, Dict, Final, List, Tuple
 
 from pydantic import field_validator
 
@@ -44,31 +44,39 @@ MAX_EXPAND_WINDOW: Final[int] = 32
 EXPANDED_CHUNK_SEPARATOR: Final[str] = " "
 
 
-def _strip_expansion_value(value: Any) -> Any:
-    """Copy a parameters value, dropping the expansion options at every level.
+def _strip_ignored_keys(value: Any, ignored_keys: Tuple[str, ...]) -> Any:
+    """Copy a parameters value, dropping *ignored_keys* at every level.
 
     Parameters
     ----------
     value : Any
         Parameters value: a mapping, a list or a leaf.
+    ignored_keys : Tuple[str, ...]
+        Parameter names to drop wherever they appear.
 
     Returns
     -------
     Any
-        A deep-enough copy without ``enable_retrieve_then_expand`` or
-        ``expand_window`` anywhere inside it.
+        A deep-enough copy without the ignored keys.
     """
     if isinstance(value, dict):
-        return strip_expansion_options(value)
+        stripped: Dict[str, Any] = {}
+        for key, item in value.items():
+            if key in ignored_keys:
+                continue
+            stripped[key] = _strip_ignored_keys(item, ignored_keys)
+        return stripped
     if isinstance(value, list):
-        stripped_list: list = []
+        stripped_list: List[Any] = []
         for item in value:
-            stripped_list.append(_strip_expansion_value(item))
+            stripped_list.append(_strip_ignored_keys(item, ignored_keys))
         return stripped_list
     return value
 
 
-def strip_expansion_options(params: Dict[str, Any]) -> Dict[str, Any]:
+def strip_expansion_options(
+    params: Dict[str, Any], extra_keys: Tuple[str, ...] = ()
+) -> Dict[str, Any]:
     """Return a copy of *params* without the retrieve-then-expand options.
 
     The two options are post-processing knobs: they never change what is
@@ -82,19 +90,19 @@ def strip_expansion_options(params: Dict[str, Any]) -> Dict[str, Any]:
     ----------
     params : Dict[str, Any]
         Retriever parameters, possibly holding nested ``children`` refs.
+    extra_keys : Tuple[str, ...], optional
+        Additional parameter names to drop at every level, for callers whose
+        identity ignores more than the expansion options (for example
+        ``top_k`` in the preset match).
 
     Returns
     -------
     Dict[str, Any]
-        A copy with ``ENABLE_FIELD`` and ``WINDOW_FIELD`` removed at every
-        level. The input mapping is never mutated.
+        A copy with ``ENABLE_FIELD`` and ``WINDOW_FIELD`` (and any
+        ``extra_keys``) removed at every level. The input mapping is never
+        mutated.
     """
-    stripped: Dict[str, Any] = {}
-    for key, value in params.items():
-        if key in (ENABLE_FIELD, WINDOW_FIELD):
-            continue
-        stripped[key] = _strip_expansion_value(value)
-    return stripped
+    return _strip_ignored_keys(params, (ENABLE_FIELD, WINDOW_FIELD) + extra_keys)
 
 
 def expansion_span(chunk: Chunk) -> int:
