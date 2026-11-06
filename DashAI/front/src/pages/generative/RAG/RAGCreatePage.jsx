@@ -8,6 +8,7 @@ import {
   Stack,
   TextField,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import ModuleContainer from "../../../components/layout/ModuleContainer";
 import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
@@ -42,9 +43,8 @@ import { getApiErrorMessage } from "../../../utils/apiError";
  * This is what `/app/generative/rag` renders, so arriving from the hub puts
  * the cursor straight in the form. Existing sessions are listed on the left.
  *
- * Documents are uploaded into the session once it exists, so there is nothing
- * to pick here; everything else the pipeline needs has a backend default the
- * session view can change.
+ * Documents are added from the session view once it exists; everything else
+ * the pipeline needs has a backend default the session view can change.
  *
  * Chunking, retrieval and the prompt template are filled in by the backend and
  * stay editable in the session view, so creating a session is three decisions
@@ -57,6 +57,7 @@ export default function RAGCreatePage() {
   const { t } = useTranslation(["generative", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const threePanelLayout = useThreePanelLayout({ storageKey: "rag" });
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const { sessions, setSessions, deleteSessionById } = useGenerative();
   const ragTitle = useTaskDisplayName(RAG_TASK_NAME);
 
@@ -139,6 +140,24 @@ export default function RAGCreatePage() {
     !modelUnavailable &&
     !submitting;
 
+  /**
+   * Adds the created session to the list and navigates to it.
+   *
+   * @param {{id: string|number}} created - The created session.
+   */
+  const finishCreatedSession = (created) => {
+    setSessions?.((prev) => [...(prev ?? []), created]);
+    enqueueSnackbar(t("generative:rag.messages.success"), {
+      variant: "success",
+    });
+    navigate(`/app/generative/rag/sessions/${created.id}`);
+  };
+
+  /**
+   * Creates the session and navigates to it.
+   *
+   * @returns {Promise<void>}
+   */
   const handleCreate = async () => {
     if (!canCreate) return;
     setSubmitting(true);
@@ -152,11 +171,7 @@ export default function RAGCreatePage() {
           generation_model: { component: selectedModel.name, params: {} },
         },
       });
-      setSessions?.((prev) => [...(prev ?? []), created]);
-      enqueueSnackbar(t("generative:rag.messages.success"), {
-        variant: "success",
-      });
-      navigate(`/app/generative/rag/sessions/${created.id}`);
+      finishCreatedSession(created);
     } catch (error) {
       console.error("Error creating RAG session:", error);
       enqueueSnackbar(
@@ -214,6 +229,7 @@ export default function RAGCreatePage() {
                   flex: 1,
                   minHeight: 0,
                   overflowY: "auto",
+                  overscrollBehavior: "contain",
                   pt: 1.5,
                   pb: 2,
                 }}
@@ -247,7 +263,17 @@ export default function RAGCreatePage() {
                           py: 6,
                         }}
                       >
-                        <CircularProgress />
+                        {reduceMotion ? (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            role="status"
+                          >
+                            {t("common:loading")}
+                          </Typography>
+                        ) : (
+                          <CircularProgress />
+                        )}
                       </Box>
                     ) : (
                       <ComponentSelector

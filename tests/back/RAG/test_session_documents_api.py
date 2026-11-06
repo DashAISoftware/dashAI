@@ -118,6 +118,28 @@ def test_attaching_unknown_or_unready_documents_is_refused(client):
     assert client.get(_url(987654)).status_code == 404
 
 
+def test_session_documents_expose_their_folder(client):
+    session_id = _session(client)
+    folder_name = f"folder_{uuid.uuid4().hex[:8]}"
+    folder = client.post("/api/v1/folder/", json={"name": folder_name}).json()
+    filed = _create_data_document(client, text="filed")
+    loose = _create_data_document(client, text="loose")
+    moved = client.patch(f"/api/v1/documents/{filed}", json={"folder_id": folder["id"]})
+    assert moved.status_code == 200, moved.text
+
+    attached = client.post(_url(session_id), json={"document_ids": [filed, loose]})
+
+    assert attached.status_code == 200, attached.text
+    listed = client.get(_url(session_id))
+    assert listed.status_code == 200, listed.text
+    for rows in (attached.json(), listed.json()):
+        rows_by_id = {row["id"]: row for row in rows}
+        assert rows_by_id[filed]["folder_id"] == folder["id"]
+        assert rows_by_id[filed]["folder_name"] == folder_name
+        assert rows_by_id[loose]["folder_id"] is None
+        assert rows_by_id[loose]["folder_name"] is None
+
+
 def test_detaching_keeps_the_document_in_data(client):
     session_id = _session(client)
     document_id = _create_data_document(client, text="detach me")
