@@ -12,6 +12,7 @@ import PropTypes from "prop-types";
  * @param {object} initialValues - The initial values of the form
  * @param {function} onFormSubmit - The function to submit the form
  * @param {function} onCancel - The function to cancel the form
+ * @param {string[]} excludeFields - Schema fields not to render
  */
 
 function FormSchemaWithSelectedModel({
@@ -22,6 +23,7 @@ function FormSchemaWithSelectedModel({
   saveButtonText,
   hideButtons,
   onValuesChange = () => {},
+  excludeFields = [],
 }) {
   const {
     formValues,
@@ -90,6 +92,7 @@ function FormSchemaWithSelectedModel({
         setError={setErrorForm}
         saveButtonText={saveButtonText}
         hideButtons={hideButtons}
+        excludeFields={excludeFields}
         onValuesChange={() => onValuesChange(formValues)}
         onCancel={() => {
           if (properties.length > 0) {
@@ -111,6 +114,7 @@ FormSchemaWithSelectedModel.propTypes = {
   saveButtonText: PropTypes.string,
   hideButtons: PropTypes.bool,
   onValuesChange: PropTypes.func,
+  excludeFields: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default FormSchemaWithSelectedModel;

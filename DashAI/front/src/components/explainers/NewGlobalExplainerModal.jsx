@@ -37,9 +37,9 @@ import { LoadingButton } from "@mui/lab";
 import { useTranslation } from "react-i18next";
 import { generateSequentialName } from "../../utils/nameGenerator";
 
-const getNextExplainerName = (existingExplainers = []) => {
+const getNextExplainerName = (existingExplainers, t) => {
   const { defaultName } = generateSequentialName({
-    base: "Explainer_global",
+    base: t("common:defaultName.globalExplainer"),
     items: existingExplainers,
     getName: (explainer) => explainer?.name,
   });
@@ -126,13 +126,14 @@ export default function NewGlobalExplainerModal({
 
     setNewGlobalExpl((prev) => ({
       ...prev,
-      name: getNextExplainerName(existingGlobalExplainers),
+      name: getNextExplainerName(existingGlobalExplainers, t),
     }));
   }, [
     open,
     existingGlobalExplainersLoaded,
     existingGlobalExplainers,
     newGlobalExpl.name,
+    t,
   ]);
 
   const enqueueGlobalExplainerJob = async (explainerId) => {

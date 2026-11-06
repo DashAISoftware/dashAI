@@ -29,7 +29,8 @@
     "nameTooShort": "O nome do explicador deve ter pelo menos 4 caracteres alfanuméricos.",
     "noData": "Sem dados disponíveis",
     "nameAlreadyExists": "O nome já existe",
-    "validateDataset": "Erro ao tentar validar o conjunto de dados selecionado."
+    "validateDataset": "Erro ao tentar validar o conjunto de dados selecionado.",
+    "taskNotAvailable": "A tarefa {{task}} desta sessão não está disponível, então as colunas a explicar não podem ser lidas. Ela pode pertencer a um plugin que não está mais instalado."
   },
   "label": {
     "configureExplainer": "Configure seu Explicador",

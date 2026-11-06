@@ -1,10 +1,11 @@
 """HuggingFace image embedding converter"""
 
-from typing import TYPE_CHECKING, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional
 
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
 )
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -12,13 +13,13 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.utils import (
     DEVICE_ENUM,
     DEVICE_PLACEHOLDER,
     DEVICE_TO_IDX,
 )
+from DashAI.back.preprocessing.structure_types import StateItem, StructureDelta
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.dashai_image import DashAIImage
 from DashAI.back.types.value_types import Float
@@ -41,7 +42,7 @@ IMAGE_ENCODERS: Dict[str, str] = {
 DEFAULT_IMAGE_ENCODER: str = "DINOv2 small"
 
 
-class ImageEmbeddingSchema(BaseSchema):
+class ImageEmbeddingSchema(AddColumnsConverterSchema):
     """Schema for ImageEmbedding converter hyperparameters."""
 
     model_name: schema_field(
@@ -119,6 +120,7 @@ class ImageEmbeddingConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper
     """
 
     SCHEMA = ImageEmbeddingSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en="Embed an image column into dense float columns using a "
         "HuggingFace vision model. Each detected image column is encoded "
@@ -262,6 +264,28 @@ class ImageEmbeddingConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper
             self._load_model()
 
         return self
+
+    def infer_output_columns(self, inputs: List[StateItem]) -> StructureDelta:
+        """Estimate the output: one block of embedding columns.
+
+        The number of embedding columns is the encoder's hidden size, only
+        known once the model is loaded. The source image columns survive
+        only when ``keep_source_column`` is true.
+
+        Parameters
+        ----------
+        inputs : list of ColumnItem | BlockItem
+            The dataset state items in this converter's scope.
+
+        Returns
+        -------
+        StructureDelta
+            The source columns (if kept), plus the embedding block.
+        """
+        return StructureDelta(
+            kept=list(inputs) if self.keep_source_column else [],
+            added=self._default_blocks(),
+        )
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI type produced for a given output column.

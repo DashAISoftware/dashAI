@@ -15,6 +15,7 @@ import { enqueuePredictionJob } from "../../api/job";
 import { getDatasets } from "../../api/datasets";
 import { getModelSessionById } from "../../api/modelSession";
 import { startJobPolling } from "../../utils/jobPoller";
+import { getApiDetail } from "../../utils/apiError";
 
 /**
  * DatasetPredictionPanel
@@ -26,6 +27,7 @@ export default function DatasetPredictionPanel({
   onClose,
   runRef = null,
   onStateChange = null,
+  onCreated = null,
 }) {
   const [datasets, setDatasets] = useState([]);
   const [selectedDataset, setSelectedDataset] = useState(null);
@@ -40,7 +42,7 @@ export default function DatasetPredictionPanel({
 
   const handleUploadNewDataset = () => {
     onClose();
-    navigate("/app/data/datasets/new");
+    navigate("/app/data/new");
   };
 
   const handleRunRef = useRef(null);
@@ -52,6 +54,7 @@ export default function DatasetPredictionPanel({
     onStateChange?.({
       canRun: !!selectedDataset && !isSubmitting,
       isSubmitting,
+      datasetId: selectedDataset?.id ?? null,
     });
   }, [selectedDataset, isSubmitting, onStateChange]);
 
@@ -76,9 +79,10 @@ export default function DatasetPredictionPanel({
         setModelSession(sessionData);
       } catch (error) {
         console.error("Error loading dataset prediction data:", error);
-        enqueueSnackbar(t("prediction:error.loadingPredictionData"), {
-          variant: "error",
-        });
+        enqueueSnackbar(
+          getApiDetail(error, t("prediction:error.loadingPredictionData")),
+          { variant: "error" },
+        );
       } finally {
         setLoading(false);
       }
@@ -97,6 +101,9 @@ export default function DatasetPredictionPanel({
         selectedDataset.id,
         selectedSplit !== "all" ? selectedSplit : null,
       );
+      // What POST /predict/ answered, its warnings included, for a form
+      // that shows them.
+      onCreated?.(prediction);
       const jobResponse = await enqueuePredictionJob(prediction.id);
 
       if (!jobResponse || !jobResponse.id) {
@@ -170,9 +177,10 @@ export default function DatasetPredictionPanel({
       );
     } catch (error) {
       console.error("Error creating dataset prediction:", error);
-      enqueueSnackbar(t("prediction:error.creatingPrediction"), {
-        variant: "error",
-      });
+      enqueueSnackbar(
+        getApiDetail(error, t("prediction:error.creatingPrediction")),
+        { variant: "error" },
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -225,4 +233,7 @@ DatasetPredictionPanel.propTypes = {
   }),
   onSaved: PropTypes.func,
   onClose: PropTypes.func.isRequired,
+  runRef: PropTypes.shape({ current: PropTypes.any }),
+  onStateChange: PropTypes.func,
+  onCreated: PropTypes.func,
 };

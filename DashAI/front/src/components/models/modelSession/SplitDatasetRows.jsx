@@ -1,11 +1,12 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { parseRangeToIndex } from "../../../utils/parseRange";
 import {
-  Box,
+  Alert,
   FormHelperText,
   Grid,
   Paper,
+  Box,
   Stack,
   TextField,
   ToggleButton,
@@ -19,26 +20,25 @@ import FormSchema from "../../shared/FormSchema";
 import FormSchemaLayout from "../../shared/FormSchemaLayout";
 import SplitsCard from "./SplitsCard";
 import SplitPreview from "./SplitPreview";
-import { geometryOf } from "../../../utils/splitPreview";
 import {
-  defaultHoldoutSplitter,
-  filterByPartitioning,
+  defaultSplitterOf,
   findStrategy,
-  FOLD_PARTITIONING,
-  HOLDOUT_PARTITIONING,
-  resolveSplitterName,
+  splittersOf,
   STRATEGY_KINDS,
   strategyKindOf,
 } from "../../../utils/splitsPayload";
+import useSplitPreview from "../../../hooks/useSplitPreview";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import { getComponents } from "../../../api/component";
 
 function SplitDatasetRows({
+  datasetId,
   datasetInfo,
   rowsPartitionsIndex,
   setRowsPartitionsIndex,
   setSplitsReady,
+  setSplitPartitions,
   splitType,
   setSplitType,
   SPLIT_TYPES,
@@ -48,10 +48,8 @@ function SplitDatasetRows({
   setParamsError,
   evaluationStrategy,
   setEvaluationStrategy,
-  cvType,
-  setCvType,
-  holdoutType,
-  setHoldoutType,
+  splitter,
+  setSplitter,
   strategyKind,
   setStrategyKind,
   groupColumn,
@@ -62,40 +60,36 @@ function SplitDatasetRows({
   const { t } = useTranslation(["experiments", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const totalRows = datasetInfo.total_rows;
-  const trainDatasetPercentage = (datasetInfo.train_size / totalRows).toFixed(
-    2,
-  );
-  const validationDatasetPercentage = (
-    datasetInfo.val_size / totalRows
-  ).toFixed(2);
-  const testDatasetPercentage = (datasetInfo.test_size / totalRows).toFixed(2);
+  // The share of each partition the dataset carries of its own, as the
+  // dataset info declares it; none when it carries no partitions.
+  const predefinedSplits = datasetInfo.predefined_splits ?? null;
+  const hasPredefinedSplits = predefinedSplits !== null;
+  const predefinedShare = (partition) =>
+    Number(predefinedSplits?.[partition] ?? 0).toFixed(2);
 
-  const hasPredefinedSplits =
-    trainDatasetPercentage > 0 ||
-    validationDatasetPercentage > 0 ||
-    testDatasetPercentage > 0;
-
-  const checkSplit = (train, validation, test) =>
-    Math.abs(train + validation + test - 1) < 0.0001;
-
-  // The splitter's own parameters come from the schema generated form; only the
-  // rules the schema cannot express are checked here.
-  const splitterName = resolveSplitterName(strategyKind, cvType, holdoutType);
-  const selectedSplitter =
-    strategyKind === STRATEGY_KINDS.HOLDOUT ? holdoutType : cvType;
+  const splitterName =
+    strategyKind && strategyKind !== STRATEGY_KINDS.FULL
+      ? (splitter?.name ?? null)
+      : null;
+  const isHoldout = strategyKind === STRATEGY_KINDS.HOLDOUT;
+  // Which splitter the parameters in splitterParams were given for: its form
+  // or its schema defaults. Until they are this splitter's, they may still be
+  // the previous one's, and nothing is previewed or created with them.
+  const [paramsOwner, setParamsOwnerState] = useState(null);
+  // The same, for the seed that resolves between renders.
+  const paramsOwnerRef = useRef(null);
+  const setParamsOwner = (name) => {
+    paramsOwnerRef.current = name;
+    setParamsOwnerState(name);
+  };
+  const paramsOwned = Boolean(splitterName) && paramsOwner === splitterName;
+  const submitSplitterParams = (values) => {
+    setParamsOwner(splitterName);
+    setSplitterParams(values);
+  };
   const isIndexMode =
-    splitType === SPLIT_TYPES.MANUAL || splitType === SPLIT_TYPES.PREDEFINED;
-  const params = splitterParams ?? {};
-  const proportionsAreNumbers = ["train", "validation", "test"].every(
-    (key) => typeof params[key] === "number",
-  );
-  const proportionsSumToOne =
-    proportionsAreNumbers &&
-    checkSplit(params.train, params.validation, params.test);
-  const trainIsEmpty = params.train === 0;
-  const folds = params.n_splits;
-  const tooManyFolds =
-    typeof folds === "number" && folds > (datasetInfo.total_rows ?? 0);
+    isHoldout &&
+    (splitType === SPLIT_TYPES.MANUAL || splitType === SPLIT_TYPES.PREDEFINED);
   // group_column is rendered by hand because its options are the dataset's own
   // columns, so the generated form never validates it.
   // Memoized because the generated form memoizes its field list on this array.
@@ -107,6 +101,47 @@ function SplitDatasetRows({
     [isIndexMode],
   );
 
+  // The splitter computes the preview, and with it whether the configuration
+  // can be used and which partitions receive rows. A predefined split is read
+  // from the dataset's own partitions by the backend. Values the generated
+  // form marks as invalid (its schema's bounds) are not previewed: the form
+  // says what is wrong with them, and the backend would only refuse them.
+  const {
+    preview,
+    loading: previewLoading,
+    error: previewError,
+    errorStatus: previewErrorStatus,
+    retry: retryPreview,
+  } = useSplitPreview({
+    datasetId,
+    splitterName: paramsOwned && !paramsError ? splitterName : null,
+    params: splitterParams ?? {},
+    splitType: isHoldout ? splitType : null,
+    indexes:
+      isHoldout && splitType === SPLIT_TYPES.MANUAL
+        ? rowsPartitionsIndex
+        : null,
+  });
+  // A 422 is the backend's verdict on the configuration, the one creating
+  // the session would give; any other failure is the preview's own, and the
+  // session API still checks the configuration when it is created. The
+  // verdict's text is the schema's, untranslated, so only the preview's own
+  // errors, which come as translation keys, are shown under the form.
+  const previewFailed = previewError !== null || previewErrorStatus !== null;
+  const configurationRefused = previewErrorStatus === 422;
+  // Values the form marks are as refused as a 422, without asking: the
+  // preview says the parameters cannot be used, and the form says why.
+  const formRefused = paramsOwned && Boolean(paramsError);
+  const previewFailure = formRefused
+    ? { reason: null, invalid: true }
+    : previewFailed
+      ? { reason: previewError, invalid: configurationRefused }
+      : null;
+  const previewErrors = preview?.errors ?? [];
+  const errorMessages = previewErrors.map((error) =>
+    t(`experiments:error.${error.key}`, error.values),
+  );
+
   // The generated form reports its values only once the user edits a field, so
   // the schema placeholders are pushed up here: without them a session created
   // without touching the form would carry no splitter parameters at all.
@@ -115,26 +150,34 @@ function SplitDatasetRows({
   // on purpose. That hook keeps the previous splitter's schema for one render
   // after the name changes, and seeding from it left the parameters of the
   // splitter that was selected a moment ago in place.
+  //
+  // The defaults always replace the previous splitter's parameters, even when
+  // there are none or the schema cannot be fetched; what the new splitter's
+  // form already sent is kept over them.
   useEffect(() => {
     if (!splitterName) return undefined;
     let cancelled = false;
 
     const seedSplitterParams = async () => {
+      let defaults = {};
       try {
         const component = await getComponents({ model: splitterName });
-        if (cancelled) return;
         const properties = component?.schema?.properties ?? {};
-        const defaults = Object.fromEntries(
+        defaults = Object.fromEntries(
           Object.entries(properties)
             .filter(([, property]) => "placeholder" in property)
             .map(([key, property]) => [key, property.placeholder]),
         );
-        if (Object.keys(defaults).length > 0) {
-          setSplitterParams(defaults);
-        }
       } catch (error) {
         console.error(`Error fetching the ${splitterName} schema`, error);
       }
+      if (cancelled) return;
+      const submitted = paramsOwnerRef.current === splitterName;
+      setSplitterParams((current) => ({
+        ...defaults,
+        ...(submitted ? (current ?? {}) : {}),
+      }));
+      setParamsOwner(splitterName);
     };
 
     seedSplitterParams();
@@ -144,32 +187,15 @@ function SplitDatasetRows({
     };
   }, [splitterName]);
 
-  // Rules that span several fields, which a per field schema cannot express.
-  let splitsMessage = "";
-  if (
-    strategyKind === STRATEGY_KINDS.HOLDOUT &&
-    splitType === SPLIT_TYPES.RANDOM
-  ) {
-    if (trainIsEmpty) {
-      splitsMessage = t("experiments:error.trainSplitMustBeGreaterThanZero");
-    } else if (proportionsAreNumbers && !proportionsSumToOne) {
-      splitsMessage = t("experiments:error.splitsMustSumToOne");
-    }
-  } else if (strategyKind === STRATEGY_KINDS.CV && tooManyFolds) {
-    splitsMessage = t("experiments:error.foldsMustBeLessThanDatasetSize", {
-      datasetSize: datasetInfo.total_rows,
-    });
-  }
-
-  const [manualSplitError, setManualSplitError] = useState(false);
-  const [manualSplitErrorText, setManualSplitErrorText] = useState("");
+  // Row indexes typed by hand that do not parse. Whether the train partition
+  // got any rows is the preview's to say.
+  const [manualParseError, setManualParseError] = useState("");
 
   const [groupColumnError, setGroupColumnError] = useState(true);
-  const [allowedCvTypes, setAllowedCvTypes] = useState([]);
-  const [allowedHoldoutTypes, setAllowedHoldoutTypes] = useState([]);
+  const [taskSplitters, setTaskSplitters] = useState([]);
   const [allowedStrategies, setAllowedStrategies] = useState([]);
 
-  // Update allowed CV types when task changes
+  // Update the offered splitters and strategies when the task changes
   useEffect(() => {
     const getSplittersForTask = async () => {
       try {
@@ -177,12 +203,7 @@ function SplitDatasetRows({
           selectTypes: ["Splitter"],
           relatedComponent: taskName,
         });
-        // A holdout splitter is not a cross-validation method, so the two
-        // kinds are kept apart rather than both landing in the CV dropdown.
-        setAllowedCvTypes(filterByPartitioning(response, FOLD_PARTITIONING));
-        setAllowedHoldoutTypes(
-          filterByPartitioning(response, HOLDOUT_PARTITIONING),
-        );
+        setTaskSplitters(response);
 
         // Which strategies exist is a property of the task too, so a
         // forecasting session cannot be pointed at one that scores its
@@ -203,17 +224,19 @@ function SplitDatasetRows({
     getSplittersForTask();
   }, [taskName]);
 
-  // Set default CV type when allowedCvTypes changes
-  useEffect(() => {
-    setCvType(allowedCvTypes.length > 0 ? allowedCvTypes[0] : null);
-  }, [allowedCvTypes]);
-
-  // Same for the holdout splitter, which used to be a hardcoded name.
-  useEffect(() => {
-    setHoldoutType(defaultHoldoutSplitter(allowedHoldoutTypes));
-  }, [allowedHoldoutTypes]);
-
   const selectedStrategy = findStrategy(allowedStrategies, evaluationStrategy);
+
+  // The splitters a strategy takes are the ones that carve the way it
+  // declares, so a holdout splitter never lands in the folds dropdown.
+  const allowedSplitters = useMemo(
+    () => splittersOf(selectedStrategy, taskSplitters),
+    [selectedStrategy, taskSplitters],
+  );
+
+  // A strategy starts on the splitter it declares as its default.
+  useEffect(() => {
+    setSplitter(defaultSplitterOf(selectedStrategy, allowedSplitters));
+  }, [allowedSplitters]);
 
   // Publish the split shape so the rest of the session reads it instead of
   // comparing strategy names.
@@ -231,20 +254,28 @@ function SplitDatasetRows({
     setEvaluationStrategy((holdout ?? allowedStrategies[0]).name);
   }, [allowedStrategies, selectedStrategy, setEvaluationStrategy]);
 
+  // The partitions with rows decide the metrics the session records. Without
+  // a preview to say which (a splitter with none, or a preview that could not
+  // be computed), they are the ones the strategy scores.
+  const answered = paramsOwned && !paramsError && !previewLoading;
+  const withoutPreview = answered && !preview && !configurationRefused;
+  const splitPartitions = preview
+    ? preview.partitions
+    : withoutPreview
+      ? (selectedStrategy?.metadata?.scored_splits ?? null)
+      : null;
+  useEffect(() => {
+    setSplitPartitions?.(splitPartitions);
+  }, [splitPartitions]);
+
   const handleSplitTypeChange = (_e, newType) => {
     if (!newType) return;
     setSplitType(newType);
 
-    if (newType === SPLIT_TYPES.PREDEFINED) {
-      setSplitsReady(true);
-    }
     if (newType === SPLIT_TYPES.MANUAL) {
       const newIndex = { train: [], test: [], validation: [] };
       setRowsPartitionsIndex(newIndex);
-      setManualSplitErrorText(
-        t("experiments:error.trainSplitMustHaveAtLeastOneRow"),
-      );
-      setManualSplitError(true);
+      setManualParseError("");
     }
   };
 
@@ -254,19 +285,10 @@ function SplitDatasetRows({
 
     try {
       const rowsIndex = parseRangeToIndex(value, totalRows);
-      const updatedIndex = { ...rowsPartitionsIndex, [id]: rowsIndex };
-      setRowsPartitionsIndex(updatedIndex);
-      if (updatedIndex.train.length === 0) {
-        setManualSplitErrorText(
-          t("experiments:error.trainSplitMustHaveAtLeastOneRow"),
-        );
-        setManualSplitError(true);
-      } else {
-        setManualSplitError(false);
-      }
+      setRowsPartitionsIndex({ ...rowsPartitionsIndex, [id]: rowsIndex });
+      setManualParseError("");
     } catch (error) {
-      setManualSplitErrorText(error.message);
-      setManualSplitError(true);
+      setManualParseError(error.message);
     }
   };
 
@@ -288,47 +310,38 @@ function SplitDatasetRows({
     }
   }, [hasPredefinedSplits]);
 
+  const isManual = isHoldout && splitType === SPLIT_TYPES.MANUAL;
+
   useEffect(() => {
-    if (paramsError) {
+    if (strategyKind === STRATEGY_KINDS.FULL) {
+      // Nothing is carved, so there is nothing left to configure.
+      setSplitsReady(true);
+    } else if (
+      !strategyKind ||
+      !splitterName ||
+      !paramsOwned ||
+      paramsError ||
+      previewLoading ||
+      configurationRefused ||
+      (isManual && manualParseError) ||
+      (strategyKind === STRATEGY_KINDS.CV && groupColumnError)
+    ) {
       setSplitsReady(false);
-      return;
-    }
-    if (strategyKind === STRATEGY_KINDS.HOLDOUT) {
-      if (splitType === SPLIT_TYPES.PREDEFINED) {
-        setSplitsReady(true);
-      } else if (
-        splitType === SPLIT_TYPES.MANUAL &&
-        !manualSplitError &&
-        rowsPartitionsIndex.train.length >= 1
-      ) {
-        setSplitsReady(true);
-      } else if (
-        splitType === SPLIT_TYPES.RANDOM &&
-        proportionsSumToOne &&
-        !trainIsEmpty
-      ) {
-        setSplitsReady(true);
-      } else {
-        setSplitsReady(false);
-      }
-    } else if (strategyKind === STRATEGY_KINDS.CV) {
-      setSplitsReady(
-        Boolean(splitterName) && !tooManyFolds && !groupColumnError,
-      );
     } else {
-      setSplitsReady(false);
+      // Without a preview, the session API checks the configuration.
+      setSplitsReady(previewErrors.length === 0);
     }
   }, [
-    rowsPartitionsIndex,
-    manualSplitError,
-    splitType,
-    evaluationStrategy,
-    paramsError,
-    proportionsSumToOne,
-    trainIsEmpty,
-    tooManyFolds,
-    groupColumnError,
+    strategyKind,
     splitterName,
+    paramsOwned,
+    paramsError,
+    previewLoading,
+    preview,
+    configurationRefused,
+    isManual,
+    manualParseError,
+    groupColumnError,
   ]);
 
   const splitOptions = [
@@ -349,54 +362,90 @@ function SplitDatasetRows({
 
   // Validate group column when grouping CV type is selected
   useEffect(() => {
-    const isGrouping = Boolean(cvType?.schema?.properties?.group_column);
+    const isGrouping = Boolean(splitter?.schema?.properties?.group_column);
     if (isGrouping && !groupColumn) {
       setGroupColumnError(true);
     } else {
       setGroupColumnError(false);
     }
-  }, [cvType, groupColumn, t]);
+  }, [splitter, groupColumn, t]);
+
+  // Typed indexes are reported where they are typed; every other problem
+  // under the splitter's form.
+  const manualMessage = manualParseError || (isManual && errorMessages[0]);
+  const splitsMessage = isManual ? "" : errorMessages.join(" ");
+
+  // A strategy that takes a single splitter offers no choice: the splitter is
+  // named, not selected.
+  const singleSplitter = allowedSplitters.length === 1;
+  const splitterSelect = (label) => (
+    <SplitsCard label={label}>
+      {singleSplitter ? (
+        <Typography variant="body2">
+          {allowedSplitters[0].display_name ?? allowedSplitters[0].name}
+        </Typography>
+      ) : (
+        <FormControl fullWidth size="small">
+          <Select
+            value={splitter ?? ""}
+            onChange={(e) => setSplitter(e.target.value)}
+          >
+            {allowedSplitters.map((type) => (
+              <MenuItem key={type.name} value={type}>
+                {type.display_name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      )}
+    </SplitsCard>
+  );
+  // Where the splitter is shown, a single one is described by its own text
+  // alone: the strategy's would say the same. The holdout section shows no
+  // splitter and keeps both (§6.7).
+  const strategyDescription =
+    !isHoldout && singleSplitter ? null : selectedStrategy?.description;
 
   return (
     <Stack spacing={4} data-tour="exp-dataset-splits">
-      {/* Evaluation Strategy Selector */}
-      <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>
-        <Box
-          sx={{
-            px: 8,
-            py: 3,
-            borderBottom: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          <Typography variant="body2" fontWeight={600}>
-            {t("experiments:label.selectEvaluationStrategy")}
-          </Typography>
-        </Box>
-        <Box sx={{ px: 8, pt: 2, pb: 4 }}>
-          <ToggleButtonGroup
-            value={evaluationStrategy}
-            exclusive={true}
-            onChange={(_, value) => {
-              value && setEvaluationStrategy(value);
+      {/* Evaluation Strategy Selector, when the task offers a choice */}
+      {allowedStrategies.length > 1 && (
+        <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>
+          <Box
+            sx={{
+              px: 8,
+              py: 3,
+              borderBottom: "1px solid",
+              borderColor: "divider",
             }}
-            fullWidth
-            size="small"
           >
-            {allowedStrategies.map((strategy) => (
-              <ToggleButton
-                key={strategy.name}
-                value={strategy.name}
-                sx={{ textTransform: "none", fontSize: "0.8rem" }}
-              >
-                {strategyKindOf(strategy) === STRATEGY_KINDS.CV
-                  ? t("experiments:label.crossValidation")
-                  : t("experiments:label.holdout")}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        </Box>
-      </Paper>
+            <Typography variant="body2" fontWeight={600}>
+              {t("experiments:label.selectEvaluationStrategy")}
+            </Typography>
+          </Box>
+          <Box sx={{ px: 8, pt: 2, pb: 4 }}>
+            <ToggleButtonGroup
+              value={evaluationStrategy}
+              exclusive={true}
+              onChange={(_, value) => {
+                value && setEvaluationStrategy(value);
+              }}
+              fullWidth
+              size="small"
+            >
+              {allowedStrategies.map((strategy) => (
+                <ToggleButton
+                  key={strategy.name}
+                  value={strategy.name}
+                  sx={{ textTransform: "none", fontSize: "0.8rem" }}
+                >
+                  {strategy.display_name ?? strategy.name}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+          </Box>
+        </Paper>
+      )}
 
       {/* HOLDOUT SECTION */}
       {strategyKind === STRATEGY_KINDS.HOLDOUT && (
@@ -454,15 +503,11 @@ function SplitDatasetRows({
               description={t("experiments:label.splitsDescription")}
             >
               <Grid container spacing={2}>
-                {[
-                  { id: "train", value: trainDatasetPercentage },
-                  { id: "validation", value: validationDatasetPercentage },
-                  { id: "test", value: testDatasetPercentage },
-                ].map(({ id, value }) => (
+                {["train", "validation", "test"].map((id) => (
                   <Grid key={id} size={{ xs: 4 }}>
                     <TextField
                       label={t(`common:${id}`)}
-                      value={value}
+                      value={predefinedShare(id)}
                       type="number"
                       size="small"
                       fullWidth
@@ -472,7 +517,9 @@ function SplitDatasetRows({
                         "& .MuiInputBase-input.Mui-disabled": {
                           WebkitTextFillColor: "#999",
                         },
-                        "& .MuiInputLabel-root.Mui-disabled": { color: "#bbb" },
+                        "& .MuiInputLabel-root.Mui-disabled": {
+                          color: "#bbb",
+                        },
                       }}
                     />
                   </Grid>
@@ -486,7 +533,7 @@ function SplitDatasetRows({
             <SplitsCard
               label={t("experiments:label.rowIndexes")}
               description={t("experiments:label.rowIndexesDescription")}
-              errorMessage={manualSplitError ? manualSplitErrorText : undefined}
+              errorMessage={manualMessage || undefined}
             >
               <Grid container spacing={2}>
                 {splitFields.map(({ id, label }) => (
@@ -496,7 +543,7 @@ function SplitDatasetRows({
                       label={label}
                       size="small"
                       fullWidth
-                      error={manualSplitError}
+                      error={Boolean(manualMessage)}
                       onChange={handleRowsChange}
                       slotProps={{ inputLabel: { shrink: true } }}
                     />
@@ -512,23 +559,10 @@ function SplitDatasetRows({
       {strategyKind === STRATEGY_KINDS.CV && (
         <>
           {/* CV Type Selector */}
-          <SplitsCard label={t("experiments:label.cvType")}>
-            <FormControl fullWidth size="small">
-              <Select
-                value={cvType}
-                onChange={(e) => setCvType(e.target.value)}
-              >
-                {allowedCvTypes.map((type) => (
-                  <MenuItem key={type.name} value={type}>
-                    {type.display_name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </SplitsCard>
+          {splitterSelect(t("experiments:label.cvType"))}
 
           {/* Group Column */}
-          {Boolean(cvType?.schema?.properties?.group_column) && (
+          {Boolean(splitter?.schema?.properties?.group_column) && (
             <SplitsCard
               label={t("experiments:label.groupColumn")}
               description={t("experiments:label.groupColumnDescription")}
@@ -556,15 +590,33 @@ function SplitDatasetRows({
         </>
       )}
 
-      <SplitPreview
-        geometry={geometryOf(selectedSplitter)}
-        description={selectedStrategy?.description}
-        splitterDescription={selectedSplitter?.description}
-        splitType={splitType}
-        params={splitterParams}
-        indexes={rowsPartitionsIndex}
-        datasetInfo={datasetInfo}
-      />
+      {/* ANY OTHER STRATEGY: its splitter, chosen or fixed, and the
+          splitter's own form */}
+      {strategyKind &&
+        ![
+          STRATEGY_KINDS.HOLDOUT,
+          STRATEGY_KINDS.CV,
+          STRATEGY_KINDS.FULL,
+        ].includes(strategyKind) &&
+        allowedSplitters.length > 0 &&
+        splitterSelect(t("experiments:label.splitter"))}
+
+      {/* FULL DATASET SECTION: nothing is carved, so there is no splitter to
+          choose and no partition to preview */}
+      {strategyKind === STRATEGY_KINDS.FULL ? (
+        <Alert severity="info">
+          {t("experiments:label.noSplitConfigNeeded")}
+        </Alert>
+      ) : (
+        <SplitPreview
+          preview={preview}
+          loading={previewLoading || (Boolean(splitterName) && !paramsOwned)}
+          failure={previewFailure}
+          onRetry={retryPreview}
+          description={strategyDescription}
+          splitterDescription={splitter?.description}
+        />
+      )}
 
       {/* Splitter parameters, generated from the component schema */}
       {splitterName && (
@@ -575,7 +627,7 @@ function SplitDatasetRows({
               hideButtons
               key={splitterName}
               model={splitterName}
-              onFormSubmit={setSplitterParams}
+              onFormSubmit={submitSplitterParams}
               setError={setParamsError}
               excludeFields={excludedFields}
             />
@@ -592,10 +644,12 @@ function SplitDatasetRows({
 }
 
 SplitDatasetRows.propTypes = {
+  datasetId: PropTypes.number,
   datasetInfo: PropTypes.object.isRequired,
   rowsPartitionsIndex: PropTypes.object.isRequired,
   setRowsPartitionsIndex: PropTypes.func.isRequired,
   setSplitsReady: PropTypes.func.isRequired,
+  setSplitPartitions: PropTypes.func,
   splitType: PropTypes.string.isRequired,
   setSplitType: PropTypes.func.isRequired,
   SPLIT_TYPES: PropTypes.object.isRequired,
@@ -603,14 +657,12 @@ SplitDatasetRows.propTypes = {
   setSplitterParams: PropTypes.func.isRequired,
   paramsError: PropTypes.bool,
   setParamsError: PropTypes.func.isRequired,
-  evaluationStrategy: PropTypes.string.isRequired,
+  evaluationStrategy: PropTypes.string,
   setEvaluationStrategy: PropTypes.func.isRequired,
-  cvType: PropTypes.object,
-  holdoutType: PropTypes.object,
-  setHoldoutType: PropTypes.func,
+  splitter: PropTypes.object,
+  setSplitter: PropTypes.func.isRequired,
   strategyKind: PropTypes.string,
   setStrategyKind: PropTypes.func,
-  setCvType: PropTypes.func.isRequired,
   groupColumn: PropTypes.string,
   setGroupColumn: PropTypes.func.isRequired,
   inputColumnNames: PropTypes.arrayOf(PropTypes.string),

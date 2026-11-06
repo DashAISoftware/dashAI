@@ -29,7 +29,8 @@
     "nameTooShort": "解释器名称至少需要 4 个字母或数字字符。",
     "noData": "暂无数据",
     "nameAlreadyExists": "名称已存在",
-    "validateDataset": "验证所选数据集时出错。"
+    "validateDataset": "验证所选数据集时出错。",
+    "taskNotAvailable": "此会话的任务 {{task}} 不可用，因此无法读取要解释的列。它可能属于一个已不再安装的插件。"
   },
   "label": {
     "configureExplainer": "配置解释器",

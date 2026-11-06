@@ -45,12 +45,13 @@
     "react-window": "^1.8.11",
     "reactflow": "^11.11.4",
     "recharts": "^3.4.1",
+    "remark-gfm": "^4.0.1",
     "web-vitals": "^2.1.4",
     "yup": "^0.32.11"
   },
   "scripts": {
     "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",
-    "build": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts build",
+    "build": "cross-env DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false react-scripts build",
     "test": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts test",
     "eject": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts eject",
     "json-server": "json-server sample-db.json --routes sample-routes.json --port 3001",

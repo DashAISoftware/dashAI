@@ -1,12 +1,13 @@
 from fastapi import APIRouter
 
+from DashAI.back.api.api_v1.endpoints.app_config import router as app_config
 from DashAI.back.api.api_v1.endpoints.components import router as components
 from DashAI.back.api.api_v1.endpoints.converters import router as converters
 from DashAI.back.api.api_v1.endpoints.credentials import router as credentials
+from DashAI.back.api.api_v1.endpoints.data_documents import router as data_documents
 from DashAI.back.api.api_v1.endpoints.datafile import router as datafile_router
 from DashAI.back.api.api_v1.endpoints.dataset_source import router as dataset_source
 from DashAI.back.api.api_v1.endpoints.datasets import router as datasets
-from DashAI.back.api.api_v1.endpoints.documents import router as documents
 from DashAI.back.api.api_v1.endpoints.explainers import router as explainers
 from DashAI.back.api.api_v1.endpoints.explorers import router as explorers
 from DashAI.back.api.api_v1.endpoints.folders import router as folders
@@ -28,15 +29,17 @@ from DashAI.back.api.api_v1.endpoints.prompts import router as prompts
 from DashAI.back.api.api_v1.endpoints.rag import router as rag
 from DashAI.back.api.api_v1.endpoints.reports import router as reports
 from DashAI.back.api.api_v1.endpoints.runs import router as runs
+from DashAI.back.api.api_v1.endpoints.splitters import router as splitters
 from DashAI.back.api.api_v1.endpoints.statistical_tests import (
     router as statistical_tests,
 )
+from DashAI.back.api.api_v1.endpoints.system import router as system
 
 api_router_v1 = APIRouter()
 api_router_v1.include_router(converters, prefix="/converter")
 api_router_v1.include_router(components, prefix="/component")
 api_router_v1.include_router(datasets, prefix="/dataset")
-api_router_v1.include_router(documents, prefix="/document")
+api_router_v1.include_router(data_documents, prefix="/documents")
 api_router_v1.include_router(model_sessions, prefix="/model-session")
 api_router_v1.include_router(explainers, prefix="/explainer")
 api_router_v1.include_router(reports, prefix="/report")
@@ -44,6 +47,7 @@ api_router_v1.include_router(explorers, prefix="/explorer")
 api_router_v1.include_router(jobs, prefix="/job")
 api_router_v1.include_router(runs, prefix="/run")
 api_router_v1.include_router(predict, prefix="/predict")
+api_router_v1.include_router(splitters, prefix="/splitter")
 api_router_v1.include_router(generative_session, prefix="/generative-session")
 api_router_v1.include_router(generative_process, prefix="/generative-process")
 api_router_v1.include_router(pipelines, prefix="/pipelines")
@@ -58,3 +62,5 @@ api_router_v1.include_router(statistical_tests, prefix="/statistical-tests")
 api_router_v1.include_router(folders, prefix="/folder")
 api_router_v1.include_router(credentials, prefix="/credential")
 api_router_v1.include_router(rag, prefix="/rag")
+api_router_v1.include_router(system, prefix="/system")
+api_router_v1.include_router(app_config, prefix="/app-config")

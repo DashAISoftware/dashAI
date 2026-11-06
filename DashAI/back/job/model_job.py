@@ -3,23 +3,46 @@ from typing import TYPE_CHECKING, Any, Dict, List
 
 from kink import inject
 from sqlalchemy import exc
+from sqlalchemy.orm.attributes import flag_modified
 
-from DashAI.back.core.atomic import atomic_save_path
-from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
-from DashAI.back.dependencies.downloads.nested import missing_downloads
-from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
+from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
+from DashAI.back.dependencies.database.models import (
+    Dataset,
+    Metric,
+    ModelSession,
+    Run,
+)
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics.base_metric import BaseMetric
-from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
-from DashAI.back.splitters.base_splitter import BaseSplitter
-from DashAI.back.splitters.splits_payload import normalize_splits_payload
-from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.splitters.splits_payload import META_KEYS, normalize_splits_payload
+from DashAI.back.tasks.session_roles import SessionIO, session_has_steps, session_io
+from DashAI.back.units.apply_cut_preprocessing_unit import ApplyCutPreprocessingUnit
+from DashAI.back.units.backtest_forecaster_unit import BacktestForecasterUnit
+from DashAI.back.units.build_forecaster_unit import BuildForecasterUnit
+from DashAI.back.units.build_model_unit import BuildModelUnit
+from DashAI.back.units.context import ExecutionContext
+from DashAI.back.units.evaluate_model_unit import EvaluateModelUnit
+from DashAI.back.units.fit_final_forecaster_unit import FitFinalForecasterUnit
+from DashAI.back.units.fit_model_over_folds_unit import FitModelOverFoldsUnit
+from DashAI.back.units.fit_model_over_nested_folds_unit import (
+    FitModelOverNestedFoldsUnit,
+)
+from DashAI.back.units.fit_model_unit import FitModelUnit
+from DashAI.back.units.fit_without_target_unit import FitWithoutTargetUnit
+from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
+from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
+from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
+from DashAI.back.units.prepare_series_unit import PrepareSeriesUnit
+from DashAI.back.units.prepare_without_target_unit import PrepareWithoutTargetUnit
+from DashAI.back.units.save_forecasts_unit import SaveForecastsUnit
+from DashAI.back.units.save_model_unit import SaveModelUnit
+from DashAI.back.units.score_clusters_unit import ScoreClustersUnit
+from DashAI.back.units.score_forecasts_unit import ScoreForecastsUnit
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
-    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -94,28 +117,57 @@ class ModelJob(BaseJob):
     ) -> None:
         import gc
         import json
-        import os
 
         from kink import di
 
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
-        config = di["config"]
 
         # Get the necessary parameters
         run_id: int = self.kwargs["run_id"]
 
+        ctx = ExecutionContext()
+
         with session_factory() as db:
             run: Run = db.get(Run, run_id)
+            # Without this the next line raises AttributeError on None, which
+            # reaches the user as a stack trace rather than as the reason.
+            if not run:
+                raise JobError(f"Run {run_id} does not exist in DB.")
             run.huey_id = self.kwargs.get("huey_id", None)
             db.commit()
             self.report_progress(0.05, "Preparing data")
             try:
                 try:
-                    # Get the dataset and components prepared for the model training
+                    # What is left in the helper is reading the configuration
+                    # this run was created with off its rows. The work that
+                    # configuration describes is done by the units below.
                     preparation_results = self._prepare_dataset_and_components(
                         run_id=run_id, db=db, component_registry=component_registry
                     )
+                    model_session: ModelSession = preparation_results["model_session"]
+                    prepare = preparation_results["prepare_unit"]
+                    cut_unit = preparation_results["cut_unit"]
+
+                    LoadDatasetUnit(dataset_id=model_session.dataset_id)(ctx)
+
+                    model = {"component": run.model_name, "params": run.parameters}
+                    if isinstance(prepare, PrepareSeriesUnit):
+                        # A forecaster is sized by its series' grid, and its
+                        # metrics are scored on the backtest's forecasts.
+                        build_model = BuildForecasterUnit(model=model, run_id=run_id)
+                    else:
+                        build_model = BuildModelUnit(
+                            model=model,
+                            train_metrics=model_session.train_metrics,
+                            validation_metrics=model_session.validation_metrics,
+                            test_metrics=model_session.test_metrics,
+                            run_id=run_id,
+                        )
+                    # The download gate lives in validate(), and running it here
+                    # keeps a model that cannot be trained from being reported
+                    # as a preparation failure further down.
+                    build_model.validate(ctx)
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
@@ -123,21 +175,33 @@ class ModelJob(BaseJob):
                     ) from e
 
                 try:
-                    # Get splits from the splitter
-                    splitter: BaseSplitter = preparation_results["splitter"]
-                    # Get the dataset splits between input columns and output column
-                    X, Y = preparation_results["X"], preparation_results["Y"]
-
-                    # Get x,y but now splitted with train, validation and test indexes
-                    # each one, and the indexes used for the splits
-                    x, y, splits = splitter.split(X, Y)
+                    # Preparing the dataset for the task and partitioning it are
+                    # one step: how many partitions there are and what they are
+                    # called is the strategy's and the splitter's answer, and
+                    # the units differ in the shape they publish for it. A
+                    # strategy that carves nothing publishes no partitions, so
+                    # there are no indexes to keep for a re-train.
+                    prepare(ctx)
+                    # A backtest reads its exogenous variables per cut, each
+                    # as the preprocessing fitted for that cut made them.
+                    if cut_unit is not None:
+                        cut_unit(ctx)
 
                     # save the obtained splits into the database
-                    run.split_indexes = json.dumps(splits)
+                    if ctx.has("split_indexes"):
+                        run.split_indexes = json.dumps(ctx.require("split_indexes"))
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
-                        f"Error splitting the dataset for run {run_id}: {e}",
+                        f"Error preparing the dataset for run {run_id}: {e}",
+                    ) from e
+
+                try:
+                    build_model(ctx)
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Error preparing dataset and components for run {run_id}: {e}",
                     ) from e
 
                 try:
@@ -149,22 +213,151 @@ class ModelJob(BaseJob):
                         "Connection with the database failed",
                     ) from e
 
+                strategy_class = preparation_results["evaluation_strategy_class"]
+                # Which partitions a run records a score for is declared by the
+                # strategy the session chose: a forecaster is not judged on the
+                # dates it was fitted on, so its training partition is not in
+                # this list even though metrics are configured for it.
+                scored_splits = [split.name for split in strategy_class.SCORED_SPLITS]
+
                 self.report_progress(0.2, "Training")
                 try:
-                    # Hyperparameter Tunning
                     plot_paths = []
+                    kind = getattr(strategy_class, "KIND", "holdout")
 
-                    evaluation_estrategy: BaseEvaluationStrategy = preparation_results[
-                        "evaluation_strategy"
-                    ]
+                    if kind == "full":
+                        # Nothing was held out, so the model is fitted once and
+                        # scored over the whole dataset, with every metric the
+                        # registry relates to the task: there is no split to
+                        # choose metrics for. The fitting unit publishes the
+                        # model the saving unit below reads.
+                        metrics = self._metrics_for_task(
+                            model_session.task_name, component_registry
+                        )
+                        FitWithoutTargetUnit()(ctx)
+                        ScoreClustersUnit(
+                            metrics=[metric.__name__ for metric in metrics]
+                        )(ctx)
+                        self._write_full_metrics(
+                            db, run_id, ctx.require("metrics")["full"]
+                        )
+                    elif kind == "backtest":
+                        BacktestForecasterUnit(
+                            optimizer={
+                                "component": run.optimizer_name,
+                                "params": run.optimizer_parameters,
+                            },
+                            goal_metric=run.goal_metric,
+                            run_id=run_id,
+                            artifact_prefix=str(run_id),
+                        )(ctx)
+                        plot_paths = ctx.require("plot_paths")
+                        run.parameters = ctx.require("best_parameters")
+                        flag_modified(run, "parameters")
+                        run.exogenous = self._exogenous_record(
+                            run, model_session, cut_unit, ctx, component_registry
+                        )
+                        db.commit()
 
-                    evaluation_estrategy.set_progress_reporter(self.report_progress)
-                    model, plot_paths = evaluation_estrategy.execute(
-                        x=x,
-                        y=y,
-                        run=run,
-                        db=db,
-                    )
+                        self.report_progress(0.85, "Computing metrics")
+                        ScoreForecastsUnit(
+                            validation_metrics=model_session.validation_metrics,
+                            test_metrics=model_session.test_metrics,
+                        )(ctx)
+                        self._write_forecast_metrics(
+                            db, run_id, ctx.require("forecast_metrics")
+                        )
+                        FitFinalForecasterUnit()(ctx)
+                    elif kind == "holdout":
+                        fit_model = FitModelUnit(
+                            optimizer={
+                                "component": run.optimizer_name,
+                                "params": run.optimizer_parameters,
+                            },
+                            goal_metric=run.goal_metric,
+                            run_id=run_id,
+                            # The run names its own artifacts, which is what
+                            # keeps the plot filenames of two runs apart inside
+                            # the runs directory.
+                            artifact_prefix=str(run_id),
+                            # A trial never scores the test partition, so what
+                            # it may record is whatever else the strategy scores.
+                            trial_splits=[
+                                name for name in scored_splits if name != "TEST"
+                            ],
+                        )
+                        fit_model(ctx)
+
+                        plot_paths = ctx.require("plot_paths")
+                        if ctx.has("best_parameters"):
+                            run.parameters = ctx.get("best_parameters")
+                            flag_modified(run, "parameters")
+                            db.commit()
+
+                        self.report_progress(0.85, "Computing metrics")
+                        EvaluateModelUnit(run_id=run_id, splits=scored_splits)(ctx)
+                    else:
+                        # Two units and not one with a flag: the nested one
+                        # takes a required component field for its inner
+                        # splitter, and a component field cannot be made
+                        # optional without leaving the user without a selector.
+                        fold_config = {
+                            "optimizer": {
+                                "component": run.optimizer_name,
+                                "params": run.optimizer_parameters,
+                            },
+                            "goal_metric": run.goal_metric,
+                            "run_id": run_id,
+                            "artifact_prefix": str(run_id),
+                            "scored_splits": [
+                                name for name in scored_splits if name != "TEST"
+                            ],
+                        }
+                        if run.nested:
+                            fold_config["inner_splitter"] = {
+                                "component": run.nested.get("splitter_name"),
+                                "params": run.nested,
+                            }
+                            fit_folds = FitModelOverNestedFoldsUnit(**fold_config)
+                        else:
+                            fit_folds = FitModelOverFoldsUnit(**fold_config)
+
+                        fit_folds(ctx)
+
+                        plot_paths = ctx.require("plot_paths")
+                        if ctx.has("best_parameters"):
+                            run.parameters = ctx.get("best_parameters")
+                            flag_modified(run, "parameters")
+                            db.commit()
+
+                        self.report_progress(0.85, "Computing metrics")
+                        if ctx.has("outer_fold_metrics"):
+                            # Kept at its own level: it answers a different
+                            # question from the ordinary summary -- how the
+                            # procedure does, rather than how this model does --
+                            # and the two would be indistinguishable side by
+                            # side.
+                            self._aggregate_fold_metrics(
+                                db,
+                                run_id,
+                                ctx.get("outer_fold_metrics"),
+                                LevelEnum.LAST_OUTER,
+                            )
+                        self._aggregate_fold_metrics(
+                            db, run_id, ctx.require("fold_metrics"), LevelEnum.LAST
+                        )
+
+                        # The rows the session reserved are the only ones no
+                        # fold and no trial ever saw, so they are the only
+                        # honest estimate left once a model is picked out of a
+                        # comparison table -- and scoring them is an ordinary
+                        # LAST metric, so it is the same unit a holdout run
+                        # uses. Whether there is anything to score is the
+                        # caller's to know: a session that reserved nothing
+                        # leaves that partition empty rather than absent.
+                        x = ctx.get("x") if ctx.has("x") else ctx.require("x_folds")
+                        if "TEST" in scored_splits and len(x[-1]["test"]) > 0:
+                            EvaluateModelUnit(run_id=run_id, splits=["TEST"])(ctx)
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
@@ -187,18 +380,14 @@ class ModelJob(BaseJob):
                     ) from e
 
                 self.report_progress(0.95, "Saving model")
-                try:
-                    run_path = os.path.join(config["RUNS_PATH"], str(run.id))
-                    with atomic_save_path(run_path) as tmp_run_path:
-                        model.save(str(tmp_run_path))
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        "Model saving failed",
-                    ) from e
+                SaveModelUnit(artifact_prefix=str(run_id))(ctx)
+                if ctx.has("forecasts"):
+                    # A backtest's forecasts are kept beside its model; the
+                    # results and the reports read them, never the model.
+                    SaveForecastsUnit(artifact_prefix=str(run_id))(ctx)
 
                 try:
-                    run.run_path = run_path
+                    run.run_path = ctx.require("model_path")
                     db.commit()
                 except exc.SQLAlchemyError as e:
                     log.exception(e)
@@ -221,53 +410,162 @@ class ModelJob(BaseJob):
                 db.commit()
                 raise e
             finally:
+                ctx.clear_cache()
                 gc.collect()
+
+    @staticmethod
+    def _write_forecast_metrics(db, run_id: int, rows: List[Dict[str, Any]]) -> None:
+        """Persist the metric rows a backtest's scoring produced.
+
+        The unit computes every row, the summaries included, and publishes
+        them as plain values; writing them is the job's, like every other row
+        this job persists.
+
+        They replace the rows a previous training of the same run left at
+        those splits and levels: a run trained again without a reset would
+        otherwise hold every origin twice, and the paired tests read the fold
+        rows by position.
+        """
+        written = {(SplitEnum[row["split"]], LevelEnum[row["level"]]) for row in rows}
+        for split, level in written:
+            db.query(Metric).filter_by(run_id=run_id, split=split, level=level).delete()
+        db.add_all(
+            Metric(
+                run_id=run_id,
+                split=SplitEnum[row["split"]],
+                level=LevelEnum[row["level"]],
+                name=row["name"],
+                value=row["value"],
+                unavailable_reason=row["unavailable_reason"],
+                std_value=row["std_value"],
+                fold_index=row["fold_index"],
+                step=0,
+            )
+            for row in rows
+        )
+        db.commit()
+
+    @staticmethod
+    def _aggregate_fold_metrics(
+        db, run_id: int, fold_metrics: Dict[str, Any], level: LevelEnum
+    ) -> None:
+        """Summarise the per-fold scores into one row per split and metric.
+
+        The unit that fitted the folds publishes their scores rather than
+        aggregating them, because a summary row carries a standard deviation
+        and a unit may not write domain rows -- the one sanctioned write in the
+        domain layer has nowhere to put one. So the arithmetic and the writing
+        happen here, where every other row this job persists is written.
+
+        A single fold gets a deviation of zero rather than none: none is what
+        the reserved-rows measurement carries, and the two say different
+        things -- "one fold, so nothing varied" against "not a summary at all".
+
+        Parameters
+        ----------
+        db : Session
+            The session this job is already holding.
+        run_id : int
+            The run the rows belong to.
+        fold_metrics : dict
+            ``{split name: {metric name: [one score per fold]}}``.
+        level : LevelEnum
+            Where the summary goes. The ordinary fold scores summarise to
+            ``LAST``; the outer folds of a nested run summarise to
+            ``LAST_OUTER``, because they answer a different question and would
+            be indistinguishable from the first if they shared a level.
+        """
+        import numpy as np
+
+        # A metric with no value on some fold has no mean over the folds
+        # either: averaging the others would summarise a different set of
+        # folds than every other metric of the run. The fold rows say why,
+        # and the summary repeats it.
+        fold_level = (
+            LevelEnum.OUTER_FOLD if level is LevelEnum.LAST_OUTER else LevelEnum.FOLD
+        )
+        unavailable: Dict[tuple, str] = {}
+        for row in (
+            db.query(Metric)
+            .filter_by(run_id=run_id, level=fold_level)
+            .filter(Metric.value.is_(None))
+            .order_by(Metric.fold_index)
+        ):
+            # The first fold that had no value is the one the summary names.
+            unavailable.setdefault((row.split, row.name), row.unavailable_reason)
+
+        def upsert(split, metric_name, value, deviation, reason):
+            existing = (
+                db.query(Metric)
+                .filter_by(run_id=run_id, split=split, level=level, name=metric_name)
+                .first()
+            )
+            if existing:
+                existing.value = value
+                existing.std_value = deviation
+                existing.unavailable_reason = reason
+            else:
+                db.add(
+                    Metric(
+                        run_id=run_id,
+                        split=split,
+                        level=level,
+                        name=metric_name,
+                        value=value,
+                        std_value=deviation,
+                        unavailable_reason=reason,
+                        step=0,
+                    )
+                )
+
+        for (split, metric_name), reason in unavailable.items():
+            upsert(split, metric_name, None, None, reason)
+
+        for split_name, by_metric in fold_metrics.items():
+            for metric_name, values in by_metric.items():
+                if not values or (SplitEnum[split_name], metric_name) in unavailable:
+                    continue
+                mean = float(np.mean(values))
+                deviation = float(np.std(values)) if len(values) > 1 else 0.0
+                upsert(SplitEnum[split_name], metric_name, mean, deviation, None)
+        db.commit()
 
     def _prepare_dataset_and_components(
         self, run_id: int, db, component_registry
     ) -> Dict[str, Any]:
-        """Prepare the dataset, task, splitter, metrics, model, and evaluation strategy.
+        """Read the configuration this run was created with, off its rows.
 
-        This helper resolves the persisted training configuration for a run,
-        loads the associated dataset from disk, prepares it for the selected
-        task, instantiates the required components from the component registry,
-        and builds the model factory together with the evaluation strategy.
+        What is resolved here is what the units cannot: rows, the JSON columns
+        stored on them, and the choice of which unit prepares the data. The
+        work those rows describe -- loading the dataset, validating it against
+        the task, separating features from targets, partitioning them and
+        building the model -- belongs to the units and happens in ``run``.
 
         Parameters
         ----------
         run_id : int
-            Identifier of the training run whose configuration and artifacts must
-            be loaded.
+            Identifier of the training run whose configuration must be read.
         db : object
-            Database access object used to retrieve the run, model session, and
-            related persisted entities.
+            Database session used to retrieve the run and its model session.
         component_registry : object
-            Registry containing the available task, splitter, metric, model,
-            optimizer, and evaluation strategy implementations.
+            Registry used to resolve the splitter, the optimizer and the
+            evaluation strategy the session names.
 
         Returns
         -------
         dict
-            A dictionary containing the prepared input and output datasets, the
-            instantiated splitter, and the evaluation strategy.
+            The model session, the unit that will prepare and partition the
+            dataset, the evaluation strategy class, and the optimizer and goal
+            metric it will be built with.
 
         Raises
         ------
         JobError
-            If the run, model session, dataset, task, splitter, metrics, model,
-            optimizer, or evaluation strategy cannot be resolved or instantiated.
+            If the run's session, its splits payload, its splitter, its
+            optimizer or its evaluation strategy cannot be resolved.
         """
-
-        import json
-
-        from DashAI.back.dataloaders.classes.dashai_dataset import (
-            load_dataset,
-            select_columns,
-        )
-
         run: Run = db.get(Run, run_id)
 
-        # Get the model session and dataset from the database
         model_session: ModelSession = db.get(ModelSession, run.model_session_id)
         if not model_session:
             raise JobError(
@@ -279,133 +577,48 @@ class ModelJob(BaseJob):
             raise JobError(f"Dataset {model_session.dataset_id} does not exist in DB.")
 
         try:
-            # Load dataset from the file path
-            loaded_dataset: "DashAIDataset" = load_dataset(
-                f"{dataset.file_path}/dataset"
+            evaluation_strategy_class = component_registry[
+                model_session.evaluation_strategy
+            ]["class"]
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                # string is too long, so it has to be split in two
+                f"""Unable to find Evaluation Strategy with name
+                {model_session.evaluation_strategy} in registry.""",
+            ) from e
+
+        # The session stores its columns by role; its task says which of them
+        # the model takes as inputs and which as outputs.
+        try:
+            task = component_registry[model_session.task_name]["class"]()
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Unable to find Task with name {model_session.task_name} in registry"
+            ) from e
+        io = session_io(model_session, task)
+
+        # A strategy that carves nothing has no splitter and no splits payload
+        # to read: its unit prepares the features over every row. The session
+        # API only pairs such a strategy with a task without a target, which is
+        # what lets that unit leave the target out.
+        kind = getattr(evaluation_strategy_class, "KIND", "holdout")
+        cut_unit = None
+        if kind == "full":
+            prepare_unit = PrepareWithoutTargetUnit(
+                task_name=model_session.task_name,
+                input_columns=io.inputs,
+                standardise=True,
             )
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"Can not load dataset from path {dataset.file_path}",
-            ) from e
-
-        try:
-            # Get task from model session
-            task: BaseTask = component_registry[model_session.task_name]["class"]()
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                (
-                    f"Unable to find Task with name {model_session.task_name} "
-                    "in registry"
-                ),
-            ) from e
-
-        try:
-            # Prepare dataset for the task and get number of labels of the task
-            prepared_dataset = task.prepare_for_task(
-                dataset=loaded_dataset,
-                input_columns=model_session.input_columns,
-                output_columns=model_session.output_columns,
-            )
-            n_labels = task.num_labels(
-                prepared_dataset, model_session.output_columns[0]
-            )
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"""Can not prepare Dataset {dataset.id}
-                for Task {model_session.task_name}""",
-            ) from e
-
-        try:
-            # Divide the dataset into two datasets:
-            # one with the input columns and another with the output column.
-            # This reads the prepared dataset rather than the loaded one: a
-            # task may reorder or otherwise adjust the rows, and forecasting
-            # does, sorting them by date so the temporal splitter carves real
-            # periods of time. Selecting from the loaded dataset would drop
-            # that work on the floor.
-            X, Y = select_columns(
-                prepared_dataset,
-                model_session.input_columns,
-                model_session.output_columns,
-            )
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"Error selecting input and output columns from dataset {dataset.id}",
-            ) from e
-
-        try:
-            # Get splits data from model session
-            splits_data = json.loads(model_session.splits)
-            if run.split_indexes:
-                splits_data["splitted_indexes"] = json.loads(run.split_indexes)
-            # Sessions created before the splits payload followed the splitter
-            # schema use different keys for the seed and for manual indexes.
-            splits_data = normalize_splits_payload(splits_data)
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"Can not load splits data from model session {model_session.id}",
-            ) from e
-
-        try:
-            # Get the splitter class from the registry and split the dataset
-            splitter_name = splits_data.get("splitter_name", None)
-            splitter: BaseSplitter = component_registry[splitter_name]["class"](
-                splits_data=splits_data,
-            )
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"""Unable to find Splitter with name
-                {splitter_name} in registry.""",
-            ) from e
-
-        try:
-            # Get metrics from model session
-            train_metrics: List[BaseMetric] = [
-                component_registry[m]["class"] for m in model_session.train_metrics
-            ]
-            validation_metrics: List[BaseMetric] = [
-                component_registry[m]["class"] for m in model_session.validation_metrics
-            ]
-            test_metrics: List[BaseMetric] = [
-                component_registry[m]["class"] for m in model_session.test_metrics
-            ]
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                "Unable to find metrics associated with"
-                f"Task {model_session.task_name} in registry",
-            ) from e
-
-        try:
-            # Get the model class from the registry
-            run_model_class = component_registry[run.model_name]["class"]
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"Unable to find Model with name {run.model_name} in registry.",
-            ) from e
-
-        # Make sure the model (and any nested components) are downloaded
-        # before attempting to train, otherwise fail fast with a clear error.
-        if getattr(run_model_class, "REQUIRES_DOWNLOAD", False) and not (
-            run_model_class.is_downloaded()
-        ):
-            raise JobError(
-                f"Model {run.model_name} is not downloaded. "
-                "Download it before training."
-            )
-        nested_missing = missing_downloads(run.parameters, component_registry)
-        if nested_missing:
-            names = ", ".join(m["name"] for m in nested_missing)
-            raise JobError(
-                "These components are not downloaded. "
-                f"Download them before training: {names}."
+        elif kind == "backtest":
+            # A backtest recomputes its cuts from the session every time: they
+            # are steps of the prepared series, not rows a re-train reuses.
+            prepare_unit = self._series_unit(model_session, task, io)
+            cut_unit = self._cut_unit(model_session, task, io)
+        else:
+            prepare_unit = self._partitioning_unit(
+                run, model_session, io, component_registry
             )
 
         try:
@@ -425,44 +638,254 @@ class ModelJob(BaseJob):
                 f"Error instantiating optimizer {run.optimizer_name}, {e}",
             ) from e
 
-        try:
-            # Instantiate the model using the ModelFactory
-            # and get the optimizable parameters
-            factory = ModelFactory(
-                model=run_model_class,
-                params=run.parameters,
-                run_id=run_id,
-                train_metrics=train_metrics,
-                validation_metrics=validation_metrics,
-                test_metrics=test_metrics,
-                n_labels=n_labels,
-            )
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"Unable to instantiate model using run {run_id}",
-            ) from e
-
-        try:
-            # Get the evaluation strategy for the model session
-            evaluation_strategy: BaseEvaluationStrategy = component_registry[
-                model_session.evaluation_strategy
-            ]["class"](
-                factory=factory,
-                optimizer=optimizer,
-                goal_metric=goal_metric,
-            )
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                # string is too long, so it has to be split in two
-                f"""Unable to find Evaluation Strategy with name
-                {model_session.evaluation_strategy} in registry.""",
-            ) from e
-
         return {
-            "X": X,
-            "Y": Y,
-            "splitter": splitter,
-            "evaluation_strategy": evaluation_strategy,
+            "model_session": model_session,
+            "prepare_unit": prepare_unit,
+            "cut_unit": cut_unit,
+            "evaluation_strategy_class": evaluation_strategy_class,
+            "optimizer": optimizer,
+            "goal_metric": goal_metric,
         }
+
+    @staticmethod
+    def _series_unit(model_session: ModelSession, task, io: SessionIO):
+        """Build the unit that prepares a series and cuts it into origins.
+
+        With preprocessing, the unit gets only the time index as an input:
+        the exogenous columns the session stores are what each cut's fit
+        resolved, and they exist once ``ApplyCutPreprocessingUnit`` has run.
+
+        Raises
+        ------
+        JobError
+            If the session's splits payload cannot be read.
+        """
+        import json
+
+        try:
+            splits_data = normalize_splits_payload(json.loads(model_session.splits))
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Can not load splits data from model session {model_session.id}",
+            ) from e
+        input_columns = io.inputs
+        if session_has_steps(model_session):
+            input_columns, _ = task.split_inputs(io.inputs)
+        return PrepareSeriesUnit(
+            task_name=model_session.task_name,
+            input_columns=input_columns,
+            output_columns=io.outputs,
+            splitter={
+                "component": splits_data.get("splitter_name"),
+                "params": {
+                    key: value
+                    for key, value in splits_data.items()
+                    if key not in META_KEYS
+                },
+            },
+        )
+
+    @staticmethod
+    def _exogenous_record(run, model_session, cut_unit, ctx, component_registry):
+        """What the run did with its session's exogenous variables.
+
+        ``used`` and ``reason`` are ``exogenous_usage``'s answer, the one the
+        units acted on: from whether the role has columns, the model and its
+        parameters, never from what one cut resolved. ``columns`` are the raw
+        columns a prediction has to bring, with their types: the exogenous
+        refs walked back to the dataset, plus every column the session's steps
+        read, since the fitted sequence reads them all
+        (``ConverterSequence.raw_columns_read``). None for a session without
+        exogenous variables.
+        """
+        from DashAI.back.models.forecasting.single_series_forecasting_model import (
+            exogenous_usage,
+        )
+        from DashAI.back.preprocessing.column_ref import (
+            ConverterSequence,
+            parse_column_refs,
+        )
+        from DashAI.back.preprocessing.structure_types import type_fields
+
+        refs = parse_column_refs(cut_unit.config.get("exogenous_column_refs") or [])
+        if not refs:
+            return None
+        used, reason = exogenous_usage(
+            component_registry[run.model_name]["class"], run.parameters, bool(refs)
+        )
+        sequence = ConverterSequence.model_validate(
+            model_session.preprocessing or {"steps": []}
+        )
+        types = ctx.require("dataset").types
+        return {
+            "used": used,
+            "columns": [
+                {"name": name, "type": type_fields(types[name])[0]}
+                for name in sequence.raw_columns_read(refs)
+            ],
+            "reason": reason,
+        }
+
+    @staticmethod
+    def _cut_unit(model_session: ModelSession, task, io: SessionIO):
+        """Build the unit that gives each cut of a backtest its exogenous columns.
+
+        The refs are what the wizard stored for the exogenous role, and the
+        artifacts are passed only when there are steps, as for the x/y
+        partitioning units: without them every cut reads the raw columns.
+        """
+        _, exogenous_refs = task.split_inputs(io.input_refs)
+        return ApplyCutPreprocessingUnit(
+            exogenous_column_refs=[
+                ref.model_dump(mode="json") for ref in exogenous_refs
+            ],
+            preprocessing_artifacts_path=(
+                model_session.preprocessing_artifacts_path
+                if session_has_steps(model_session)
+                else None
+            ),
+        )
+
+    @staticmethod
+    def _partitioning_unit(
+        run: Run, model_session: ModelSession, io: SessionIO, component_registry
+    ):
+        """Build the unit that prepares the dataset and partitions it.
+
+        Which unit it is follows from how the session's splitter carves the
+        dataset, which the splitter declares.
+
+        Raises
+        ------
+        JobError
+            If the session's splits payload or its splitter cannot be resolved.
+        """
+        import json
+
+        try:
+            # Unpacking the JSON column is an artifact of how the row stores
+            # it, not part of the split. Sessions created before the payload
+            # followed the splitter schema use different keys for the seed and
+            # for manual indexes.
+            splits_data = json.loads(model_session.splits)
+            if run.split_indexes:
+                splits_data["splitted_indexes"] = json.loads(run.split_indexes)
+            splits_data = normalize_splits_payload(splits_data)
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Can not load splits data from model session {model_session.id}",
+            ) from e
+
+        try:
+            splitter_name = splits_data.get("splitter_name", None)
+            splitter_class = component_registry[splitter_name]["class"]
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Unable to find Splitter with name {splitter_name} in registry.",
+            ) from e
+
+        # Which unit prepares the data follows from how the splitter carves it,
+        # which the splitter declares. The two units publish different shapes,
+        # so this is a choice of unit and not a flag on one.
+        prepare_class = (
+            PrepareAndFoldUnit
+            if getattr(splitter_class, "PARTITIONING", "holdout") == "folds"
+            else PrepareAndSplitUnit
+        )
+        prepare_config = {
+            "task_name": model_session.task_name,
+            "input_columns": io.inputs,
+            "output_columns": io.outputs,
+            "splitter": {"component": splitter_name, "params": splits_data},
+        }
+        if session_has_steps(model_session):
+            # PreprocessingJob fitted the sequence once per entry and left the
+            # artifacts at this path; the refs are what the wizard stored,
+            # and the unit resolves them against each entry's own fit. Passed
+            # only when there are steps: the unit reads their absence as "no
+            # preprocessing" and one without the other as a wiring mistake.
+            prepare_config["input_column_refs"] = [
+                ref.model_dump(mode="json") for ref in io.input_refs
+            ]
+            prepare_config["preprocessing_artifacts_path"] = (
+                model_session.preprocessing_artifacts_path
+            )
+        return prepare_class(**prepare_config)
+
+    @staticmethod
+    def _metrics_for_task(task_name: str, component_registry) -> List[BaseMetric]:
+        """Every metric the registry relates to a task without a target.
+
+        Such a task has no metric picker of its own: every metric registered for
+        it is computed, since there is no split to choose between.
+
+        Raises
+        ------
+        JobError
+            If the registry cannot answer.
+        """
+        try:
+            metric_names = [
+                component["name"]
+                for component in component_registry.get_related_components(task_name)
+                if component.get("type") == "Metric"
+            ]
+            metrics: List[BaseMetric] = [
+                component_registry[name]["class"] for name in metric_names
+            ]
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Unable to find metrics associated with Task {task_name} in registry",
+            ) from e
+
+        return metrics
+
+    @staticmethod
+    def _write_full_metrics(db, run_id: int, results: Dict[str, float]) -> None:
+        """Write one LAST metric row per score, over the full dataset.
+
+        Written here rather than through ``BaseModel.calculate_metrics``: that
+        path compares y_true against predictions, which is precisely what a task
+        without a target does not have, and ``_save_metrics`` would number the
+        row's step instead of leaving it at 0. Upserted, so a re-train replaces
+        the previous values instead of adding rows.
+
+        Raises
+        ------
+        JobError
+            If the rows cannot be written.
+        """
+        try:
+            for name, value in results.items():
+                existing = (
+                    db.query(Metric)
+                    .filter_by(
+                        run_id=run_id,
+                        split=SplitEnum.FULL,
+                        level=LevelEnum.LAST,
+                        name=name,
+                    )
+                    .first()
+                )
+                if existing:
+                    existing.value = value
+                    existing.step = 0
+                else:
+                    db.add(
+                        Metric(
+                            run_id=run_id,
+                            split=SplitEnum.FULL,
+                            level=LevelEnum.LAST,
+                            name=name,
+                            value=value,
+                            step=0,
+                        )
+                    )
+            db.commit()
+        except Exception as e:
+            log.exception(e)
+            raise JobError(f"Metric saving failed {e}") from e

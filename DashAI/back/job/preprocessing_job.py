@@ -1,0 +1,256 @@
+import json
+import logging
+import os
+import pickle
+from typing import TYPE_CHECKING
+
+from kink import inject
+from sqlalchemy import exc
+
+from DashAI.back.core.atomic import atomic_directory
+from DashAI.back.dependencies.database.models import Dataset, ModelSession
+from DashAI.back.job.base_job import BaseJob, JobError
+from DashAI.back.preprocessing.column_ref import (
+    ConverterSequence,
+    resolve_refs,
+)
+from DashAI.back.preprocessing.session_preprocessor import SessionPreprocessor
+from DashAI.back.splitters.splits_payload import normalize_splits_payload
+from DashAI.back.tasks.session_roles import session_io, session_roles
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
+
+logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger(__name__)
+
+
+class PreprocessingJob(BaseJob):
+    """Fits a session's ConverterSequence once, ahead of any model training.
+
+    Fits per fold for Cross-Validation (plus a final fit on the full
+    training pool) or once for Holdout, and persists each fitted
+    SessionPreprocessor so ModelJob, predict_job and explainer_job can
+    reuse it without ever re-fitting on new data.
+
+    A backtest (a splitter whose ``PARTITIONING`` is ``"origins"``) cuts the
+    series in steps, so it fits once per cut instead: ``origin_{i}.pkl`` and
+    ``test.pkl`` on the steps before each origin, and ``final.pkl`` on the
+    whole series, as the final model is (RECONCILING_FORECASTING §2.14).
+    """
+
+    @inject
+    def set_status_as_delivered(
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
+    ) -> None:
+        model_session_id = self.kwargs["model_session_id"]
+        with session_factory() as db:
+            model_session = db.get(ModelSession, model_session_id)
+            if model_session is None:
+                raise JobError(
+                    f"Model session {model_session_id} does not exist in DB."
+                )
+            try:
+                db.commit()
+            except exc.SQLAlchemyError as e:
+                log.exception(e)
+                raise JobError("Error setting preprocessing status as delivered") from e
+
+    @inject
+    def set_status_as_error(
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
+    ) -> None:
+        model_session_id = self.kwargs.get("model_session_id")
+        if model_session_id is None:
+            return
+        with session_factory() as db:
+            model_session = db.get(ModelSession, model_session_id)
+            if model_session is None:
+                return
+            model_session.preprocessing_status = "failed"
+            try:
+                db.commit()
+            except exc.SQLAlchemyError as e:
+                log.exception(e)
+
+    @inject
+    def get_job_name(self) -> str:
+        model_session_id = self.kwargs.get("model_session_id")
+        return f"Preprocessing: session {model_session_id}"
+
+    @inject
+    def run(self) -> None:
+        from kink import di
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
+
+        session_factory = di["session_factory"]
+        component_registry = di["component_registry"]
+        config = di["config"]
+
+        model_session_id = self.kwargs["model_session_id"]
+
+        with session_factory() as db:
+            model_session: ModelSession = db.get(ModelSession, model_session_id)
+            if not model_session:
+                raise JobError(
+                    f"Model session {model_session_id} does not exist in DB."
+                )
+
+            try:
+                model_session.preprocessing_status = "pending"
+                db.commit()
+
+                dataset = db.get(Dataset, model_session.dataset_id)
+                if not dataset:
+                    raise JobError(
+                        f"Dataset {model_session.dataset_id} does not exist in DB."
+                    )
+                loaded_dataset = load_dataset(f"{dataset.file_path}/dataset")
+
+                sequence = ConverterSequence.model_validate(
+                    model_session.preprocessing or {"steps": []}
+                )
+                sequence.validate_scopes()
+                task = component_registry[model_session.task_name]["class"]()
+                io = session_io(model_session, task)
+                input_refs = io.input_refs
+
+                self.report_progress(0.05, "Splitting dataset")
+                splits_data = normalize_splits_payload(json.loads(model_session.splits))
+                splitter_name = splits_data.get("splitter_name")
+                splitter = component_registry[splitter_name]["class"](
+                    splits_data=splits_data
+                )
+
+                # Partition the dataset the task prepared, not the one loaded,
+                # because that is what ModelJob partitions
+                # (SplitterScopeMixin._prepare). A task may reorder the rows,
+                # and forecasting does, sorting them by date. Splitting the
+                # loaded dataset would fit fold_{i}.pkl and final.pkl on other
+                # rows than the entry they are applied to, and nothing would
+                # notice: the entries still come in the same number. As in the
+                # unit, only the raw refs are validated here, because a group
+                # ref names a column that exists once its converter has run.
+                if getattr(splitter, "PARTITIONING", None) == "origins":
+                    entries, final_split = _cut_entries(
+                        task, loaded_dataset, io, splitter
+                    )
+                else:
+                    prepared_dataset = task.prepare_for_task(
+                        dataset=loaded_dataset,
+                        input_columns=io.raw_inputs,
+                        output_columns=io.outputs,
+                    )
+                    y_for_split = prepared_dataset.select_columns(io.outputs)
+                    x, _, _ = splitter.split(prepared_dataset, y_for_split)
+
+                    is_cv = isinstance(x, list)
+                    x_folds = x if is_cv else [x]
+                    entries = [
+                        (f"fold_{i}.pkl", "fold", x_folds[i])
+                        for i in range(len(x_folds) - 1 if is_cv else 0)
+                    ]
+                    final_split = x_folds[-1]
+                total_folds = len(entries)
+
+                artifacts_dir = os.path.join(
+                    str(config["PREPROCESSING_PATH"]), str(model_session.id)
+                )
+
+                final_transformed = None
+                final_resolved = None
+                with atomic_directory(artifacts_dir) as tmp_dir:
+                    for i, (filename, label, split) in enumerate(entries):
+                        self.report_progress(
+                            0.1 + 0.7 * (i / max(total_folds, 1)),
+                            f"Fitting preprocessing for {label} {i + 1}/{total_folds}",
+                        )
+                        fold_preprocessor = SessionPreprocessor(
+                            sequence,
+                            component_registry,
+                            target_columns=io.outputs,
+                        )
+                        fold_preprocessor.fit_transform(split)
+                        with open(os.path.join(tmp_dir, filename), "wb") as f:
+                            pickle.dump(fold_preprocessor, f)
+
+                    self.report_progress(0.85, "Fitting final preprocessing")
+                    final_preprocessor = SessionPreprocessor(
+                        sequence,
+                        component_registry,
+                        target_columns=io.outputs,
+                    )
+                    final_transformed, final_resolved = (
+                        final_preprocessor.fit_transform(final_split)
+                    )
+                    with open(os.path.join(tmp_dir, "final.pkl"), "wb") as f:
+                        pickle.dump(final_preprocessor, f)
+
+                resolved_input_columns = resolve_refs(
+                    input_refs, final_resolved, final_preprocessor.resolved_slots
+                )
+
+                self.report_progress(0.95, "Validating against the task")
+                task.prepare_for_task(
+                    dataset=final_transformed["train"],
+                    input_columns=resolved_input_columns,
+                    output_columns=io.outputs,
+                )
+
+                model_session.column_roles = (
+                    session_roles(model_session, task)
+                    .with_columns(
+                        task.roles_from_io(resolved_input_columns, io.outputs)
+                    )
+                    .to_stored()
+                )
+                model_session.preprocessing_artifacts_path = artifacts_dir
+                model_session.preprocessing_status = "ready"
+                model_session.preprocessing_error = None
+                db.commit()
+            except (TypeError, ValueError) as e:
+                log.exception(e)
+                model_session.preprocessing_status = "failed"
+                model_session.preprocessing_error = str(e)
+                db.commit()
+                raise JobError(
+                    f"Preprocessing produced columns invalid for the task: {e}"
+                ) from e
+            except Exception as e:
+                log.exception(e)
+                model_session.preprocessing_status = "failed"
+                model_session.preprocessing_error = str(e)
+                db.commit()
+                raise JobError(
+                    f"Error running preprocessing for session {model_session_id}: {e}"
+                ) from e
+
+
+def _cut_entries(task, dataset, io, splitter):
+    """The training steps of every cut of a backtest, and of the final fit.
+
+    The series is validated and put in date order by the task first, with
+    the message a run gives (D5), so a series off its grid fails here, once,
+    and not in every run. The cuts are the splitter's, on the series'
+    number of steps. They match the ones a run makes because every step of
+    the preprocessing keeps the rows (``PREPROCESSING_KEEPS_ROWS``).
+
+    Returns
+    -------
+    tuple
+        The ``(filename, label, split)`` of each validation origin and of the
+        test, and the split of the final fit. Every split holds only a
+        ``"train"`` entry: the steps before its cut.
+    """
+    prepared = task.prepare_series(dataset, io.raw_inputs, io.outputs)
+    rows = prepared.dataset
+    cuts = splitter.cuts(prepared.grid.n_steps)
+    entries = [
+        (f"origin_{i}.pkl", "origin", {"train": rows.select(range(origin))})
+        for i, origin in enumerate(cuts["validation_origins"])
+    ]
+    entries.append(
+        ("test.pkl", "test", {"train": rows.select(range(cuts["test_origin"]))})
+    )
+    return entries, {"train": rows}

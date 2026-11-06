@@ -58,13 +58,24 @@ function FormSchemaField({
             {...commonProps}
             options={paramJsonSchema.enum}
             optionNames={paramJsonSchema.enumNames}
+            optionDescriptions={paramJsonSchema.optionDescriptions}
           />
         );
       } else {
-        return <TextInput {...commonProps} />;
+        return (
+          <TextInput
+            {...commonProps}
+            nullable={paramJsonSchema.nullable === true}
+          />
+        );
       }
     case "text":
-      return <TextInput {...commonProps} />;
+      return (
+        <TextInput
+          {...commonProps}
+          nullable={paramJsonSchema.nullable === true}
+        />
+      );
     case "boolean":
       return <BooleanInput {...commonProps} />;
     case "array":

@@ -7,6 +7,7 @@ from sqlalchemy import (
     JSON,
     BigInteger,
     Boolean,
+    CheckConstraint,
     DateTime,
     Enum,
     Float,
@@ -26,8 +27,11 @@ from DashAI.back.core.enums.status import (
     ConverterStatus,
     DatafileStatus,
     DatasetStatus,
+    DocumentStatus,
     ExplainerStatus,
     ExplorerStatus,
+    NodeRunStatus,
+    PipelineRunStatus,
     PluginStatus,
     PredictionStatus,
     ReportStatus,
@@ -62,6 +66,7 @@ class Folder(Base):
     )
 
     datasets: Mapped[List["Dataset"]] = relationship(back_populates="folder")
+    data_documents: Mapped[List["DataDocument"]] = relationship(back_populates="folder")
 
 
 class Dataset(Base):
@@ -107,10 +112,14 @@ class Dataset(Base):
     def set_status_as_started(self) -> None:
         """
         Update the status of the dataset to started and set created to now.
+
+        Unlike ``Run`` or ``Explorer``, this table has no ``start_time`` /
+        ``end_time`` columns, so there is nothing to stamp beyond the timestamps
+        it does declare. Assigning them anyway only set an attribute on the
+        instance that was dropped at commit and read back as missing.
         """
         self.status = DatasetStatus.STARTED
         self.created = datetime.now()
-        self.start_time = datetime.now()
 
     def set_status_as_finished(self) -> None:
         """
@@ -118,13 +127,74 @@ class Dataset(Base):
         """
         self.status = DatasetStatus.FINISHED
         self.last_modified = datetime.now()
-        self.end_time = datetime.now()
 
     def set_status_as_error(self) -> None:
         """
         Update the status of the dataset to error.
         """
         self.status = DatasetStatus.ERROR
+
+
+class DataDocument(Base):
+    __tablename__ = "data_document"
+    """
+    Persistent document uploaded through the Data module.
+
+    The parsed contents live on disk under ``file_path``; this row keeps the
+    source description, the dataloader that parsed it and its status.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    file_name: Mapped[str] = mapped_column(String, nullable=False)
+    file_type: Mapped[str] = mapped_column(String, nullable=False)
+    file_hash: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    file_path: Mapped[str] = mapped_column(String, nullable=False, default="")
+    dataloader: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    dataloader_params: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+        JSON, nullable=True
+    )
+    content_counts: Mapped[Optional[Dict[str, int]]] = mapped_column(
+        JSON, nullable=True
+    )
+    total_pages: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    folder_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("folder.id", ondelete="SET NULL"), nullable=True
+    )
+    huey_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    status: Mapped[Enum] = mapped_column(
+        Enum(DocumentStatus), nullable=False, default=DocumentStatus.NOT_STARTED
+    )
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+    folder: Mapped[Optional["Folder"]] = relationship(back_populates="data_documents")
+    notebooks: Mapped[List["Notebook"]] = relationship(
+        cascade="all, delete-orphan", back_populates="document"
+    )
+
+    def set_status_as_delivered(self) -> None:
+        """Mark the document as delivered to the job queue."""
+        self.status = DocumentStatus.DELIVERED
+        self.last_modified = datetime.now()
+
+    def set_status_as_started(self) -> None:
+        """Mark the document as being parsed."""
+        self.status = DocumentStatus.STARTED
+        self.last_modified = datetime.now()
+
+    def set_status_as_finished(self) -> None:
+        """Mark the document as parsed and stored."""
+        self.status = DocumentStatus.FINISHED
+        self.last_modified = datetime.now()
+
+    def set_status_as_error(self) -> None:
+        """Mark the document as failed."""
+        self.status = DocumentStatus.ERROR
+        self.last_modified = datetime.now()
 
 
 class ModelSession(Base):
@@ -136,8 +206,6 @@ class ModelSession(Base):
     dataset_id: Mapped[int] = mapped_column(ForeignKey("dataset.id"))
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     task_name: Mapped[str] = mapped_column(String, nullable=False)
-    input_columns: Mapped[str] = mapped_column(JSON, nullable=False)
-    output_columns: Mapped[str] = mapped_column(JSON, nullable=False)
 
     # Metrics per split
     train_metrics: Mapped[list[str]] = mapped_column(JSON, nullable=True)
@@ -146,6 +214,23 @@ class ModelSession(Base):
 
     evaluation_strategy: Mapped[str] = mapped_column(String, nullable=False)
     splits: Mapped[str] = mapped_column(JSON, nullable=False)
+    preprocessing: Mapped[dict] = mapped_column(JSON, nullable=True)
+    # The columns by role, as the task declares them: per role, the refs
+    # chosen and the column names they resolve to (see
+    # tasks/session_roles.py).
+    column_roles: Mapped[dict] = mapped_column(JSON, nullable=False)
+    preprocessing_status: Mapped[str] = mapped_column(
+        String, nullable=False, default="ready", server_default="ready"
+    )
+    preprocessing_error: Mapped[str] = mapped_column(String, nullable=True)
+    preprocessing_artifacts_path: Mapped[str] = mapped_column(String, nullable=True)
+    # The Huey task id PreprocessingJob was enqueued with — lets the frontend
+    # track this specific job via the same shared job-polling mechanism the
+    # Job Queue widget uses (useJobTracker/startJobPolling), instead of
+    # polling preprocessing_status on its own separate timer. Keeping both
+    # "is it done" signals on the same underlying poll loop is what keeps
+    # them from ever drifting out of sync with each other.
+    preprocessing_job_id: Mapped[str] = mapped_column(String, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
@@ -178,6 +263,10 @@ class Run(Base):
     model_name: Mapped[str] = mapped_column(String)
     parameters: Mapped[JSON] = mapped_column(JSON)
     split_indexes: Mapped[str] = mapped_column(JSON, nullable=True)
+    # What a forecasting run did with its session's exogenous variables:
+    # {"used", "columns": [{"name", "type"}], "reason"}, the raw columns a
+    # prediction has to bring. NULL for a session without them.
+    exogenous: Mapped[JSON] = mapped_column(JSON, nullable=True)
     # optimizer
     optimizer_name: Mapped[str] = mapped_column(String)
     optimizer_parameters: Mapped[JSON] = mapped_column(JSON)
@@ -235,6 +324,9 @@ class Prediction(Base):
     run_id: Mapped[int] = mapped_column(ForeignKey("run.id", ondelete="CASCADE"))
     dataset_id: Mapped[int] = mapped_column(ForeignKey("dataset.id"), nullable=True)
     split: Mapped[str] = mapped_column(String, nullable=True)
+    # How many steps past the end of the training series to forecast, for a
+    # task that predicts by horizon. NULL for a prediction of rows.
+    horizon: Mapped[int] = mapped_column(Integer, nullable=True)
     huey_id: Mapped[str] = mapped_column(String, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
@@ -249,6 +341,11 @@ class Prediction(Base):
     delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    # The categories of the predicted rows that training never saw, which an
+    # encoder treated instead of refusing: one record per encoder and column
+    # (``unseen_record``). Empty when there were none; NULL for predictions
+    # made before it was recorded, or that did not finish.
+    unseen_categories: Mapped[list] = mapped_column(JSON, nullable=True)
 
     # Relationships
     run: Mapped["Run"] = relationship("Run", back_populates="predictions")
@@ -288,7 +385,10 @@ class Metric(Base):
     level: Mapped[LevelEnum] = mapped_column(Enum(LevelEnum), nullable=False)
 
     name: Mapped[str] = mapped_column(String, nullable=False)
-    value: Mapped[float] = mapped_column(Float, nullable=False)
+    # NULL when the metric has no value on this data, and then
+    # unavailable_reason says why (MAPE on a series with a zero, say).
+    value: Mapped[float] = mapped_column(Float, nullable=True)
+    unavailable_reason: Mapped[str] = mapped_column(String, nullable=True)
     std_value: Mapped[float] = mapped_column(Float, nullable=True)
     step: Mapped[int] = mapped_column(Integer, nullable=False)
     fold_index: Mapped[int] = mapped_column(Integer, nullable=True)
@@ -587,6 +687,9 @@ class GenerativeSession(Base):
     # A pointer, never the truth: the job queue stays authoritative for whether
     # that job is still alive, so a stale id simply resolves to nothing.
     index_job_id: Mapped[str] = mapped_column(String, nullable=True)
+    needs_reindex: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
 
     # Relationship with GenerativeSessionParameterHistory
     parameters_history: Mapped[List["GenerativeSessionParameterHistory"]] = (
@@ -602,11 +705,17 @@ class GenerativeSession(Base):
         "GenerativeProcess", cascade="all, delete-orphan", back_populates="session"
     )
 
-    # RAG documents belong to exactly one session. SQLite foreign keys are not
-    # enforced here, so this ORM cascade -- not the ondelete on Document -- is
-    # what deletes them when the session goes away.
-    documents: Mapped[List["Document"]] = relationship(
-        "Document", back_populates="session", cascade="all, delete-orphan"
+    documents: Mapped[List["DataDocument"]] = relationship(
+        "DataDocument",
+        secondary="rag_session_document",
+        viewonly=True,
+        order_by="DataDocument.id",
+    )
+    document_links: Mapped[List["RAGSessionDocument"]] = relationship(
+        "RAGSessionDocument",
+        back_populates="session",
+        cascade="all, delete-orphan",
+        order_by="RAGSessionDocument.id",
     )
 
 
@@ -619,9 +728,170 @@ class Pipeline(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     steps: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
     edges: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    # Dead columns, kept for compatibility. Results live in NodeArtifact now,
+    # keyed by a PROVIDES key rather than by node type. They are still read by
+    # the pipelines endpoints (dataexploration/results, filter_models) and by
+    # the results view in the front, so dropping them is a change to those.
     exploration: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
     train: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
     prediction: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+
+    pipeline_runs: Mapped[List["PipelineRun"]] = relationship(
+        "PipelineRun", cascade="all, delete-orphan", back_populates="pipeline"
+    )
+
+
+class PipelineRun(Base):
+    __tablename__ = "pipeline_run"
+    """
+    Table to store one execution of a pipeline.
+
+    The definition of a graph lives in ``Pipeline`` and changes as the user
+    edits it; a run freezes the ``steps`` and ``edges`` it actually executed,
+    so a past execution stays readable after the pipeline it came from was
+    rewritten.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    pipeline_id: Mapped[int] = mapped_column(
+        ForeignKey("pipeline.id", ondelete="CASCADE"), nullable=False
+    )
+    steps: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    edges: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=datetime.now
+    )
+    delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    status: Mapped[Enum] = mapped_column(
+        Enum(PipelineRunStatus),
+        nullable=False,
+        default=PipelineRunStatus.NOT_STARTED,
+    )
+    error_message: Mapped[str] = mapped_column(String, nullable=True)
+
+    pipeline: Mapped["Pipeline"] = relationship(
+        "Pipeline", back_populates="pipeline_runs"
+    )
+    node_runs: Mapped[List["NodeRun"]] = relationship(
+        "NodeRun", cascade="all, delete-orphan", back_populates="pipeline_run"
+    )
+
+    def set_status_as_delivered(self) -> None:
+        """Update the status of the pipeline run to delivered."""
+        self.status = PipelineRunStatus.DELIVERED
+        self.delivery_time = datetime.now()
+
+    def set_status_as_started(self) -> None:
+        """Update the status of the pipeline run to started."""
+        self.status = PipelineRunStatus.STARTED
+        self.start_time = datetime.now()
+
+    def set_status_as_finished(self) -> None:
+        """Update the status of the pipeline run to finished."""
+        self.status = PipelineRunStatus.FINISHED
+        self.end_time = datetime.now()
+
+    def set_status_as_error(self, error_message: Optional[str] = None) -> None:
+        """Update the status of the pipeline run to error."""
+        self.status = PipelineRunStatus.ERROR
+        self.error_message = error_message
+        self.end_time = datetime.now()
+
+
+class NodeRun(Base):
+    __tablename__ = "pipeline_node_run"
+    """
+    Table to store the execution of one node of a pipeline run.
+
+    A node is one unit. ``block_id`` is the visual block the node belongs to:
+    an editor groups several units into one block on the canvas, so a block
+    maps to N node runs and its status is an aggregate of theirs. In the first
+    version every block holds exactly one unit and ``block_id`` equals
+    ``node_id``, but the column is here from the start so growing to N never
+    needs a migration.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    pipeline_run_id: Mapped[int] = mapped_column(
+        ForeignKey("pipeline_run.id", ondelete="CASCADE"), nullable=False
+    )
+    node_id: Mapped[str] = mapped_column(String, nullable=False)
+    block_id: Mapped[str] = mapped_column(String, nullable=False)
+    #: Class name of the unit this node runs, as the component registry knows it.
+    node_type: Mapped[str] = mapped_column(String, nullable=False)
+    config: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    input: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    output: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=datetime.now
+    )
+    delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    status: Mapped[Enum] = mapped_column(
+        Enum(NodeRunStatus),
+        nullable=False,
+        default=NodeRunStatus.NOT_STARTED,
+    )
+    error_message: Mapped[str] = mapped_column(String, nullable=True)
+
+    pipeline_run: Mapped["PipelineRun"] = relationship(
+        "PipelineRun", back_populates="node_runs"
+    )
+    artifacts: Mapped[List["NodeArtifact"]] = relationship(
+        "NodeArtifact", cascade="all, delete-orphan", back_populates="node_run"
+    )
+
+    def set_status_as_delivered(self) -> None:
+        """Update the status of the node run to delivered."""
+        self.status = NodeRunStatus.DELIVERED
+        self.delivery_time = datetime.now()
+
+    def set_status_as_started(self) -> None:
+        """Update the status of the node run to started."""
+        self.status = NodeRunStatus.STARTED
+        self.start_time = datetime.now()
+
+    def set_status_as_finished(self) -> None:
+        """Update the status of the node run to finished."""
+        self.status = NodeRunStatus.FINISHED
+        self.end_time = datetime.now()
+
+    def set_status_as_error(self, error_message: Optional[str] = None) -> None:
+        """Update the status of the node run to error."""
+        self.status = NodeRunStatus.ERROR
+        self.error_message = error_message
+        self.end_time = datetime.now()
+
+    def set_status_as_cancelled(self) -> None:
+        """Update the status of the node run to cancelled.
+
+        A node that never ran because an earlier one failed, as opposed to one
+        still waiting its turn.
+        """
+        self.status = NodeRunStatus.CANCELLED
+        self.end_time = datetime.now()
+
+
+class NodeArtifact(Base):
+    __tablename__ = "pipeline_node_artifact"
+    """
+    Table to store one output of a node run.
+
+    ``key`` is a key from the unit's ``PROVIDES``, so what a node emits is
+    named by its own declared contract rather than by a column per node type.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    node_run_id: Mapped[int] = mapped_column(
+        ForeignKey("pipeline_node_run.id", ondelete="CASCADE"), nullable=False
+    )
+    key: Mapped[str] = mapped_column(String, nullable=False)
+    value: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+
+    node_run: Mapped["NodeRun"] = relationship("NodeRun", back_populates="artifacts")
 
 
 class Converter(Base):
@@ -682,12 +952,25 @@ class Converter(Base):
 
 class Notebook(Base):
     __tablename__ = "notebook"
+    __table_args__ = (
+        CheckConstraint(
+            "(dataset_id IS NOT NULL AND document_id IS NULL) "
+            "OR (dataset_id IS NULL AND document_id IS NOT NULL)",
+            name="notebook_exactly_one_source",
+        ),
+    )
     """
     Table to store all the information about a notebook.
+
+    A notebook works on a private copy of exactly one source, a dataset or a
+    document.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    dataset_id: Mapped[int] = mapped_column(
-        ForeignKey("dataset.id", ondelete="CASCADE")
+    dataset_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("dataset.id", ondelete="CASCADE"), nullable=True
+    )
+    document_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("data_document.id", ondelete="CASCADE"), nullable=True
     )
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
@@ -698,14 +981,28 @@ class Notebook(Base):
     file_path: Mapped[str] = mapped_column(String, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=True)
     description: Mapped[str] = mapped_column(String, nullable=True)
-    # Relationships
     explorers: Mapped[List["Explorer"]] = relationship(
         back_populates="notebook", cascade="all, delete-orphan"
     )
     converters: Mapped[List["Converter"]] = relationship(
         back_populates="notebook", cascade="all, delete-orphan"
     )
-    dataset: Mapped["Dataset"] = relationship(back_populates="notebooks")
+    dataset: Mapped[Optional["Dataset"]] = relationship(back_populates="notebooks")
+    document: Mapped[Optional["DataDocument"]] = relationship(
+        back_populates="notebooks"
+    )
+
+    @property
+    def data_kind(self) -> str:
+        """Kind of data the notebook works on.
+
+        Returns
+        -------
+        str
+            ``"document"`` when the notebook was created from a document,
+            ``"dataset"`` otherwise.
+        """
+        return "document" if self.document_id is not None else "dataset"
 
 
 class GenerativeSessionParameterHistory(Base):
@@ -829,176 +1126,25 @@ RAG tables
 """
 
 
-class RAGExtractor(Base):
-    __tablename__ = "rag_extractor"
-    """
-    Canonical extractor configuration shared across documents.
-
-    Stores a component_name + params pair. Multiple documents can reference
-    the same extractor config via extractor_id FK.
-    """
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    component_name: Mapped[str] = mapped_column(String, nullable=False)
-    params: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
-
-    # Relationship back to documents using this extractor
-    documents: Mapped[List["Document"]] = relationship(
-        "Document", back_populates="extractor_record"
-    )
-
-
-class ProcessedDocumentContent(Base):
-    __tablename__ = "processed_document_content"
-    """
-    Cache of extracted document text, one row per document (1:1).
-
-    The signature captures the file content hash and the extractor
-    configuration used. It is kept for tracking purposes but no longer
-    participates in uniqueness: re-extraction overwrites the single row.
-    """
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    document_id: Mapped[int] = mapped_column(
-        ForeignKey("document.id", ondelete="CASCADE"), nullable=False
-    )
-    content: Mapped[str] = mapped_column(Text, nullable=False)
-    signature: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    char_count: Mapped[int] = mapped_column(Integer, nullable=False)
-
-    document: Mapped["Document"] = relationship(
-        "Document", back_populates="processed_contents"
-    )
-
-    __table_args__ = (
-        UniqueConstraint("document_id", name="uq_processed_document_content_document"),
-    )
-
-
-class Document(Base):
-    __tablename__ = "document"
-    """
-    Table to store all the information about a document.
-    """
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    session_id: Mapped[int] = mapped_column(
-        ForeignKey("generative_session.id", ondelete="CASCADE"), nullable=False
-    )
-    file_name: Mapped[str] = mapped_column(String, nullable=False)
-    file_type: Mapped[str] = mapped_column(String, nullable=False)
-    file_path: Mapped[str] = mapped_column(String, nullable=False)
-    # Unique per session, not globally: the same file uploaded into two
-    # sessions is two documents, each with its own extractor choice.
-    file_hash: Mapped[str] = mapped_column(String, nullable=False)
-    optional_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
-    extractor_id: Mapped[int] = mapped_column(
-        ForeignKey("rag_extractor.id", ondelete="RESTRICT"), nullable=False
-    )
-    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
-    last_modified: Mapped[DateTime] = mapped_column(
-        DateTime,
-        default=datetime.now,
-        onupdate=datetime.now,
-    )
-
-    session: Mapped["GenerativeSession"] = relationship(
-        "GenerativeSession", back_populates="documents"
-    )
-
-    chunks: Mapped[List["Chunk"]] = relationship(
-        "Chunk",
-        back_populates="document",
-        cascade="all, delete-orphan",
-    )
-
-    embedding_matrices: Mapped[List["RAGEmbeddingMatrix"]] = relationship(
-        "RAGEmbeddingMatrix", back_populates="document", cascade="all, delete-orphan"
-    )
-
-    extractor_record: Mapped[Optional["RAGExtractor"]] = relationship(
-        "RAGExtractor", back_populates="documents"
-    )
-
-    processed_contents: Mapped[List["ProcessedDocumentContent"]] = relationship(
-        "ProcessedDocumentContent",
-        back_populates="document",
-        cascade="all, delete-orphan",
-    )
-
-    # SQLite foreign keys are not enforced (no PRAGMA foreign_keys=ON), so the
-    # ondelete=CASCADE above is documentation only: this cascade is what
-    # actually removes the membership rows when a document is deleted.
-    chunk_set_links: Mapped[List["RAGChunkSetDocument"]] = relationship(
-        "RAGChunkSetDocument",
-        back_populates="document",
-        cascade="all, delete-orphan",
-    )
-
-    __table_args__ = (
-        UniqueConstraint(
-            "session_id", "file_hash", name="uq_document_session_file_hash"
-        ),
-    )
-
-    def get_embedding_matrix(
-        self, chunk_set_id: int, embedding_model_id: int
-    ) -> Optional["RAGEmbeddingMatrix"]:
-        for matrix in self.embedding_matrices:
-            if (
-                matrix.chunk_set_id == chunk_set_id
-                and matrix.embedding_model_id == embedding_model_id
-            ):
-                return matrix
-        return None
-
-
-class Chunk(Base):
-    __tablename__ = "chunk"
-    """
-    Table to store all the information about a chunk.
-    """
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    chunk_set_id: Mapped[int] = mapped_column(
-        ForeignKey("rag_chunk_set.id", ondelete="CASCADE"), nullable=False
-    )
-    document_id: Mapped[int] = mapped_column(
-        ForeignKey("document.id", ondelete="CASCADE"), nullable=False
-    )
-    chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
-    text: Mapped[str] = mapped_column(Text, nullable=False)
-    chunk_metadata: Mapped[Optional[dict]] = mapped_column(
-        "metadata", JSON, nullable=True
-    )
-
-    document: Mapped["Document"] = relationship("Document", back_populates="chunks")
-    chunk_set: Mapped["RAGChunkSet"] = relationship(
-        "RAGChunkSet", back_populates="chunks"
-    )
-
-    __table_args__ = (
-        UniqueConstraint(
-            "chunk_set_id",
-            "document_id",
-            "chunk_index",
-            name="uix_chunk_set_doc_index",
-        ),
-    )
-
-
 class RAGChunkSet(Base):
+    """Identity of the chunks one session built over a set of documents.
+
+    The signature hashes the owning session, the document ids and the chunking
+    configuration, so two sessions never share a chunk set even when they use
+    the same Data documents with the same settings. ``session_id`` is NULL only
+    for chunk sets detached by migration d8f3a1c6e2b9 (stored in the old
+    format) or built before sessions owned them; the startup cleanup deletes
+    those.
+    """
+
     __tablename__ = "rag_chunk_set"
-    """
-    Canonical identity for a set of chunks produced by a processing pipeline.
-    Two sessions with the same documents + same pipeline config share the same
-    chunk set (same signature → same row).
-    """
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     signature: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     parameters: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
-
-    chunks: Mapped[List["Chunk"]] = relationship(
-        "Chunk",
-        back_populates="chunk_set",
-        cascade="all, delete-orphan",
+    session_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("generative_session.id", ondelete="CASCADE"), nullable=True
     )
+
     documents: Mapped[List["RAGChunkSetDocument"]] = relationship(
         "RAGChunkSetDocument",
         back_populates="chunk_set",
@@ -1017,21 +1163,20 @@ class RAGChunkSet(Base):
 
 class RAGChunkSetDocument(Base):
     __tablename__ = "rag_chunk_set_document"
-    """Which documents belong to a chunk set."""
+    """Which documents belong to a chunk set and where their chunks are stored."""
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     chunk_set_id: Mapped[int] = mapped_column(
         ForeignKey("rag_chunk_set.id", ondelete="CASCADE"), nullable=False
     )
     document_id: Mapped[int] = mapped_column(
-        ForeignKey("document.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("data_document.id", ondelete="CASCADE"), nullable=False
     )
+    path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    n_chunks: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     chunk_set: Mapped["RAGChunkSet"] = relationship(
         "RAGChunkSet",
         back_populates="documents",
-    )
-    document: Mapped["Document"] = relationship(
-        "Document", back_populates="chunk_set_links"
     )
 
     __table_args__ = (
@@ -1041,6 +1186,63 @@ class RAGChunkSetDocument(Base):
             name="uix_chunk_set_document",
         ),
     )
+
+
+class RAGSessionDocument(Base):
+    """A Data module document used by one RAG session.
+
+    The document belongs to the Data module and may be used by several
+    sessions; deleting the link never deletes the document. The pair is
+    unique, so a session holds a document at most once.
+    """
+
+    __tablename__ = "rag_session_document"
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("generative_session.id", ondelete="CASCADE"), nullable=False
+    )
+    data_document_id: Mapped[int] = mapped_column(
+        ForeignKey("data_document.id", ondelete="RESTRICT"), nullable=False
+    )
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+
+    session: Mapped["GenerativeSession"] = relationship(
+        "GenerativeSession", back_populates="document_links"
+    )
+    data_document: Mapped["DataDocument"] = relationship("DataDocument")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "session_id", "data_document_id", name="uq_rag_session_document_pair"
+        ),
+    )
+
+
+class RAGLegacyDocument(Base):
+    """A legacy RAG document waiting to become a ``DataDocument``.
+
+    Filled by migration ``c5d1a9e74f28`` from the dropped ``document`` and
+    ``rag_extractor`` tables, emptied by ``backfill_rag_documents``. ``id``
+    keeps the legacy document id so chat citations can be remapped, and
+    ``error`` records why a row could not be converted.
+    """
+
+    __tablename__ = "rag_legacy_document"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    file_name: Mapped[str] = mapped_column(String, nullable=False)
+    file_type: Mapped[str] = mapped_column(String, nullable=False)
+    file_path: Mapped[str] = mapped_column(String, nullable=False)
+    file_hash: Mapped[str] = mapped_column(String, nullable=False)
+    optional_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+        JSON, nullable=True
+    )
+    extractor_component: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    extractor_params: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+        JSON, nullable=True
+    )
+    created: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    error: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 
 class RAGRetrieverChunkSet(Base):
@@ -1349,7 +1551,7 @@ class RAGEmbeddingMatrix(Base):
     """
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     document_id: Mapped[int] = mapped_column(
-        ForeignKey("document.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("data_document.id", ondelete="CASCADE"), nullable=False
     )
     chunk_set_id: Mapped[int] = mapped_column(
         ForeignKey("rag_chunk_set.id", ondelete="CASCADE"), nullable=False
@@ -1366,9 +1568,6 @@ class RAGEmbeddingMatrix(Base):
         onupdate=datetime.now,
     )
 
-    document: Mapped["Document"] = relationship(
-        "Document", back_populates="embedding_matrices"
-    )
     chunk_set: Mapped["RAGChunkSet"] = relationship(
         "RAGChunkSet",
         back_populates="embedding_matrices",

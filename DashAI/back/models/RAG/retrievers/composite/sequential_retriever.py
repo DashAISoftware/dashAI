@@ -23,7 +23,7 @@ class SequentialRetrieverSchema(BaseSchema):
     """
 
     children: schema_field(
-        list_field(component_field(parent="RetrieverModel"), min_items=2),
+        list_field(component_field(parent="BaseRetriever"), min_items=2),
         placeholder=[],
         description=MultilingualString(
             en="Ordered list of child retrievers. The first child retrieves"
@@ -81,7 +81,7 @@ class SequentialRetriever(CompositeRetriever):
 
         Args:
             **kwargs: Must contain a ``children`` key with at least 2
-                :class:`RetrieverModel` instances.
+                :class:`BaseRetriever` instances.
 
         Raises:
             CompositeValidationError: If ``top_k`` values are not strictly
@@ -95,7 +95,7 @@ class SequentialRetriever(CompositeRetriever):
 
         Checks that ``top_k`` values are strictly decreasing so each
         stage narrows the result set.  No type restrictions — any
-        ``RetrieverModel`` subclass is allowed as a child (Composite
+        ``BaseRetriever`` subclass is allowed as a child (Composite
         pattern).
 
         Raises:

@@ -1,6 +1,5 @@
 import logging
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from fastapi import status
 from fastapi.encoders import jsonable_encoder
@@ -8,12 +7,38 @@ from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc
 
-from DashAI.back.dependencies.database.models import Dataset, ModelSession, Prediction
+from DashAI.back.dependencies.database.models import (
+    Dataset,
+    ModelSession,
+    Prediction,
+    Run,
+)
 from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.models.base_model import BaseModel
+from DashAI.back.models.forecasting.single_series_forecasting_model import (
+    used_exogenous,
+)
 from DashAI.back.splitters.splits_payload import run_split_indexes
-from DashAI.back.tasks.base_task import BaseTask
-from DashAI.back.tasks.regression_task import RegressionTask
+from DashAI.back.tasks.session_roles import (
+    SessionIO,
+    TaskUnavailableError,
+    session_has_steps,
+    session_io,
+    session_raw_columns,
+    session_task,
+)
+from DashAI.back.units.apply_session_preprocessing_unit import (
+    ApplySessionPreprocessingUnit,
+)
+from DashAI.back.units.build_manual_input_unit import BuildManualInputUnit
+from DashAI.back.units.context import ExecutionContext
+from DashAI.back.units.forecast_future_unit import ForecastFutureUnit
+from DashAI.back.units.forecast_horizon_unit import ForecastHorizonUnit
+from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
+from DashAI.back.units.load_trained_model_unit import LoadTrainedModelUnit
+from DashAI.back.units.load_training_dataset_unit import LoadTrainingDatasetUnit
+from DashAI.back.units.predict_unit import PredictUnit
+from DashAI.back.units.prepare_future_unit import PrepareFutureUnit
+from DashAI.back.units.save_prediction_unit import SavePredictionUnit
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -24,41 +49,90 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
-def _run_prediction_pipeline(
-    task: BaseTask,
-    trained_model: BaseModel,
-    train_dataset: "DashAIDataset",
-    loaded_dataset: "DashAIDataset",
-    model_session: ModelSession,
-) -> Tuple["DashAIDataset", Any]:
-    """Run shared prediction steps from prepared input data to final predictions.
+def _preprocessing_artifacts_path(model_session: ModelSession) -> Optional[str]:
+    """Where the session's fitted preprocessor lives, or None when it has none.
 
-    Parameters
-    ----------
-    task : BaseTask
-        The task the run belongs to.
-    trained_model : BaseModel
-        The model loaded from the run.
-    train_dataset : DashAIDataset
-        The dataset the model was trained on, for type and label information.
-    loaded_dataset : DashAIDataset
-        The rows to predict.
-    model_session : ModelSession
-        The session declaring the input and output columns.
-
-    Returns
-    -------
-    tuple
-        The prepared inputs and the predictions for them.
+    A session preprocesses when it declares steps; only then does the
+    artifacts path mean anything, so the two are read together and the path
+    alone travels to the unit that applies it.
     """
-    import numpy as np
+    if not session_has_steps(model_session):
+        return None
+    artifacts_path = model_session.preprocessing_artifacts_path
+    if not artifacts_path:
+        # Without this the rows would silently be predicted raw, which is the
+        # one thing a session with steps must never do. Training refuses the
+        # same state in SplitterScopeMixin; the runs endpoint keeps it out of
+        # reach with a 409, so this is the job's own last line.
+        raise JobError(
+            "This session declares preprocessing steps but has no fitted "
+            "preprocessor: its preprocessing has not finished or failed."
+        )
+    return artifacts_path
 
-    prepared_dataset = loaded_dataset.select_columns(model_session.input_columns)
-    y_pred_proba = np.array(trained_model.predict(prepared_dataset))
-    y_pred = task.process_predictions(
-        train_dataset, y_pred_proba, model_session.output_columns[0]
-    )
-    return prepared_dataset, y_pred
+
+def _session_columns(
+    model_session: ModelSession,
+) -> Tuple[Optional[SessionIO], Optional[str]]:
+    """The session's columns as the model's inputs and outputs, or why not.
+
+    The session stores its columns by role and its task translates them, so a
+    session whose task cannot be built cannot be read. ``(None, reason)`` is
+    returned then, with the text ``session_task`` gives (not registered, or
+    its constructor raised), and the caller reports it where it always has:
+    when the prediction unit would resolve the task, ahead of the model.
+    """
+    try:
+        task = session_task(model_session.task_name, di["component_registry"])
+    except TaskUnavailableError as e:
+        return None, str(e)
+    return session_io(model_session, task), None
+
+
+def _no_outputs_problem(model_session: ModelSession) -> str:
+    """Why a session with no output columns cannot predict.
+
+    A task that declares no output role (clustering) does not predict at all,
+    so the message says that rather than blaming the session's configuration.
+    Called only once the task has been built, so it is registered.
+    """
+    task_class = di["component_registry"][model_session.task_name]["class"]
+    if not task_class.io_roles()["outputs"]:
+        return (
+            f"{model_session.task_name} does not predict: it declares no "
+            "output columns."
+        )
+    return "Model session has no output columns configured"
+
+
+def _input_columns_training_prepared_with(
+    model_session: ModelSession, io: SessionIO
+) -> List[str]:
+    """The input columns the task was handed when the run's rows were carved.
+
+    A session that preprocesses has among its inputs the columns its
+    converters produce, which the loaded rows do not have, so training
+    prepares with the raw refs instead (``SplitterScopeMixin._prepare``,
+    ``PreprocessingJob``). Without steps, the session's inputs are the raw
+    columns themselves.
+    """
+    if not session_has_steps(model_session):
+        return io.inputs
+    return io.raw_inputs
+
+
+def _unseen_categories(ctx: ExecutionContext, input_columns: List[str]) -> List[dict]:
+    """The categories of the rows just predicted that training never saw.
+
+    Two encoders may have treated them: the session's, whose records
+    ``ApplySessionPreprocessingUnit`` publishes, and the model's own, which
+    the model reports for the columns it reads.
+    """
+    unseen = list(ctx.require("unseen_categories"))
+    reader = getattr(ctx.require("model"), "unseen_categories", None)
+    if reader is not None:
+        unseen.extend(reader(ctx.require("model_input").select_columns(input_columns)))
+    return unseen
 
 
 def _build_preview_rows(
@@ -99,10 +173,20 @@ def _build_preview_rows(
 def run_manual_prediction(
     run_id: int,
     manual_input_data: List[Dict],
-    component_registry: Any,
     session_factory: "sessionmaker",
+    unseen: Optional[List[dict]] = None,
 ) -> Tuple[List[str], List[List]]:
     """Execute a manual prediction synchronously without persisting results.
+
+    Composes the same units ``PredictJob`` does, so there is one definition of
+    what predicting means. The difference is entirely in the orchestration: no
+    state row to advance, nothing written to disk, and failures reported as
+    ``HTTPException`` because this runs inside a request instead of a worker.
+
+    Each unit call sits in its own ``try`` so the HTTP response is decided by
+    *which step* failed, never by matching on an error message. That is what
+    keeps the endpoint's contract — eleven distinct responses across four status
+    codes — independent of how the units happen to word their errors.
 
     Parameters
     ----------
@@ -110,10 +194,14 @@ def run_manual_prediction(
         The ID of the trained run.
     manual_input_data : List[Dict]
         List of row dicts keyed by input column name.
-    component_registry : Any
-        The DashAI component registry.
     session_factory : sessionmaker
-        SQLAlchemy session factory.
+        SQLAlchemy session factory, used for this function's own row reads. It
+        must be the container's: the units resolve ``session_factory`` and
+        ``component_registry`` from the DI container themselves, so a different
+        one passed here would leave the two halves reading different databases.
+    unseen : list, optional
+        When given, the categories of the rows that training never saw are
+        appended to it, one ``unseen_record`` per encoder and column.
 
     Returns
     -------
@@ -126,10 +214,11 @@ def run_manual_prediction(
     HTTPException
         On missing run, model session, or prediction failure.
     """
-    with session_factory() as db:
-        from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
-        from DashAI.back.dependencies.database.models import Run
+    from DashAI.back.dependencies.database.models import Run
 
+    # Read everything this function needs off the rows, then let the session go:
+    # nothing here writes, and the units open their own sessions.
+    with session_factory() as db:
         run = db.get(Run, run_id)
         if not run:
             raise HTTPException(
@@ -151,66 +240,104 @@ def run_manual_prediction(
                 detail="Training dataset not found",
             )
 
-        if not model_session.input_columns:
+        # Without its task the session's roles cannot be read; the missing
+        # task is reported below, where the units resolve it.
+        io, task_problem = _session_columns(model_session)
+
+        if io is not None and not io.inputs:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Model session has no input columns configured",
             )
 
-        if not model_session.output_columns:
+        if io is not None and not io.outputs:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Model session has no output columns configured",
+                detail=_no_outputs_problem(model_session),
             )
 
+        task_name = model_session.task_name
+        train_dataset_file_path = dataset_trained.file_path
         try:
-            task: BaseTask = component_registry[model_session.task_name]["class"]()
-        except Exception as e:
+            preprocessing_artifacts_path = _preprocessing_artifacts_path(model_session)
+        except JobError as e:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(e)
+            ) from e
+
+    if io is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=task_problem,
+        )
+    input_columns = list(io.inputs)
+    output_columns = list(io.outputs)
+
+    ctx = ExecutionContext()
+
+    build_input = BuildManualInputUnit(
+        task_name=task_name,
+        train_dataset_file_path=train_dataset_file_path,
+        manual_input_data=manual_input_data,
+    )
+    apply_preprocessing = ApplySessionPreprocessingUnit(
+        preprocessing_artifacts_path=preprocessing_artifacts_path,
+    )
+    predict = PredictUnit(
+        task_name=task_name,
+        input_columns=input_columns,
+        output_columns=output_columns,
+    )
+
+    try:
+        # Both units resolve the task; validating up front keeps a missing task
+        # reported as a task problem, ahead of the model, the way it always was.
+        try:
+            build_input.validate(ctx)
+            predict.validate(ctx)
+        except JobError as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Task {model_session.task_name} not found in the registry",
+                detail=f"Task {task_name} not found in the registry",
             ) from e
 
         try:
-            model_cls = component_registry[run.model_name]["class"]
-        except KeyError as e:
+            LoadTrainedModelUnit(run_id=run_id)(ctx)
+        except JobError as e:
+            # The unit distinguishes "not in the registry" from "cannot be read
+            # from disk" with the same two texts this endpoint has always
+            # returned, so its message is forwarded rather than rebuilt.
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Model {run.model_name} not found in the registry",
+                detail=str(e),
             ) from e
 
         try:
-            trained_model: BaseModel = model_cls.load(run.run_path)
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=(
-                    f"Failed to load model {run.model_name} from path {run.run_path}"
-                ),
-            ) from e
-
-        try:
-            train_dataset: "DashAIDataset" = load_dataset(
-                str(Path(f"{dataset_trained.file_path}/dataset/"))
+            LoadTrainingDatasetUnit(train_dataset_file_path=train_dataset_file_path)(
+                ctx
             )
-        except Exception as e:
+        except JobError as e:
+            # Not forwarded: the unit names the path, this endpoint never has.
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Cannot load training dataset",
             ) from e
 
         try:
-            dataset_trained_path = str(Path(f"{dataset_trained.file_path}/dataset/"))
-            loaded_dataset: "DashAIDataset" = task.process_manual_input(
-                manual_input_data, dataset_trained_path
-            )
-            prepared_dataset, y_pred = _run_prediction_pipeline(
-                task=task,
-                trained_model=trained_model,
-                train_dataset=train_dataset,
-                loaded_dataset=loaded_dataset,
-                model_session=model_session,
-            )
+            build_input(ctx)
+            # Hand-typed rows carry the raw columns; a session that preprocesses
+            # was trained on derived ones, and its input columns only exist
+            # once the fitted preprocessor has run over the rows.
+            apply_preprocessing(ctx)
+            predict(ctx)
+            # The preview shows what the model saw, so it is narrowed from the
+            # model input and not from the raw rows. Re-derived here rather
+            # than published by the unit: a narrowed view of the dataset is
+            # exactly the kind of derived value that must not cross a unit
+            # boundary, since anything upstream may reshape it.
+            prepared_dataset = ctx.require("model_input").select_columns(input_columns)
+            if unseen is not None:
+                unseen.extend(_unseen_categories(ctx, input_columns))
         except (ValueError, TypeError) as e:
             logging.exception("Manual prediction input error: %s", e)
             raise HTTPException(
@@ -223,13 +350,14 @@ def run_manual_prediction(
                 detail="Model prediction failed",
             ) from e
 
-        output_col = model_session.output_columns[0]
         return _build_preview_rows(
             prepared_dataset=prepared_dataset,
-            input_columns=list(model_session.input_columns),
-            output_col=output_col,
-            y_pred=y_pred,
+            input_columns=input_columns,
+            output_col=output_columns[0],
+            y_pred=ctx.require("y_pred"),
         )
+    finally:
+        ctx.clear_cache()
 
 
 class PredictJob(BaseJob):
@@ -291,22 +419,178 @@ class PredictJob(BaseJob):
 
         return f"Prediction (Prediction:{prediction_id}, Dataset:{dataset_id})"
 
+    @staticmethod
+    def _predicts_by_horizon(task_name: str, component_registry) -> bool:
+        """Whether the task forecasts a horizon rather than predicting rows."""
+        if task_name not in component_registry:
+            return False
+        task_class = component_registry[task_name]["class"]
+        return getattr(task_class, "PREDICTION_MODE", "rows") == "horizon"
+
+    def _forecast_horizon(
+        self,
+        db,
+        ctx: ExecutionContext,
+        prediction,
+        model_session,
+        io,
+        dataset_trained,
+        manual_input_data=None,
+    ) -> None:
+        """Forecast the prediction's horizon past the end of the run's series.
+
+        A run that read exogenous variables, as it recorded
+        (``Run.exogenous``), forecasts the future rows the request brings
+        instead: ``_forecast_future``.
+
+        No dataset is read: the kept model was fitted on the whole series and
+        knows its grid, so the dates follow its last one. The forecast is saved
+        beside those dates as any prediction is, its column a float.
+
+        Raises
+        ------
+        JobError
+            If the request names rows to predict, which a forecast has none
+            of (the API refuses it first), or a step of the forecast fails.
+        """
+        run = db.get(Run, prediction.run_id)
+        if run is not None and used_exogenous(run):
+            self._forecast_future(
+                db,
+                ctx,
+                prediction,
+                model_session,
+                io,
+                dataset_trained,
+                run.exogenous,
+                manual_input_data,
+            )
+            return
+        try:
+            if prediction.dataset_id or prediction.split or not prediction.horizon:
+                raise JobError(
+                    f"{model_session.task_name} forecasts past the end of its "
+                    "training series, so it takes a horizon, not rows to predict."
+                )
+            LoadTrainedModelUnit(run_id=prediction.run_id)(ctx)
+            LoadTrainingDatasetUnit(train_dataset_file_path=dataset_trained.file_path)(
+                ctx
+            )
+
+            self.report_progress(0.4, "Forecasting")
+            ForecastHorizonUnit(horizon=prediction.horizon, input_columns=io.inputs)(
+                ctx
+            )
+
+            self.report_progress(0.9, "Saving predictions")
+            SavePredictionUnit(
+                task_name=model_session.task_name,
+                input_columns=io.inputs,
+                output_columns=io.outputs,
+            )(ctx)
+
+            prediction.results_path = ctx.require("results_path")
+            prediction.set_status_as_finished()
+            db.commit()
+        except Exception as e:
+            prediction.set_status_as_error()
+            db.commit()
+            log.exception(e)
+            raise
+        finally:
+            ctx.clear_cache()
+
+    def _forecast_future(
+        self,
+        db,
+        ctx: ExecutionContext,
+        prediction,
+        model_session,
+        io,
+        dataset_trained,
+        exogenous,
+        manual_input_data,
+    ) -> None:
+        """Forecast the future rows of a run that read exogenous variables.
+
+        The rows come from a dataset or typed by hand, as ``dataset`` either
+        way, so ``PrepareFutureUnit`` checks them once (decision 6). The
+        session's ``final.pkl`` turns them into what the model reads, as it
+        does an x/y prediction's rows, and the saved prediction keeps the
+        exogenous values it was made with (detail 10).
+
+        Raises
+        ------
+        JobError
+            If the request names a partition or brings no rows, rows typed in
+            are not as many as the horizon asked for, or a step of the
+            forecast fails.
+        """
+        task = di["component_registry"][model_session.task_name]["class"]()
+        (time_index,), model_exogenous = task.split_inputs(io.inputs)
+        raw_columns = [column["name"] for column in exogenous["columns"]]
+        try:
+            if prediction.split or not (prediction.dataset_id or manual_input_data):
+                raise JobError(
+                    f"Run {prediction.run_id} read exogenous variables, so it "
+                    "forecasts the future rows that bring their values: give a "
+                    "dataset of them, or type them in."
+                )
+            preprocessing_artifacts_path = _preprocessing_artifacts_path(model_session)
+            LoadTrainedModelUnit(run_id=prediction.run_id)(ctx)
+            LoadTrainingDatasetUnit(train_dataset_file_path=dataset_trained.file_path)(
+                ctx
+            )
+            if prediction.dataset_id:
+                LoadDatasetUnit(dataset_id=prediction.dataset_id)(ctx)
+            else:
+                if prediction.horizon and len(manual_input_data) != prediction.horizon:
+                    raise JobError(
+                        f"The prediction was asked for {prediction.horizon} "
+                        f"rows, and {len(manual_input_data)} were typed in."
+                    )
+                BuildManualInputUnit(
+                    task_name=model_session.task_name,
+                    train_dataset_file_path=dataset_trained.file_path,
+                    manual_input_data=manual_input_data,
+                )(ctx)
+            PrepareFutureUnit(
+                time_index=time_index, exogenous_columns=exogenous["columns"]
+            )(ctx)
+            ApplySessionPreprocessingUnit(
+                preprocessing_artifacts_path=preprocessing_artifacts_path,
+            )(ctx)
+
+            self.report_progress(0.4, "Forecasting")
+            ForecastFutureUnit(exogenous_columns=list(model_exogenous))(ctx)
+            prediction.unseen_categories = list(ctx.require("unseen_categories"))
+
+            self.report_progress(0.9, "Saving predictions")
+            SavePredictionUnit(
+                task_name=model_session.task_name,
+                input_columns=[time_index, *raw_columns],
+                output_columns=io.outputs,
+            )(ctx)
+
+            prediction.results_path = ctx.require("results_path")
+            prediction.set_status_as_finished()
+            db.commit()
+        except Exception as e:
+            prediction.set_status_as_error()
+            db.commit()
+            log.exception(e)
+            raise
+        finally:
+            ctx.clear_cache()
+
     @inject
     def run(
         self,
     ) -> List[Any]:
-        import uuid
-        from pathlib import Path
-
-        from DashAI.back.dataloaders.classes.dashai_dataset import (
-            load_dataset,
-            save_dataset,
-            to_dashai_dataset,
-        )
-
-        component_registry = di["component_registry"]
         session_factory = di["session_factory"]
-        config = di["config"]
+        component_registry = di["component_registry"]
+
+        ctx = ExecutionContext()
 
         prediction_id: int = self.kwargs["prediction_id"]
         manual_input_data: List[dict] = self.kwargs.get("manual_input_data", [])
@@ -330,8 +614,9 @@ class PredictJob(BaseJob):
 
                 dataset_id = prediction.dataset_id
 
-                # Validate input data
-                if not manual_input_data and not dataset_id:
+                # Validate input data. A forecast by horizon has neither: it
+                # reaches past the end of the data.
+                if not manual_input_data and not dataset_id and not prediction.horizon:
                     prediction.set_status_as_error()
                     db.commit()
                     raise JobError(
@@ -350,19 +635,23 @@ class PredictJob(BaseJob):
                         detail="Model session not found",
                     )
 
-                # Retrieve Dataset if dataset_id is provided
-                dataset: Dataset = None
+                # The dataset the model was trained on. The one to predict on,
+                # when there is one, is resolved by the unit that loads it.
                 dataset_trained: Dataset = db.get(Dataset, model_session.dataset_id)
                 if not dataset_trained:
+                    prediction.set_status_as_error()
+                    db.commit()
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Training dataset not found",
                     )
 
-                if dataset_id:
-                    dataset: Dataset = db.get(Dataset, dataset_id)
+                # Without its task the session's roles cannot be read; the
+                # missing task is reported below, where the prediction unit
+                # resolves it.
+                io, task_problem = _session_columns(model_session)
 
-                if not model_session.input_columns:
+                if io is not None and not io.inputs:
                     prediction.set_status_as_error()
                     db.commit()
                     raise HTTPException(
@@ -370,13 +659,12 @@ class PredictJob(BaseJob):
                         detail="Model session has no input columns configured",
                     )
 
-                if not model_session.output_columns:
+                if io is not None and not io.outputs:
                     prediction.set_status_as_error()
                     db.commit()
-                    raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                        detail="Model session has no output columns configured",
-                    )
+                    # JobError, not HTTPException: this runs in the Huey
+                    # worker, where an HTTPException does not survive dill.
+                    raise JobError(_no_outputs_problem(model_session))
 
             except exc.SQLAlchemyError as e:
                 log.exception(e)
@@ -385,52 +673,80 @@ class PredictJob(BaseJob):
                     detail="Internal database error",
                 ) from e
 
-            # Retrieve Task
-            try:
-                task: BaseTask = component_registry[model_session.task_name]["class"]()
-            except Exception as e:
-                prediction.set_status_as_error()
-                db.commit()
-                log.exception(e)
-                raise JobError(
-                    f"Task {model_session.task_name} not found in the registry",
-                ) from e
-
-            # Load Model
-            try:
-                model = component_registry[prediction.run.model_name]["class"]
-            except KeyError as e:
-                prediction.set_status_as_error()
-                db.commit()
-                log.exception(e)
-                raise JobError(
-                    f"Model {prediction.run.model_name} not found in the registry"
-                ) from e
-
-            try:
-                trained_model: BaseModel = model.load(prediction.run.run_path)
-            except Exception as e:
-                prediction.set_status_as_error()
-                db.commit()
-                log.exception(e)
-                raise JobError(
-                    f"Failed to load model {prediction.run.model_name} "
-                    f"from path {prediction.run.run_path}"
-                ) from e
-
-            # Load Dataset and make Predictions
-            try:
-                # Load training dataset for type info and label processing
-                train_dataset: "DashAIDataset" = load_dataset(
-                    str(Path(f"{dataset_trained.file_path}/dataset/"))
+            if io is not None and self._predicts_by_horizon(
+                model_session.task_name, component_registry
+            ):
+                self._forecast_horizon(
+                    db,
+                    ctx,
+                    prediction,
+                    model_session,
+                    io,
+                    dataset_trained,
+                    manual_input_data,
                 )
-            except Exception as e:
-                log.exception(e)
-                raise JobError(
-                    f"Cannot load training dataset from "
-                    f"{dataset_trained.file_path}/dataset/"
-                ) from e
+                return
 
+            if prediction.horizon:
+                prediction.set_status_as_error()
+                db.commit()
+                raise JobError(
+                    f"{model_session.task_name} predicts rows, not a horizon."
+                )
+
+            # The prediction step owns the task, and resolving it here — before
+            # the model is even looked up — is what keeps a missing task
+            # reported as a task problem instead of being overtaken by
+            # whatever fails next. Same shape as ModelJob validating the fit
+            # unit ahead of the status change.
+            try:
+                if io is None:
+                    raise JobError(task_problem)
+                predict = PredictUnit(
+                    task_name=model_session.task_name,
+                    input_columns=io.inputs,
+                    output_columns=io.outputs,
+                )
+                predict.validate(ctx)
+            except Exception as e:
+                prediction.set_status_as_error()
+                db.commit()
+                log.exception(e)
+                raise
+
+            # Load Model. The unit reports both the registry miss and the
+            # unreadable artifact with the same texts the job used to build
+            # here; re-raised as-is so they reach the user intact.
+            try:
+                LoadTrainedModelUnit(run_id=prediction.run_id)(ctx)
+            except Exception as e:
+                prediction.set_status_as_error()
+                db.commit()
+                log.exception(e)
+                raise
+
+            # Load training dataset for type info and label processing. Loaded
+            # before the dataset to predict on, which is the order the error
+            # messages depend on when both are unreadable.
+            try:
+                LoadTrainingDatasetUnit(
+                    train_dataset_file_path=dataset_trained.file_path
+                )(ctx)
+            except Exception as e:
+                # This branch used to skip set_status_as_error, unlike every
+                # one around it, leaving the prediction STARTED forever.
+                # Re-raised as-is so the unit's specific message survives.
+                prediction.set_status_as_error()
+                db.commit()
+                log.exception(e)
+                raise
+
+            # The rows to predict on, when the request names a partition of
+            # the run. A partition only means something on the dataset the
+            # model was trained on; on any other dataset the name is ignored,
+            # as it always was. Resolved ahead of the load so a partition the
+            # run does not have fails with its own message rather than as
+            # invalid input data, and so the row remains in error.
             row_indexes = None
             if prediction.split and dataset_id == model_session.dataset_id:
                 try:
@@ -448,37 +764,76 @@ class PredictJob(BaseJob):
                         f"Cannot predict on the {prediction.split} split: {e}"
                     ) from e
 
+            # Resolved ahead of the generic handler below, which would replace
+            # this message with "Model prediction failed".
             try:
-                # Load or create prediction dataset
+                preprocessing_artifacts_path = _preprocessing_artifacts_path(
+                    model_session
+                )
+            except JobError as e:
+                prediction.set_status_as_error()
+                db.commit()
+                log.exception(e)
+                raise
+
+            try:
+                # Load or create prediction dataset. Both branches publish the
+                # same "dataset" key, so the prediction below cannot tell a
+                # dataset read from disk from one typed in by hand.
                 if dataset_id:
-                    loaded_dataset: "DashAIDataset" = load_dataset(
-                        str(Path(f"{dataset.file_path}/dataset/"))
-                    )
+                    LoadDatasetUnit(dataset_id=dataset_id)(ctx)
+                    # Narrowed straight after the load and before anything
+                    # downstream reshapes the rows, and written back under the
+                    # same key: the saved prediction has to cover the rows
+                    # that were asked for and no others. The run's indexes are
+                    # positions in the dataset the task prepared, which a task
+                    # may reorder (forecasting sorts by date), so they select
+                    # from that dataset and not from the loaded one. Preparing
+                    # keeps every column and value of the loaded rows, so what
+                    # follows still reads raw rows.
                     if row_indexes is not None:
-                        loaded_dataset = loaded_dataset.select(row_indexes)
+                        task = component_registry[model_session.task_name]["class"]()
+                        prepared = task.prepare_for_task(
+                            dataset=ctx.require("dataset"),
+                            input_columns=_input_columns_training_prepared_with(
+                                model_session, io
+                            ),
+                            output_columns=io.outputs,
+                        )
+                        ctx.put("dataset", prepared.select(row_indexes))
                 else:
-                    dataset_trained_path = str(
-                        Path(f"{dataset_trained.file_path}/dataset/")
-                    )
-                    loaded_dataset = task.process_manual_input(
-                        manual_input_data, dataset_trained_path
-                    )
+                    BuildManualInputUnit(
+                        task_name=model_session.task_name,
+                        train_dataset_file_path=dataset_trained.file_path,
+                        manual_input_data=manual_input_data,
+                    )(ctx)
+
+                # After the narrowing and before the prediction: the fitted
+                # preprocessor runs over exactly the rows that were asked for,
+                # and the model reads the columns it was trained on from what
+                # it publishes. The raw rows stay under "dataset" for the save.
+                ApplySessionPreprocessingUnit(
+                    preprocessing_artifacts_path=preprocessing_artifacts_path,
+                )(ctx)
 
                 self.report_progress(0.4, "Running prediction")
-                _, y_pred = _run_prediction_pipeline(
-                    task=task,
-                    trained_model=trained_model,
-                    train_dataset=train_dataset,
-                    loaded_dataset=loaded_dataset,
-                    model_session=model_session,
-                )
+                predict(ctx)
+                prediction.unseen_categories = _unseen_categories(ctx, io.inputs)
 
             except ValueError as ve:
                 prediction.set_status_as_error()
                 db.commit()
                 log.error(f"Validation Error: {ve}")
+                # JobError, not HTTPException: this runs in the Huey worker
+                # and its exception travels back through dill. HTTPException
+                # stores nothing in ``args``, so unpickling calls it with no
+                # status code and the model's own complaint is replaced by a
+                # deserialisation failure.
                 raise JobError(f"Invalid input data: {ve}") from ve
             except TypeError as te:
+                # Marked as failed like its ValueError neighbour: this branch
+                # used to return 400 without touching the row, which left the
+                # prediction STARTED forever.
                 prediction.set_status_as_error()
                 db.commit()
                 log.error(f"Type Error: {te}")
@@ -495,49 +850,17 @@ class PredictJob(BaseJob):
 
             # Save Predictions to Arrow file
             try:
-                # Create unique folder for predictions
-                path = str(Path(f"{config['DATASETS_PATH']}/predictions/"))
-                folder_name = str(uuid.uuid4())
-                full_path = Path(path) / folder_name
-                full_path.mkdir(parents=True, exist_ok=True)
-
-                output_col = model_session.output_columns[0]
-                base_columns = [
-                    col for col in loaded_dataset.column_names if col != output_col
-                ]
-                output_dataset = loaded_dataset.select_columns(base_columns)
-                dataset_with_prediction = to_dashai_dataset(
-                    output_dataset.add_column(output_col, y_pred)
-                )
-
-                # Filter schema from trained dataset
-                trained_schema = train_dataset.types
-                filtered_schema = {
-                    key: value.to_string()
-                    for key, value in trained_schema.items()
-                    if key in model_session.input_columns + model_session.output_columns
-                }
-
-                # Regression models predict continuous values regardless of
-                # the training target's original dtype (e.g. a target column
-                # that happened to hold only integer-looking values), so the
-                # output column's saved schema must reflect that instead of
-                # inheriting the training dataset's type.
-                if isinstance(task, RegressionTask):
-                    filtered_schema[output_col] = {"type": "Float", "dtype": "float64"}
-
-                # Store num of rows, columns, and column names
-                dataset_with_prediction.compute_base_metadata()
-
-                # Save dataset with predictions
-                save_dataset(
-                    dataset_with_prediction,
-                    str(full_path / "dataset"),
-                    filtered_schema,
-                )
+                SavePredictionUnit(
+                    task_name=model_session.task_name,
+                    # The saved rows are the raw ones, so what keeps a type is
+                    # what the prediction read from them, not the columns a
+                    # preprocessor produced from it.
+                    input_columns=session_raw_columns(model_session, io),
+                    output_columns=io.outputs,
+                )(ctx)
 
                 # Update Prediction record
-                prediction.results_path = str(full_path)
+                prediction.results_path = ctx.require("results_path")
                 prediction.set_status_as_finished()
                 db.commit()
             except Exception as e:
@@ -547,3 +870,5 @@ class PredictJob(BaseJob):
                 raise JobError(
                     "Can not save prediction to json file",
                 ) from e
+            finally:
+                ctx.clear_cache()

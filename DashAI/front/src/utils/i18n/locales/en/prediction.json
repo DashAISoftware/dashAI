@@ -3,7 +3,8 @@
     "deleteSelected_one": "Delete Selected ({{count}})",
     "deleteSelected_other": "Delete Selected ({{count}})",
     "downloadResults": "Download Prediction Results",
-    "runPrediction": "Run Prediction"
+    "runPrediction": "Run Prediction",
+    "generateDates": "Show the next dates"
   },
   "error": {
     "creatingPrediction": "Error creating prediction",
@@ -20,6 +21,8 @@
     "updatingPredictionStatus": "Error updating prediction status."
   },
   "label": {
+    "horizon": "Horizon",
+    "horizonDescription": "How many steps past the end of the series to forecast.",
     "basedOnDataset": "Based on dataset: {{datasetName}}",
     "changeImage": "Change image",
     "chooseInputMethod": "Choose Input Method",
@@ -61,14 +64,28 @@
     "selectRowsToDelete": "Select rows to delete",
     "targetColumn": "Target Column",
     "uploadImage": "Upload image",
-    "useExistingDataset": "Use Existing Dataset"
+    "useExistingDataset": "Use Existing Dataset",
+    "futureFromDataset": "From a dataset",
+    "futureTypedIn": "Typed in",
+    "futureStepsDescription": "How many steps to type in",
+    "futureStepsMax": "Up to {{max}} rows are typed in by hand; for more, use a dataset"
   },
   "message": {
+    "unevaluatedSteps_one": "The last step goes beyond the {{evaluated}} the backtest measured: its error was never evaluated.",
+    "unevaluatedSteps_other": "The last {{count}} steps go beyond the {{evaluated}} the backtest measured: their error was never evaluated.",
     "deletedSuccessfully": "Prediction deleted successfully",
     "downloadedSuccessfully": "Prediction downloaded successfully",
     "predictionCompleted": "Prediction completed successfully",
     "predictionJobSubmitted": "Prediction job submitted successfully",
     "predictionsDeleted_one": "{{count}} prediction deleted successfully",
-    "predictionsDeleted_other": "{{count}} predictions deleted successfully"
+    "predictionsDeleted_other": "{{count}} predictions deleted successfully",
+    "exogenousFuture": "This model read exogenous variables, so it forecasts their future values: bring {{columns}} for every step to forecast. The horizon is the number of rows."
+  },
+  "unseen": {
+    "title": "Categories the model never saw in training",
+    "description": "They were encoded as unknown (a row of zeros, or -1), so the predictions for the rows that have them are less reliable.",
+    "line": "{{column}} ({{source}}): {{values}}",
+    "more_one": "and {{count}} more",
+    "more_other": "and {{count}} more"
   }
 }

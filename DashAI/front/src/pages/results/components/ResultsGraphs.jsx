@@ -69,21 +69,26 @@ function ResultsGraphs({
   );
 
   const availableMetrics = useMemo(() => {
-    const sets = { train: new Set(), validation: new Set(), test: new Set() };
+    const sets = {
+      train: new Set(),
+      validation: new Set(),
+      test: new Set(),
+      full: new Set(),
+    };
+    // A metric with no value on a run (MAPE on a zero) still has its column:
+    // the run says why, under {split}_metrics_unavailable.
     finishedRuns.forEach((run) => {
-      if (run.train_metrics)
-        Object.keys(run.train_metrics).forEach((m) => sets.train.add(m));
-      if (run.validation_metrics)
-        Object.keys(run.validation_metrics).forEach((m) =>
-          sets.validation.add(m),
+      Object.entries(sets).forEach(([split, names]) => {
+        [run[`${split}_metrics`], run[`${split}_metrics_unavailable`]].forEach(
+          (values) => Object.keys(values ?? {}).forEach((m) => names.add(m)),
         );
-      if (run.test_metrics)
-        Object.keys(run.test_metrics).forEach((m) => sets.test.add(m));
+      });
     });
     return {
       train: Array.from(sets.train),
       validation: Array.from(sets.validation),
       test: Array.from(sets.test),
+      full: Array.from(sets.full),
     };
   }, [finishedRuns]);
 
@@ -96,6 +101,9 @@ function ResultsGraphs({
     else if (availableMetrics.validation.length > 0)
       setInternalSplit("validation");
     else if (availableMetrics.test.length > 0) setInternalSplit("test");
+    // A clustering run has no train/validation/test metrics at all, so it
+    // falls through to the split it does have.
+    else if (availableMetrics.full.length > 0) setInternalSplit("full");
   }, [availableMetrics, splitProp]);
 
   useEffect(() => {

@@ -20,6 +20,7 @@ from DashAI.back.models.base_model import BaseModel
 from DashAI.back.splitters.holdout import HoldoutSplitter
 from DashAI.back.splitters.k_fold import KFoldSplitter
 from DashAI.back.tasks.base_task import BaseTask
+from tests.back.session_columns import xy_roles
 
 input_columns = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
 output_columns = ["Species"]
@@ -217,8 +218,7 @@ def create_model_session(client: TestClient, dataset_id: int):
             dataset_id=dataset_id,
             name="DummyExperiment",
             task_name="DummyTask",
-            input_columns=input_columns,
-            output_columns=output_columns,
+            column_roles=xy_roles(input_columns, output_columns),
             evaluation_strategy="test_size",
             splits=splits,
         )
@@ -574,8 +574,7 @@ def _cv_session(client: TestClient, dataset_id: int, name: str) -> int:
             dataset_id=dataset_id,
             name=f"CVExperiment_{name}",
             task_name="DummyTask",
-            input_columns=input_columns,
-            output_columns=output_columns,
+            column_roles=xy_roles(input_columns, output_columns),
             evaluation_strategy="CrossValidationEvaluationStrategy",
             splits=json.dumps(
                 {

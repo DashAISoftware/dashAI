@@ -10,8 +10,10 @@ def _session_body(splits: dict, dataset: Dataset, name: str) -> dict:
         "name": name,
         "dataset_id": dataset.id,
         "task_name": "TabularClassificationTask",
-        "input_columns": ["SepalLengthCm"],
-        "output_columns": ["Species"],
+        "column_roles": {
+            "features": [{"kind": "raw", "name": "SepalLengthCm"}],
+            "target": [{"kind": "raw", "name": "Species"}],
+        },
         "train_metrics": [],
         "validation_metrics": [],
         "test_metrics": [],

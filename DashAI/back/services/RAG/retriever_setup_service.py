@@ -28,10 +28,13 @@ from DashAI.back.models.RAG.exceptions import (
     RAGRetrieverError,
     RAGRetrieverMissingParameterError,
 )
+from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
-from DashAI.back.models.RAG.retrievers.dense.dense_retriever import DenseRetriever
+from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
+    DenseEmbeddingRetriever,
+)
 from DashAI.back.models.RAG.retrievers.persistence import (
     DensePersistence,
     SparsePersistence,
@@ -39,7 +42,6 @@ from DashAI.back.models.RAG.retrievers.persistence import (
 from DashAI.back.models.RAG.retrievers.retriever_factory import (
     RetrieverFactory,
 )
-from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 from DashAI.back.models.RAG.utils import hash_function
 from DashAI.back.services.RAG.embedding_storage_service import EmbeddingStorageService
@@ -51,7 +53,7 @@ log = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class RetrieverSetupResult:
     db_record_id: int
-    model: RetrieverModel
+    model: BaseRetriever
 
 
 class RetrieverSetupService:
@@ -114,18 +116,18 @@ class RetrieverSetupService:
         component_name: str,
         params: dict[str, Any],
         persistence: DensePersistence | SparsePersistence | None = None,
-    ) -> RetrieverModel:
+    ) -> BaseRetriever:
         """Phase 1: Build model in memory. No I/O, no DB."""
         factory = RetrieverFactory(self._registry, self._env_RAG_path, self._chunks)
         result = factory.create(component_name, params, persistence)
         return result.model
 
-    def initialize_model(self, model: RetrieverModel) -> None:
+    def initialize_model(self, model: BaseRetriever) -> None:
         """Phase 2: Initialize model (load embeddings, similarity matrices)."""
         model.init_model()
 
     def persist_model(
-        self, model: RetrieverModel, component_name: str, sorted_params: dict
+        self, model: BaseRetriever, component_name: str, sorted_params: dict
     ) -> int:
         """Phase 3: Persist to DB and return bridge_id."""
         bridge_id = self._save_unit(model, sorted_params)
@@ -230,7 +232,7 @@ class RetrieverSetupService:
 
     def _load_unit_from_db(
         self, model_class: type, class_name: str, sorted_params: dict[str, Any]
-    ) -> RetrieverModel | None:
+    ) -> BaseRetriever | None:
         """Load a unit retriever (dense or sparse) from the DB cache.
 
         Args:
@@ -241,7 +243,7 @@ class RetrieverSetupService:
         Returns:
             Initialized retriever model, or ``None`` if not cached.
         """
-        if issubclass(model_class, DenseRetriever):
+        if issubclass(model_class, DenseEmbeddingRetriever):
             return self._load_dense(class_name, sorted_params)
         if issubclass(model_class, SparseRetriever):
             return self._load_sparse(class_name, sorted_params)
@@ -249,7 +251,7 @@ class RetrieverSetupService:
 
     def _load_dense(
         self, class_name: str, sorted_params: dict[str, Any]
-    ) -> RetrieverModel | None:
+    ) -> BaseRetriever | None:
         """Load a dense retriever from the DB cache by its natural key.
 
         Args:
@@ -257,7 +259,7 @@ class RetrieverSetupService:
             sorted_params: Deterministically sorted parameters.
 
         Returns:
-            Fully initialized DenseRetriever, or ``None`` if not cached.
+            Fully initialized DenseEmbeddingRetriever, or ``None`` if not cached.
 
         Raises:
             SQLAlchemyError: On database lookup failure.
@@ -285,7 +287,7 @@ class RetrieverSetupService:
 
     def _load_sparse(
         self, class_name: str, sorted_params: dict[str, Any]
-    ) -> RetrieverModel | None:
+    ) -> BaseRetriever | None:
         """Load a sparse retriever from the DB cache by its natural key.
 
         Args:
@@ -334,7 +336,7 @@ class RetrieverSetupService:
         Raises:
             RAGRetrieverError: If the retriever type is unsupported.
         """
-        if issubclass(model_class, DenseRetriever):
+        if issubclass(model_class, DenseEmbeddingRetriever):
             return self._build_dense_persistence_for(params)
         elif issubclass(model_class, SparseRetriever):
             return self._build_sparse_persistence_for(model_class, params)
@@ -350,10 +352,8 @@ class RetrieverSetupService:
         schema-component format ``{"component": "<class>", "params": {...}}``,
         set by ``DenseEmbeddingRetriever.__init__``.
 
-        When the embedding model key is absent (e.g. for
-        ``HuggingFaceDenseRetriever`` subclasses that create the embedding
-        internally during ``init_model()``), an empty persistence is returned
-        and the caller must handle embedding computation in Phase 2.
+        When the embedding model key is absent, an empty persistence is
+        returned and the caller must handle embedding computation in Phase 2.
 
         Args:
             params: Configuration parameters containing ``embedding_model``
@@ -443,7 +443,7 @@ class RetrieverSetupService:
 
     # ── Private: Persistence ───────────────────────────────────────────
 
-    def _save_unit(self, model: RetrieverModel, sorted_params: dict[str, Any]) -> int:
+    def _save_unit(self, model: BaseRetriever, sorted_params: dict[str, Any]) -> int:
         """Persist a unit retriever (dense or sparse) and return its bridge id.
 
         Args:
@@ -456,20 +456,22 @@ class RetrieverSetupService:
         Raises:
             ValueError: If the retriever type is unsupported.
         """
-        if isinstance(model, DenseRetriever):
+        if isinstance(model, DenseEmbeddingRetriever):
             return self._save_dense(model, sorted_params)
         if isinstance(model, SparseRetriever):
             return self._save_sparse(model, sorted_params)
         raise ValueError(f"Unsupported retriever: {type(model).__name__}")
 
-    def _save_dense(self, model: DenseRetriever, sorted_params: dict[str, Any]) -> int:
+    def _save_dense(
+        self, model: DenseEmbeddingRetriever, sorted_params: dict[str, Any]
+    ) -> int:
         """Persist a dense retriever: embedding matrices, bridge, and detail record.
 
         All DB operations share a single transaction; the caller's session
         is committed once at the end.
 
         Args:
-            model: The initialized DenseRetriever.
+            model: The initialized DenseEmbeddingRetriever.
             sorted_params: Deterministically sorted parameters.
 
         Returns:

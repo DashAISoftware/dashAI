@@ -18,6 +18,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history: the checks below read the migrations of previous
+          # releases (tags) and of the base branch.
+          fetch-depth: 0
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -27,6 +31,19 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --locked --extra cpu --no-install-package llama-cpp-python
+
+      # A migration that already reached a release or the base branch must keep
+      # its revision id and its parent; otherwise databases out there skip or
+      # cannot locate revisions.
+      - name: Check published migrations keep their parents
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          refs="$(git tag --sort=-creatordate | head -n 1)"
+          if [ -n "$BASE_REF" ]; then
+            refs="$refs origin/$BASE_REF"
+          fi
+          uv run --no-sync python scripts/ci_alembic_history.py check-parents $refs
 
       - name: Set DB env vars
         run: |
@@ -59,3 +76,10 @@ jobs:
         env:
           PYTHONPATH: "${PYTHONPATH}:."
         run: uv run --no-sync python -m scripts.ci_alembic_check
+
+      # A database created on each of the last releases must end up with the
+      # same schema as one created from scratch.
+      - name: Upgrade databases created on previous releases
+        run: |
+          uv run --no-sync python scripts/ci_alembic_history.py upgrade-from \
+            $(git tag --sort=-creatordate | head -n 8)

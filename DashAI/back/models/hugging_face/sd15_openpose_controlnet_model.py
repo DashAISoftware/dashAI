@@ -12,6 +12,10 @@ from DashAI.back.dependencies.downloads.downloadable import (
     HFDownloadableMixin,
 )
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
+from DashAI.back.models.hugging_face.diffusion_memory import (
+    GpuMemoryModeField,
+    place_pipeline,
+)
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 if TYPE_CHECKING:
@@ -164,6 +168,8 @@ class SD15OpenPoseControlNetSchema(BaseSchema):
         ),
     )  # type: ignore
 
+    gpu_memory_mode: GpuMemoryModeField = "auto"  # type: ignore
+
 
 class SD15OpenPoseControlNetModel(HFDownloadableMixin, BaseControlNetModel):
     """OpenPose-conditioned ControlNet pipeline built on Stable Diffusion 1.5.
@@ -264,8 +270,8 @@ class SD15OpenPoseControlNetModel(HFDownloadableMixin, BaseControlNetModel):
         Loads the OpenPose detector from ``lllyasviel/Annotators``, then loads
         ``lllyasviel/sd-controlnet-openpose`` as the ControlNet backbone and
         ``runwayml/stable-diffusion-v1-5`` as the base diffusion pipeline, both
-        moved to the requested device. CPU offloading is enabled automatically
-        via ``pipe.enable_model_cpu_offload()`` to reduce VRAM pressure.
+        placed on the requested device by ``place_pipeline`` according to
+        ``gpu_memory_mode``.
 
         Requires the ``controlnet_aux`` package
         (``pip install controlnet_aux``).
@@ -278,6 +284,9 @@ class SD15OpenPoseControlNetModel(HFDownloadableMixin, BaseControlNetModel):
 
             device : str
                 Target hardware (e.g. ``"GPU 0"`` or ``"CPU"``).
+            gpu_memory_mode : str
+                How much of the pipeline stays on the GPU; see
+                ``place_pipeline``. Defaults to ``"auto"``.
             num_inference_steps : int
                 Number of denoising steps during generation.
             controlnet_conditioning_scale : float
@@ -311,20 +320,21 @@ class SD15OpenPoseControlNetModel(HFDownloadableMixin, BaseControlNetModel):
         controlnet = ControlNetModel.from_pretrained(
             self._local_or_repo("lllyasviel/sd-controlnet-openpose"),
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
-        ).to(self.device)
+        )
 
         self.pipe = StableDiffusionControlNetPipeline.from_pretrained(
             self._local_or_repo("runwayml/stable-diffusion-v1-5"),
             controlnet=controlnet,
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
-        ).to(self.device)
+        )
 
         self.controlnet_conditioning_scale = kwargs.get("controlnet_conditioning_scale")
         self.num_inference_steps = kwargs.get("num_inference_steps")
         self.guidance_scale = kwargs.get("guidance_scale")
 
-        if self.device != "cpu":
-            self.pipe.enable_model_cpu_offload()
+        self.pipe = place_pipeline(
+            self.pipe, self.device, kwargs.get("gpu_memory_mode")
+        )
 
     def generate(self, input: Tuple["Image.Image", str]) -> List[Any]:
         """Generate output from a generative model.

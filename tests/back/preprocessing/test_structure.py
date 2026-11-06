@@ -1,0 +1,426 @@
+import pandas as pd
+
+from DashAI.back.converters.imbalanced_learn.smote_converter import SMOTEConverter
+from DashAI.back.converters.scikit_learn.one_hot_encoder import OneHotEncoder
+from DashAI.back.converters.scikit_learn.pca import PCA
+from DashAI.back.converters.scikit_learn.select_k_best import SelectKBest
+from DashAI.back.converters.scikit_learn.standard_scaler import StandardScaler
+from DashAI.back.converters.simple_converters.column_arithmetic import (
+    ColumnArithmetic,
+)
+from DashAI.back.converters.simple_converters.column_concat import ColumnConcat
+from DashAI.back.converters.simple_converters.date_features import (
+    DateFeaturesConverter,
+)
+from DashAI.back.converters.simple_converters.nan_remover import NanRemover
+from DashAI.back.converters.simple_converters.time_resampler import (
+    TimeResamplerConverter,
+)
+from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    to_dashai_dataset,
+    transform_dataset_with_schema,
+)
+from DashAI.back.preprocessing.column_ref import (
+    ConverterSequence,
+    ConverterStep,
+    GroupColumnRef,
+    RawColumnRef,
+)
+from DashAI.back.preprocessing.session_preprocessor import SessionPreprocessor
+from DashAI.back.preprocessing.structure import infer_structure
+from DashAI.back.preprocessing.structure_types import BlockItem, ColumnItem
+
+REGISTRY = {
+    cls.__name__: {"class": cls}
+    for cls in (
+        PCA,
+        SelectKBest,
+        StandardScaler,
+        DateFeaturesConverter,
+        SMOTEConverter,
+        NanRemover,
+        TimeResamplerConverter,
+    )
+}
+
+SCHEMA = {
+    "age": {"type": "Integer", "dtype": "int64"},
+    "height": {"type": "Float", "dtype": "float64"},
+    "city": {"type": "Categorical", "dtype": "string"},
+    "date": {"type": "Date", "dtype": "%Y-%m-%d"},
+    "date_year": {"type": "Integer", "dtype": "int64"},
+    "label": {"type": "Categorical", "dtype": "string"},
+}
+
+
+def _dataset():
+    frame = pd.DataFrame(
+        {
+            "age": [30, 41, 25, 60],
+            "height": [1.7, 1.8, 1.6, 1.75],
+            "city": ["a", "b", "a", "c"],
+            "date": ["2024-01-05", "2024-02-10", "2024-03-15", "2024-04-20"],
+            "date_year": [1, 2, 3, 4],
+            "label": ["yes", "no", "yes", "no"],
+        }
+    )
+    return transform_dataset_with_schema(to_dashai_dataset(frame), SCHEMA)
+
+
+def _infer(steps, candidates=("age", "height", "city", "date"), target=("label",)):
+    return infer_structure(
+        dataset_types=_dataset().types,
+        candidates=list(candidates),
+        target=list(target),
+        steps=steps,
+        component_registry=REGISTRY,
+    )
+
+
+def _step(converter, scope, **params):
+    return ConverterStep(converter=converter, params=params, scope=scope)
+
+
+def _names(state):
+    return [item.name for item in state if isinstance(item, ColumnItem)]
+
+
+def test_initial_state_is_the_candidates_without_the_target():
+    result = _infer([], candidates=["age", "label", "city"])
+
+    assert _names(result.initial) == ["age", "city"]
+    assert result.final == result.initial
+    assert result.valid
+
+
+def test_a_consumed_column_cannot_be_used_by_a_later_step():
+    result = _infer(
+        [
+            _step(
+                "PCA",
+                [RawColumnRef(name="age"), RawColumnRef(name="height")],
+                n_components=2,
+            ),
+            _step("StandardScaler", [RawColumnRef(name="age")]),
+        ]
+    )
+
+    first, second = result.steps
+    assert first.status == "ok"
+    assert "age" not in _names(first.state)
+    (block,) = first.added
+    assert isinstance(block, BlockItem)
+    assert (block.step, block.slot, block.count) == (0, None, 2)
+    assert second.status == "error"
+    assert second.error.code == "missing_ref"
+    assert not result.valid
+
+
+def test_the_target_cannot_be_in_a_scope():
+    result = _infer([_step("StandardScaler", [RawColumnRef(name="label")])])
+
+    assert result.steps[0].error.code == "target_in_scope"
+
+
+def test_steps_after_a_broken_one_are_blocked():
+    result = _infer(
+        [
+            _step("StandardScaler", [RawColumnRef(name="missing")]),
+            _step("StandardScaler", [RawColumnRef(name="age")]),
+        ]
+    )
+
+    assert [step.status for step in result.steps] == ["error", "blocked"]
+    assert _names(result.final) == ["age", "height", "city", "date"]
+
+
+def test_an_unknown_converter_is_an_error():
+    result = _infer([_step("Nope", [RawColumnRef(name="age")])])
+
+    assert result.steps[0].error.code == "unknown_converter"
+
+
+def test_a_scope_type_the_converter_does_not_accept_is_an_error():
+    result = _infer([_step("StandardScaler", [RawColumnRef(name="city")])])
+
+    assert result.steps[0].error.code == "type_not_allowed"
+
+
+def _infer_keeping_rows(steps, **kwargs):
+    return infer_structure(
+        dataset_types=_dataset().types,
+        candidates=["age", "height", "city", "date"],
+        target=["label"],
+        steps=steps,
+        component_registry=REGISTRY,
+        keeps_rows=True,
+        **kwargs,
+    )
+
+
+def test_a_task_that_keeps_its_rows_refuses_every_step_that_changes_them():
+    # A task with a time index counts its cuts in steps (PREPROCESSING_KEEPS_ROWS):
+    # removing rows, resampling or a resampler with no split rule all shift them.
+    params = schema_placeholder_defaults(TimeResamplerConverter)
+    for step in (
+        _step("NanRemover", [RawColumnRef(name="height")]),
+        _step("SMOTEConverter", [RawColumnRef(name="age")]),
+        _step("TimeResamplerConverter", [RawColumnRef(name="date")], **params),
+    ):
+        result = _infer_keeping_rows([step])
+
+        assert not result.valid
+        assert result.steps[0].error.code == "changes_rows"
+        assert result.steps[0].error.params == {"converter": step.converter}
+
+
+def test_a_task_that_keeps_its_rows_takes_a_step_that_keeps_them():
+    result = _infer_keeping_rows([_step("StandardScaler", [RawColumnRef(name="age")])])
+
+    assert result.valid
+
+
+def test_a_task_that_may_change_rows_still_takes_a_row_step():
+    result = _infer([_step("NanRemover", [RawColumnRef(name="height")])])
+
+    assert result.valid
+
+
+def test_row_changing_converters_without_a_split_rule_are_not_supported():
+    params = schema_placeholder_defaults(TimeResamplerConverter)
+    result = _infer(
+        [_step("TimeResamplerConverter", [RawColumnRef(name="date")], **params)]
+    )
+
+    assert result.steps[0].error.code == "rows_not_supported"
+
+
+def test_a_resampler_keeps_its_scope_and_drops_every_other_column():
+    result = _infer(
+        [
+            _step(
+                "SMOTEConverter",
+                [RawColumnRef(name="age"), RawColumnRef(name="height")],
+                random_state=0,
+            )
+        ]
+    )
+
+    step = result.steps[0]
+    assert step.status == "ok"
+    assert _names(step.state) == ["age", "height"]
+    codes = [warning.code for warning in step.warnings]
+    assert codes == ["train_only", "drops_columns"]
+    assert step.warnings[1].params == {"columns": ["city", "date"]}
+
+
+def test_more_components_than_columns_is_an_error():
+    result = _infer(
+        [
+            _step(
+                "PCA",
+                [RawColumnRef(name="age"), RawColumnRef(name="height")],
+                n_components=5,
+            )
+        ]
+    )
+
+    error = result.steps[0].error
+    assert error.code == "n_components_exceeds"
+    assert error.params == {"n_components": 5, "columns": 2}
+
+
+def test_a_named_generated_column_can_be_used_by_a_later_step():
+    result = _infer(
+        [
+            _step("DateFeaturesConverter", [RawColumnRef(name="date")]),
+            _step("StandardScaler", [GroupColumnRef(step=0, name="date_month")]),
+        ]
+    )
+
+    assert result.valid
+    month = next(item for item in result.final if item.name == "date_month")
+    assert (month.type, month.origin) == ("Float", 0)
+
+
+def test_a_selector_over_mixed_types_adds_one_slotted_block_per_type():
+    result = _infer(
+        [
+            _step(
+                "SelectKBest",
+                [RawColumnRef(name="age"), RawColumnRef(name="height")],
+                k=1,
+            ),
+        ]
+    )
+
+    blocks = result.steps[0].added
+    assert {(block.slot, block.type) for block in blocks} == {
+        ("Integer", "Integer"),
+        ("Float", "Float"),
+    }
+
+
+def test_a_clashing_new_column_is_renamed_like_the_runtime_does():
+    # "date_year" exists in the dataset but is not a candidate, so the one
+    # DateFeatures creates must become "date_year_1", as the runtime names it.
+    step = _step("DateFeaturesConverter", [RawColumnRef(name="date")])
+
+    estimated = _infer([step])
+
+    preprocessor = SessionPreprocessor(ConverterSequence(steps=[step]), REGISTRY)
+    _, resolved = preprocessor.fit_transform({"train": _dataset()})
+    added = [item.name for item in estimated.steps[0].added]
+    assert added[0] == "date_year_1"
+    assert added == resolved[0]
+
+
+class _BrokenEstimateConverter(StandardScaler):
+    """Stands in for a plugin whose structure estimate crashes."""
+
+    def get_output_type(self, column_name=None):
+        raise RuntimeError("no idea")
+
+
+def test_a_crashing_estimate_falls_back_to_one_unknown_block():
+    registry = {**REGISTRY, "Broken": {"class": _BrokenEstimateConverter}}
+
+    result = infer_structure(
+        dataset_types=_dataset().types,
+        candidates=["age", "height"],
+        target=["label"],
+        steps=[_step("Broken", [RawColumnRef(name="age")])],
+        component_registry=registry,
+    )
+
+    step = result.steps[0]
+    assert step.status == "ok"
+    assert [w.code for w in step.warnings] == ["inference_fallback"]
+    (block,) = step.added
+    assert (block.type, block.count) == (None, None)
+    assert _names(step.state) == ["height"]
+
+
+def test_nan_remover_keeps_its_scope_and_warns_it_removes_rows_everywhere():
+    result = _infer([_step("NanRemover", [RawColumnRef(name="age")])])
+
+    step = result.steps[0]
+    assert step.status == "ok"
+    assert _names(step.state) == ["age"]
+    codes = [warning.code for warning in step.warnings]
+    assert codes == ["rows_removed_in_splits", "drops_columns"]
+
+
+def test_an_add_step_that_drops_its_source_columns_removes_them_from_the_state():
+    result = _infer(
+        [
+            _step(
+                "DateFeaturesConverter",
+                [RawColumnRef(name="date")],
+                drop_source_columns=True,
+            )
+        ]
+    )
+
+    assert result.valid
+    assert "date" not in _names(result.final)
+    assert "date_month" in _names(result.final)
+
+
+def test_a_later_step_using_a_dropped_column_is_a_missing_ref():
+    result = _infer(
+        [
+            _step(
+                "DateFeaturesConverter",
+                [RawColumnRef(name="date")],
+                drop_source_columns=True,
+            ),
+            _step("StandardScaler", [RawColumnRef(name="date")]),
+        ]
+    )
+
+    assert result.steps[1].status == "error"
+    assert result.steps[1].error.code == "missing_ref"
+
+
+def test_dropping_source_columns_estimates_what_the_runtime_produces():
+    step = _step(
+        "DateFeaturesConverter", [RawColumnRef(name="date")], drop_source_columns=True
+    )
+
+    estimated = _infer([step])
+
+    preprocessor = SessionPreprocessor(ConverterSequence(steps=[step]), REGISTRY)
+    transformed, resolved = preprocessor.fit_transform({"train": _dataset()})
+    added = [item.name for item in estimated.steps[0].added]
+    assert added == resolved[0]
+    assert "date" not in transformed["train"].column_names
+    assert set(_names(estimated.final)) <= set(transformed["train"].column_names)
+
+
+def _infer_with(registry, steps):
+    return infer_structure(
+        dataset_types=_dataset().types,
+        candidates=["age", "height", "city", "date"],
+        target=["label"],
+        steps=steps,
+        component_registry=registry,
+    )
+
+
+ADD_REGISTRY = {
+    cls.__name__: {"class": cls}
+    for cls in (OneHotEncoder, ColumnArithmetic, ColumnConcat)
+}
+
+
+def test_a_name_freed_by_a_dropping_block_step_is_reused_like_the_runtime_does():
+    # One-hot outputs a block; with its source dropped, "city" is free again,
+    # so a later column named "city" keeps that name in the dataset.
+    steps = [
+        _step(
+            "OneHotEncoder",
+            [RawColumnRef(name="city")],
+            **{
+                **schema_placeholder_defaults(OneHotEncoder),
+                "drop_source_columns": True,
+            },
+        ),
+        _step(
+            "ColumnArithmetic",
+            [RawColumnRef(name="age"), RawColumnRef(name="height")],
+            operation="add",
+            output_column_name="city",
+        ),
+    ]
+
+    estimated = _infer_with(ADD_REGISTRY, steps)
+
+    preprocessor = SessionPreprocessor(ConverterSequence(steps=steps), ADD_REGISTRY)
+    _, resolved = preprocessor.fit_transform({"train": _dataset()})
+    assert estimated.valid
+    assert [item.name for item in estimated.steps[1].added] == resolved[1]
+
+
+def test_an_output_named_like_a_scope_column_is_rejected():
+    # Named after its own source, the result could not be told apart from the
+    # source column it keeps: dropping the source would delete the result.
+    for converter, scope, params in (
+        ("ColumnArithmetic", ["age", "height"], {"operation": "add"}),
+        ("ColumnConcat", ["city"], {"constant": "x"}),
+    ):
+        result = _infer_with(
+            ADD_REGISTRY,
+            [
+                _step(
+                    converter,
+                    [RawColumnRef(name=name) for name in scope],
+                    output_column_name=scope[0],
+                    **params,
+                )
+            ],
+        )
+
+        assert result.steps[0].status == "error", converter
+        assert result.steps[0].error.code == "converter_rejected", converter

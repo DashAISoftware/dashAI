@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dashAI"
-version = "0.10.0"
+version = "0.11.0"
 description = "dashAI: a graphical toolbox for training, evaluating and deploying state-of-the-art AI models."
 readme = "README.rst"
 license = "MIT"
@@ -49,8 +49,12 @@ dependencies = [
     "arviz<1.0.0",
     "typer",
     "rich",
-    "torch",
-    "torchvision",
+    # transformers 5.20 disables torch below 2.6 at import time, so every HF
+    # model stops working while the app still boots. Without a minimum,
+    # pip install -e . keeps an older torch that is already installed.
+    # uv sync is unaffected: the lock pins a compatible pair.
+    "torch>=2.6",
+    "torchvision>=0.21",
     "transformers>=5.0.0",
     "sentence-transformers",
     "controlnet_aux",
@@ -68,6 +72,7 @@ dependencies = [
     "imblearn",
     "numba>=0.60",
     "llvmlite>=0.43",
+    "faiss-cpu",
     "huey",
     "ijson",
     "greenery==3.2",
@@ -86,6 +91,9 @@ dependencies = [
     "pypdf",
     "pdfminer.six",
     "pdfplumber",
+    "python-docx>=1.2.0",
+    "unstructured[docx,md,pptx,xlsx]>=0.27.34",
+    "scikit-posthocs>=0.17.1",
 ]
 
 [project.optional-dependencies]

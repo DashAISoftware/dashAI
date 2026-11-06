@@ -12,6 +12,10 @@ from DashAI.back.dependencies.downloads.downloadable import (
     HFDownloadableMixin,
 )
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
+from DashAI.back.models.hugging_face.diffusion_memory import (
+    GpuMemoryModeField,
+    place_pipeline,
+)
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 if TYPE_CHECKING:
@@ -179,6 +183,8 @@ class SD15DepthControlNetSchema(BaseSchema):
         ),
     )  # type: ignore
 
+    gpu_memory_mode: GpuMemoryModeField = "auto"  # type: ignore
+
 
 def get_depth_map_sd15(image, device, model_source="Intel/dpt-hybrid-midas"):
     """Convert an input image to a normalised depth map for SD 1.5 ControlNet.
@@ -328,8 +334,8 @@ class SD15DepthControlNetModel(HFDownloadableMixin, BaseControlNetModel):
 
         Loads ``lllyasviel/sd-controlnet-depth`` as the ControlNet backbone and
         ``runwayml/stable-diffusion-v1-5`` as the base diffusion pipeline, both
-        moved to the requested device. CPU offloading is enabled automatically
-        via ``pipe.enable_model_cpu_offload()`` to reduce VRAM pressure.
+        placed on the requested device by ``place_pipeline`` according to
+        ``gpu_memory_mode``.
 
         Parameters
         ----------
@@ -339,6 +345,9 @@ class SD15DepthControlNetModel(HFDownloadableMixin, BaseControlNetModel):
 
             device : str
                 Target hardware (e.g. ``"GPU 0"`` or ``"CPU"``).
+            gpu_memory_mode : str
+                How much of the pipeline stays on the GPU; see
+                ``place_pipeline``. Defaults to ``"auto"``.
             num_inference_steps : int
                 Number of denoising steps during generation.
             controlnet_conditioning_scale : float
@@ -358,20 +367,21 @@ class SD15DepthControlNetModel(HFDownloadableMixin, BaseControlNetModel):
         controlnet = ControlNetModel.from_pretrained(
             self._local_or_repo("lllyasviel/sd-controlnet-depth"),
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
-        ).to(self.device)
+        )
 
         self.pipe = StableDiffusionControlNetPipeline.from_pretrained(
             self._local_or_repo("runwayml/stable-diffusion-v1-5"),
             controlnet=controlnet,
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
-        ).to(self.device)
+        )
 
         self.controlnet_conditioning_scale = kwargs.get("controlnet_conditioning_scale")
         self.num_inference_steps = kwargs.get("num_inference_steps")
         self.guidance_scale = kwargs.get("guidance_scale")
 
-        if self.device != "cpu":
-            self.pipe.enable_model_cpu_offload()
+        self.pipe = place_pipeline(
+            self.pipe, self.device, kwargs.get("gpu_memory_mode")
+        )
 
     def generate(self, input: Tuple["Image.Image", str]) -> List[Any]:
         """Generate output from a generative model.

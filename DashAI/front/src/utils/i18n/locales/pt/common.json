@@ -84,6 +84,7 @@
   "finish": "Finalizar",
   "finished": "Concluído",
   "from": "De",
+  "full": "Completo",
   "generative": "Generativo",
   "graphs": "Gráficos",
   "hardwareMonitor": {
@@ -288,5 +289,14 @@
   "viewDetails": "Ver Detalhes",
   "viewLess": "Ver menos",
   "viewMore": "Ver mais",
-  "yes": "Sim"
+  "yes": "Sim",
+  "data": "Dados",
+  "defaultName": {
+    "dataset": "Conjunto_de_dados",
+    "notebook": "Caderno",
+    "pipeline": "Pipeline",
+    "document": "Documento",
+    "localExplainer": "Explicador_local",
+    "globalExplainer": "Explicador_global"
+  }
 }

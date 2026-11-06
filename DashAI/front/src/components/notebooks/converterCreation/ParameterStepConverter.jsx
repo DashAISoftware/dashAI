@@ -13,6 +13,13 @@ export default function ParameterStepConverter({
   handleSaveConverter,
   setStep,
   hideButtons = false,
+  // The notebook fits a converter on the whole dataset, so one that learns
+  // from the data can leak test information. Session preprocessing fits on
+  // the training split only, so it turns this warning off.
+  warnAboutLeakage = true,
+  // Schema fields left out of the form, e.g. options that do not apply to
+  // the notebook's kind of data.
+  excludeFields = [],
 }) {
   const tourContext = useTourContext();
   const { t } = useTranslation(["common", "datasets"]);
@@ -72,6 +79,9 @@ export default function ParameterStepConverter({
     nColumnsSelected > 0 &&
     currentNComponents > nColumnsSelected;
 
+  const showLeakageWarning =
+    warnAboutLeakage && tool?.metadata?.learns_from_data === true;
+
   return (
     <Box
       sx={{
@@ -95,6 +105,11 @@ export default function ParameterStepConverter({
           })}
         </Alert>
       )}
+      {showLeakageWarning && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          {t("datasets:label.leakageWarning")}
+        </Alert>
+      )}
       <FormSchemaContainer>
         <FormSchemaWithSelectedModel
           onFormSubmit={handleSave}
@@ -103,6 +118,7 @@ export default function ParameterStepConverter({
           onCancel={() => setStep(0)}
           saveButtonText={t("datasets:button.createConverter")}
           hideButtons={hideButtons}
+          excludeFields={excludeFields}
           onValuesChange={(values) => {
             if (values?.n_components !== undefined) {
               setCurrentNComponents(values.n_components);

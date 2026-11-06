@@ -1,13 +1,14 @@
 """Promptable instance segmentation converter that appends ranked columns."""
 
 import io
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from kink import di
 
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
 )
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.core.schema_fields import (
     bool_field,
     enum_field,
@@ -16,7 +17,6 @@ from DashAI.back.core.schema_fields import (
     schema_field,
     string_field,
 )
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.downloads.downloadable import (
     HFPretrainedDownloadMixin,
@@ -26,6 +26,12 @@ from DashAI.back.models.utils import (
     DEVICE_ENUM,
     DEVICE_PLACEHOLDER,
     DEVICE_TO_IDX,
+)
+from DashAI.back.preprocessing.structure_types import (
+    ColumnItem,
+    StateItem,
+    StructureDelta,
+    type_fields,
 )
 from DashAI.back.segmenters.rendering import render_binary_mask, render_segment
 from DashAI.back.segmenters.sam3_segmenter import SAM3Segmenter
@@ -60,7 +66,7 @@ def _mask_column(rank: int) -> str:
     return f"{MASK_COLUMN}_{rank}"
 
 
-class SAM3SegmentConverterSchema(BaseSchema):
+class SAM3SegmentConverterSchema(AddColumnsConverterSchema):
     """Configuration schema for the SAM3 segmentation converter."""
 
     prompt: schema_field(
@@ -333,6 +339,7 @@ class SAM3SegmentConverter(HFPretrainedDownloadMixin, AdvancedPreprocessingConve
 
     SCHEMA = SAM3SegmentConverterSchema
     CHANGES_ROW_COUNT = False
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en="Detects every instance of a prompt in each image and appends "
         "2 times max_masks new columns, keeping every row unchanged: "
@@ -814,6 +821,36 @@ class SAM3SegmentConverter(HFPretrainedDownloadMixin, AdvancedPreprocessingConve
                 output_types[mask_name] = DashAIImage()
 
         return DashAIDataset(result_table, splits=x.splits, types=output_types)
+
+    def infer_output_columns(self, inputs: List[StateItem]) -> StructureDelta:
+        """Estimate the output: the scope kept, plus one column set per rank.
+
+        ``max_masks`` fixes how many ``segment_i`` and ``seg_score_i``
+        columns (and ``mask_i`` with ``keep_binary_mask``) are appended,
+        whatever the model detects, so every name is known ahead of fit.
+
+        Parameters
+        ----------
+        inputs : list of ColumnItem | BlockItem
+            The dataset state items in this converter's scope.
+
+        Returns
+        -------
+        StructureDelta
+            The unchanged inputs, plus the segment, score and mask columns.
+        """
+        names = [
+            name
+            for rank in range(1, self.max_masks + 1)
+            for name in (_segment_column(rank), _score_column(rank))
+        ]
+        if self.keep_binary_mask:
+            names += [_mask_column(rank) for rank in range(1, self.max_masks + 1)]
+        added = []
+        for name in names:
+            type_name, dtype = type_fields(self.get_output_type(name))
+            added.append(ColumnItem(name=name, type=type_name, dtype=dtype))
+        return StructureDelta(kept=list(inputs), added=added)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI type produced for a given output column.

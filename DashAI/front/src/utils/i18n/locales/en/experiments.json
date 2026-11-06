@@ -29,20 +29,20 @@
     "trainSplitMustBeGreaterThanZero": "Train split must be greater than zero",
     "trainSplitMustHaveAtLeastOneRow": "Train split must have at least one row",
     "foldsMustBeLessThanDatasetSize": "Number of folds must be less than or equal to the number of samples in the dataset ({{datasetSize}})",
+    "seriesTooShort": "A horizon of {{horizon}} with {{origins}} validation origin(s) needs at least {{needed}} rows; the dataset has {{rows}}. Shorten the horizon, use fewer origins, or bring more history.",
     "groupColumnMustBeSelected": "A group column must be selected"
   },
   "label": {
     "addModelsToExperiment": "Add Models to your Experiment",
     "addOptimizersToExperiment": "Add Optimizers to your Experiment",
-    "columnsInvalidRequirements": "Current Input and Output columns do not match {{taskName}} requirements",
-    "columnsValidRequirements": "Current Input and Output columns match {{taskName}} requirements",
+    "columnsInvalidRequirements": "The selected columns do not match the requirements of {{taskName}}",
+    "columnsValidRequirements": "The selected columns match the requirements of {{taskName}}",
     "configureExperimentsSubtitle": "Configure experiments to train models.",
     "configureModels": "Configure models",
     "configureOptimizer": "Configure hyperparameter optimization",
     "currentExperiments": "Current Experiments",
     "currentOptimizerSettings": "Current Optimizer Settings {{optimizer}}",
-    "datasetInputColumnRequirements": "<0>The input columns must be of the types</0><1></1><2>, and they should have a cardinality of </2><3>{{cardinality}}.</3>",
-    "datasetOutputColumnRequirements": "<0>The output columns must be of the types</0><1></1><2>, and they should have a cardinality of </2><3>{{cardinality}}.</3>",
+    "datasetRoleColumnRequirements": "<0>{{role}}: the columns must be of the types</0><1></1><2>, and they should have a cardinality of </2><3>{{cardinality}}.</3>",
     "cardinalityAtLeast": "at least {{min}}",
     "cardinalityBetween": "{{min}} to {{max}}",
     "duration": "Duration",
@@ -56,9 +56,11 @@
     "modelName": "Model Name",
     "modelsInExperiment": "Current Models in the Experiment",
     "noDatasetsAvailable": "There are no Datasets Available",
+    "noConverterAdded": "No converter was added.",
     "noDatasetsAvailableGoToDataTab": "Go to <1>data tab</1> to upload one first.",
     "noModelsAvailable": "No Models Available",
     "noOptimizersNoMetric": "No hyperparameter optimization",
+    "noSplitConfigNeeded": "This task type trains on the full dataset — no train/validation/test split needs to be configured.",
     "optimizer": "Optimizer",
     "optimizerMetric": "Optimization Metric",
     "parameterModification": "Parameter Modification",
@@ -69,19 +71,18 @@
     "rowIndexes": "Row Indexes",
     "rowIndexesDescription": "Specify row ranges for each split using comma-separated values or ranges (e.g. 0-100, 200).",
     "seed": "Seed",
-    "selectDatasetColumns": "Indicate which columns of the dataset will be used as input and output.",
     "selectDatasetTitle": "Select a dataset for the selected task",
     "selectHowToDivideDataset": "Select how to divide the dataset into training, validation and test subsets.",
     "selectEvaluationStrategy": "Evaluation strategy",
     "holdout": "Holdout",
     "crossValidation": "Cross-Validation",
     "cvType": "Cross-Validation Type",
+    "splitter": "Splitter",
     "numFolds": "Number of Folds (k)",
     "numFoldsDescription": "Number of folds to use for cross-validation. A higher number of folds can improve the stability of the evaluation, but increases the processing time. Must be an integer greater than 1.",
     "numRepeats": "Number of Repeats",
     "numRepeatsDescription": "Number of times to repeat the cross-validation process. A higher value provides more precise results but requires more training time. Must be an integer greater than 1.",
     "groupColumn": "Column to Group By",
-    "selectInputOutputColumnsDescription": "Select column names from the lists.",
     "selectMetrics": "Select metrics",
     "selectModelFirst": "Select a Model First",
     "selectModelToAdd": "Select a Model to Add",
@@ -133,17 +134,26 @@
   "splitPreview": {
     "title": "Split preview",
     "unavailable": "This splitter does not describe its shape yet, so there is nothing to draw.",
+    "loading": "Drawing the split…",
+    "failed": "The preview could not be computed ({{reason}}). You can go on: the session checks these parameters when it is created.",
+    "retry": "Retry",
+    "invalid": "The splitter cannot use these parameters; check the marked fields of its form.",
     "wholeDataset": "Dataset",
     "reservedTest": "Held out",
     "finalFit": "Final fit",
     "fold": "Fold {{index}}",
+    "origin": "Origin {{index}}",
+    "testOrigin": "Test",
     "moreFolds": "+{{hidden}} more folds",
+    "moreOrigins": "+{{hidden}} more origins",
     "unused": "Unused",
-    "notes": {
-      "foldsHidden": "{{total}} folds in total; only the first ones and the last are drawn."
+    "legend": {
+      "steps_one": "{{role}}: {{count}} step",
+      "steps_other": "{{role}}: {{count}} steps"
     },
-    "error": {
-      "notEnoughRows": "{{folds}} origins with a horizon of {{horizon}} and a step of {{step}} do not fit in {{rows}} rows. Lower one of them, or hold out less."
+    "notes": {
+      "foldsHidden": "{{total}} folds in total; only the first ones and the last are drawn.",
+      "originsHidden": "{{total}} origins in total; only the first ones and the last are drawn."
     }
   }
 }

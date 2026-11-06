@@ -151,3 +151,40 @@ export async function getOuterAveragedMetrics(
   });
   return response.data;
 }
+
+export const exportRunModel = async (runId: number): Promise<Blob> => {
+  const response = await api.get(`/v1/run/${runId}/export`, {
+    responseType: "blob",
+  });
+  return response.data;
+};
+
+// One origin of a backtest: the window it forecast, what happened and the
+// forecast with its intervals by level ("80", "95"). A value with none is null.
+export interface IForecastOrigin {
+  partition: "validation" | "test";
+  index: number;
+  origin_step: number;
+  dates: string[];
+  actual: (number | null)[];
+  forecast: (number | null)[];
+  lower: Record<string, (number | null)[]>;
+  upper: Record<string, (number | null)[]>;
+}
+
+export interface IRunForecasts {
+  version: number;
+  freq: string;
+  horizon: number;
+  levels: number[];
+  season_length?: number;
+  origins: IForecastOrigin[];
+}
+
+// The forecasts a finished backtest run saved, origin by origin.
+export const getRunForecasts = async (
+  runId: number,
+): Promise<IRunForecasts> => {
+  const response = await api.get<IRunForecasts>(`/v1/run/${runId}/forecasts`);
+  return response.data;
+};

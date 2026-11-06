@@ -42,6 +42,12 @@ import DatasetAutocomplete from "../notebooks/notebookCreation/DatasetAutocomple
 import ExplainerSourceToggle from "./ExplainerSourceToggle";
 import RowSelectionModeToggle from "./RowSelectionModeToggle";
 import ExplanationInfo from "./ExplanationInfo";
+import {
+  TaskMetadataError,
+  fetchTaskMetadata,
+} from "../../hooks/useTaskMetadata";
+import { sessionColumns } from "../models/modelSession/columnRoles";
+import { getApiDetail } from "../../utils/apiError";
 
 export default function SelectDatasetStep({
   newExpl,
@@ -67,6 +73,8 @@ export default function SelectDatasetStep({
   const [inputColumns, setInputColumns] = useState([]);
   const [outputColumns, setOutputColumns] = useState([]);
   const [trainingDatasetId, setTrainingDatasetId] = useState(null);
+  // The session's task when it cannot be read: nothing can be explained then.
+  const [unavailableTask, setUnavailableTask] = useState(null);
   // Which partitions this run can be explained on, and how many rows each has.
   // The backend decides the list, so a new partition needs no change here.
   const [explainableSplits, setExplainableSplits] = useState([]);
@@ -101,9 +109,10 @@ export default function SelectDatasetStep({
         const validIdSet = new Set(validIds.map(String));
         setDatasets(all.filter((ds) => validIdSet.has(String(ds.id))));
       } catch (error) {
-        enqueueSnackbar(t("explainers:error.fetchDatasets"), {
-          variant: "error",
-        });
+        enqueueSnackbar(
+          getApiDetail(error, t("explainers:error.fetchDatasets")),
+          { variant: "error" },
+        );
         setRequestError(true);
         console.error("Error fetching datasets", error);
       } finally {
@@ -117,11 +126,18 @@ export default function SelectDatasetStep({
   useEffect(() => {
     const fetchRunInfo = async () => {
       if (!newExpl.run_id) return;
+      setUnavailableTask(null);
       try {
         const run = await getRunById(newExpl.run_id);
         const session = await getModelSessionById(run.model_session_id);
-        setInputColumns(session.input_columns ?? []);
-        setOutputColumns(session.output_columns ?? []);
+        const columns = sessionColumns(
+          session,
+          await fetchTaskMetadata(session.task_name),
+        );
+        // The rows typed by hand carry dataset columns; the backend runs
+        // the session's fitted preprocessor over them.
+        setInputColumns(columns.rawInputs);
+        setOutputColumns(columns.outputs);
         setTrainingDatasetId(session.dataset_id);
         const splits = await getExplainableSplitsRequest(newExpl.run_id);
         setExplainableSplits(splits);
@@ -129,6 +145,9 @@ export default function SelectDatasetStep({
           setSplit(splits[0].name);
         }
       } catch (error) {
+        if (error instanceof TaskMetadataError) {
+          setUnavailableTask(error.taskName);
+        }
         console.error(`Error fetching run info for ${newExpl.run_id}`, error);
       }
     };
@@ -270,11 +289,16 @@ export default function SelectDatasetStep({
 
   return (
     <Box sx={{ width: "100%" }}>
+      {unavailableTask && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {t("explainers:error.taskNotAvailable", { task: unavailableTask })}
+        </Alert>
+      )}
       <ExplainerSourceToggle source={source} onChange={setSource} />
 
       {source === "manual" ? (
         <ManualInput
-          experiment={{ input_columns: inputColumns }}
+          inputColumns={inputColumns}
           loading={loadingManual}
           types={manualTypes}
           sample={manualSample}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
-import { Alert, Box, Typography } from "@mui/material";
+import { Alert, Box, Chip, Typography } from "@mui/material";
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -8,6 +8,8 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { Trans, useTranslation } from "react-i18next";
+import { getColorByColumnType } from "../../utils";
+import { getColumnTypeLabel } from "../../utils/typesLists";
 import { useTableLocalization } from "../../utils/useTableLocalization";
 
 /**
@@ -42,10 +44,12 @@ function ColumnSelector({
   allowedDtypes = [],
   allowedTypes = [],
   nonAllowedDtypes = [],
+  allowedColumnNames = null,
   excludedColumnIds = [],
   onSelectionChange = () => {},
   onValidationChange = () => {},
   columnTypes = null,
+  optionLabels = {},
 }) {
   const [rows, setRows] = useState([]);
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
@@ -72,11 +76,56 @@ function ColumnSelector({
         accessorKey: "columnName",
         header: t("datasets:label.columnName"),
         flex: 1,
+        // The underlying value stays the real column name/synthetic group
+        // key (selection tracking and the caller's onSelectionChange both
+        // depend on it). Only a converter's output group — the only rows
+        // `optionLabels` ever has an entry for, never a raw column — gets
+        // the RefChip-style label + type badge, so it looks identical to
+        // that same group's chip in AppliedConvertersView; a plain raw
+        // column keeps rendering as plain text, unchanged.
+        Cell: ({ cell, row }) => {
+          const key = cell.getValue();
+          const rawLabel = optionLabels[key];
+          if (!rawLabel) return key;
+          // Drop a trailing "(slot)" — e.g. "SimpleImputer: output
+          // (Integer)" — since the type badge right next to it already
+          // shows that same value; text-only consumers of this same label
+          // (e.g. the column Autocomplete elsewhere) keep the full string,
+          // this strip only affects this chip's own rendering.
+          const label = rawLabel.replace(/ \([^)]*\)$/, "");
+          const type = row.original.valueType;
+          return (
+            <Chip
+              size="small"
+              label={
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <span>{label}</span>
+                  {type && type !== t("common:unknown") && (
+                    <Chip
+                      label={getColumnTypeLabel(type, t)}
+                      size="small"
+                      sx={{
+                        backgroundColor: (cellTheme) =>
+                          getColorByColumnType(type, cellTheme),
+                        color: "#fff",
+                        fontWeight: 600,
+                        fontSize: "0.65rem",
+                        height: "18px",
+                        ml: 1,
+                      }}
+                    />
+                  )}
+                </Box>
+              }
+            />
+          );
+        },
       },
       {
         accessorKey: "valueType",
         header: t("datasets:label.valueType"),
         flex: 0.5,
+        Cell: ({ cell }) => getColumnTypeLabel(cell.getValue(), t),
       },
       {
         accessorKey: "dataType",
@@ -89,7 +138,7 @@ function ColumnSelector({
         flex: 0.5,
       },
     ],
-    [t],
+    [t, optionLabels],
   );
 
   useEffect(() => {
@@ -133,11 +182,11 @@ function ColumnSelector({
   const isValidSelection = useCallback(
     (selection) => {
       if (selection.length === 0) {
-        return false;
+        return inputCardinality.exact === 0;
       }
 
       if (
-        inputCardinality.exact &&
+        inputCardinality.exact != null &&
         selection.length !== inputCardinality.exact
       ) {
         return false;
@@ -156,8 +205,15 @@ function ColumnSelector({
     [inputCardinality],
   );
   const getValidColumnIds = useCallback(() => {
+    if (inputCardinality.exact === 0) return [];
     return rows
       .filter((row) => {
+        if (
+          allowedColumnNames !== null &&
+          !allowedColumnNames.has(row.columnName)
+        ) {
+          return false;
+        }
         if (excludedColumnIds.includes(row.id)) {
           return false;
         }
@@ -175,7 +231,14 @@ function ColumnSelector({
         return true;
       })
       .map((row) => row.id);
-  }, [rows, allowedDtypes, allowedTypes, nonAllowedDtypes, excludedColumnIds]);
+  }, [
+    rows,
+    allowedDtypes,
+    allowedTypes,
+    nonAllowedDtypes,
+    allowedColumnNames,
+    excludedColumnIds,
+  ]);
 
   // Deselect any already-selected column that becomes excluded (e.g. it was
   // picked as scope and then also set as the target column)
@@ -376,11 +439,14 @@ function ColumnSelector({
               exact: inputCardinality.exact,
               min: inputCardinality.min || 0,
               max: inputCardinality.max,
-              context: inputCardinality.exact
-                ? "exact"
-                : inputCardinality.max
-                  ? "range"
-                  : "min",
+              context:
+                inputCardinality.exact === 0
+                  ? "none"
+                  : inputCardinality.exact
+                    ? "exact"
+                    : inputCardinality.max
+                      ? "range"
+                      : "min",
             })}
           </Typography>
         )}
@@ -496,6 +562,7 @@ ColumnSelector.propTypes = {
   excludedColumnIds: PropTypes.array,
   onSelectionChange: PropTypes.func,
   onValidationChange: PropTypes.func,
+  optionLabels: PropTypes.object,
 };
 
 export default ColumnSelector;

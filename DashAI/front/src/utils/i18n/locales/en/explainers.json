@@ -29,7 +29,8 @@
     "nameTooShort": "The explainer name must have at least 4 alphanumeric characters.",
     "noData": "No data available",
     "nameAlreadyExists": "Name already exists",
-    "validateDataset": "Error while trying to validate the selected dataset."
+    "validateDataset": "Error while trying to validate the selected dataset.",
+    "taskNotAvailable": "The task {{task}} of this session is not available, so the columns to explain cannot be read. It may belong to a plugin that is no longer installed."
   },
   "label": {
     "configureExplainer": "Configure your Explainer",

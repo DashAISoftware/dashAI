@@ -12,6 +12,10 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.downloads.downloadable import (
     HFPretrainedDownloadMixin,
 )
+from DashAI.back.models.hugging_face.diffusion_memory import (
+    GpuMemoryModeField,
+    place_pipeline,
+)
 from DashAI.back.models.text_to_image_generation_model import (
     TextToImageGenerationTaskModel,
 )
@@ -111,7 +115,7 @@ class PixArtSigmaSchema(BaseSchema):
                 zh="负向提示词",
             ),
         )  # type: ignore
-    ]
+    ] = None
 
     num_inference_steps: schema_field(
         int_field(ge=1),
@@ -233,6 +237,8 @@ class PixArtSigmaSchema(BaseSchema):
             en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät", zh="设备"
         ),
     )  # type: ignore
+
+    gpu_memory_mode: GpuMemoryModeField = "auto"  # type: ignore
 
     seed: schema_field(
         int_field(),
@@ -483,6 +489,9 @@ class PixArtSigma(HFPretrainedDownloadMixin, TextToImageGenerationTaskModel):
             device : str
                 Target device string from ``DEVICE_ENUM``.  Mapped to a
                 ``cuda:<index>`` string or ``"cpu"`` via ``DEVICE_TO_IDX``.
+            gpu_memory_mode : str
+                How much of the pipeline stays on the GPU; see
+                ``place_pipeline``. Defaults to ``"auto"``.
             seed : int
                 Fixed seed for reproducible outputs.  Values ≤ 0 disable
                 seeding.
@@ -500,7 +509,10 @@ class PixArtSigma(HFPretrainedDownloadMixin, TextToImageGenerationTaskModel):
         )
 
         self.checkpoint = kwargs.get("checkpoint")
-        self.model = self._build_pipeline(use_gpu).to(self.device)
+        self.model = self._build_pipeline(use_gpu)
+        self.model = place_pipeline(
+            self.model, self.device, kwargs.get("gpu_memory_mode")
+        )
 
         self.negative_prompt = kwargs.get("negative_prompt")
         self.num_inference_steps = kwargs.get("num_inference_steps")
@@ -582,7 +594,9 @@ class PixArtSigma(HFPretrainedDownloadMixin, TextToImageGenerationTaskModel):
 
         output = self.model(
             prompt=input,
-            negative_prompt=self.negative_prompt,
+            # PixArt's pipeline lowercases the negative prompt, so it needs
+            # a string; the other pipelines accept None.
+            negative_prompt=self.negative_prompt or "",
             num_inference_steps=self.num_inference_steps,
             guidance_scale=self.guidance_scale,
             width=self.width,

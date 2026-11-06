@@ -25,7 +25,7 @@ class ParallelRetrieverSchema(BaseSchema):
     """
 
     children: schema_field(
-        list_field(component_field(parent="RetrieverModel"), min_items=2),
+        list_field(component_field(parent="BaseRetriever"), min_items=2),
         placeholder=[],
         description=MultilingualString(
             en="List of child retrievers queried in parallel.",

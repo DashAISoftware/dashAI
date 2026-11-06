@@ -21,6 +21,7 @@ import { Close as CloseIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
 import FormSchemaContainer from "../shared/FormSchemaContainer";
+import ExogenousUseNotice from "./ExogenousUseNotice";
 import OptimizationTableSelectOptimizer from "./modelSession/OptimizationTableSelectOptimizer";
 import ModelsTableSelectMetric from "./modelSession/ModelsTableSelectMetric";
 import NestedCVSelector from "./modelSession/NestedCVSelector";
@@ -38,6 +39,7 @@ import { useTourContext } from "../tour/TourProvider";
 import { checkIfHaveOptimazers } from "../../utils/schema";
 import { getDatasetInfo } from "../../api/datasets";
 import { useModels } from "./ModelsContext";
+import { getApiErrorMessage } from "../../utils/apiError";
 
 const DEFAULT_INNER_CONFIG = {
   splitterType: null, // null means: derive from outer splitter on mount
@@ -59,10 +61,13 @@ function AddModelDialog({
   onRunCreated,
 }) {
   const { enqueueSnackbar } = useSnackbar();
-  // Nested cross-validation only applies to a folded strategy, which the
-  // backend reports rather than the strategy name implying it.
-  const isCrossValidation =
-    useStrategyKind(session?.evaluation_strategy) === STRATEGY_KINDS.CV;
+  // Nested cross-validation only applies to a folded strategy, and a search
+  // needs a held-out partition to be measured on, which a strategy that carves
+  // nothing does not make. Both are what the backend reports rather than what
+  // the strategy name implies.
+  const strategyKind = useStrategyKind(session?.evaluation_strategy);
+  const isCrossValidation = strategyKind === STRATEGY_KINDS.CV;
+  const supportsOptimization = strategyKind !== STRATEGY_KINDS.FULL;
 
   const [activeStep, setActiveStep] = useState(0);
   const [name, setName] = useState("");
@@ -104,15 +109,18 @@ function AddModelDialog({
   });
 
   const tourContext = useTourContext();
-
   const outerSplit = useMemo(() => {
     return session?.splits ? JSON.parse(session.splits) : null;
   }, [session?.splits]);
 
+  // Translated name (e.g. "Arbol_de_Decision_1"); the class name is only the
+  // fallback. Numbering still counts runs of this model only.
+  const modelDisplayName = preselectedModelObject?.display_name;
+
   useEffect(() => {
     if (open && selectedModel) {
       const generated = generateSequentialName({
-        base: selectedModel,
+        base: modelDisplayName || selectedModel,
         items: existingRuns,
         getName: (run) => run.name,
         filter: (run) => run.model_name === selectedModel,
@@ -121,15 +129,16 @@ function AddModelDialog({
         setName(generated.defaultName);
       }
     }
-  }, [open, selectedModel, existingRuns, hasUserTouchedName]);
+  }, [open, selectedModel, modelDisplayName, existingRuns, hasUserTouchedName]);
 
   const hasOptimizableParams = useMemo(() => {
     return checkIfHaveOptimazers(modelParameters);
   }, [modelParameters]);
 
-  const steps = hasOptimizableParams
-    ? [t("models:label.configureModel"), t("models:label.configureOptimizer")]
-    : [t("models:label.configureModel")];
+  const steps =
+    supportsOptimization && hasOptimizableParams
+      ? [t("models:label.configureModel"), t("models:label.configureOptimizer")]
+      : [t("models:label.configureModel")];
 
   useEffect(() => {
     if (preselectedModel && preselectedModel !== selectedModel) {
@@ -235,7 +244,7 @@ function AddModelDialog({
         return;
       }
 
-      if (hasOptimizableParams) {
+      if (supportsOptimization && hasOptimizableParams) {
         setActiveStep(1);
       } else {
         handleCreateRun();
@@ -275,13 +284,15 @@ function AddModelDialog({
         selectedModel,
         name.trim(),
         modelParameters || {},
-        selectedOptimizer || "",
-        { ...defaultOptimizerParams, ...optimizerParameters },
+        supportsOptimization ? selectedOptimizer || "" : "",
+        supportsOptimization
+          ? { ...defaultOptimizerParams, ...optimizerParameters }
+          : {},
         "",
         "",
         "",
         "",
-        goalMetric || "",
+        supportsOptimization ? goalMetric || "" : "",
         "",
         nestedConfig,
       );
@@ -328,9 +339,16 @@ function AddModelDialog({
         console.error("Unknown Error", error.message);
       }
 
-      enqueueSnackbar(t("models:error.createRun", { name }), {
-        variant: "error",
-      });
+      enqueueSnackbar(
+        t("models:error.createRunReason", {
+          name,
+          reason: getApiErrorMessage(
+            error,
+            t("models:error.createRun", { name }),
+          ),
+        }),
+        { variant: "error" },
+      );
     } finally {
       setLoading(false);
     }
@@ -349,14 +367,17 @@ function AddModelDialog({
   );
 
   const isStep1Valid = Boolean(selectedModel && name.trim() !== "");
-  const isStep2Valid = Boolean(
-    selectedOptimizer &&
-    goalMetric &&
-    (!useNestedCV ||
-      (innerConfig.splitterType &&
-        innerConfig.nSplits > 1 &&
-        innerConfig.nSplits <= maxInnerFolds)),
-  );
+  // A task without optimization (clustering) has no optimizer step to fill in.
+  const isStep2Valid =
+    !supportsOptimization ||
+    Boolean(
+      selectedOptimizer &&
+      goalMetric &&
+      (!useNestedCV ||
+        (innerConfig.splitterType &&
+          innerConfig.nSplits > 1 &&
+          innerConfig.nSplits <= maxInnerFolds)),
+    );
 
   return (
     <Dialog
@@ -408,7 +429,11 @@ function AddModelDialog({
               fullWidth
               required
               placeholder={t("common:modelName")}
-              helperText={selectedModel ? `Model: ${selectedModel}` : ""}
+              helperText={
+                selectedModel
+                  ? `${t("common:model")}: ${modelDisplayName || selectedModel}`
+                  : ""
+              }
             />
 
             {selectedModel && (
@@ -426,6 +451,11 @@ function AddModelDialog({
                     hideButtons
                   />
                 </FormSchemaContainer>
+                <ExogenousUseNotice
+                  sessionId={session?.id}
+                  model={selectedModel}
+                  parameters={modelParameters}
+                />
               </Box>
             )}
           </Box>
@@ -558,11 +588,12 @@ AddModelDialog.propTypes = {
     id: PropTypes.number,
     name: PropTypes.string,
     task_name: PropTypes.string,
-    splits: PropTypes.string,
+    splits: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   }),
   preselectedModel: PropTypes.string,
   preselectedModelObject: PropTypes.shape({
     name: PropTypes.string,
+    display_name: PropTypes.string,
     downloaded: PropTypes.bool,
     metadata: PropTypes.object,
   }),

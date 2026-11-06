@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - production
+  # Manual run from any branch to test the macOS signing/notarization job.
+  # Only react-build and build-macos-arm64 run; publishing jobs are skipped.
+  workflow_dispatch:
 
 jobs:
   # ============================================================
@@ -41,6 +44,7 @@ jobs:
   # 2. Publish to PyPI
   # ============================================================
   publish-pypi:
+    if: github.event_name == 'push'
     needs: react-build
     runs-on: ubuntu-latest
 
@@ -85,6 +89,7 @@ jobs:
   # 3. Build Windows Executable
   # ============================================================
   build-windows-executable:
+    if: github.event_name == 'push'
     needs: react-build
     runs-on: windows-latest
 
@@ -112,10 +117,17 @@ jobs:
       - name: Install Inno Setup
         run: choco install innosetup -y
 
+      - name: Extract version from pyproject.toml
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(grep -m 1 '^version = ' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Build Windows Installer
         shell: cmd
         run: |
-          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer/installer.iss
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DAppVersion=${{ steps.version.outputs.version }} installer/installer.iss
       - name: Upload Windows Installer
         uses: actions/upload-artifact@v4
         with:
@@ -128,7 +140,9 @@ jobs:
   # ============================================================
   build-macos-arm64:
     needs: react-build
-    runs-on: macos-14
+    # macos-26 ships Xcode 26, whose notarytool is the first to accept
+    # individual App Store Connect API keys (no issuer ID).
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - name: Download React build artifact
@@ -151,23 +165,18 @@ jobs:
         run: |
           uv run --no-sync pyinstaller --clean --noconfirm dashai.spec
 
-      - name: Sign App Bundle (ad-hoc)
+      # Developer ID signing (hardened runtime), DMG packaging, notarization
+      # and stapling. See installer/macos/sign_and_notarize.sh.
+      - name: Sign, package and notarize
+        env:
+          MACOS_CERTIFICATE_P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_ISSUER_ID: ${{ secrets.APPLE_ISSUER_ID }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
         run: |
-          codesign --force --deep --sign - dist/dashAI.app
-
-      - name: Create DMG
-        run: |
-          rm -f dashAI-macos-arm64.dmg
-
-          create-dmg \
-            --volname "dashAI Installer" \
-            --window-pos 200 120 \
-            --window-size 800 400 \
-            --app-drop-link 600 185 \
-            --hide-extension "dashAI.app" \
-            --no-internet-enable \
-            "dashAI-macos-arm64.dmg" \
-            "dist/dashAI.app"
+          installer/macos/sign_and_notarize.sh dist/dashAI.app dashAI-macos-arm64.dmg
 
       - name: Upload DMG Artifact
         uses: actions/upload-artifact@v4
@@ -180,6 +189,7 @@ jobs:
   # 5. Build macOS x86_64 Executable
   # ============================================================
   build-macos-x86_64:
+    if: github.event_name == 'push'
     needs: react-build
     runs-on: macos-15-intel
     # PyTorch's last macOS Intel wheel is 2.2.2, so `uv sync --locked` can't
@@ -236,6 +246,7 @@ jobs:
   # 6. Build Linux AppImage
   # ============================================================
   build-linux-appimage:
+    if: github.event_name == 'push'
     needs: react-build
     # ubuntu-22.04 sets the minimum glibc (2.35) for the AppImage.
     runs-on: ubuntu-22.04
@@ -297,6 +308,7 @@ jobs:
   # 7. Publish installers to GitHub Release
   # ============================================================
   github-release:
+    if: github.event_name == 'push'
     needs:
       - publish-pypi
       - build-windows-executable

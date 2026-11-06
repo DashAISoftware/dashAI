@@ -29,20 +29,20 @@
     "trainSplitMustBeGreaterThanZero": "La división de entrenamiento debe ser mayor que cero",
     "trainSplitMustHaveAtLeastOneRow": "La división de entrenamiento debe tener al menos una fila",
     "foldsMustBeLessThanDatasetSize": "El número de pliegues debe ser menor o igual al número de muestras en el dataset ({{datasetSize}})",
+    "seriesTooShort": "Un horizonte de {{horizon}} con {{origins}} origen(es) de validación necesita al menos {{needed}} filas; el dataset tiene {{rows}}. Acorta el horizonte, usa menos orígenes o agrega más historia.",
     "groupColumnMustBeSelected": "Debe seleccionarse una columna para agrupar"
   },
   "label": {
     "addModelsToExperiment": "Agregar Modelos a su Experimento",
     "addOptimizersToExperiment": "Agregar Optimizadores a su Experimento",
-    "columnsInvalidRequirements": "Las columnas de Entrada y Salida actuales no coinciden con los requisitos de {{taskName}}",
-    "columnsValidRequirements": "Las columnas de Entrada y Salida actuales coinciden con los requisitos de {{taskName}}",
+    "columnsInvalidRequirements": "Las columnas elegidas no cumplen los requisitos de {{taskName}}",
+    "columnsValidRequirements": "Las columnas elegidas cumplen los requisitos de {{taskName}}",
     "configureExperimentsSubtitle": "Configure experimentos para entrenar modelos.",
     "configureModels": "Configurar modelos",
     "configureOptimizer": "Configurar optimización de hiperparámetros",
     "currentExperiments": "Experimentos Actuales",
     "currentOptimizerSettings": "Configuración Actual del Optimizador {{optimizer}}",
-    "datasetInputColumnRequirements": "<0>Las columnas de entrada deben ser de los tipos</0><1></1><2>, y deben tener una cardinalidad de </2><3>{{cardinality}}.</3>",
-    "datasetOutputColumnRequirements": "<0>Las columnas de salida deben ser de los tipos</0><1></1><2>, y deben tener una cardinalidad de </2><3>{{cardinality}}.</3>",
+    "datasetRoleColumnRequirements": "<0>{{role}}: las columnas deben ser de los tipos</0><1></1><2>, y deben tener una cardinalidad de </2><3>{{cardinality}}.</3>",
     "cardinalityAtLeast": "al menos {{min}}",
     "cardinalityBetween": "{{min}} a {{max}}",
     "duration": "Duración",
@@ -56,9 +56,11 @@
     "modelName": "Nombre del Modelo",
     "modelsInExperiment": "Modelos Actuales en el Experimento",
     "noDatasetsAvailable": "No hay Datasets Disponibles",
+    "noConverterAdded": "No se agregó ningún converter.",
     "noDatasetsAvailableGoToDataTab": "Vaya a <1>pestaña de datos</1> para subir uno primero.",
     "noModelsAvailable": "No hay Modelos Disponibles",
     "noOptimizersNoMetric": "Sin optimización de hiperparámetros",
+    "noSplitConfigNeeded": "Este tipo de tarea entrena con el dataset completo — no requiere configurar una partición de entrenamiento, validación y prueba.",
     "optimizer": "Optimizador",
     "optimizerMetric": "Métrica de Optimización",
     "parameterModification": "Modificación de Parámetros",
@@ -69,19 +71,18 @@
     "rowIndexes": "Índices de filas",
     "rowIndexesDescription": "Especifica rangos de filas para cada partición usando valores separados por comas o rangos (ej. 0-100, 200).",
     "seed": "Semilla",
-    "selectDatasetColumns": "Indique qué columnas del dataset se usarán como entrada y salida.",
     "selectDatasetTitle": "Seleccione un dataset para la tarea seleccionada",
     "selectHowToDivideDataset": "Seleccione cómo dividir el dataset en subconjuntos de entrenamiento, validación y prueba.",
     "selectEvaluationStrategy": "Estrategia de evaluación",
     "holdout": "Holdout",
     "crossValidation": "Validación Cruzada",
     "cvType": "Tipo de Validación Cruzada",
+    "splitter": "Divisor",
     "numFolds": "Número de Pliegues (k)",
     "numFoldsDescription": "Número de pliegues de validación cruzada. Más pliegues pueden mejorar la estabilidad de la evaluación, pero incrementan el tiempo de procesamiento. Debe ser un entero mayor que 1.",
     "numRepeats": "Número de Repeticiones",
     "numRepeatsDescription": "Número de veces que se repetirá el proceso de validación cruzada. Un valor más alto obtiene valores más precisos, pero requiere más tiempo de entrenamiento. Debe ser un entero mayor que 1.",
     "groupColumn": "Columna para Agrupar",
-    "selectInputOutputColumnsDescription": "Seleccione nombres de columnas de las listas.",
     "selectMetrics": "Seleccionar métricas",
     "selectModelFirst": "Seleccione un Modelo Primero",
     "selectModelToAdd": "Seleccione un Modelo para Agregar",
@@ -133,17 +134,26 @@
   "splitPreview": {
     "title": "Vista previa de la división",
     "unavailable": "Este divisor aún no declara su forma, así que no hay nada que dibujar.",
+    "loading": "Dibujando la división…",
+    "failed": "No se pudo calcular la vista previa ({{reason}}). Puedes continuar: la sesión revisa estos parámetros al crearse.",
+    "retry": "Reintentar",
+    "invalid": "El divisor no puede usar estos parámetros; revisa los campos marcados de su formulario.",
     "wholeDataset": "Conjunto",
     "reservedTest": "Reservado",
     "finalFit": "Ajuste final",
     "fold": "Pliegue {{index}}",
+    "origin": "Origen {{index}}",
+    "testOrigin": "Prueba",
     "moreFolds": "+{{hidden}} pliegues más",
+    "moreOrigins": "+{{hidden}} orígenes más",
     "unused": "Sin usar",
-    "notes": {
-      "foldsHidden": "{{total}} pliegues en total; solo se dibujan los primeros y el último."
+    "legend": {
+      "steps_one": "{{role}}: {{count}} paso",
+      "steps_other": "{{role}}: {{count}} pasos"
     },
-    "error": {
-      "notEnoughRows": "{{folds}} orígenes con un horizonte de {{horizon}} y un paso de {{step}} no caben en {{rows}} filas. Reduce alguno o reserva menos."
+    "notes": {
+      "foldsHidden": "{{total}} pliegues en total; solo se dibujan los primeros y el último.",
+      "originsHidden": "{{total}} orígenes en total; solo se dibujan los primeros y el último."
     }
   }
 }

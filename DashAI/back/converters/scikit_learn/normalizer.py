@@ -64,6 +64,7 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
     """
 
     SCHEMA = NormalizerSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(
             "Normalize each row (sample) to unit norm across the selected columns. "

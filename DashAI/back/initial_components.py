@@ -1,11 +1,26 @@
 import logging
 
+from DashAI.back.converters.clustering.clustering import Clustering
+
+# Document converters
+from DashAI.back.converters.document.image_captioning import (
+    ImageCaptioningConverter,
+)
+from DashAI.back.converters.document.item_filter import DocumentItemFilter
+from DashAI.back.converters.document.language_filter import LanguageFilter
+from DashAI.back.converters.document.ocr import OCRConverter
+from DashAI.back.converters.document.text_splitter import TextSplitter
+
 # Hugging Face module
-from DashAI.back.converters.hugging_face.embedding import Embedding
 from DashAI.back.converters.hugging_face.image_embedding import (
     ImageEmbeddingConverter,
 )
+from DashAI.back.converters.hugging_face.summarizer import Summarizer
+from DashAI.back.converters.hugging_face.text_embedding import (
+    TEXT_EMBEDDING_CONVERTERS,
+)
 from DashAI.back.converters.hugging_face.tokenizer import TokenizerConverter
+from DashAI.back.converters.hugging_face.translation import TRANSLATION_CONVERTERS
 
 # Imbalanced_learn
 from DashAI.back.converters.imbalanced_learn.random_under_sampler_converter import (
@@ -72,6 +87,8 @@ from DashAI.back.converters.simple_converters.date_features import (
 )
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
 from DashAI.back.converters.simple_converters.numeric_expansion import NumericExpansion
+from DashAI.back.converters.simple_converters.regex_replacer import RegexReplacer
+from DashAI.back.converters.simple_converters.text_cleaner import TextCleaner
 from DashAI.back.converters.simple_converters.time_resampler import (
     TimeResamplerConverter,
 )
@@ -90,6 +107,24 @@ from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.excel_dataloader import ExcelDataLoader
 from DashAI.back.dataloaders.classes.image_dataloader import ImageDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
+from DashAI.back.dataloaders.classes.pdfminer_document_dataloader import (
+    PdfMinerDocumentDataLoader,
+)
+from DashAI.back.dataloaders.classes.pdfplumber_document_dataloader import (
+    PdfPlumberDocumentDataLoader,
+)
+from DashAI.back.dataloaders.classes.plain_text_document_dataloader import (
+    PlainTextDocumentDataLoader,
+)
+from DashAI.back.dataloaders.classes.pypdf_document_dataloader import (
+    PypdfDocumentDataLoader,
+)
+from DashAI.back.dataloaders.classes.python_docx_document_dataloader import (
+    PythonDocxDocumentDataLoader,
+)
+from DashAI.back.dataloaders.classes.unstructured_document_dataloader import (
+    UnstructuredDocumentDataLoader,
+)
 
 # Dataset Sources
 from DashAI.back.dataset_sources.huggingface_dataset_source import (
@@ -101,6 +136,13 @@ from DashAI.back.dataset_sources.zenodo_dataset_source import ZenodoDatasetSourc
 
 # Evaluation Strategies
 from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
+from DashAI.back.evaluation.forecasting_cv import (
+    ForecastingCrossValidationEvaluationStrategy,
+)
+from DashAI.back.evaluation.forecasting_holdout import (
+    ForecastingHoldoutEvaluationStrategy,
+)
+from DashAI.back.evaluation.full_dataset import FullDatasetEvaluationStrategy
 from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
 
 # Explainers
@@ -136,13 +178,32 @@ from DashAI.back.exploration.explorers.autocorrelation_plot import (
 )
 from DashAI.back.exploration.explorers.box_plot import BoxPlotExplorer
 from DashAI.back.exploration.explorers.class_overlap import ClassOverlapExplorer
+from DashAI.back.exploration.explorers.cluster_distribution import (
+    ClusterDistributionExplorer,
+)
+from DashAI.back.exploration.explorers.cluster_stability import (
+    ClusterStabilityExplorer,
+)
+from DashAI.back.exploration.explorers.clustering_heatmap import (
+    ClusteringHeatmapExplorer,
+)
+from DashAI.back.exploration.explorers.clustering_profile import (
+    ClusteringProfileExplorer,
+)
+from DashAI.back.exploration.explorers.clustering_scatter import (
+    ClusteringScatterExplorer,
+)
 from DashAI.back.exploration.explorers.corr_matrix import CorrelationMatrixExplorer
 from DashAI.back.exploration.explorers.cov_matrix import CovarianceMatrixExplorer
+from DashAI.back.exploration.explorers.dendrogram import DendrogramExplorer
 from DashAI.back.exploration.explorers.density_heatmap import DensityHeatmapExplorer
 from DashAI.back.exploration.explorers.describe_explorer import DescribeExplorer
 from DashAI.back.exploration.explorers.ecdf_plot import ECDFPlotExplorer
 from DashAI.back.exploration.explorers.histogram_plot import HistogramPlotExplorer
 from DashAI.back.exploration.explorers.multibox_plot import MultiColumnBoxPlotExplorer
+from DashAI.back.exploration.explorers.named_entities import (
+    NamedEntitiesExplorer,
+)
 from DashAI.back.exploration.explorers.parallel_categories import (
     ParallelCategoriesExplorer,
 )
@@ -154,10 +215,15 @@ from DashAI.back.exploration.explorers.scatter_plot import ScatterPlotExplorer
 from DashAI.back.exploration.explorers.seasonal_decomposition import (
     SeasonalDecompositionExplorer,
 )
+from DashAI.back.exploration.explorers.silhouette_plot import SilhouettePlotExplorer
+from DashAI.back.exploration.explorers.text_statistics import (
+    TextStatisticsExplorer,
+)
 from DashAI.back.exploration.explorers.time_index_audit import TimeIndexAuditExplorer
 from DashAI.back.exploration.explorers.time_series_plot import (
     TimeSeriesPlotExplorer,
 )
+from DashAI.back.exploration.explorers.top_terms import TopTermsExplorer
 from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
 
 # Jobs
@@ -165,6 +231,7 @@ from DashAI.back.job.component_download_job import ComponentDownloadJob
 from DashAI.back.job.converter_job import ConverterJob
 from DashAI.back.job.datafile_job import DatafileJob
 from DashAI.back.job.dataset_job import DatasetJob
+from DashAI.back.job.document_job import DocumentJob
 from DashAI.back.job.explainer_job import ExplainerJob
 from DashAI.back.job.explorer_job import ExplorerJob
 from DashAI.back.job.generative_job import GenerativeJob
@@ -185,12 +252,18 @@ from DashAI.back.metrics.classification.matthews_corrcoef import MatthewsCorrCoe
 from DashAI.back.metrics.classification.precision import Precision
 from DashAI.back.metrics.classification.recall import Recall
 from DashAI.back.metrics.classification.roc_auc import ROCAUC
+from DashAI.back.metrics.clustering.calinski_harabasz import CalinskiHarabasz
+from DashAI.back.metrics.clustering.davies_bouldin import DaviesBouldin
+from DashAI.back.metrics.clustering.silhouette import Silhouette
+from DashAI.back.metrics.forecasting.interval_coverage import IntervalCoverage
 from DashAI.back.metrics.regression.explained_variance import ExplainedVariance
 from DashAI.back.metrics.regression.mae import MAE
+from DashAI.back.metrics.regression.mape import MAPE
 from DashAI.back.metrics.regression.median_absolute_error import MedianAbsoluteError
 from DashAI.back.metrics.regression.mse import MSE
 from DashAI.back.metrics.regression.r2 import R2
 from DashAI.back.metrics.regression.rmse import RMSE
+from DashAI.back.metrics.regression.smape import SMAPE
 from DashAI.back.metrics.translation.bleu import Bleu
 from DashAI.back.metrics.translation.chrf import Chrf
 from DashAI.back.metrics.translation.ter import Ter
@@ -200,6 +273,15 @@ from DashAI.back.models.efficientnet_b0_image_classifier import (
 )
 
 # Models
+from DashAI.back.models.faiss.faiss_dbscan_clustering import FaissDBSCANClustering
+from DashAI.back.models.faiss.faiss_kmeans_clustering import FaissKMeansClustering
+from DashAI.back.models.forecasting.arima import ARIMA
+from DashAI.back.models.forecasting.drift import DriftForecaster
+from DashAI.back.models.forecasting.exponential_smoothing import ExponentialSmoothing
+from DashAI.back.models.forecasting.mean import MeanForecaster
+from DashAI.back.models.forecasting.naive import NaiveForecaster
+from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
+from DashAI.back.models.forecasting.theta import Theta
 from DashAI.back.models.hugging_face.albert_transformer import AlbertTransformer
 from DashAI.back.models.hugging_face.bert_transformer import BertTransformer
 from DashAI.back.models.hugging_face.bertin_transformer import BertinTransformer
@@ -310,21 +392,6 @@ from DashAI.back.models.RAG.chunking_models import (
     RecursiveCharacterChunkModel,
     TokenChunkModel,
 )
-from DashAI.back.models.RAG.embeddings.dense import (
-    BERTEmbedding,
-    DistilBERTEmbedding,
-    E5Embedding,
-    InstructorEmbedding,
-    LaBSEmbedding,
-    RoBERTaEmbedding,
-    SentenceTransformerEmbedding,
-)
-from DashAI.back.models.RAG.extractors import (
-    PdfMinerExtractor,
-    PdfPlumberExtractor,
-    PlainTextExtractor,
-    PypdfExtractor,
-)
 from DashAI.back.models.RAG.prompts import (
     CustomAugmentationPrompt,
     CustomRAGGenerationPrompt,
@@ -349,16 +416,17 @@ from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
 )
 from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import (
     BM25Retriever,
-    BM25VectorizerModel,
 )
 from DashAI.back.models.RAG.retrievers.sparse.tfidf_retriever import (
     TFIDFRetriever,
-    TFIDFVectorizerModel,
 )
 from DashAI.back.models.resnet18_image_classifier import ResNet18ImageClassifier
 from DashAI.back.models.resnet50_image_classifier import ResNet50ImageClassifier
 from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
 from DashAI.back.models.scikit_learn.adaboost_regression import AdaBoostRegression
+from DashAI.back.models.scikit_learn.agglomerative_clustering import (
+    AgglomerativeClustering,
+)
 from DashAI.back.models.scikit_learn.bagging_classifier import BaggingClassifier
 from DashAI.back.models.scikit_learn.bayesian_ridge_regression import (
     BayesianRidgeRegression,
@@ -366,6 +434,7 @@ from DashAI.back.models.scikit_learn.bayesian_ridge_regression import (
 from DashAI.back.models.scikit_learn.bow_text_classification_model import (
     BagOfWordsTextClassificationModel,
 )
+from DashAI.back.models.scikit_learn.dbscan_clustering import DBSCANClustering
 from DashAI.back.models.scikit_learn.decision_tree_classifier import (
     DecisionTreeClassifier,
 )
@@ -376,6 +445,9 @@ from DashAI.back.models.scikit_learn.dummy_classifier import DummyClassifier
 from DashAI.back.models.scikit_learn.elastic_net_regression import ElasticNetRegression
 from DashAI.back.models.scikit_learn.extra_trees_classifier import ExtraTreesClassifier
 from DashAI.back.models.scikit_learn.extra_trees_regression import ExtraTreesRegression
+from DashAI.back.models.scikit_learn.gaussian_mixture_clustering import (
+    GaussianMixtureClustering,
+)
 from DashAI.back.models.scikit_learn.gaussian_nb import GaussianNB
 from DashAI.back.models.scikit_learn.gradient_boosting_classifier import (
     GradientBoostingClassifier,
@@ -383,6 +455,7 @@ from DashAI.back.models.scikit_learn.gradient_boosting_classifier import (
 from DashAI.back.models.scikit_learn.gradient_boosting_regression import (
     GradientBoostingR,
 )
+from DashAI.back.models.scikit_learn.hdbscan_clustering import HDBSCANClustering
 from DashAI.back.models.scikit_learn.hist_gradient_boosting_classifier import (
     HistGradientBoostingClassifier,
 )
@@ -391,6 +464,7 @@ from DashAI.back.models.scikit_learn.hist_gradient_boosting_regression import (
 )
 from DashAI.back.models.scikit_learn.k_neighbors_classifier import KNeighborsClassifier
 from DashAI.back.models.scikit_learn.k_neighbors_regression import KNeighborsRegression
+from DashAI.back.models.scikit_learn.kmeans_clustering import KMeansClustering
 from DashAI.back.models.scikit_learn.lasso_regression import LassoRegression
 from DashAI.back.models.scikit_learn.linear_regression import LinearRegression
 from DashAI.back.models.scikit_learn.linear_svc_classifier import LinearSVCClassifier
@@ -406,6 +480,7 @@ from DashAI.back.models.scikit_learn.random_forest_regression import (
 )
 from DashAI.back.models.scikit_learn.ridge_regression import RidgeRegression
 from DashAI.back.models.scikit_learn.sgd_classifier import SGDClassifier
+from DashAI.back.models.scikit_learn.spectral_clustering import SpectralClustering
 from DashAI.back.models.scikit_learn.svc import SVC
 from DashAI.back.models.scikit_learn.svr import SVR
 from DashAI.back.models.scikit_learn.tfidf_logreg_text_classification_model import (
@@ -435,6 +510,12 @@ from DashAI.back.reports.classification.precision_recall_curve import (
     PrecisionRecallCurve,
 )
 from DashAI.back.reports.classification.roc_curve import RocCurve
+from DashAI.back.reports.forecasting.forecast_error_by_step import ForecastErrorByStep
+from DashAI.back.reports.forecasting.forecast_vs_actual import ForecastVsActual
+from DashAI.back.reports.forecasting.residual_autocorrelation import (
+    ResidualAutocorrelation,
+)
+from DashAI.back.reports.forecasting.residuals_over_time import ResidualsOverTime
 from DashAI.back.reports.regression.predicted_vs_actual import PredictedVsActual
 from DashAI.back.reports.regression.residual_histogram import ResidualHistogram
 from DashAI.back.reports.regression.residual_plot import ResidualPlot
@@ -477,17 +558,90 @@ from DashAI.back.statistical_tests.post_hoc_tests.tukey_test import TukeyHSDTest
 from DashAI.back.statistical_tests.wilcoxon_sr_test import (
     WilcoxonSRTest,
 )
+
+# Tasks
+from DashAI.back.tasks.clustering_task import ClusteringTask
 from DashAI.back.tasks.controlnet_task import ControlNetTask
 from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 
 # Tasks
 from DashAI.back.tasks.RAG_task import RAGTask
 from DashAI.back.tasks.regression_task import RegressionTask
+from DashAI.back.tasks.single_series_forecasting_task import (
+    SingleSeriesForecastingTask,
+)
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
 from DashAI.back.tasks.text_to_image_generation_task import TextToImageGenerationTask
 from DashAI.back.tasks.text_to_text_generation_task import TextToTextGenerationTask
 from DashAI.back.tasks.translation_task import TranslationTask
+
+# Units
+from DashAI.back.units.apply_converter_unit import ApplyConverterUnit
+from DashAI.back.units.apply_cut_preprocessing_unit import ApplyCutPreprocessingUnit
+from DashAI.back.units.apply_dataset_schema_unit import ApplyDatasetSchemaUnit
+from DashAI.back.units.apply_session_preprocessing_unit import (
+    ApplySessionPreprocessingUnit,
+)
+from DashAI.back.units.backtest_forecaster_unit import BacktestForecasterUnit
+from DashAI.back.units.build_forecaster_unit import BuildForecasterUnit
+from DashAI.back.units.build_global_explainer_unit import BuildGlobalExplainerUnit
+from DashAI.back.units.build_local_explainer_unit import BuildLocalExplainerUnit
+from DashAI.back.units.build_manual_input_unit import BuildManualInputUnit
+from DashAI.back.units.build_model_unit import BuildModelUnit
+from DashAI.back.units.compute_dataset_metadata_unit import ComputeDatasetMetadataUnit
+from DashAI.back.units.evaluate_model_to_artifact_unit import (
+    EvaluateModelToArtifactUnit,
+)
+from DashAI.back.units.evaluate_model_unit import EvaluateModelUnit
+from DashAI.back.units.fit_converter_unit import FitConverterUnit
+from DashAI.back.units.fit_final_forecaster_unit import FitFinalForecasterUnit
+from DashAI.back.units.fit_model_over_folds_unit import FitModelOverFoldsUnit
+from DashAI.back.units.fit_model_over_nested_folds_unit import (
+    FitModelOverNestedFoldsUnit,
+)
+from DashAI.back.units.fit_model_unit import FitModelUnit
+from DashAI.back.units.fit_without_target_unit import FitWithoutTargetUnit
+from DashAI.back.units.forecast_future_unit import ForecastFutureUnit
+from DashAI.back.units.forecast_horizon_unit import ForecastHorizonUnit
+from DashAI.back.units.generate_global_explanation_unit import (
+    GenerateGlobalExplanationUnit,
+)
+from DashAI.back.units.generate_local_explanation_unit import (
+    GenerateLocalExplanationUnit,
+)
+from DashAI.back.units.infer_dataset_types_unit import InferDatasetTypesUnit
+from DashAI.back.units.load_datafile_dataset_unit import LoadDatafileDatasetUnit
+from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
+from DashAI.back.units.load_run_model_unit import LoadRunModelUnit
+from DashAI.back.units.load_trained_model_unit import LoadTrainedModelUnit
+from DashAI.back.units.load_training_dataset_unit import LoadTrainingDatasetUnit
+from DashAI.back.units.load_uploaded_dataset_unit import LoadUploadedDatasetUnit
+from DashAI.back.units.parse_document_unit import ParseDocumentUnit
+from DashAI.back.units.predict_unit import PredictUnit
+from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
+from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
+from DashAI.back.units.prepare_explanation_data_unit import PrepareExplanationDataUnit
+from DashAI.back.units.prepare_future_unit import PrepareFutureUnit
+from DashAI.back.units.prepare_series_unit import PrepareSeriesUnit
+from DashAI.back.units.prepare_without_target_unit import PrepareWithoutTargetUnit
+from DashAI.back.units.run_exploration_unit import RunExplorationUnit
+from DashAI.back.units.save_dataset_to_path_unit import SaveDatasetToPathUnit
+from DashAI.back.units.save_dataset_unit import SaveDatasetUnit
+from DashAI.back.units.save_document_to_path_unit import SaveDocumentToPathUnit
+from DashAI.back.units.save_exploration_unit import SaveExplorationUnit
+from DashAI.back.units.save_forecasts_unit import SaveForecastsUnit
+from DashAI.back.units.save_model_unit import SaveModelUnit
+from DashAI.back.units.save_prediction_unit import SavePredictionUnit
+from DashAI.back.units.score_clusters_unit import ScoreClustersUnit
+from DashAI.back.units.score_forecasts_unit import ScoreForecastsUnit
+from DashAI.back.units.store_datafile_document_source_unit import (
+    StoreDatafileDocumentSourceUnit,
+)
+from DashAI.back.units.store_uploaded_document_source_unit import (
+    StoreUploadedDocumentSourceUnit,
+)
+from DashAI.back.units.transform_dataset_unit import TransformDatasetUnit
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -515,7 +669,18 @@ def get_initial_components():
         ControlNetTask,
         RAGTask,
         ImageClassificationTask,
+        ClusteringTask,
+        SingleSeriesForecastingTask,
         # Models
+        NaiveForecaster,
+        MeanForecaster,
+        DriftForecaster,
+        SeasonalNaiveForecaster,
+        ARIMA,
+        ExponentialSmoothing,
+        Theta,
+        FaissDBSCANClustering,
+        FaissKMeansClustering,
         AdaBoostClassifier,
         AlbertTransformer,
         AdaBoostRegression,
@@ -528,6 +693,11 @@ def get_initial_components():
         DebertaV3Transformer,
         DecisionTreeClassifier,
         DecisionTreeRegression,
+        AgglomerativeClustering,
+        DBSCANClustering,
+        GaussianMixtureClustering,
+        HDBSCANClustering,
+        SpectralClustering,
         DistilBertTransformer,
         DummyClassifier,
         ElasticNetRegression,
@@ -542,6 +712,7 @@ def get_initial_components():
         KNeighborsClassifier,
         RAGPipeline,
         KNeighborsRegression,
+        KMeansClustering,
         LassoRegression,
         LinearRegression,
         LinearSVCClassifier,
@@ -615,6 +786,12 @@ def get_initial_components():
         ExcelDataLoader,
         ImageDataLoader,
         JSONDataLoader,
+        PypdfDocumentDataLoader,
+        PdfPlumberDocumentDataLoader,
+        PdfMinerDocumentDataLoader,
+        PlainTextDocumentDataLoader,
+        PythonDocxDocumentDataLoader,
+        UnstructuredDocumentDataLoader,
         # Dataset Sources
         HuggingFaceDatasetSource,
         KaggleDatasetSource,
@@ -629,12 +806,20 @@ def get_initial_components():
         BalancedAccuracy,
         Precision,
         Recall,
+        Silhouette,
+        DaviesBouldin,
+        CalinskiHarabasz,
         Bleu,
         Ter,
         Chrf,
         MSE,
         RMSE,
         MAE,
+        MAPE,
+        SMAPE,
+        # MASE is left out until its season is configured per session: today
+        # each model scales it by its own season, so runs are not comparable.
+        IntervalCoverage,
         R2,
         MedianAbsoluteError,
         ExplainedVariance,
@@ -656,8 +841,61 @@ def get_initial_components():
         PredictJob,
         ConverterJob,
         DatasetJob,
+        DocumentJob,
         GenerativeJob,
         PipelineJob,
+        # Units
+        LoadDatasetUnit,
+        PrepareAndSplitUnit,
+        PrepareAndFoldUnit,
+        PrepareWithoutTargetUnit,
+        BuildModelUnit,
+        FitModelUnit,
+        FitWithoutTargetUnit,
+        ScoreClustersUnit,
+        PrepareSeriesUnit,
+        ApplyCutPreprocessingUnit,
+        PrepareFutureUnit,
+        ForecastFutureUnit,
+        BuildForecasterUnit,
+        BacktestForecasterUnit,
+        ScoreForecastsUnit,
+        FitFinalForecasterUnit,
+        SaveForecastsUnit,
+        ForecastHorizonUnit,
+        FitModelOverFoldsUnit,
+        FitModelOverNestedFoldsUnit,
+        EvaluateModelUnit,
+        EvaluateModelToArtifactUnit,
+        SaveModelUnit,
+        ApplyConverterUnit,
+        FitConverterUnit,
+        TransformDatasetUnit,
+        SaveDatasetUnit,
+        RunExplorationUnit,
+        SaveExplorationUnit,
+        LoadTrainedModelUnit,
+        LoadTrainingDatasetUnit,
+        BuildManualInputUnit,
+        ApplySessionPreprocessingUnit,
+        PredictUnit,
+        SavePredictionUnit,
+        LoadRunModelUnit,
+        BuildGlobalExplainerUnit,
+        BuildLocalExplainerUnit,
+        PrepareExplanationDataUnit,
+        GenerateGlobalExplanationUnit,
+        GenerateLocalExplanationUnit,
+        LoadUploadedDatasetUnit,
+        LoadDatafileDatasetUnit,
+        InferDatasetTypesUnit,
+        ApplyDatasetSchemaUnit,
+        ComputeDatasetMetadataUnit,
+        SaveDatasetToPathUnit,
+        StoreUploadedDocumentSourceUnit,
+        StoreDatafileDocumentSourceUnit,
+        ParseDocumentUnit,
+        SaveDocumentToPathUnit,
         RAGJob,
         # Reports
         ConfusionMatrix,
@@ -666,6 +904,10 @@ def get_initial_components():
         PerClassBreakdown,
         PredictedVsActual,
         ResidualPlot,
+        ForecastVsActual,
+        ForecastErrorByStep,
+        ResidualsOverTime,
+        ResidualAutocorrelation,
         ResidualHistogram,
         PerSegmentComparison,
         SegmentScoreDistribution,
@@ -688,6 +930,9 @@ def get_initial_components():
         DescribeExplorer,
         ScatterPlotExplorer,
         WordcloudExplorer,
+        TextStatisticsExplorer,
+        TopTermsExplorer,
+        NamedEntitiesExplorer,
         BoxPlotExplorer,
         MultiColumnBoxPlotExplorer,
         CorrelationMatrixExplorer,
@@ -702,11 +947,27 @@ def get_initial_components():
         SeasonalDecompositionExplorer,
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
+        ClusteringProfileExplorer,
+        ClusteringScatterExplorer,
+        ClusteringHeatmapExplorer,
+        SilhouettePlotExplorer,
+        ClusterDistributionExplorer,
+        DendrogramExplorer,
+        ClusterStabilityExplorer,
         ClassOverlapExplorer,
         # Converters
         ColumnRemover,
+        Clustering,
         NanRemover,
         CharacterReplacer,
+        TextCleaner,
+        RegexReplacer,
+        DocumentItemFilter,
+        TextSplitter,
+        LanguageFilter,
+        OCRConverter,
+        ImageCaptioningConverter,
+        Summarizer,
         ColumnArithmetic,
         ColumnConcat,
         NumericExpansion,
@@ -727,11 +988,12 @@ def get_initial_components():
         OrdinalEncoder,
         PolynomialFeatures,
         StandardScaler,
-        Embedding,
         ImageEmbeddingConverter,
+        *TEXT_EMBEDDING_CONVERTERS,
         SAM3SegmentConverter,
         TFIDFConverter,
         TokenizerConverter,
+        *TRANSLATION_CONVERTERS,
         BagOfWordsConverter,
         VarianceThreshold,
         SimpleImputer,
@@ -769,6 +1031,9 @@ def get_initial_components():
         # Evaluation Strategies
         CrossValidationEvaluationStrategy,
         HoldoutEvaluationStrategy,
+        FullDatasetEvaluationStrategy,
+        ForecastingHoldoutEvaluationStrategy,
+        ForecastingCrossValidationEvaluationStrategy,
         # Statistical tests
         AnovaTest,
         FriedmanTest,
@@ -784,19 +1049,7 @@ def get_initial_components():
         CharacterChunkModel,
         RecursiveCharacterChunkModel,
         TokenChunkModel,
-        # Extractors
-        PypdfExtractor,
-        PdfMinerExtractor,
-        PdfPlumberExtractor,
-        PlainTextExtractor,
         # Encodings
-        SentenceTransformerEmbedding,
-        BERTEmbedding,
-        DistilBERTEmbedding,
-        RoBERTaEmbedding,
-        E5Embedding,
-        InstructorEmbedding,
-        LaBSEmbedding,
         # Prompts
         DefaultRAGGenerationPrompt,
         CustomRAGGenerationPrompt,
@@ -805,9 +1058,7 @@ def get_initial_components():
         CustomAugmentationPrompt,
         # Retrievers
         BM25Retriever,
-        BM25VectorizerModel,
         TFIDFRetriever,
-        TFIDFVectorizerModel,
         DenseEmbeddingRetriever,
         SentenceTransformerCrossEncoderRetriever,
         MMRRerankerRetriever,

@@ -19,6 +19,7 @@ import Tooltip from "@mui/material/Tooltip";
 import HardwareMonitorButton from "./hardware/HardwareMonitorButton";
 import NavbarTourButton from "./tour/NavbarTourButton";
 import CredentialsButton from "./credentials/CredentialsButton";
+import UpdatesButton from "./updates/UpdatesButton";
 
 function ResponsiveAppBar() {
   const theme = useTheme();
@@ -29,7 +30,7 @@ function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
 
   const pages = [
-    { name: t("common:datasets"), to: "/app/data" },
+    { name: t("common:data"), to: "/app/data" },
     { name: t("common:models"), to: "/app/models" },
     { name: t("common:generative"), to: "/app/generative" },
     { name: t("common:plugins"), to: "/app/plugins/browse" },
@@ -222,6 +223,7 @@ function ResponsiveAppBar() {
           <HardwareMonitorButton />
           <NavbarTourButton />
           <CredentialsButton />
+          <UpdatesButton />
           <Tooltip
             title={
               theme.palette.mode === "dark"

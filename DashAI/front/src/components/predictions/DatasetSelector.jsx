@@ -21,6 +21,7 @@ import {
 import { getPredictionSplits } from "../../api/predict";
 import { formatDate } from "../../pages/results/constants/formatDate";
 import { useTranslation } from "react-i18next";
+import { useSessionRoleColumns } from "../../hooks/useTaskMetadata";
 
 function DatasetSelector({
   experiment,
@@ -32,6 +33,9 @@ function DatasetSelector({
   onSplitChange = null,
 }) {
   const { t } = useTranslation(["prediction", "common", "datasets"]);
+  // The columns of each role, as the task labels its roles: a task's roles
+  // need not be inputs and a target.
+  const roleColumns = useSessionRoleColumns(experiment);
   const [columnTypes, setColumnTypes] = useState({});
   const [splits, setSplits] = useState([]);
   const [trainingDatasetId, setTrainingDatasetId] = useState(null);
@@ -185,30 +189,22 @@ function DatasetSelector({
               {t("prediction:label.predictionInfo")}
             </Typography>
 
-            <Box sx={{ mb: 2 }}>
-              <strong>{t("prediction:label.inputColumns")}:</strong>
-              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mt: 1 }}>
-                {experiment.input_columns.map((col) => (
-                  <Chip
-                    key={col}
-                    label={col}
-                    size="small"
-                    variant="outlined"
-                    sx={{ fontSize: "0.75rem" }}
-                  />
-                ))}
+            {roleColumns.map((role) => (
+              <Box key={role.name} sx={{ mb: 2 }}>
+                <strong>{role.label}:</strong>
+                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mt: 1 }}>
+                  {role.columns.map((col) => (
+                    <Chip
+                      key={col}
+                      label={col}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: "0.75rem" }}
+                    />
+                  ))}
+                </Box>
               </Box>
-            </Box>
-
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <strong>{t("prediction:label.targetColumn")}:</strong>
-              <Chip
-                label={experiment.output_columns[0]}
-                size="small"
-                color="primary"
-                sx={{ ml: 2, fontSize: "0.75rem" }}
-              />
-            </Box>
+            ))}
           </Alert>
 
           <Paper>

@@ -5,6 +5,19 @@ export function getNextAvailableName(name, existingDatasets) {
   return `${name} (${i})`;
 }
 
+// Turns a display text (e.g. a translated model or task name) into a name
+// base: accents are stripped, punctuation other than "_" and "-" is dropped
+// and whitespace runs become a single "_", so "Árbol de Decisión" becomes
+// "Arbol_de_Decision" and "K-Vecinos (KNN)" becomes "K-Vecinos_KNN".
+export function toNameBase(text) {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}_\s-]/gu, " ")
+    .trim()
+    .replace(/\s+/g, "_");
+}
+
 export function generateSequentialName({
   base,
   items = [],
@@ -13,7 +26,8 @@ export function generateSequentialName({
   allowExtension = false, // Whether to allow file extensions (e.g., .json) in the name
   startAt = 1,
 }) {
-  const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const nameBase = toNameBase(base);
+  const escapedBase = nameBase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const extPart = allowExtension ? "(?:\\.[^.]+)?" : "";
   const regex = new RegExp(`^${escapedBase}_(\\d+)${extPart}$`, "i");
 
@@ -29,7 +43,7 @@ export function generateSequentialName({
   const max = numbers.length ? Math.max(...numbers) : startAt - 1;
   const next = max + 1;
 
-  const generatedName = `${base}_${next}`;
+  const generatedName = `${nameBase}_${next}`;
 
   return {
     defaultName: generatedName,

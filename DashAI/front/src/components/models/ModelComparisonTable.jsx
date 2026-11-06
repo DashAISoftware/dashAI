@@ -129,20 +129,31 @@ function ModelComparisonTable({
     const prefix = metricSplit === "validation" ? "val" : metricSplit;
 
     runs.forEach((run) => {
-      const metricsKey = `${metricSplit}_metrics`;
-      if (run[metricsKey]) {
-        Object.keys(run[metricsKey]).forEach((key) =>
+      // A metric with no value on a run (MAPE on a zero) still has its
+      // column: the run says why, under {split}_metrics_unavailable.
+      [
+        run[`${metricSplit}_metrics`],
+        run[`${metricSplit}_metrics_unavailable`],
+      ].forEach((values) => {
+        Object.keys(values ?? {}).forEach((key) =>
           metricsSet.add(`${prefix}_${key}`),
         );
-      }
+      });
     });
+
+    // A metric the backend declares not optimizable (interval coverage) has
+    // no direction that makes it better, so no run is the best by it.
+    const directionOf = (metricInfo) =>
+      metricInfo?.metadata?.optimizable === false
+        ? undefined
+        : metricInfo?.metadata?.maximize;
 
     // Compute best value per metric field
     const bestValues = {};
     Array.from(metricsSet).forEach((metricField) => {
-      const metricName = metricField.replace(/^(test|train|val)_/, "");
+      const metricName = metricField.replace(/^(test|train|val|full)_/, "");
       const metricInfo = metrics.find((m) => m.name === metricName);
-      const maximize = metricInfo?.metadata?.maximize;
+      const maximize = directionOf(metricInfo);
       if (maximize === undefined || maximize === null) return;
 
       const metricsKey = `${metricSplit}_metrics`;
@@ -163,10 +174,10 @@ function ModelComparisonTable({
     });
 
     return Array.from(metricsSet).map((metricField) => {
-      const metricName = metricField.replace(/^(test|train|val)_/, "");
+      const metricName = metricField.replace(/^(test|train|val|full)_/, "");
       const metricInfo = metrics.find((m) => m.name === metricName);
       const metricDescription = metricInfo?.description || metricName;
-      const maximize = metricInfo?.metadata?.maximize;
+      const maximize = directionOf(metricInfo);
 
       const directionArrow =
         maximize === true ? "↑" : maximize === false ? "↓" : "";
@@ -214,7 +225,23 @@ function ModelComparisonTable({
 
           if (isRunning) return "-";
           const val = cell.getValue();
-          if (val === null || val === undefined) return "-";
+          if (val === null || val === undefined) {
+            const reason =
+              row.original[`${metricSplit}_metrics_unavailable`]?.[metricName];
+            return reason ? (
+              <Tooltip title={reason} arrow placement="top">
+                <Box
+                  component="span"
+                  aria-label={reason}
+                  sx={{ cursor: "help" }}
+                >
+                  -
+                </Box>
+              </Tooltip>
+            ) : (
+              "-"
+            );
+          }
 
           const value = Number(val);
           if (isNaN(value)) return val;
@@ -507,7 +534,7 @@ ModelComparisonTable.propTypes = {
   onViewDetails: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onRowClick: PropTypes.func,
-  metricSplit: PropTypes.oneOf(["train", "validation", "test"]),
+  metricSplit: PropTypes.oneOf(["train", "validation", "test", "full"]),
 };
 
 export default ModelComparisonTable;

@@ -200,3 +200,21 @@ def test_dummy_infers_label_for_int_categorical():
 
     assert result["code"]["type"] == "Categorical"
     assert result["code"]["encoder"] == "label"
+
+
+def test_dashaptype_infers_text_for_all_null_column():
+    """A column with no values in the preview is Text, not Categorical."""
+    import numpy as np
+    import pandas as pd
+
+    from DashAI.back.types.inf.inference_methods import DashAIPtype
+
+    data = pd.DataFrame(
+        {"release": [np.nan] * 30, "value": [float(i) + 0.5 for i in range(30)]}
+    )
+    result = DashAIPtype().infer_types(data)
+
+    assert result["release"]["type"] == "Text"
+    assert result["release"]["dtype"] == "string"
+    assert result["release"]["inference_reason"]["rule"] == "empty_column"
+    assert result["release"]["inference_reason"]["is_categorical"] is False

@@ -12,6 +12,10 @@ from DashAI.back.dependencies.downloads.downloadable import (
     HFDownloadableMixin,
 )
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
+from DashAI.back.models.hugging_face.diffusion_memory import (
+    GpuMemoryModeField,
+    place_pipeline,
+)
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 
@@ -155,6 +159,8 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
         ),
     )  # type: ignore
 
+    gpu_memory_mode: GpuMemoryModeField = "auto"  # type: ignore
+
 
 def get_depth_map(image, device, model_source="Intel/dpt-hybrid-midas"):
     """Convert an input image to a normalised depth map for SDXL ControlNet.
@@ -290,9 +296,8 @@ class StableDiffusionXLV1ControlNet(HFDownloadableMixin, BaseControlNetModel):
         Loads ``diffusers/controlnet-depth-sdxl-1.0-small`` as the ControlNet
         backbone, ``madebyollin/sdxl-vae-fp16-fix`` as the VAE, and
         ``stabilityai/stable-diffusion-xl-base-1.0`` as the base diffusion
-        pipeline, all moved to the requested device. CPU offloading is enabled
-        automatically via ``pipe.enable_model_cpu_offload()`` to reduce VRAM
-        pressure.
+        pipeline, placed on the requested device by ``place_pipeline``
+        according to ``gpu_memory_mode``.
 
         Parameters
         ----------
@@ -302,6 +307,9 @@ class StableDiffusionXLV1ControlNet(HFDownloadableMixin, BaseControlNetModel):
 
             device : str
                 Target hardware (e.g. ``"GPU 0"`` or ``"CPU"``).
+            gpu_memory_mode : str
+                How much of the pipeline stays on the GPU; see
+                ``place_pipeline``. Defaults to ``"auto"``.
             num_inference_steps : int
                 Number of denoising steps during generation.
             controlnet_conditioning_scale : float
@@ -325,12 +333,12 @@ class StableDiffusionXLV1ControlNet(HFDownloadableMixin, BaseControlNetModel):
             variant="fp16",
             use_safetensors=True,
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
-        ).to(self.device)
+        )
 
         self.vae = AutoencoderKL.from_pretrained(
             self._local_or_repo("madebyollin/sdxl-vae-fp16-fix"),
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
-        ).to(self.device)
+        )
 
         self.pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
             self._local_or_repo("stabilityai/stable-diffusion-xl-base-1.0"),
@@ -339,13 +347,14 @@ class StableDiffusionXLV1ControlNet(HFDownloadableMixin, BaseControlNetModel):
             variant="fp16",
             use_safetensors=True,
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
-        ).to(self.device)
+        )
 
         self.controlnet_conditioning_scale = kwargs.get("controlnet_conditioning_scale")
         self.num_inference_steps = kwargs.get("num_inference_steps")
 
-        if self.device != "cpu":
-            self.pipe.enable_model_cpu_offload()
+        self.pipe = place_pipeline(
+            self.pipe, self.device, kwargs.get("gpu_memory_mode")
+        )
 
     def generate(self, input: Tuple[Any, str]) -> List[Any]:
         """Generate output from a generative model.

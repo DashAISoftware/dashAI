@@ -1,9 +1,18 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Box, Typography, Chip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "../../utils";
-import ParamInfoList from "./ParamInfoBox";
+import { getComponents } from "../../api/component";
+import ParamInfoList, { ParamInfoBox } from "./ParamInfoBox";
+import {
+  buildStepDisplayNames,
+  labelForRef,
+} from "./modelSession/sessionColumnRefs";
+import { useSessionRoleColumns } from "../../hooks/useTaskMetadata";
+
+// The keys of a splits payload that are not the splitter's parameters.
+const SPLITS_META_KEYS = ["splitter_name", "splitType", "splitted_indexes"];
 
 const SPLIT_TYPE_LABEL_KEYS = {
   random: "experiments:label.random",
@@ -14,8 +23,8 @@ const SPLIT_TYPE_LABEL_KEYS = {
 
 /**
  * Shared body for a session's info: task, description, metadata (id,
- * dataset, dates) and the configuration it was created with (input/output
- * columns, split setup). Used both by InfoSessionModal (a dialog) and the
+ * dataset, dates) and the configuration it was created with (the columns of
+ * each role, split setup). Used both by InfoSessionModal (a dialog) and the
  * model detail view's right sidebar (RunInfoSidebar's "Session" tab).
  */
 export default function SessionInfoContent({
@@ -24,8 +33,65 @@ export default function SessionInfoContent({
   tasks = [],
 }) {
   const { t } = useTranslation(["common", "experiments", "models"]);
+  // One row per role, as the task labels its roles: a task's roles need not
+  // be inputs and outputs.
+  const roleColumns = useSessionRoleColumns(session);
+  const [convertersMeta, setConvertersMeta] = useState({});
+  const [splitterComponent, setSplitterComponent] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getComponents({ selectTypes: ["Converter"] })
+      .then((data) => {
+        if (cancelled) return;
+        setConvertersMeta(
+          Object.fromEntries((data || []).map((c) => [c.name, c])),
+        );
+      })
+      .catch((error) =>
+        console.error("Failed to fetch converter metadata:", error),
+      );
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  let splits = null;
+  try {
+    splits =
+      typeof session?.splits === "string"
+        ? JSON.parse(session.splits)
+        : session?.splits;
+  } catch {
+    splits = null;
+  }
+  // A strategy without a form of its own stores its splitter's parameters
+  // alone, with no split type; its schema names them.
+  const genericSplitter =
+    splits && !splits.splitType ? (splits.splitter_name ?? null) : null;
+
+  useEffect(() => {
+    if (!genericSplitter) return undefined;
+    let cancelled = false;
+    getComponents({ model: genericSplitter })
+      .then((component) => {
+        if (!cancelled) setSplitterComponent(component);
+      })
+      .catch((error) =>
+        console.error("Failed to fetch the splitter metadata:", error),
+      );
+    return () => {
+      cancelled = true;
+    };
+  }, [genericSplitter]);
 
   if (!session) return null;
+
+  const preprocessingSteps = session.preprocessing?.steps || [];
+  const stepDisplayNames = buildStepDisplayNames(
+    preprocessingSteps,
+    convertersMeta,
+  );
 
   const getDatasetName = () => {
     if (!session.dataset_id || !datasets.length) return t("common:unknown");
@@ -52,27 +118,28 @@ export default function SessionInfoContent({
     [t("common:lastModified"), formatDate(session.last_modified)],
   ];
 
-  let splits = null;
-  try {
-    splits =
-      typeof session.splits === "string"
-        ? JSON.parse(session.splits)
-        : session.splits;
-  } catch {
-    splits = null;
-  }
-
   const yesNo = (value) => t(value ? "common:yes" : "common:no");
 
-  const configRows = [
-    [t("models:label.inputColumns"), (session.input_columns || []).join(", ")],
-    [
-      t("models:label.outputColumns"),
-      (session.output_columns || []).join(", "),
-    ],
-  ];
+  const configRows = roleColumns.map((role) => [
+    role.label,
+    role.columns.join(", "),
+  ]);
 
-  if (splits?.splitType) {
+  if (genericSplitter) {
+    const properties = splitterComponent?.schema?.properties ?? {};
+    configRows.push([
+      t("experiments:label.splitter"),
+      splitterComponent?.display_name ?? genericSplitter,
+    ]);
+    Object.entries(splits)
+      .filter(([key]) => !SPLITS_META_KEYS.includes(key))
+      .forEach(([key, value]) => {
+        configRows.push([
+          properties[key]?.title ?? key,
+          typeof value === "boolean" ? yesNo(value) : value,
+        ]);
+      });
+  } else if (splits?.splitType) {
     configRows.push([
       t("experiments:label.splitType"),
       t(SPLIT_TYPE_LABEL_KEYS[splits.splitType] || splits.splitType),
@@ -150,6 +217,25 @@ export default function SessionInfoContent({
         <ParamInfoList rows={configRows} />
       </Box>
 
+      {preprocessingSteps.length > 0 && (
+        <Box>
+          <Typography variant="subtitle2" gutterBottom>
+            {t("models:label.appliedConverters")}
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {preprocessingSteps.map((step, index) => (
+              <ParamInfoBox
+                key={`${step.converter}-${index}`}
+                label={stepDisplayNames[index]}
+                value={(step.scope || [])
+                  .map((ref) => labelForRef(ref, stepDisplayNames, t))
+                  .join(", ")}
+              />
+            ))}
+          </Box>
+        </Box>
+      )}
+
       <Box>
         <Typography variant="subtitle2" gutterBottom>
           {t("common:metadata")}
@@ -166,12 +252,20 @@ SessionInfoContent.propTypes = {
     name: PropTypes.string,
     dataset_id: PropTypes.number,
     task_name: PropTypes.string,
-    input_columns: PropTypes.array,
-    output_columns: PropTypes.array,
+    task_name: PropTypes.string,
+    column_roles: PropTypes.object,
     splits: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     created: PropTypes.string,
     last_modified: PropTypes.string,
     description: PropTypes.string,
+    preprocessing: PropTypes.shape({
+      steps: PropTypes.arrayOf(
+        PropTypes.shape({
+          converter: PropTypes.string,
+          scope: PropTypes.array,
+        }),
+      ),
+    }),
   }),
   datasets: PropTypes.array,
   tasks: PropTypes.array,

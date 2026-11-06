@@ -1,10 +1,19 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Final, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, Final, List, Optional, Type, Union
 
 from DashAI.back.config_object import ConfigObject
+from DashAI.back.core.data_kinds import normalize_data_kinds, type_names
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.preprocessing.structure_types import (
+    BlockItem,
+    ColumnItem,
+    RowsNotSupportedError,
+    StateItem,
+    StructureDelta,
+    type_fields,
+)
 from DashAI.back.static.icons import Icon
 from DashAI.back.types.dashai_data_type import DashAIDataType
 
@@ -27,9 +36,14 @@ class BaseConverter(ConfigObject, ABC):
     Converters modify dataset columns in a supervised or unsupervised way.
     Operations include scaling, encoding, dimensionality reduction, imputation,
     and feature engineering. Converters do not add or remove rows unless
-    `changes_row_count` returns True (e.g. samplers).
+    `CHANGES_ROW_COUNT` is True (e.g. samplers).
 
     All converters must implement `fit`, `transform`, and `get_output_type`.
+
+    On documents, a converter whose output type is the other document
+    content type (such as an OCR turning images into text) moves each item
+    to that type. `OUTPUT_KIND` names the element kind the moved items get;
+    when None they get the default kind of their new type.
     """
 
     TYPE: Final[str] = "Converter"
@@ -42,7 +56,71 @@ class BaseConverter(ConfigObject, ABC):
     COLOR: Final[str] = "rgb(255, 255, 255)"
     SUPERVISED: bool = False
     CHANGES_ROW_COUNT: bool = False
+    # Whether `fit` computes anything from the actual values of the input
+    # data (e.g. a mean, a vocabulary, learned components) rather than just
+    # validating shapes/types or applying a fixed, user-specified rule.
+    # Defaults to True (the conservative choice): a converter added without
+    # setting this explicitly warns about possible leakage rather than
+    # silently skipping the warning for a converter that does learn from
+    # data. Used to flag possible data leakage when applied inside a
+    # notebook, where fit/transform runs on the whole dataset with no
+    # train/test split.
+    LEARNS_FROM_DATA: bool = True
+    # True for converters that never transform values, only keep or drop
+    # whole columns as-is (feature selection, variance thresholding): the
+    # output type of a surviving column is always exactly its input type, no
+    # arithmetic involved. Lets a caller that already knows the real input
+    # type (e.g. the Models-module wizard, once a real scope is chosen) use
+    # that instead of this class's own best-effort get_output_type() guess,
+    # which — called on a bare unfitted instance — has no idea what column
+    # it will actually run on.
+    PRESERVES_INPUT_TYPE: bool = False
+    OUTPUT_KIND: Optional[str] = None
+    # What the converter does to the columns in its scope, used to estimate
+    # the dataset structure of a session's converter chain before any fit
+    # (see infer_output_columns):
+    # - "replace": same columns, values (and maybe types) changed
+    # - "add": keeps its scope columns and adds new ones
+    # - "expand": consumes its scope columns and outputs new ones
+    # - "select": keeps a subset of its scope columns, unchanged
+    # - "rows": changes the row count, keeping its scope columns; sessions
+    #   support it only when ROWS_APPLY_TO is set (see below)
+    # None (e.g. an older plugin) is treated as "expand" with an unknown
+    # column count, which never promises a column that may not exist.
+    COLUMN_OPERATION: Optional[str] = None
+    # For a "rows" converter, where it runs in a session's preprocessing:
+    # - "train": only on the training split, never on validation, test or
+    #   prediction inputs (resampling);
+    # - "splits": on train, validation and test, never on prediction inputs
+    #   (row removal; the converter must implement rows_to_keep).
+    # None means sessions do not support it yet.
+    ROWS_APPLY_TO: Optional[str] = None
+    # Defaults a model session uses instead of the schema's, for parameters
+    # whose right value depends on where the converter runs. A session fits on
+    # the training rows only, so an encoder there treats a category it did
+    # not see, while the schema keeps it strict for the notebook, whose
+    # output is saved. The session wizard seeds its form with them
+    # (``session_params`` in the metadata), and the backend fills them into a
+    # session step that leaves them out (``session_params``).
+    SESSION_PARAMS: Dict[str, Any] = {}
     SCHEMA: BaseConverterSchema
+
+    @classmethod
+    def session_params(cls, params: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """A session step's params, with the session defaults under them.
+
+        Parameters
+        ----------
+        params : dict or None
+            The params the step stores.
+
+        Returns
+        -------
+        dict
+            ``SESSION_PARAMS`` updated with ``params``: what the step gives
+            wins.
+        """
+        return {**cls.SESSION_PARAMS, **(params or {})}
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
@@ -74,9 +152,17 @@ class BaseConverter(ConfigObject, ABC):
         meta["download_size_bytes"] = getattr(cls, "DOWNLOAD_SIZE_BYTES", None)
         meta["supervised"] = cls.SUPERVISED
         meta["changes_row_count"] = cls.CHANGES_ROW_COUNT
+        meta["preserves_input_type"] = cls.PRESERVES_INPUT_TYPE
+        meta["learns_from_data"] = cls.LEARNS_FROM_DATA
+        meta["column_operation"] = cls.COLUMN_OPERATION
+        meta["rows_apply_to"] = cls.ROWS_APPLY_TO
+        meta["session_params"] = dict(cls.SESSION_PARAMS)
         meta["n_components_features_bounded"] = getattr(
             cls, "N_COMPONENTS_FEATURES_BOUNDED", False
         )
+        meta["data_kinds"] = normalize_data_kinds(meta.get("data_kinds"))
+        if meta.get("document_allowed_types"):
+            meta["document_allowed_types"] = type_names(meta["document_allowed_types"])
 
         # Serialize allowed_types to the names the frontend compares against.
         # A DashAI type reports its own name via display_name(), which is the
@@ -108,7 +194,163 @@ class BaseConverter(ConfigObject, ABC):
         # Drop restricted_dtypes (no converter uses it; it is always [])
         meta.pop("restricted_dtypes", None)
 
+        # A representative output type, so the Models-module wizard can show
+        # "this converter's group is typed X" before any real fit exists.
+        # Not every converter can be instantiated with no arguments (some
+        # require constructor params with no default), so this is
+        # best-effort: None means "unknown until configured".
+        try:
+            # output_dtype is the concrete storage dtype (e.g. "int64"), so a
+            # group column can show one instead of "unknown" before any real
+            # fit exists.
+            meta["output_type"], meta["output_dtype"] = type_fields(
+                cls().get_output_type()
+            )
+        except Exception:
+            meta["output_type"] = None
+            meta["output_dtype"] = None
+
         return meta
+
+    def get_report(self) -> Union[Dict[str, Any], None]:
+        """Return the converter report produced after execution, if any.
+
+        The report complements the transformed dataset with information that
+        helps downstream tools (explorers, visualisations) interpret what the
+        converter did during its pipeline step. Persisted to disk per converter
+        execution. Optional — converters that produce no supplementary
+        information return ``None``.
+
+        Returns
+        -------
+        Dict[str, Any] or None
+            JSON-serializable report dict, or ``None`` when the converter does
+            not produce one.
+        """
+        return None
+
+    def build_report(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Wrap converter-specific data with the producer converter name.
+
+        Subclasses pass only information that is useful after the conversion
+        has finished. Configuration parameters are already persisted with the
+        converter DB row.
+        """
+        return {"converter": self.__class__.__name__, **data}
+
+    def infer_output_columns(self, inputs: List[StateItem]) -> StructureDelta:
+        """Estimate what this converter does to its scope, without any data.
+
+        Called on an instance built with the user's params but never fit, so
+        a session wizard can show which columns exist after each step of a
+        converter chain. The default follows COLUMN_OPERATION; converters
+        that know more (e.g. an exact column count from `n_components`, or
+        output names built from their inputs) override it.
+
+        Parameters
+        ----------
+        inputs : list of ColumnItem | BlockItem
+            The dataset state items in this converter's scope.
+
+        Returns
+        -------
+        StructureDelta
+            The scope items that survive (maybe retyped) and the new items.
+
+        Raises
+        ------
+        RowsNotSupportedError
+            If the converter changes the row count.
+        """
+        operation = type(self).COLUMN_OPERATION or "expand"
+        if operation == "rows":
+            if type(self).ROWS_APPLY_TO not in ("train", "splits"):
+                raise RowsNotSupportedError(type(self).__name__)
+            return StructureDelta(kept=list(inputs), drops_unscoped=True)
+        if operation == "replace":
+            return StructureDelta(kept=[self._retype(item) for item in inputs])
+        if operation == "add":
+            return StructureDelta(kept=list(inputs), added=self._default_blocks())
+        if operation == "select":
+            return StructureDelta(added=self._selection_blocks(inputs))
+        return StructureDelta(added=self._default_blocks())
+
+    def rows_to_keep(self, x: "DashAIDataset") -> List[int]:
+        """Positions of the rows of x that survive this converter.
+
+        Required for converters with ROWS_APPLY_TO = "splits": the session
+        runtime cuts the whole split (inputs and target together) with these
+        positions instead of taking the converter's own output, so the
+        target never misaligns.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            The converter's scope columns of one split.
+
+        Returns
+        -------
+        list of int
+            0-based positions of the kept rows, in order.
+
+        Raises
+        ------
+        NotImplementedError
+            For a converter that does not report which rows it keeps.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not report which rows it keeps."
+        )
+
+    def _retype(self, item: StateItem) -> StateItem:
+        """Copy an item replaced in place with this converter's output type."""
+        if type(self).PRESERVES_INPUT_TYPE:
+            return item
+        column_name = item.name if isinstance(item, ColumnItem) else None
+        type_name, dtype = type_fields(self.get_output_type(column_name))
+        return item.model_copy(update={"type": type_name, "dtype": dtype})
+
+    def _default_blocks(self, count: Optional[int] = None) -> List[StateItem]:
+        """One block typed with this converter's output type.
+
+        Parameters
+        ----------
+        count : int, optional
+            The block's column count, when params determine it. Defaults to
+            None (known only after fit).
+        """
+        type_name, dtype = type_fields(self.get_output_type())
+        return [BlockItem(type=type_name, dtype=dtype, count=count)]
+
+    def _selected_count(self, inputs: List[StateItem]) -> Optional[int]:
+        """How many scope columns a "select" converter keeps, if params say.
+
+        None (the default) means it depends on the data, e.g. a statistical
+        test threshold. Overridden by selectors with a fixed count (`k`).
+        """
+        return None
+
+    def _selection_blocks(self, inputs: List[StateItem]) -> List[StateItem]:
+        """One block per distinct input type, since selection keeps types.
+
+        A selector says at most how many columns survive, never which ones,
+        so its output is always symbolic, even with a known count.
+        """
+        by_type: Dict[Optional[str], List[StateItem]] = {}
+        for item in inputs:
+            by_type.setdefault(item.type, []).append(item)
+        count = self._selected_count(inputs) if len(by_type) == 1 else None
+        blocks = []
+        for type_name, items in by_type.items():
+            dtypes = {item.dtype for item in items}
+            blocks.append(
+                BlockItem(
+                    type=type_name,
+                    dtype=dtypes.pop() if len(dtypes) == 1 else None,
+                    count=count,
+                )
+            )
+        return blocks
 
     @abstractmethod
     def get_output_type(self, column_name: str = None) -> DashAIDataType:

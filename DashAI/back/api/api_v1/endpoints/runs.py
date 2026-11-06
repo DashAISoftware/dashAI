@@ -8,7 +8,12 @@ from kink import di, inject
 from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
-from DashAI.back.api.utils import remove_path
+from DashAI.back.api.utils import (
+    offered_components,
+    remove_path,
+    remove_run_files,
+    run_file_paths,
+)
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import (
     GlobalExplainer,
@@ -21,6 +26,7 @@ from DashAI.back.dependencies.database.models import (
     RunStatus,
 )
 from DashAI.back.dependencies.downloads.nested import missing_downloads
+from DashAI.back.metrics.base_metric import cannot_be_optimized
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -47,7 +53,9 @@ def get_metrics_for_run(db, run_id: int, level_enum=LevelEnum.LAST):
     dict
         The train, validation and test metrics of the run, each paired with the
         standard deviation that fold aggregation produces for cross-validation
-        runs. A partition the run did not score comes back as ``None``.
+        runs, and with ``{split}_metrics_unavailable``: the metrics that have
+        no value on that partition, mapped to the reason. A partition the run
+        did not score comes back as ``None``.
     """
     metrics = (
         db.query(Metric)
@@ -55,15 +63,27 @@ def get_metrics_for_run(db, run_id: int, level_enum=LevelEnum.LAST):
         .all()
     )
 
-    # One value entry and one standard deviation entry per split, derived from
-    # SplitEnum so a split cannot be silently left out of the response.
+    # One value entry, one standard deviation entry and one entry for the
+    # metrics with no value per split, derived from SplitEnum so a split cannot
+    # be silently left out of the response.
     response = {}
     for split in SplitEnum:
         response[f"{split.value}_metrics"] = None
         response[f"{split.value}_metrics_std"] = None
+        response[f"{split.value}_metrics_unavailable"] = None
 
     # Group metrics by split
     for metric in metrics:
+        # A metric with no value on this data keeps the values mapping
+        # numbers-only, which is what every reader of it formats; why it has
+        # no value travels beside it.
+        if metric.value is None:
+            unavailable_key = f"{metric.split.name.lower()}_metrics_unavailable"
+            if response[unavailable_key] is None:
+                response[unavailable_key] = {}
+            response[unavailable_key][metric.name] = metric.unavailable_reason
+            continue
+
         # Determine the key in the response dictionary
         split_key = f"{metric.split.name.lower()}_metrics"
 
@@ -202,6 +222,70 @@ async def get_run_by_id(
         return run
 
 
+@router.get("/{run_id}/export")
+@inject
+async def export_run_model(
+    run_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry=Depends(lambda: di["component_registry"]),
+):
+    """Download a finished run as a ``.dashai-model`` package.
+
+    The package holds the trained model, the session's fitted preprocessor and
+    the training column types, so it predicts outside the app with
+    ``DashAI.load_model``.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run does not exist, 409 if it has no usable trained model,
+        500 on any other failure.
+    """
+    import shutil
+    import tempfile
+    from pathlib import Path
+
+    from fastapi.concurrency import run_in_threadpool
+    from fastapi.responses import FileResponse
+    from starlette.background import BackgroundTask
+
+    from DashAI.back.model_package.export import (
+        RunNotExportableError,
+        RunNotFoundError,
+        build_package,
+        package_filename,
+    )
+
+    workdir = Path(tempfile.mkdtemp(prefix="dashai-export-"))
+    destination = workdir / "package.dashai-model"
+    try:
+        manifest = await run_in_threadpool(
+            build_package, run_id, destination, session_factory, component_registry
+        )
+    except RunNotFoundError as e:
+        shutil.rmtree(workdir, ignore_errors=True)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
+        ) from e
+    except RunNotExportableError as e:
+        shutil.rmtree(workdir, ignore_errors=True)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+    except Exception as e:
+        shutil.rmtree(workdir, ignore_errors=True)
+        log.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error exporting the model",
+        ) from e
+
+    return FileResponse(
+        destination,
+        media_type="application/zip",
+        filename=package_filename(manifest["info"]["run_name"]),
+        background=BackgroundTask(shutil.rmtree, workdir, ignore_errors=True),
+    )
+
+
 @router.get("/plot/{run_id}/{plot_type}")
 @inject
 async def get_hyperparameter_optimization_plot(
@@ -260,6 +344,57 @@ async def get_hyperparameter_optimization_plot(
     return normalize_artifacts(plot)[0]
 
 
+@router.get("/{run_id}/forecasts")
+@inject
+async def get_run_forecasts(
+    run_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Return the forecasts a backtest made from every origin.
+
+    The file ``SaveForecastsUnit`` wrote beside the run's model, as it is: the
+    frequency, the horizon, the interval levels, and per origin its partition,
+    its dates, what actually happened, the forecast and its bounds.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run does not exist, has not finished, or has no forecasts:
+        a run of a task that is not backtested, or one whose file is gone.
+    """
+    import json
+
+    from DashAI.back.units.forecast_scope import forecasts_file
+
+    with session_factory() as db:
+        try:
+            run = db.get(Run, run_id)
+            if not run:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
+                )
+            if run.status != RunStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="The run has not finished, so it has no forecasts yet.",
+                )
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+    path = forecasts_file(di["config"]["RUNS_PATH"], str(run_id))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except OSError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The run has no forecasts.",
+        ) from e
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @inject
 async def upload_run(
@@ -292,6 +427,8 @@ async def upload_run(
         If the model session with id model_session_id is not registered in the DB.
     HTTPException
         If the model requires a download but has not been downloaded yet (HTTP 409).
+    HTTPException
+        If the session's task does not offer the model (HTTP 422).
     """
     with session_factory() as db:
         try:
@@ -300,6 +437,19 @@ async def upload_run(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Model session not found",
+                )
+            if model_session.preprocessing_status == "pending":
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="This session's preprocessing has not finished yet.",
+                )
+            if model_session.preprocessing_status == "failed":
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        "This session's preprocessing failed: "
+                        f"{model_session.preprocessing_error}"
+                    ),
                 )
             # REQUIRES_DOWNLOAD is the static contract; the download state is
             # reconciled against the filesystem so a model downloaded after
@@ -330,6 +480,38 @@ async def upload_run(
                         f"These components must be downloaded before use: {names}."
                     ),
                 )
+            # After the download checks, which keep their 409 for a model that
+            # is both missing and of the wrong family. The wizard lists only
+            # the models the task offers; this refuses the rest, a component
+            # of another type included, instead of failing inside the fit.
+            task_name = model_session.task_name
+            if task_name not in component_registry:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Task {task_name} does not exist in the registry.",
+                )
+            if params.model_name not in offered_components(
+                component_registry, task_name, "Model"
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=(
+                        f"Model {params.model_name!r} is not available for task "
+                        f"{task_name}."
+                    ),
+                )
+            _check_goal_metric(
+                component_registry,
+                task_name,
+                params.goal_metric,
+                params.optimizer_name,
+            )
+            _check_exogenous_requirement(
+                component_registry[params.model_name]["class"],
+                model_session,
+                component_registry[task_name]["class"](),
+                params.parameters,
+            )
             run = Run(
                 model_session_id=params.model_session_id,
                 model_name=params.model_name,
@@ -357,6 +539,81 @@ async def upload_run(
             ) from e
 
 
+def _check_exogenous_requirement(model_class, model_session, task, parameters) -> None:
+    """Refuse a model that cannot run without exogenous variables in a run that
+    will not read them, before it trains (RECONCILING_FORECASTING §2.14,
+    detail 2).
+
+    Whether the run reads them is ``exogenous_usage``'s answer, the one the
+    session shows before training, the units act on and the run records.
+
+    Raises
+    ------
+    HTTPException
+        422 naming the model and why the run would not read them.
+    """
+    from DashAI.back.models.forecasting.single_series_forecasting_model import (
+        EXOGENOUS_REQUIRED,
+        exogenous_usage,
+    )
+    from DashAI.back.tasks.session_roles import session_exogenous_refs
+
+    if getattr(model_class, "EXOGENOUS", None) != EXOGENOUS_REQUIRED:
+        return
+    used, reason = exogenous_usage(
+        model_class, parameters, bool(session_exogenous_refs(model_session, task))
+    )
+    if used:
+        return
+    why = (
+        "and this session has none. Choose another model, or create a session "
+        "that gives the exogenous role its columns."
+        if reason["key"] == "sessionHasNoExogenous"
+        else "and use_exogenous is off. Turn it on, or choose another model."
+    )
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail=f"Model {model_class.__name__!r} requires exogenous variables, {why}",
+    )
+
+
+def _check_goal_metric(component_registry, task_name, goal_metric, optimizer_name):
+    """Refuse a goal metric the run dialog would not have offered.
+
+    The dialog lists the metrics the task offers, and offers to optimize only
+    those that can be. A run without a search may keep any offered metric, or
+    none, as its goal.
+
+    Raises
+    ------
+    HTTPException
+        422 for a metric the task does not offer, for a search without a goal
+        metric and for a search for a metric that cannot be optimized.
+    """
+    if goal_metric and goal_metric not in offered_components(
+        component_registry, task_name, "Metric"
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Metric {goal_metric!r} is not available for task {task_name}.",
+        )
+    if not optimizer_name:
+        return
+    if not goal_metric:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"A run that searches with {optimizer_name} needs a goal metric "
+                "to optimize."
+            ),
+        )
+    if not component_registry[goal_metric]["metadata"].get("optimizable", True):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=cannot_be_optimized(goal_metric),
+        )
+
+
 @router.delete("/{run_id}")
 @inject
 async def delete_run(
@@ -382,10 +639,8 @@ async def delete_run(
     HTTPException
         If the run is not registered in the DB.
     HTTPException
-        If the run was trained but the run_path does not exists.
+        If the database fails to delete it; the run's files are then kept.
     """
-    import os
-
     with session_factory() as db:
         try:
             run = db.get(Run, run_id)
@@ -393,27 +648,18 @@ async def delete_run(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
                 )
+            paths = run_file_paths([run])
             db.delete(run)
-            if (
-                run.status == RunStatus.FINISHED
-                and run.run_path
-                and os.path.exists(run.run_path)
-            ):
-                remove_path(run.run_path)
             db.commit()
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
-        except (OSError, ValueError) as e:
-            log.exception(e)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to delete directory",
-            ) from e
+
+    remove_run_files(paths)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch("/{run_id}")
@@ -422,6 +668,7 @@ async def update_run(
     run_id: int,
     params: UpdateRunParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry=Depends(lambda: di["component_registry"]),
 ):
     """Updates the run with the provided ID.
 
@@ -466,19 +713,20 @@ async def update_run(
                 )
 
             # apply updates
+            stale_files = []
             if params.run_name is not None:
                 run.name = params.run_name
             if params.run_description is not None:
                 run.description = params.run_description
             if params.parameters is not None:
                 run.parameters = params.parameters
-                reset_run(run)
+                stale_files += reset_run(run)
             if params.optimizer is not None:
                 run.optimizer_name = params.optimizer
-                reset_run(run)
+                stale_files += reset_run(run)
             if params.optimizer_parameters is not None:
                 run.optimizer_parameters = params.optimizer_parameters
-                reset_run(run)
+                stale_files += reset_run(run)
             if params.goal_metric is not None:
                 run.goal_metric = params.goal_metric
             # `nested` is nullable, so None is also how the client asks to drop
@@ -487,11 +735,25 @@ async def update_run(
             if "nested" in params.model_fields_set:
                 run.nested = params.nested
 
+            # The run the patch leaves is checked, so a goal and an optimizer
+            # sent apart cannot add up to a search the API would refuse whole.
+            # A task missing from the registry is the job's to report.
+            if {"goal_metric", "optimizer"} & params.model_fields_set:
+                model_session = db.get(ModelSession, run.model_session_id)
+                if model_session and model_session.task_name in component_registry:
+                    _check_goal_metric(
+                        component_registry,
+                        model_session.task_name,
+                        run.goal_metric,
+                        run.optimizer_name,
+                    )
+
             # Truthiness would read a cleared optimizer ("" / {}) as "nothing
             # changed" and skip the commit, so go by which fields were sent.
             if params.model_fields_set:
                 db.commit()
                 db.refresh(run)
+                remove_run_files(stale_files)
                 return run
             else:
                 raise HTTPException(
@@ -519,9 +781,10 @@ async def reset_run_by_id(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
                 )
-            reset_run(run)
+            stale_files = reset_run(run)
             db.commit()
             db.refresh(run)
+            remove_run_files(stale_files)
             return run
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -722,46 +985,52 @@ async def delete_run_operations(
             ) from e
 
 
-def reset_run(run):
+def reset_run(run) -> list:
     """
-    Reset a run to NOT_STARTED status and delete associated files.
+    Reset a run to NOT_STARTED status and let go of its files.
+
+    The files are not removed here: the caller removes them with
+    ``remove_run_files`` once it has committed the reset, so a reset that
+    fails to commit keeps the files of the run it left as it was.
 
     Parameters
     ----------
     run : Run
         The run object to reset.
+
+    Returns
+    -------
+    list[str]
+        The paths of the files the run had, for ``remove_run_files``.
     """
-    import os
+    paths = run_file_paths([run])
 
     setattr(run, "status", RunStatus.NOT_STARTED)
     for split in SplitEnum:
         setattr(run, f"{split.value}_metrics", None)
         setattr(run, f"{split.value}_metrics_std", None)
+        setattr(run, f"{split.value}_metrics_unavailable", None)
     setattr(run, "start_time", None)
     setattr(run, "delivery_time", None)
     setattr(run, "end_time", None)
+    # Recorded by the training it undoes, so it goes with it.
+    setattr(run, "exogenous", None)
 
     # Delete metrics from DB
     with di["session_factory"]() as db:
         db.query(Metric).filter(Metric.run_id == run.id).delete()
         db.commit()
 
-    # Delete files
-    if run.run_path and os.path.exists(run.run_path):
-        remove_path(run.run_path)
-        setattr(run, "run_path", None)
-    if run.plot_history_path and os.path.exists(run.plot_history_path):
-        remove_path(run.plot_history_path)
-        setattr(run, "plot_history_path", None)
-    if run.plot_slice_path and os.path.exists(run.plot_slice_path):
-        remove_path(run.plot_slice_path)
-        setattr(run, "plot_slice_path", None)
-    if run.plot_contour_path and os.path.exists(run.plot_contour_path):
-        remove_path(run.plot_contour_path)
-        setattr(run, "plot_contour_path", None)
-    if run.plot_importance_path and os.path.exists(run.plot_importance_path):
-        remove_path(run.plot_importance_path)
-        setattr(run, "plot_importance_path", None)
+    for field in (
+        "run_path",
+        "plot_history_path",
+        "plot_slice_path",
+        "plot_contour_path",
+        "plot_importance_path",
+    ):
+        if getattr(run, field):
+            setattr(run, field, None)
+    return paths
 
 
 # ─── Fold metrics ─────────────────────────────────────────────
@@ -795,6 +1064,21 @@ def _group_fold_metrics(db, run_id: int, level, split_enum):
         .order_by(Metric.name, Metric.fold_index)
         .all()
     )
+    if not fold_metrics:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No fold metrics found for this run",
+        )
+
+    # The lists are read by position: the paired tests line fold i of one run
+    # up with fold i of another. A metric with no value on some fold would
+    # leave a hole that shifts the folds after it, so it is left out whole.
+    # Its summary row is unavailable too, and says why in the run's
+    # ``{split}_metrics_unavailable``.
+    without_value = {metric.name for metric in fold_metrics if metric.value is None}
+    fold_metrics = [m for m in fold_metrics if m.name not in without_value]
+    # Nothing left is the same answer as nothing stored: an empty mapping
+    # would read as a run whose metrics all agree on zero folds.
     if not fold_metrics:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

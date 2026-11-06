@@ -1,0 +1,93 @@
+[
+  {
+    "name": "without steps, the raw refs themselves",
+    "refs": [
+      { "kind": "raw", "name": "a" },
+      { "kind": "raw", "name": "b" }
+    ],
+    "steps": [],
+    "expected": ["a", "b"]
+  },
+  {
+    "name": "a group ref reads its step's scope",
+    "refs": [
+      { "kind": "group", "step": 0 },
+      { "kind": "raw", "name": "b" }
+    ],
+    "steps": [
+      {
+        "converter": "X",
+        "params": {},
+        "scope": [{ "kind": "raw", "name": "a" }]
+      }
+    ],
+    "expected": ["a", "b"]
+  },
+  {
+    "name": "a chained group ref reads every step behind it",
+    "refs": [{ "kind": "group", "step": 1 }],
+    "steps": [
+      {
+        "converter": "X",
+        "params": {},
+        "scope": [{ "kind": "raw", "name": "a" }]
+      },
+      {
+        "converter": "Y",
+        "params": {},
+        "scope": [
+          { "kind": "group", "step": 0 },
+          { "kind": "raw", "name": "c" }
+        ]
+      }
+    ],
+    "expected": ["a", "c"]
+  },
+  {
+    "name": "a step no input reads from still runs, so its scope is read",
+    "refs": [{ "kind": "raw", "name": "b" }],
+    "steps": [
+      {
+        "converter": "X",
+        "params": {},
+        "scope": [{ "kind": "raw", "name": "a" }]
+      }
+    ],
+    "expected": ["b", "a"]
+  },
+  {
+    "name": "a column read twice is listed once",
+    "refs": [
+      { "kind": "raw", "name": "a" },
+      { "kind": "group", "step": 0 }
+    ],
+    "steps": [
+      {
+        "converter": "X",
+        "params": {},
+        "scope": [{ "kind": "raw", "name": "a" }]
+      }
+    ],
+    "expected": ["a"]
+  },
+  {
+    "name": "a named or slotted group ref reads its step's scope",
+    "refs": [
+      { "kind": "group", "step": 0, "name": "date_month" },
+      { "kind": "group", "step": 1, "slot": "Integer" }
+    ],
+    "steps": [
+      {
+        "converter": "X",
+        "params": {},
+        "scope": [{ "kind": "raw", "name": "date" }]
+      },
+      {
+        "converter": "Y",
+        "params": {},
+        "scope": [{ "kind": "raw", "name": "n" }]
+      }
+    ],
+    "expected": ["date", "n"]
+  }
+]

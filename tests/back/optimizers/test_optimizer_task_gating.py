@@ -12,7 +12,7 @@ from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
 def test_optuna_serves_forecasting():
     # ARIMA's p, d and q, and the season lengths on the other models, are all
     # declared as optimizable, so there is something for it to search.
-    assert "ForecastingTask" in OptunaOptimizer.COMPATIBLE_COMPONENTS
+    assert "SingleSeriesForecastingTask" in OptunaOptimizer.COMPATIBLE_COMPONENTS
 
 
 def test_optuna_keeps_serving_the_tasks_it_already_did():
@@ -32,8 +32,9 @@ def test_every_forecasting_model_declares_something_to_optimize():
         ExponentialSmoothing,
     )
     from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
+    from DashAI.back.models.forecasting.theta import Theta
 
-    for model in (ARIMA, SeasonalNaiveForecaster, ExponentialSmoothing):
+    for model in (ARIMA, SeasonalNaiveForecaster, ExponentialSmoothing, Theta):
         fields = model.SCHEMA.model_json_schema()["properties"]
         optimizable = [
             name

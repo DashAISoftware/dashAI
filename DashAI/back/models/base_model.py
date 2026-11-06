@@ -10,11 +10,34 @@ from kink import di
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import Metric
+from DashAI.back.metrics.undefined_metric import (
+    Unavailable,
+    UndefinedMetricError,
+    describe_undefined,
+)
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 logger = logging.getLogger(__name__)
+
+
+def _value_and_reason(result: Any) -> tuple:
+    """A metric result as the value and the reason a ``Metric`` row holds."""
+    if isinstance(result, Unavailable):
+        return None, result.reason
+    return result, None
+
+
+def _scores_only(results: Optional[Dict[str, Any]]) -> Optional[Dict[str, float]]:
+    """The scored metrics alone, without the ones that had no value."""
+    if results is None:
+        return None
+    return {
+        name: value
+        for name, value in results.items()
+        if not isinstance(value, Unavailable)
+    }
 
 
 class BaseModel(ConfigObject, metaclass=ABCMeta):
@@ -46,6 +69,12 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     # `level=EPOCH`, so for them this stays None and nothing changes.
     _epoch_reporter = None
 
+    # The splits a model is scored on, pointed at by whoever fits it so that
+    # `calculate_metrics` can read them. None until then, and again once the
+    # model is pickled: they are the run's data, never part of the model.
+    x_data = None
+    y_data = None
+
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
         """Get metadata values for the current model.
@@ -61,6 +90,31 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         metadata["requires_download"] = bool(getattr(cls, "REQUIRES_DOWNLOAD", False))
         metadata["download_size_bytes"] = getattr(cls, "DOWNLOAD_SIZE_BYTES", None)
         return metadata
+
+    def __getstate__(self) -> Dict[str, Any]:
+        """Leave the data the model was scored on out of its pickled state.
+
+        Whoever fits a model points ``x_data`` and ``y_data`` at the splits it
+        trains on, so ``calculate_metrics`` can read them. Every model that
+        saves itself by pickling (``joblib.dump(self)``) would otherwise write
+        the whole dataset into its artifact: a copy of the data on every run,
+        and a save that grows with the dataset instead of with the model.
+
+        Dropping them lets the class defaults answer, so a loaded model scores
+        nothing on its own, the same as a model never pointed at any data.
+
+        Returns
+        -------
+        Dict[str, Any]
+            A copy of the instance state, without the training data.
+        """
+        # A copy, because further up the MRO the state may be the live
+        # ``__dict__``; and ``or {}``, because ``object`` gives None for an
+        # instance that has no attributes yet.
+        state = dict(super().__getstate__() or {})
+        state.pop("x_data", None)
+        state.pop("y_data", None)
+        return state
 
     @abstractmethod
     def save(self, filename: str) -> None:
@@ -92,25 +146,11 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     @abstractmethod
     def train(
         self,
-        x_train: "DashAIDataset",
-        y_train: "DashAIDataset",
-        x_validation: "DashAIDataset" = None,
-        y_validation: "DashAIDataset" = None,
+        *args,
+        **kwargs,
     ) -> "BaseModel":
-        """Train the model with the provided data.
-
-        Parameters
-        ----------
-        x_train : DashAIDataset
-            The input features for training.
-        y_train : DashAIDataset
-            The target labels for training.
-        x_validation : DashAIDataset, optional
-            Input features for
-            validation. Defaults to None.
-        y_validation : DashAIDataset, optional
-            Target labels for
-            validation. Defaults to None.
+        """Train the model with the data required by its task executor.
+        The concrete signature depends on the modeling problem.
 
         Returns
         -------
@@ -200,6 +240,7 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             # 2. Handle 'LAST' level replacement logic
             if level == LevelEnum.LAST:
                 for name, value in results.items():
+                    score, reason = _value_and_reason(value)
                     existing = (
                         db.query(Metric)
                         .filter_by(
@@ -209,7 +250,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                     )
 
                     if existing:
-                        existing.value = value
+                        existing.value = score
+                        existing.unavailable_reason = reason
                         existing.step = log_index
                     else:
                         db.add(
@@ -218,7 +260,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                                 split=split,
                                 level=level,
                                 name=name,
-                                value=value,
+                                value=score,
+                                unavailable_reason=reason,
                                 step=log_index,
                             )
                         )
@@ -231,12 +274,13 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                         split=split,
                         level=level,
                         name=name,
-                        value=score,
+                        value=_value_and_reason(value)[0],
+                        unavailable_reason=_value_and_reason(value)[1],
                         step=log_index,
                         fold_index=fold_index,
                         inner_fold_index=inner_fold_index,
                     )
-                    for name, score in results.items()
+                    for name, value in results.items()
                 ]
                 db.add_all(metric_entries)
 
@@ -270,12 +314,18 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
 
         Returns
         -------
-        Optional[Dict[str, float]]
+        Optional[Dict[str, float or Unavailable]]
             The finite scores keyed by metric name, or None when there was
             nothing to score: no metrics declared for the split, or no data
-            available for it. None and an empty dict are different answers --
+            loaded for it. None and an empty dict are different answers --
             the first says the question could not be asked, the second that
             every metric was asked and none returned a usable number.
+
+            A metric that raised ``UndefinedMetricError`` maps to an
+            ``Unavailable`` holding its reason, and so does every metric of a
+            split whose stored partition has no rows. ``calculate_metrics``
+            records it, so the run says why; ``compute_metrics`` leaves it
+            out, as it leaves out a non-finite score.
         """
         metrics = getattr(self, f"{split.value}_metrics", None)
 
@@ -289,6 +339,16 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                 return None
             x_data = self.x_data[split.value]
             y_data = self.y_data[split.value]
+            # A partition the splitter left without rows (a holdout with no
+            # test) has nothing to score: a model cannot predict zero rows.
+            # Its metrics have no value rather than failing the run, and the
+            # run says why, as it does for a metric undefined on its data.
+            if x_data is not None and len(x_data) == 0:
+                reason = Unavailable(
+                    f"The {split.value} partition has no rows to score: the "
+                    "splitter left none in it."
+                )
+                return {metric.__name__: reason for metric in metrics}
 
         # If data is empty after retrieval, there is nothing to score
         if x_data is None or y_data is None:
@@ -301,7 +361,11 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         # Calculate metric scores
         results = {}
         for metric in metrics:
-            score = metric.score(y_transformed, y_pred)
+            try:
+                score = metric.score(y_transformed, y_pred)
+            except UndefinedMetricError as undefined:
+                results[metric.__name__] = Unavailable(describe_undefined(undefined))
+                continue
             if not math.isfinite(score):
                 logger.warning(
                     "Metric %s returned a non-finite value (%s) for split %s "
@@ -316,6 +380,47 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         return results
 
     @final
+    def compute_metrics(
+        self,
+        split: SplitEnum = SplitEnum.VALIDATION,
+        x_data: "DashAIDataset" = None,
+        y_data: "DashAIDataset" = None,
+    ) -> Optional[Dict[str, float]]:
+        """Score a data split with this model's metrics, without persisting.
+
+        Which metrics are computed is decided by the model rather than by the
+        caller: ``ModelFactory`` attaches the metric classes and the data
+        splits to the instance, and this reads them off it.
+
+        Separate from :meth:`calculate_metrics` so a caller with no run to log
+        against can still have the numbers. A pipeline is that caller: it has
+        no ``Run`` row, so there is no foreign key for a ``Metric`` row to
+        point at, and its results are recorded as an artifact instead. Both
+        paths score through :meth:`_score_split`, so the two cannot disagree.
+
+        Parameters
+        ----------
+        split : SplitEnum
+            The data split to evaluate. Defaults to ``SplitEnum.VALIDATION``.
+        x_data : DashAIDataset, optional
+            Input features. Defaults to the split stored on the model.
+        y_data : DashAIDataset, optional
+            Target labels. Defaults to the split stored on the model.
+
+        Returns
+        -------
+        Dict[str, float] or None
+            Metric name to score. A metric that scored a non-finite value is
+            absent from the mapping rather than present with a NaN, so the
+            mapping is empty when every metric returned one. ``None`` when
+            there is nothing to score at all: no metrics configured, or no
+            data for this split. Callers that need a particular metric must
+            therefore check that it is there. A metric with no value on the
+            data (``UndefinedMetricError``) is absent the same way.
+        """
+        return _scores_only(self._score_split(split, x_data=x_data, y_data=y_data))
+
+    @final
     def calculate_metrics(
         self,
         split: SplitEnum = SplitEnum.VALIDATION,
@@ -326,7 +431,7 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         fold_index: int = None,
         inner_fold_index: int = None,
     ):
-        """Calculate and save metrics for a given data split and level.
+        """Calculate metrics for a data split and save them to the database.
 
         Parameters
         ----------
@@ -348,27 +453,50 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             Target labels. If None, the
             labels stored in the model for the given split are used.
             Defaults to None.
+
+        Returns
+        -------
+        Dict[str, float] or None
+            What was written, so a caller that also wants the numbers does not
+            have to score the same split twice. ``None`` when nothing was
+            written: no run to write against, or nothing to score.
+
+        Notes
+        -----
+        A metric row is keyed by the run it belongs to, so a model with no run
+        has nowhere to write and this returns without scoring anything. That is
+        what lets a caller with no ``Run`` row -- a pipeline -- train a model
+        that logs nothing at all, during training or after it, without having
+        to intercept anything. Such a caller uses :meth:`compute_metrics` and
+        keeps the numbers itself.
         """
-        # If no metrics or run_id, skip calculation. The run_id is checked
-        # before scoring rather than after: without a run there is nowhere to
-        # persist the result, and predicting only to discard the numbers is
-        # wasted work.
-        if not getattr(self, f"{split.value}_metrics", None) or not self.run_id:
-            return
+        # No run means no foreign key for a metric row to point at.
+        #
+        # getattr rather than self.run_id: ModelFactory attaches the attribute,
+        # but a model built directly never had it, and the guard this replaced
+        # happened to never reach the attribute for such a model because it
+        # checked for metrics first. Treating "no attribute" as "no run" keeps
+        # that path working and is the same answer for any caller that has one.
+        # It is checked before scoring rather than after: without a run there
+        # is nowhere to persist the result, and predicting only to discard the
+        # numbers is wasted work.
+        if not getattr(self, "run_id", None):
+            return None
 
-        results = self._score_split(split, x_data=x_data, y_data=y_data)
-        if results is None:
-            return
+        recorded = self._score_split(split, x_data=x_data, y_data=y_data)
+        if recorded is None:
+            return None
 
-        # Save to database
+        # Save to database, the unavailable metrics with their reason.
         self._save_metrics(
             split=split,
             level=level,
-            results=results,
+            results=recorded,
             log_index=log_index,
             fold_index=fold_index,
             inner_fold_index=inner_fold_index,
         )
+        results = _scores_only(recorded)
 
         # Report the epoch to whoever is watching, AFTER persisting: the reporter
         # is allowed to raise (Optuna prunes that way), and the metrics of the
@@ -380,42 +508,7 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         ):
             self._epoch_reporter(results, log_index)
 
-    # The sibling of calculate_metrics: same scoring loop, but the scores are
-    # returned instead of written to the database. Used by the CV evaluation
-    # loop, where they become the objective of an HPO trial.
-    def compute_metrics(
-        self,
-        split: SplitEnum = SplitEnum.TEST,
-        x_data: "DashAIDataset" = None,
-        y_data: "DashAIDataset" = None,
-    ) -> Dict[str, float]:
-        """Calculate and return metric scores for a given data split.
-
-        Parameters
-        ----------
-        split : SplitEnum
-            The data split to evaluate (TRAIN, VALIDATION,
-            or TEST). Defaults to SplitEnum.VALIDATION.
-        x_data : DashAIDataset, optional
-            Input features. If None, the
-            dataset stored in the model for the given split is used.
-            Defaults to None.
-        y_data : DashAIDataset, optional
-            Target labels. If None, the
-            labels stored in the model for the given split are used.
-            Defaults to None.
-
-        Returns
-        -------
-        Dict[str, float]
-            A dictionary mapping metric names to their computed scores. A
-            metric that scored a non-finite value is absent from the mapping
-            rather than present with a NaN: see ``_score_split``. Callers that
-            need a particular metric must therefore check that it is there.
-        """
-        # "Nothing to score" and "nothing scored finite" answer this method's
-        # question the same way: no usable numbers for this split.
-        return self._score_split(split, x_data=x_data, y_data=y_data) or {}
+        return results
 
     def prepare_dataset(
         self, dataset: "DashAIDataset", is_fit: bool = False
@@ -509,6 +602,9 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         self, dataset: "DashAIDataset", is_fit: bool = False
     ) -> "DashAIDataset":
         """Hook for model-specific preprocessing of output targets.
+
+        This default exists for backward compatibility with supervised models that
+        preprocess targets. Unsupervised models are not required to use it.
 
         By default, delegates to `prepare_dataset`. Override in subclasses
         that need separate input and output preprocessing logic.

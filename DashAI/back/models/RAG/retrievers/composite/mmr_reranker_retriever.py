@@ -63,7 +63,7 @@ class MMRRerankerRetrieverSchema(BaseSchema):
     )  # type: ignore
 
     children: schema_field(
-        list_field(component_field(parent="RetrieverModel"), min_items=1, max_items=1),
+        list_field(component_field(parent="BaseRetriever"), min_items=1, max_items=1),
         placeholder=[],
         description=MultilingualString(
             en="The child retriever whose results will be re-ranked.",

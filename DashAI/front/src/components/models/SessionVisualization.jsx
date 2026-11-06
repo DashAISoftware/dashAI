@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useStrategyKind } from "../../hooks/useStrategyKind";
+import {
+  useStrategyKind,
+  useStrategyMetadata,
+} from "../../hooks/useStrategyKind";
 import { STRATEGY_KINDS } from "../../utils/splitsPayload";
-import { Box, Typography, Divider, Button, ToggleButton } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Divider,
+  Button,
+  ToggleButton,
+  CircularProgress,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useParams, useNavigate } from "react-router-dom";
 import { PlayArrow } from "@mui/icons-material";
@@ -67,8 +77,15 @@ export default function SessionVisualization() {
   const theme = useTheme();
   const [isDragOver, setIsDragOver] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const isCrossValidation =
-    useStrategyKind(session?.evaluation_strategy) === STRATEGY_KINDS.CV;
+  const strategyKind = useStrategyKind(session?.evaluation_strategy);
+  // The statistical tests compare runs fold by fold, so they are offered when
+  // the strategy declares a score per fold or origin.
+  const comparesFolds = (
+    useStrategyMetadata(session?.evaluation_strategy)?.result_views ?? []
+  ).includes("fold_metrics");
+  // A strategy that carves nothing records a single full-dataset score per
+  // metric, so there is no split to switch between.
+  const usesFullMetrics = strategyKind === STRATEGY_KINDS.FULL;
 
   // This component stays mounted across session navigations (same route,
   // different :sessionId), so metricSplit would otherwise carry over from
@@ -113,10 +130,10 @@ export default function SessionVisualization() {
   }, [sessionTourContext]);
 
   useEffect(() => {
-    if (!isCrossValidation) {
+    if (!comparesFolds) {
       setView("graphs");
     }
-  }, [isCrossValidation, session?.id]);
+  }, [comparesFolds, session?.id]);
 
   // Scroll to a newly added run card and mark it to be highlighted
   useEffect(() => {
@@ -174,27 +191,33 @@ export default function SessionVisualization() {
     [datasets, session?.dataset_id],
   );
 
+  useEffect(() => {
+    if (usesFullMetrics) {
+      setMetricSplit("full");
+    } else if (metricSplit === "full") {
+      setMetricSplit("test");
+    }
+  }, [usesFullMetrics, metricSplit, session?.id]);
+
   // Check which metrics are available. This re-scan only needs to happen
   // when `runs` itself changes, not on every render (e.g. drag state, tour
   // steps, or the highlight timer toggling elsewhere in this component).
+  // A split whose metrics all have no value still has metrics to show, with
+  // the reason each run gives (under {split}_metrics_unavailable).
   const { hasTrainMetrics, hasValidationMetrics, hasTestMetrics } =
-    React.useMemo(
-      () => ({
-        hasTrainMetrics: runs.some(
-          (run) =>
-            run.train_metrics && Object.keys(run.train_metrics).length > 0,
-        ),
-        hasValidationMetrics: runs.some(
-          (run) =>
-            run.validation_metrics &&
-            Object.keys(run.validation_metrics).length > 0,
-        ),
-        hasTestMetrics: runs.some(
-          (run) => run.test_metrics && Object.keys(run.test_metrics).length > 0,
-        ),
-      }),
-      [runs],
-    );
+    React.useMemo(() => {
+      const hasMetrics = (split) =>
+        runs.some((run) =>
+          [run[`${split}_metrics`], run[`${split}_metrics_unavailable`]].some(
+            (values) => values && Object.keys(values).length > 0,
+          ),
+        );
+      return {
+        hasTrainMetrics: hasMetrics("train"),
+        hasValidationMetrics: hasMetrics("validation"),
+        hasTestMetrics: hasMetrics("test"),
+      };
+    }, [runs]);
 
   const availableSplits = React.useMemo(
     () =>
@@ -297,6 +320,55 @@ export default function SessionVisualization() {
           </Typography>
         </Box>
       </>
+    );
+  }
+
+  // Sessions with preprocessing steps run a PreprocessingJob (fit/transform
+  // on train, persist to disk) right after creation — no Run can train, and
+  // nothing about the session is safe to show, until it finishes.
+  const hasPreprocessing = (session.preprocessing?.steps || []).length > 0;
+  if (hasPreprocessing && session.preprocessing_status === "failed") {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          justifyContent: "center",
+          alignItems: "center",
+          p: 8,
+          gap: 2,
+        }}
+      >
+        <Typography variant="h6" color="error">
+          {t("models:label.preprocessingFailed")}
+        </Typography>
+        {session.preprocessing_error && (
+          <Typography variant="body2" color="text.secondary">
+            {session.preprocessing_error}
+          </Typography>
+        )}
+      </Box>
+    );
+  }
+  if (hasPreprocessing && session.preprocessing_status === "pending") {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          justifyContent: "center",
+          alignItems: "center",
+          p: 8,
+          gap: 2,
+        }}
+      >
+        <CircularProgress />
+        <Typography variant="body1" color="text.secondary">
+          {t("models:label.preprocessingInProgress")}
+        </Typography>
+      </Box>
     );
   }
 
@@ -615,33 +687,37 @@ export default function SessionVisualization() {
                     flexWrap: "wrap",
                   }}
                 >
-                  {/* Metric Split Selector: controls both table and graph views */}
-                  {(hasTrainMetrics ||
-                    hasValidationMetrics ||
-                    hasTestMetrics) && (
-                    <PillToggleButtonGroup
-                      value={effectiveSplit}
-                      onChange={(e, newValue) => {
-                        if (newValue !== null) setMetricSplit(newValue);
-                      }}
-                    >
-                      {hasTrainMetrics && (
-                        <ToggleButton value="train">
-                          {t("common:train")}
-                        </ToggleButton>
-                      )}
-                      {hasValidationMetrics && (
-                        <ToggleButton value="validation">
-                          {t("common:validation")}
-                        </ToggleButton>
-                      )}
-                      {hasTestMetrics && (
-                        <ToggleButton value="test">
-                          {t("common:test")}
-                        </ToggleButton>
-                      )}
-                    </PillToggleButtonGroup>
-                  )}
+                  {/* Metric Split Selector: controls both table and graph views.
+                      Hidden when the session only ever has one metric set
+                      (clustering's full-dataset runs): there is nothing to
+                      switch between. */}
+                  {!usesFullMetrics &&
+                    (hasTrainMetrics ||
+                      hasValidationMetrics ||
+                      hasTestMetrics) && (
+                      <PillToggleButtonGroup
+                        value={effectiveSplit}
+                        onChange={(e, newValue) => {
+                          if (newValue !== null) setMetricSplit(newValue);
+                        }}
+                      >
+                        {hasTrainMetrics && (
+                          <ToggleButton value="train">
+                            {t("common:train")}
+                          </ToggleButton>
+                        )}
+                        {hasValidationMetrics && (
+                          <ToggleButton value="validation">
+                            {t("common:validation")}
+                          </ToggleButton>
+                        )}
+                        {hasTestMetrics && (
+                          <ToggleButton value="test">
+                            {t("common:test")}
+                          </ToggleButton>
+                        )}
+                      </PillToggleButtonGroup>
+                    )}
                 </Box>
               </Box>
 
@@ -669,8 +745,8 @@ export default function SessionVisualization() {
                     metricSplit={effectiveSplit}
                   />
 
-                  {/* Graphs and statistical tests button toggle just when cross validation is being used */}
-                  {isCrossValidation ? (
+                  {/* Graphs and statistical tests button toggle just when the runs have fold scores to compare */}
+                  {comparesFolds ? (
                     <Box
                       sx={{
                         display: "flex",

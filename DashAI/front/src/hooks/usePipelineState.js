@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useEdgesState, useNodesState } from "reactflow";
 import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 import {
   validatePipeline,
   sortNodes,
@@ -36,18 +37,19 @@ export function usePipelineState(pipelineId, location, navigate) {
   const [existingPipelines, setExistingPipelines] = useState([]);
   const [nodeIdCounter, setNodeIdCounter] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["common"]);
 
   // Generate default name for new pipelines
   const { defaultName } = useMemo(() => {
     if (pipelineId) return { defaultName: null };
 
     const result = generateSequentialName({
-      base: "Pipeline",
+      base: t("common:defaultName.pipeline"),
       items: existingPipelines,
     });
 
     return result;
-  }, [existingPipelines, pipelineId]);
+  }, [existingPipelines, pipelineId, t]);
 
   // Load existing pipelines for name generation
   useEffect(() => {

@@ -1,7 +1,13 @@
-from typing import TYPE_CHECKING, Final, Union
+from typing import TYPE_CHECKING, Dict, Final, List, Optional, Union
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.preprocessing.structure_types import (
+    ColumnItem,
+    StateItem,
+    StructureDelta,
+    type_fields,
+)
 from DashAI.back.static.icons import Icon
 
 if TYPE_CHECKING:
@@ -28,7 +34,88 @@ class EncodingConverter(BaseConverter):
     )
     ICON: Final[str] = Icon.Dns.value
     COLOR: Final[str] = "rgb(138, 43, 226)"
+    COLUMN_OPERATION = "add"
     PREFIX: str = "encoded_"
+    # Whether the converter appends exactly one PREFIX column per encoded
+    # scope column (ordinal, label, binarizer). One-hot appends one column
+    # per category instead, a count only known after fit.
+    ONE_COLUMN_PER_INPUT: bool = False
+    #: What to change so the converter treats a category it did not see in
+    #: fit instead of raising, for the message of one set to raise. None for
+    #: converters that always treat it.
+    UNKNOWN_HINT: Optional[str] = None
+
+    def raises_on_unseen(self) -> bool:
+        """Whether a category unseen in fit makes ``transform`` raise."""
+        return getattr(self, "handle_unknown", None) == "error"
+
+    def unseen_values(self, x: "DashAIDataset") -> Dict[str, List[str]]:
+        """The values of each column of ``x`` that the fit did not see.
+
+        Read from the categories the sklearn encoder learnt, so it only
+        answers for encoders that have them; the others report nothing.
+        Missing values are not categories and are never reported.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Rows of the converter's scope, as ``transform`` would get them.
+
+        Returns
+        -------
+        dict
+            Column name to its unseen values as sorted strings, only for the
+            columns that have any.
+        """
+        categories = getattr(self, "categories_", None)
+        if categories is None:
+            return {}
+        names = getattr(self, "feature_names_in_", x.column_names)
+        frame = x.to_pandas()
+        unseen = {}
+        for name, known in zip(names, categories, strict=False):
+            if name not in frame.columns:
+                continue
+            values = frame[name].dropna()
+            new = sorted({str(v) for v in values[~values.isin(known)]})
+            if new:
+                unseen[name] = new
+        return unseen
+
+    def _encodes(self, item: ColumnItem) -> bool:
+        """Whether a scope column gets an encoded copy. Defaults to all."""
+        return True
+
+    def infer_output_columns(self, inputs: List[StateItem]) -> StructureDelta:
+        """Estimate the output: the scope kept, plus one encoded copy each.
+
+        Only exact for ONE_COLUMN_PER_INPUT converters over concrete
+        columns; otherwise the new columns are one block of unknown size.
+
+        Parameters
+        ----------
+        inputs : list of ColumnItem | BlockItem
+            The dataset state items in this converter's scope.
+
+        Returns
+        -------
+        StructureDelta
+            The unchanged inputs, plus the encoded columns.
+        """
+        concrete = all(isinstance(item, ColumnItem) for item in inputs)
+        if not (type(self).ONE_COLUMN_PER_INPUT and concrete):
+            return super().infer_output_columns(inputs)
+        added = []
+        for item in inputs:
+            if not self._encodes(item):
+                continue
+            type_name, dtype = type_fields(self.get_output_type(item.name))
+            added.append(
+                ColumnItem(
+                    name=f"{self.PREFIX}{item.name}", type=type_name, dtype=dtype
+                )
+            )
+        return StructureDelta(kept=list(inputs), added=added)
 
     def transform(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None

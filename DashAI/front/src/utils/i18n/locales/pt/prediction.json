@@ -4,7 +4,8 @@
     "deleteSelected_many": "Excluir Selecionadas ({{count}})",
     "deleteSelected_other": "Excluir Selecionadas ({{count}})",
     "downloadResults": "Baixar Resultados da Previsão",
-    "runPrediction": "Executar Previsão"
+    "runPrediction": "Executar Previsão",
+    "generateDates": "Mostrar as próximas datas"
   },
   "error": {
     "creatingPrediction": "Erro ao criar previsão",
@@ -21,6 +22,8 @@
     "updatingPredictionStatus": "Erro ao atualizar o estado da previsão."
   },
   "label": {
+    "horizon": "Horizonte",
+    "horizonDescription": "Quantos passos prever depois do fim da série.",
     "basedOnDataset": "Baseado no conjunto de dados: {{datasetName}}",
     "changeImage": "Alterar imagem",
     "chooseInputMethod": "Escolher Método de Entrada",
@@ -64,15 +67,29 @@
     "selectRowsToDelete": "Selecionar linhas para excluir",
     "targetColumn": "Coluna Alvo",
     "uploadImage": "Enviar imagem",
-    "useExistingDataset": "Usar Conjunto de Dados Existente"
+    "useExistingDataset": "Usar Conjunto de Dados Existente",
+    "futureFromDataset": "De um conjunto de dados",
+    "futureTypedIn": "Digitadas à mão",
+    "futureStepsDescription": "Quantos passos digitar",
+    "futureStepsMax": "Até {{max}} linhas são digitadas à mão; para mais, use um dataset"
   },
   "message": {
+    "unevaluatedSteps_one": "O último passo vai além dos {{evaluated}} que o backtest mediu: o erro dele nunca foi avaliado.",
+    "unevaluatedSteps_other": "Os últimos {{count}} passos vão além dos {{evaluated}} que o backtest mediu: o erro deles nunca foi avaliado.",
     "deletedSuccessfully": "Previsão excluída com sucesso",
     "downloadedSuccessfully": "Previsão baixada com sucesso",
     "predictionCompleted": "Previsão concluída com sucesso",
     "predictionJobSubmitted": "Trabalho de previsão enviado com sucesso",
     "predictionsDeleted_one": "{{count}} previsão excluída com sucesso",
     "predictionsDeleted_many": "{{count}} previsões excluídas com sucesso",
-    "predictionsDeleted_other": "{{count}} previsões excluídas com sucesso"
+    "predictionsDeleted_other": "{{count}} previsões excluídas com sucesso",
+    "exogenousFuture": "Este modelo leu variáveis exógenas, então prevê com os seus valores futuros: traga {{columns}} para cada passo a prever. O horizonte é o número de linhas."
+  },
+  "unseen": {
+    "title": "Categorias que o modelo não viu no treinamento",
+    "description": "Foram codificadas como desconhecidas (uma linha de zeros, ou -1), então as previsões das linhas que as contêm são menos confiáveis.",
+    "line": "{{column}} ({{source}}): {{values}}",
+    "more_one": "e mais {{count}}",
+    "more_other": "e mais {{count}}"
   }
 }

@@ -15,6 +15,7 @@ import DatasetTable from "../DatasetTable";
 import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 import { getColorByColumnType } from "../../../../utils";
+import { getColumnTypeLabel } from "../../../../utils/typesLists";
 
 const OverviewTab = ({
   dataset,
@@ -65,7 +66,7 @@ const OverviewTab = ({
               {typeCounts.map(([type, count]) => (
                 <Chip
                   key={type}
-                  label={`${count} ${type}`}
+                  label={`${count} ${getColumnTypeLabel(type, t)}`}
                   size="small"
                   sx={{
                     backgroundColor: getColorByColumnType(type, theme),

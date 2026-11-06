@@ -26,6 +26,8 @@ from DashAI.back.api.api_v1.schemas.datasets_params import (
     DatasetRenameColumnParams,
     DatasetUpdateParams,
 )
+from DashAI.back.api.utils import remove_run_files, run_file_paths
+from DashAI.back.dataloaders.classes.dataloader import require_data_kind
 from DashAI.back.dependencies.database.models import Dataset, Folder, ModelSession
 
 if TYPE_CHECKING:
@@ -1030,6 +1032,7 @@ async def delete_datasets(
     """
     logger.debug("Deleting datasets with ids %s", params.ids)
     file_paths = []
+    run_files = []
     with session_factory() as db:
         try:
             for dataset_id in params.ids:
@@ -1037,6 +1040,7 @@ async def delete_datasets(
                 if not dataset:
                     continue
                 file_paths.append(dataset.file_path)
+                run_files += _run_files_of(dataset)
                 db.delete(dataset)
 
             db.commit()
@@ -1054,8 +1058,20 @@ async def delete_datasets(
 
     for file_path in file_paths:
         shutil.rmtree(file_path, ignore_errors=True)
+    remove_run_files(run_files)
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+def _run_files_of(dataset) -> list:
+    """The files of every run the cascade deletes along with a dataset.
+
+    The dataset's sessions go with it, and their runs with them; the rows say
+    where those runs' files are, so read them before the delete.
+    """
+    return run_file_paths(
+        run for model_session in dataset.model_sessions for run in model_session.runs
+    )
 
 
 @router.delete("/{dataset_id}")
@@ -1088,6 +1104,7 @@ async def delete_dataset(
                     detail="Dataset not found",
                 )
 
+            run_files = _run_files_of(dataset)
             db.delete(dataset)
             db.commit()
 
@@ -1104,6 +1121,7 @@ async def delete_dataset(
         import shutil
 
         shutil.rmtree(dataset.file_path, ignore_errors=True)
+        remove_run_files(run_files)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     except OSError as e:
@@ -1955,6 +1973,7 @@ async def preview_with_types(
                 )
 
             dataloader_cls = component_registry[dataloader_name]["class"]
+            require_data_kind(dataloader_cls, "dataset")
             dataloader = dataloader_cls()
 
             native_types = None
@@ -2151,7 +2170,9 @@ async def validate_type_changes(
                     detail=f"Dataloader {dataloader_name} not found",
                 )
 
-            dataloader = component_registry[dataloader_name]["class"]()
+            dataloader_cls = component_registry[dataloader_name]["class"]
+            require_data_kind(dataloader_cls, "dataset")
+            dataloader = dataloader_cls()
 
             sample_df = dataloader.load_preview(
                 filepath_or_buffer=tmp_file_path, params=parsed_params, n_rows=1000

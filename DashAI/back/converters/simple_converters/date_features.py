@@ -4,9 +4,15 @@ from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.feature_engineering import (
     FeatureEngineeringConverter,
 )
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.core.schema_fields import bool_field, schema_field
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.preprocessing.structure_types import (
+    ColumnItem,
+    StateItem,
+    StructureDelta,
+    type_fields,
+)
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Date, Float, Integer
 
@@ -33,7 +39,7 @@ CYCLICAL_PERIODS: Dict[str, int] = {
 }
 
 
-class DateFeaturesSchema(BaseSchema):
+class DateFeaturesSchema(AddColumnsConverterSchema):
     """Schema for DateFeaturesConverter hyperparameters."""
 
     year: schema_field(
@@ -210,11 +216,13 @@ class DateFeaturesConverter(FeatureEngineeringConverter, BaseConverter):
     columns named ``<column>_<feature>``, one set per ``Date`` column in
     scope, and leaves the original column untouched.
 
-    The columns it produces are exactly what ``ExogenousForecastingTask``
-    takes beside the series: variables known for every period being forecast,
-    since a calendar is known in advance. That is what separates them from an
-    exogenous variable such as a price, which has to be planned or forecast
-    first.
+    The columns it produces are what the ``exogenous`` role of
+    ``SingleSeriesForecastingTask`` takes beside the series: variables known
+    for every period being forecast, since a calendar is known in advance.
+    The role takes only variables like those, known ahead of time; a price
+    goes in only once it has been set for the periods being forecast. The
+    time index itself is protected from the session's preprocessing, so the
+    calendar comes from a copy of the date in a column of its own.
 
     Cyclical encoding answers the one problem plain calendar numbers have.
     Month 12 and month 1 are one step apart in the calendar and eleven apart
@@ -225,6 +233,7 @@ class DateFeaturesConverter(FeatureEngineeringConverter, BaseConverter):
     """
 
     SCHEMA = DateFeaturesSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(
             "Extracts calendar features from each date column: year, month, "
@@ -343,6 +352,57 @@ class DateFeaturesConverter(FeatureEngineeringConverter, BaseConverter):
         """
         return [name for name in FEATURE_SUFFIXES if self.features[name]]
 
+    def _feature_columns(self, date_columns: List[str]) -> Dict[str, DashAIDataType]:
+        """Name and type every column added for the given date columns.
+
+        Parameters
+        ----------
+        date_columns : List[str]
+            The date columns to extract features from.
+
+        Returns
+        -------
+        Dict[str, DashAIDataType]
+            New column name to its type, in the order they are written out:
+            one Integer column per selected feature, plus a Float sine and
+            cosine column per periodic feature when cyclical encoding is on.
+        """
+        import pyarrow as pa
+
+        columns: Dict[str, DashAIDataType] = {}
+        for column in date_columns:
+            for feature in self._selected_features():
+                suffix = FEATURE_SUFFIXES[feature]
+                columns[f"{column}_{suffix}"] = Integer(arrow_type=pa.int64())
+                if self.cyclical and feature in CYCLICAL_PERIODS:
+                    columns[f"{column}_{suffix}_sin"] = Float(arrow_type=pa.float64())
+                    columns[f"{column}_{suffix}_cos"] = Float(arrow_type=pa.float64())
+        return columns
+
+    def infer_output_columns(self, inputs: List[StateItem]) -> StructureDelta:
+        """Estimate the output: the scope kept, plus the calendar features.
+
+        Only Date columns get features, exactly as ``fit`` picks them.
+
+        Parameters
+        ----------
+        inputs : list of ColumnItem | BlockItem
+            The dataset state items in this converter's scope.
+
+        Returns
+        -------
+        StructureDelta
+            The unchanged inputs, plus one column per feature and date column.
+        """
+        if not all(isinstance(item, ColumnItem) for item in inputs):
+            return super().infer_output_columns(inputs)
+        date_columns = [item.name for item in inputs if item.type == "Date"]
+        added = []
+        for name, dashai_type in self._feature_columns(date_columns).items():
+            type_name, dtype = type_fields(dashai_type)
+            added.append(ColumnItem(name=name, type=type_name, dtype=dtype))
+        return StructureDelta(kept=list(inputs), added=added)
+
     def fit(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> "DateFeaturesConverter":
@@ -360,25 +420,10 @@ class DateFeaturesConverter(FeatureEngineeringConverter, BaseConverter):
         DateFeaturesConverter
             The fitted converter instance (self).
         """
-        import pyarrow as pa
-
         self._date_columns = [
             name for name in x.column_names if isinstance(x.types.get(name), Date)
         ]
-        self._output_types = {}
-        for column in self._date_columns:
-            for feature in self._selected_features():
-                suffix = FEATURE_SUFFIXES[feature]
-                self._output_types[f"{column}_{suffix}"] = Integer(
-                    arrow_type=pa.int64()
-                )
-                if self.cyclical and feature in CYCLICAL_PERIODS:
-                    self._output_types[f"{column}_{suffix}_sin"] = Float(
-                        arrow_type=pa.float64()
-                    )
-                    self._output_types[f"{column}_{suffix}_cos"] = Float(
-                        arrow_type=pa.float64()
-                    )
+        self._output_types = self._feature_columns(self._date_columns)
 
         if not self._date_columns:
             print(

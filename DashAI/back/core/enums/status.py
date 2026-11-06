@@ -55,6 +55,14 @@ class DatasetStatus(Enum):
     ERROR = 4
 
 
+class DocumentStatus(Enum):
+    NOT_STARTED = 0
+    DELIVERED = 1
+    STARTED = 2
+    FINISHED = 3
+    ERROR = 4
+
+
 class PredictionStatus(Enum):
     NOT_STARTED = 0
     DELIVERED = 1
@@ -67,3 +75,24 @@ class DatafileStatus(Enum):
     DOWNLOADING = "downloading"
     READY = "ready"
     ERROR = "error"
+
+
+class PipelineRunStatus(Enum):
+    NOT_STARTED = 0
+    DELIVERED = 1
+    STARTED = 2
+    FINISHED = 3
+    ERROR = 4
+
+
+class NodeRunStatus(Enum):
+    NOT_STARTED = 0
+    DELIVERED = 1
+    STARTED = 2
+    FINISHED = 3
+    ERROR = 4
+    # A node that never ran because an earlier one failed. Distinct from
+    # NOT_STARTED, which is a node still waiting its turn: without the
+    # distinction a run that died halfway is indistinguishable from one still
+    # in flight.
+    CANCELLED = 5

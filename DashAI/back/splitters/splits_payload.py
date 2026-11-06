@@ -11,7 +11,10 @@ import json
 from typing import Any, Dict, List, Optional, Tuple, Type
 
 # Before fold splitters existed the payload named no splitter at all: every
-# split was a holdout split.
+# split was a holdout split. Sessions stored back then still mean this one, and
+# so does the empty payload of a strategy that carves nothing. It shuffles, so
+# the session API checks the resolved splitter against the task like any named
+# one, and a task that does not offer it gets a 422 instead of a shuffle.
 DEFAULT_SPLITTER_NAME = "HoldoutSplitter"
 
 INDEX_KEY_BY_SPLIT = {
@@ -21,6 +24,11 @@ INDEX_KEY_BY_SPLIT = {
 }
 
 META_KEYS = ("splitter_name", "splitType", "splitted_indexes", "seed")
+
+# The holdout modes that give the partitions as row indexes. Their payload
+# carries ``splitted_indexes`` and none of the proportions the form still holds
+# from the random mode.
+INDEX_SPLIT_TYPES = ("manual", "predefined")
 
 
 def normalize_splits_payload(splits_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -32,6 +40,12 @@ def normalize_splits_payload(splits_data: Dict[str, Any]) -> Dict[str, Any]:
     - ``seed`` instead of the schema's ``random_state``.
     - ``holdout`` instead of ``test_size``, which is what the reserved
       proportion was called when fold splitters first got one.
+
+    The last two are only translated for a splitter whose schema declares the
+    parameter: a splitter that refuses the keys it does not know (the temporal
+    ones) would otherwise be handed one it never had. A payload that names no
+    splitter, or names one that is not registered, gets them translated, as
+    before.
     - ``train`` / ``test`` / ``validation`` holding index lists instead of
       proportions, which is how manual and predefined holdout splits used to
       be stored.
@@ -49,13 +63,25 @@ def normalize_splits_payload(splits_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     normalized = dict(splits_data)
 
-    if not isinstance(normalized.get("splitter_name"), str):
+    named = isinstance(normalized.get("splitter_name"), str)
+    if not named:
         normalized["splitter_name"] = DEFAULT_SPLITTER_NAME
 
-    if "random_state" not in normalized and "seed" in normalized:
+    # A payload that names no splitter says nothing about which parameters
+    # its splitter takes, so it keeps the translation it always had.
+    declared = _declared_parameters(normalized["splitter_name"]) if named else None
+
+    def takes(parameter: str) -> bool:
+        return declared is None or parameter in declared
+
+    if (
+        takes("random_state")
+        and "random_state" not in normalized
+        and "seed" in normalized
+    ):
         normalized["random_state"] = normalized["seed"]
 
-    if "test_size" not in normalized and "holdout" in normalized:
+    if takes("test_size") and "test_size" not in normalized and "holdout" in normalized:
         normalized["test_size"] = normalized["holdout"]
 
     index_lists = {
@@ -74,30 +100,56 @@ def normalize_splits_payload(splits_data: Dict[str, Any]) -> Dict[str, Any]:
     return normalized
 
 
-def schema_placeholder_defaults(splitter_cls: Type) -> Dict[str, Any]:
-    """Collect the placeholder value declared for each schema parameter.
+def _declared_parameters(splitter_name: str) -> Optional[set]:
+    """The parameters a registered splitter's schema declares.
 
-    The frontend seeds its form with these values, so filling them in makes a
-    partial payload (for example a manual split, which carries no
-    proportions) validate exactly as the form would have submitted it.
+    None when the splitter is not known here (no registry yet, or a name it
+    does not have), which leaves the legacy translation as it always was.
+    """
+    from kink import di
+
+    if "component_registry" not in di:
+        return None
+    registry = di["component_registry"]
+    if splitter_name not in registry:
+        return None
+    schema = getattr(registry[splitter_name]["class"], "SCHEMA", None)
+    return set(schema.model_fields) if schema is not None else None
+
+
+def validate_splitter_parameters(
+    splitter_class: Type, splits_data: Dict[str, Any]
+) -> None:
+    """Check a splitter's parameters against its schema, as a session stores them.
+
+    The meta keys are not the schema's, and any parameter left out is filled
+    with the schema placeholder, which is the value the frontend form would
+    have submitted, so a manual split (which carries row indexes instead of
+    proportions) validates too. The session API checks a payload with this
+    before creating the session, and the split preview before drawing one, so
+    the wizard never goes on with a configuration the session would refuse.
 
     Parameters
     ----------
-    splitter_cls : type
-        A splitter class exposing ``get_schema``.
+    splitter_class : type
+        The splitter the parameters are for.
+    splits_data : dict
+        The splits payload, normalized, or the parameters alone.
 
-    Returns
-    -------
-    dict
-        Parameter name to placeholder value, skipping parameters that declare
-        no placeholder.
+    Raises
+    ------
+    pydantic.ValidationError
+        If the schema refuses the parameters.
     """
-    properties = splitter_cls.get_schema().get("properties", {})
-    return {
-        name: prop["placeholder"]
-        for name, prop in properties.items()
-        if "placeholder" in prop
+    from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
+
+    schema = getattr(splitter_class, "SCHEMA", None)
+    if schema is None:
+        return
+    parameters = {
+        key: value for key, value in splits_data.items() if key not in META_KEYS
     }
+    schema.model_validate({**schema_placeholder_defaults(splitter_class), **parameters})
 
 
 def splitter_class_for(session_splits: Dict[str, Any], component_registry) -> Type:
@@ -150,8 +202,11 @@ def explainable_indexes(
     Raises
     ------
     ValueError
-        If the run has no rows in the partition explanations are measured on.
+        If the run has no rows in the partition explanations are measured on,
+        or its splitter makes no partitions of rows at all.
     """
+    if splitter_class.NO_ROW_PARTITIONS:
+        raise ValueError(splitter_class.NO_ROW_PARTITIONS)
     try:
         partitions = splitter_class.explainable_partitions(split_indexes)
     except (KeyError, NotImplementedError, TypeError) as e:
@@ -261,8 +316,8 @@ def run_split_indexes(
     Raises
     ------
     ValueError
-        If the splitter is not registered, or if it declares no partition by
-        that name.
+        If the splitter is not registered, if it declares no partition by
+        that name, or if it makes no partitions of rows at all.
     """
     if not split or split == "all":
         return None
@@ -270,6 +325,8 @@ def run_split_indexes(
     splitter_class = splitter_class_for(
         _parse_payload(session_splits), component_registry
     )
+    if splitter_class.NO_ROW_PARTITIONS:
+        raise ValueError(splitter_class.NO_ROW_PARTITIONS)
     try:
         partitions = splitter_class.explainable_partitions(
             _parse_payload(split_indexes)

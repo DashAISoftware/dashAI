@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from DashAI.back.dependencies.database.models import Dataset
+from tests.back.api.row_order_tasks import ReversingTask
 
 input_columns_1 = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
 input_columns_2 = ["SepalLengthCm", "PetalWidthCm"]
@@ -35,17 +36,19 @@ def create_model_session_1(client: TestClient, dataset_id: int):
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "ExperimentA",
-            "input_columns": [
-                "SepalLengthCm",
-                "SepalWidthCm",
-                "PetalLengthCm",
-                "PetalWidthCm",
-            ],
-            "output_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalLengthCm"},
+                    {"kind": "raw", "name": "SepalWidthCm"},
+                    {"kind": "raw", "name": "PetalLengthCm"},
+                    {"kind": "raw", "name": "PetalWidthCm"},
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
-            "evaluation_strategy": "holdout",
+            "evaluation_strategy": "HoldoutEvaluationStrategy",
             "splits": splits,
         },
     )
@@ -60,12 +63,17 @@ def create_model_session_2(client: TestClient, dataset_id: int):
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "ExperimentB",
-            "input_columns": ["SepalLengthCm", "PetalWidthCm"],
-            "output_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalLengthCm"},
+                    {"kind": "raw", "name": "PetalWidthCm"},
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
-            "evaluation_strategy": "holdout",
+            "evaluation_strategy": "HoldoutEvaluationStrategy",
             "splits": splits,
         },
     )
@@ -85,10 +93,10 @@ def test_create_and_get_model_session(
     assert data["dataset_id"] == dataset_id
     assert data["task_name"] == "TabularClassificationTask"
     assert data["name"] == "ExperimentA"
-    assert data["input_columns"] == input_columns_1
-    assert data["output_columns"] == output_columns
+    assert data["column_roles"]["features"]["columns"] == input_columns_1
+    assert data["column_roles"]["target"]["columns"] == output_columns
     assert data["splits"] == splits
-    assert data["evaluation_strategy"] == "holdout"
+    assert data["evaluation_strategy"] == "HoldoutEvaluationStrategy"
 
     # test get model session by id 2.
     response = client.get("/api/v1/model-session/2")
@@ -97,10 +105,10 @@ def test_create_and_get_model_session(
     assert data["dataset_id"] == dataset_id
     assert data["task_name"] == "TabularClassificationTask"
     assert data["name"] == "ExperimentB"
-    assert data["input_columns"] == input_columns_2
-    assert data["output_columns"] == output_columns
+    assert data["column_roles"]["features"]["columns"] == input_columns_2
+    assert data["column_roles"]["target"]["columns"] == output_columns
     assert data["splits"] == splits
-    assert data["evaluation_strategy"] == "holdout"
+    assert data["evaluation_strategy"] == "HoldoutEvaluationStrategy"
 
 
 def test_get_all_model_sessions(client: TestClient, dataset_id: int):
@@ -126,10 +134,18 @@ def test_not_found_model_session(client: TestClient):
 def test_update_model_session(client: TestClient, dataset_id: int):
     """Test that a model session can be updated through a patch call."""
 
-    response = client.patch(
-        "/api/v1/model-session/2?task_name=UnknownTask&name=ModelSession123",
-    )
-    assert response.status_code == 200
+    # ReversingTask offers the session's holdout strategy and splitter and
+    # takes its columns (a categorical target), so the API accepts the change
+    # of task. RegressionTask would refuse the categorical target.
+    registry = client.app.container["component_registry"]
+    registry.register_component(ReversingTask)
+    try:
+        response = client.patch(
+            "/api/v1/model-session/2?task_name=ReversingTask&name=ModelSession123",
+        )
+        assert response.status_code == 200, response.text
+    finally:
+        registry.unregister_component(ReversingTask)
 
     # get the updated model session
     response = client.get("/api/v1/model-session/2")
@@ -137,7 +153,7 @@ def test_update_model_session(client: TestClient, dataset_id: int):
 
     data = response.json()
     assert data["dataset_id"] == dataset_id
-    assert data["task_name"] == "UnknownTask"
+    assert data["task_name"] == "ReversingTask"
     assert data["name"] == "ModelSession123"
     assert data["created"] != data["last_modified"]
 
@@ -167,13 +183,15 @@ def test_get_columns_validation_valid(client: TestClient, dataset_id: int):
         json={
             "task_name": "TabularClassificationTask",
             "dataset_id": dataset_id,
-            "inputs_columns": [
-                "SepalLengthCm",
-                "SepalWidthCm",
-                "PetalLengthCm",
-                "PetalWidthCm",
-            ],
-            "outputs_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalLengthCm"},
+                    {"kind": "raw", "name": "SepalWidthCm"},
+                    {"kind": "raw", "name": "PetalLengthCm"},
+                    {"kind": "raw", "name": "PetalWidthCm"},
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
         },
     )
     assert response.status_code == 200, response.text
@@ -187,13 +205,15 @@ def test_get_columns_validation_wrong_task_name(client: TestClient, dataset_id: 
         json={
             "task_name": "TabularClassTask",
             "dataset_id": dataset_id,
-            "inputs_columns": [
-                "SepalLengthCm",
-                "SepalWidthCm",
-                "PetalLengthCm",
-                "PetalWidthCm",
-            ],
-            "outputs_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalLengthCm"},
+                    {"kind": "raw", "name": "SepalWidthCm"},
+                    {"kind": "raw", "name": "PetalLengthCm"},
+                    {"kind": "raw", "name": "PetalWidthCm"},
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
         },
     )
     assert response.status_code == 404, response.text
@@ -208,13 +228,15 @@ def test_get_columns_validation_wrong_dataset(client: TestClient):
         json={
             "task_name": "TabularClassificationTask",
             "dataset_id": 127,
-            "inputs_columns": [
-                "SepalLengthCm",
-                "SepalWidthCm",
-                "PetalLengthCm",
-                "PetalWidthCm",
-            ],
-            "outputs_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalLengthCm"},
+                    {"kind": "raw", "name": "SepalWidthCm"},
+                    {"kind": "raw", "name": "PetalLengthCm"},
+                    {"kind": "raw", "name": "PetalWidthCm"},
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
         },
     )
     assert response.status_code == 404, response.text
