@@ -121,12 +121,20 @@ CODESIGN_ARGS=(--force --timestamp --options runtime
 # Mach-O binaries so scripts and data with the x bit are skipped. Order
 # between plain files does not matter, so they are signed in parallel; only
 # the outer bundle has to come last.
+#
+# The bundle's main executable stays out of the list. Given that path,
+# codesign signs the whole bundle and walks every nested binary, so in the
+# parallel batch it trips on the .cstemp file another codesign is writing
+# ("cannot find code object on disk"). Signing the bundle signs it anyway.
 echo "==> Collecting Mach-O binaries inside $APP_PATH"
+MAIN_EXECUTABLE="$APP_PATH/Contents/MacOS/$(/usr/libexec/PlistBuddy \
+    -c 'Print :CFBundleExecutable' "$APP_PATH/Contents/Info.plist")"
 BINARIES_LIST="$WORK_DIR/binaries.txt"
 find "$APP_PATH/Contents" -type f \
     \( -name '*.so' -o -name '*.dylib' -o -perm -u+x \) -print0 \
     | xargs -0 file -N -F $'\t' \
-    | awk -F $'\t' '$2 ~ /Mach-O/ { print $1 }' > "$BINARIES_LIST"
+    | awk -F $'\t' -v main="$MAIN_EXECUTABLE" \
+        '$2 ~ /Mach-O/ && $1 != main { print $1 }' > "$BINARIES_LIST"
 echo "    $(wc -l < "$BINARIES_LIST" | tr -d ' ') binaries to sign"
 
 echo "==> Signing inner binaries"
