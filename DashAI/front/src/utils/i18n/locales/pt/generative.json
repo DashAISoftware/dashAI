@@ -121,6 +121,7 @@
     "breadcrumbs": {
       "generative": "Generativo",
       "goBack": "Voltar",
+      "prompts": "Prompts",
       "rag": "RAG",
       "sessionSuffix": "sessão"
     },
@@ -218,12 +219,15 @@
     },
     "placeholders": {
       "insert": "Inserir {{placeholder}}",
+      "optionalTitle": "Marcadores opcionais",
       "title": "Marcadores obrigatórios"
     },
     "prompt": {
       "editor": {
         "expand": "Abrir em um editor maior",
         "missingPlaceholder": "O modelo ainda precisa de: {{placeholders}}",
+        "savedPrompt": "Prompts salvos",
+        "savedPromptHelp": "Carrega um modelo salvo na biblioteca de prompts.",
         "seedLanguage": "Idioma do modelo",
         "startFrom": "Partir de",
         "startFromHelp": "Substitui o modelo abaixo. O seu é mantido até você escolher um.",
@@ -245,6 +249,57 @@
         "en": "English",
         "es": "Español",
         "pt": "Português"
+      },
+      "library": {
+        "title": "Biblioteca de prompts",
+        "subtitle": "Modelos reutilizáveis para sessões RAG. Excluir um também exclui as sessões que o usam.",
+        "new": "Novo prompt",
+        "createTitle": "Novo prompt",
+        "createSubtitle": "Escreva ou cole um modelo. Para partir de um existente, copie-o ou use-o como base no painel de detalhes.",
+        "name": "Nome do prompt",
+        "language": "Idioma",
+        "save": "Salvar prompt",
+        "created": "Prompt salvo",
+        "createError": "Não foi possível salvar o prompt",
+        "empty": "Ainda não há prompts salvos.",
+        "loadError": "Não foi possível carregar a biblioteca de prompts",
+        "builtin": "Integrado",
+        "copyTemplate": "Copiar modelo",
+        "copied": "Modelo copiado",
+        "copyError": "Não foi possível copiar o modelo",
+        "useAsBase": "Usar como base",
+        "types": {
+          "generation": "Geração",
+          "augmentation": "Aumento",
+          "transformation": "Transformação de consultas",
+          "evaluation": "Retriever"
+        },
+        "subtypes": {
+          "rewriting": "Reescrita",
+          "expansion": "Expansão",
+          "decomposition": "Decomposição",
+          "sufficiency": "Suficiência",
+          "filter": "Filtro LLM"
+        },
+        "filterType": "Tipo de prompt",
+        "filterSubtype": "Subtipo",
+        "allTypes": "Todos os tipos",
+        "allSubtypes": "Todos os subtipos",
+        "noMatches": "Nenhum prompt corresponde a estes filtros.",
+        "view": "Ver prompt",
+        "delete": "Excluir prompt",
+        "sessionCount_one": "{{count}} sessão",
+        "sessionCount_other": "{{count}} sessões",
+        "deleteConfirm": "Tem certeza de que deseja excluir o prompt \"{{name}}\"? Esta ação não pode ser desfeita.",
+        "deleteWarning": "Este prompt será removido da biblioteca.",
+        "deleteCascadeWarning": "As seguintes sessões RAG usam este prompt e serão excluídas: {{sessions}}.",
+        "deleted": "Prompt excluído",
+        "deleteError": "Não foi possível excluir o prompt",
+        "template": "Modelo",
+        "noTemplate": "Este prompt não tem modelo.",
+        "usedBy": "Usado por",
+        "notUsed": "Nenhuma sessão RAG usa este prompt.",
+        "selectPrompt": "Selecione um prompt para ver seu modelo e suas sessões."
       }
     },
     "retrieverConfig": {

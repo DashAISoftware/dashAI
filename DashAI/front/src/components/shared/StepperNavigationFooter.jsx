@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
  * @param {string} variant - Next button variant: "next" or "save" (default: "next")
  * @param {boolean} loading - Show loading state in next button
  * @param {string} sx - Additional MUI sx styles for the footer
+ * @param {node} leftContent - Optional content aligned to the left edge
  */
 export default function StepperNavigationFooter({
   onBack,
@@ -31,6 +32,7 @@ export default function StepperNavigationFooter({
   loading = false,
   sx = {},
   nextDataTour = null,
+  leftContent = null,
 }) {
   const { t } = useTranslation(["common"]);
 
@@ -46,50 +48,56 @@ export default function StepperNavigationFooter({
         borderColor: "divider",
         flexShrink: 0,
         display: "flex",
-        justifyContent: "flex-end",
+        alignItems: "center",
+        justifyContent: leftContent ? "space-between" : "flex-end",
         gap: 1,
         pt: 2,
         ...sx,
       }}
     >
-      {showBack && onBack && (
-        <Button
-          variant="outlined"
-          onClick={onBack}
-          disabled={backDisabled || loading}
-        >
-          {finalBackLabel}
-        </Button>
+      {leftContent && (
+        <Box sx={{ display: "flex", alignItems: "center" }}>{leftContent}</Box>
       )}
-      {showNext && onNext && (
-        <Button
-          variant="contained"
-          onClick={onNext}
-          disabled={nextDisabled || loading}
-          data-tour={nextDataTour || undefined}
-          sx={{
-            position: "relative",
-          }}
-        >
-          {loading && (
-            <CircularProgress
-              size={20}
-              sx={{
-                position: "absolute",
-                left: "50%",
-                marginLeft: "-10px",
-              }}
-            />
-          )}
-          <span
-            style={{
-              visibility: loading ? "hidden" : "visible",
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        {showBack && onBack && (
+          <Button
+            variant="outlined"
+            onClick={onBack}
+            disabled={backDisabled || loading}
+          >
+            {finalBackLabel}
+          </Button>
+        )}
+        {showNext && onNext && (
+          <Button
+            variant="contained"
+            onClick={onNext}
+            disabled={nextDisabled || loading}
+            data-tour={nextDataTour || undefined}
+            sx={{
+              position: "relative",
             }}
           >
-            {finalNextLabel}
-          </span>
-        </Button>
-      )}
+            {loading && (
+              <CircularProgress
+                size={20}
+                sx={{
+                  position: "absolute",
+                  left: "50%",
+                  marginLeft: "-10px",
+                }}
+              />
+            )}
+            <span
+              style={{
+                visibility: loading ? "hidden" : "visible",
+              }}
+            >
+              {finalNextLabel}
+            </span>
+          </Button>
+        )}
+      </Box>
     </Box>
   );
 }
@@ -107,4 +115,5 @@ StepperNavigationFooter.propTypes = {
   loading: PropTypes.bool,
   sx: PropTypes.object,
   nextDataTour: PropTypes.string,
+  leftContent: PropTypes.node,
 };

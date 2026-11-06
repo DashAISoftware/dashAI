@@ -3,6 +3,11 @@ import api from "./api";
 const documentsEndpoint = "/v1/documents";
 const documentsUrlBase = "/api/v1/documents";
 
+export interface IDocumentSession {
+  id: number;
+  name: string;
+}
+
 export interface IDataDocument {
   id: number;
   name: string;
@@ -17,6 +22,7 @@ export interface IDataDocument {
   status: number;
   created: string;
   last_modified: string;
+  sessions: IDocumentSession[];
 }
 
 export interface IDocumentContentItem {
@@ -87,8 +93,13 @@ export const updateDocument = async (
   return response.data;
 };
 
-export const deleteDocument = async (id: number): Promise<void> => {
-  await api.delete(`${documentsEndpoint}/${id}`);
+export const deleteDocument = async (
+  id: number,
+  cascadeSessions = false,
+): Promise<void> => {
+  await api.delete(`${documentsEndpoint}/${id}`, {
+    params: { cascade_sessions: cascadeSessions },
+  });
 };
 
 export const getDocumentContent = async (

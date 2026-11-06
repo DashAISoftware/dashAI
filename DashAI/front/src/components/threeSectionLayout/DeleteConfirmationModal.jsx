@@ -15,6 +15,7 @@ export default function DeleteConfirmationModal({
   onConfirm,
   content,
   warning,
+  warningSeverity = "error",
   onExited,
 }) {
   const { t } = useTranslation(["common"]);
@@ -77,7 +78,7 @@ export default function DeleteConfirmationModal({
                 "Are you sure you want to delete this item? This action cannot be undone.",
               )}
           </Typography>
-          {warning && <Alert severity="warning">{warning}</Alert>}
+          {warning && <Alert severity={warningSeverity}>{warning}</Alert>}
 
           {/* Footer */}
           <Box

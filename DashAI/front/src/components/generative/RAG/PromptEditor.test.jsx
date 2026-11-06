@@ -6,9 +6,10 @@ import PromptEditor from "./PromptEditor";
 
 jest.mock("../../../api/rag", () => ({
   getDefaultPrompts: jest.fn(),
+  getLibraryPrompts: jest.fn(),
 }));
 
-const { getDefaultPrompts } = require("../../../api/rag");
+const { getDefaultPrompts, getLibraryPrompts } = require("../../../api/rag");
 
 const BASE_PROMPT = {
   name: "CustomRAGGenerationPrompt",
@@ -50,6 +51,7 @@ function renderEditor(template) {
 beforeEach(() => {
   jest.clearAllMocks();
   getDefaultPrompts.mockResolvedValue([BASE_PROMPT, SEED_PROMPT]);
+  getLibraryPrompts.mockResolvedValue([]);
 });
 
 test("reports a complete template as valid", async () => {

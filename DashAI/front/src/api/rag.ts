@@ -258,6 +258,69 @@ export const getDefaultPrompts = async (): Promise<IComponent[]> => {
   return getChildComponents("RAGGenerationPrompt", false);
 };
 
+/** A RAG session that uses a saved prompt. */
+export interface IPromptSession {
+  id: number;
+  name: string;
+}
+
+/** A prompt saved in the prompt library. */
+export interface IRAGPrompt {
+  id: number;
+  class_name: string;
+  name: string | null;
+  parameters: {
+    template?: string;
+    templates?: Record<string, string>;
+    language?: string;
+  } | null;
+  created: string;
+  last_modified: string;
+  is_library: boolean;
+  prompt_type?: string | null;
+  prompt_subtype?: string | null;
+  sessions: IPromptSession[];
+}
+
+export interface IRAGPromptCreate {
+  class_name: string;
+  name: string;
+  parameters: { template: string; language?: string };
+}
+
+/** Fetches the prompts saved by the user (not internal pipeline rows). */
+export const getLibraryPrompts = async (): Promise<IRAGPrompt[]> => {
+  const response = await api.get<IRAGPrompt[]>("/v1/prompt/library");
+  if (response.status !== 200) {
+    throw new Error(`Failed to fetch prompt library: ${response.statusText}`);
+  }
+  return response.data;
+};
+
+/** Creates a prompt in the prompt library. */
+export const createRAGPrompt = async (
+  prompt: IRAGPromptCreate,
+): Promise<{ id: number }> => {
+  const response = await api.post<{ id: number }>("/v1/prompt/", prompt);
+  if (response.status !== 201) {
+    throw new Error(`Failed to create RAG prompt: ${response.statusText}`);
+  }
+  return response.data;
+};
+
+/** Deletes a library prompt, optionally deleting the sessions using it. */
+export const deleteRAGPrompt = async (
+  promptId: number,
+  cascadeSessions = false,
+): Promise<void> => {
+  const response = await api.delete(`/v1/prompt/${promptId}`, {
+    params: { cascade_sessions: cascadeSessions },
+  });
+  if (response.status !== 204) {
+    throw new Error(`Failed to delete RAG prompt: ${response.statusText}`);
+  }
+};
+
 /**
  * Fetches query transformation components (children of BaseQueryTransformation).
  * @returns List of transformer components, each carrying `metadata.technique`

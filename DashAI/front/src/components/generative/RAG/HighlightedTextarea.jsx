@@ -23,9 +23,8 @@ const HighlightedTextarea = forwardRef(function HighlightedTextarea(
 
   useImperativeHandle(ref, () => inputRef.current, []);
 
-  const bgColor = theme.palette.placeholder?.bg || theme.palette.warning.light;
-  const textColor =
-    theme.palette.placeholder?.text || theme.palette.warning.dark;
+  const bgColor = theme.palette.secondary.light;
+  const textColor = theme.palette.secondary.dark;
 
   const handleScroll = useCallback(() => {
     const input = inputRef.current;

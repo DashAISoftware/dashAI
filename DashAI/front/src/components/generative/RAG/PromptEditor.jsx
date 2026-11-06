@@ -16,7 +16,8 @@ import { useTranslation } from "react-i18next";
 import HighlightedTextarea from "./HighlightedTextarea";
 import PlaceholdersList from "./PlaceholdersList";
 import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
-import { getDefaultPrompts } from "../../../api/rag";
+import { getDefaultPrompts, getLibraryPrompts } from "../../../api/rag";
+import { getChildComponents } from "../../../api/component";
 import { LANGUAGE_CODES } from "../../../constants/languages";
 
 /** The component a hand-written template is stored under. */
@@ -51,16 +52,25 @@ export default function PromptEditor({
   promptModel,
   setPromptModel,
   onValidityChange,
+  showSeeding = true,
+  componentName = CUSTOM_PROMPT_COMPONENT,
 }) {
   const { t } = useTranslation(["generative", "common"]);
   const [seeds, setSeeds] = useState([]);
+  const [savedPrompts, setSavedPrompts] = useState([]);
   const [placeholderSpec, setPlaceholderSpec] = useState({
     required: FALLBACK_REQUIRED,
+    optional: [],
     descriptions: {},
   });
   const [expanded, setExpanded] = useState(false);
   const textareaRef = useRef(null);
   const dialogTextareaRef = useRef(null);
+  const componentNameRef = useRef(componentName);
+  const generationMetadataRef = useRef(null);
+  useEffect(() => {
+    componentNameRef.current = componentName;
+  }, [componentName]);
 
   const template = promptModel?.params?.template ?? "";
   // Which language's template to seed from. `CustomRAGGenerationPrompt` takes
@@ -69,6 +79,26 @@ export default function PromptEditor({
   const [seedLanguage, setSeedLanguage] = useState(
     promptModel?.params?.language ?? "en",
   );
+
+  useEffect(() => {
+    if (!showSeeding) return undefined;
+    let cancelled = false;
+    getLibraryPrompts()
+      .then((options) => {
+        // Built-in templates are already offered by the "Start from" select;
+        // only user-saved prompts belong in the second one.
+        if (!cancelled) {
+          setSavedPrompts(options.filter((prompt) => prompt.is_library));
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load saved prompts:", error);
+        if (!cancelled) setSavedPrompts([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [showSeeding]);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,10 +110,15 @@ export default function PromptEditor({
         setSeeds(options.filter((o) => o.name !== CUSTOM_PROMPT_COMPONENT));
         const base = options.find((o) => o.name === CUSTOM_PROMPT_COMPONENT);
         if (base?.metadata) {
-          setPlaceholderSpec({
-            required: base.metadata.required_placeholders ?? FALLBACK_REQUIRED,
-            descriptions: base.metadata.placeholder_descriptions ?? {},
-          });
+          generationMetadataRef.current = base.metadata;
+          if (componentNameRef.current === CUSTOM_PROMPT_COMPONENT) {
+            setPlaceholderSpec({
+              required:
+                base.metadata.required_placeholders ?? FALLBACK_REQUIRED,
+              optional: base.metadata.optional_placeholders ?? [],
+              descriptions: base.metadata.placeholder_descriptions ?? {},
+            });
+          }
         }
       })
       .catch((error) => {
@@ -94,6 +129,39 @@ export default function PromptEditor({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (componentName === CUSTOM_PROMPT_COMPONENT) {
+      const metadata = generationMetadataRef.current;
+      setPlaceholderSpec({
+        required: metadata?.required_placeholders ?? FALLBACK_REQUIRED,
+        optional: metadata?.optional_placeholders ?? [],
+        descriptions: metadata?.placeholder_descriptions ?? {},
+      });
+      return undefined;
+    }
+    let cancelled = false;
+    getChildComponents("BasePrompt", true)
+      .then((components) => {
+        if (cancelled) return;
+        const selected = components.find(
+          (component) => component.name === componentName,
+        );
+        const metadata = selected?.metadata;
+        if (!metadata) return;
+        setPlaceholderSpec({
+          required: metadata.required_placeholders ?? FALLBACK_REQUIRED,
+          optional: metadata.optional_placeholders ?? [],
+          descriptions: metadata.placeholder_descriptions ?? {},
+        });
+      })
+      .catch((error) => {
+        console.error("Failed to load placeholder metadata:", error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [componentName]);
 
   const missing = useMemo(
     () => placeholderSpec.required.filter((ph) => !template.includes(ph)),
@@ -107,11 +175,11 @@ export default function PromptEditor({
   const update = useCallback(
     (nextTemplate) => {
       setPromptModel({
-        component: CUSTOM_PROMPT_COMPONENT,
+        component: componentName,
         params: { template: nextTemplate },
       });
     },
-    [setPromptModel],
+    [componentName, setPromptModel],
   );
 
   /**
@@ -127,6 +195,25 @@ export default function PromptEditor({
     const seeded = seed?.metadata?.templates?.[seedLanguage];
     if (seeded === undefined) return;
     update(seeded);
+  };
+
+  /**
+   * Replaces the template with one saved in the prompt library.
+   *
+   * @param {string} value - The selected prompt id, as a string.
+   */
+  const handleSeedSaved = (value) => {
+    const prompt = savedPrompts.find((item) => String(item.id) === value);
+    if (!prompt) return;
+    const parameters = prompt.parameters ?? {};
+    const templates = parameters.templates ?? {};
+    const templateText =
+      parameters.template ??
+      templates[seedLanguage] ??
+      Object.values(templates)[0];
+    if (typeof templateText !== "string") return;
+    update(templateText);
+    if (parameters.language) setSeedLanguage(parameters.language);
   };
 
   const insertPlaceholder = useCallback(
@@ -165,40 +252,63 @@ export default function PromptEditor({
 
   return (
     <Stack spacing={2}>
-      <Stack direction="row" spacing={1}>
-        <TextField
-          select
-          size="small"
-          fullWidth
-          label={t("generative:rag.prompt.editor.startFrom")}
-          value=""
-          onChange={(event) => handleSeed(event.target.value)}
-          helperText={t("generative:rag.prompt.editor.startFromHelp")}
-        >
-          {seeds.map((seed) => (
-            <MenuItem key={seed.name} value={seed.name}>
-              {seed.name}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          select
-          size="small"
-          label={t("generative:rag.prompt.editor.seedLanguage")}
-          value={seedLanguage}
-          onChange={(event) => setSeedLanguage(event.target.value)}
-          sx={{ minWidth: 96 }}
-        >
-          {LANGUAGE_CODES.map((code) => (
-            <MenuItem key={code} value={code}>
-              {code}
-            </MenuItem>
-          ))}
-        </TextField>
-      </Stack>
+      {showSeeding && (
+        <>
+          <Stack direction="row" spacing={1}>
+            <TextField
+              select
+              size="small"
+              fullWidth
+              label={t("generative:rag.prompt.editor.startFrom")}
+              value=""
+              onChange={(event) => handleSeed(event.target.value)}
+              helperText={t("generative:rag.prompt.editor.startFromHelp")}
+            >
+              {seeds.map((seed) => (
+                <MenuItem key={seed.name} value={seed.name}>
+                  {seed.name}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select
+              size="small"
+              label={t("generative:rag.prompt.editor.seedLanguage")}
+              value={seedLanguage}
+              onChange={(event) => setSeedLanguage(event.target.value)}
+              sx={{ minWidth: 96 }}
+            >
+              {LANGUAGE_CODES.map((code) => (
+                <MenuItem key={code} value={code}>
+                  {code}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Stack>
+
+          {savedPrompts.length > 0 && (
+            <TextField
+              select
+              size="small"
+              fullWidth
+              label={t("generative:rag.prompt.editor.savedPrompt")}
+              value=""
+              onChange={(event) => handleSeedSaved(event.target.value)}
+              helperText={t("generative:rag.prompt.editor.savedPromptHelp")}
+            >
+              {savedPrompts.map((prompt) => (
+                <MenuItem key={prompt.id} value={String(prompt.id)}>
+                  {prompt.name || `Prompt ${prompt.id}`}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+        </>
+      )}
 
       <PlaceholdersList
         required={placeholderSpec.required}
+        optional={placeholderSpec.optional}
         descriptions={placeholderSpec.descriptions}
         template={template}
         onInsertPlaceholder={insertPlaceholder}
@@ -261,6 +371,7 @@ export default function PromptEditor({
         <Stack spacing={2}>
           <PlaceholdersList
             required={placeholderSpec.required}
+            optional={placeholderSpec.optional}
             descriptions={placeholderSpec.descriptions}
             template={template}
             onInsertPlaceholder={insertPlaceholder}
@@ -286,4 +397,6 @@ PromptEditor.propTypes = {
   }),
   setPromptModel: PropTypes.func.isRequired,
   onValidityChange: PropTypes.func,
+  showSeeding: PropTypes.bool,
+  componentName: PropTypes.string,
 };

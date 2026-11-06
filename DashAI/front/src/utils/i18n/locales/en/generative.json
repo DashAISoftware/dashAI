@@ -118,6 +118,7 @@
     "breadcrumbs": {
       "generative": "Generative",
       "goBack": "Go back",
+      "prompts": "Prompts",
       "rag": "RAG",
       "sessionSuffix": "session"
     },
@@ -215,12 +216,15 @@
     },
     "placeholders": {
       "insert": "Insert {{placeholder}}",
+      "optionalTitle": "Optional Placeholders",
       "title": "Required Placeholders"
     },
     "prompt": {
       "editor": {
         "expand": "Open in a larger editor",
         "missingPlaceholder": "The template still needs: {{placeholders}}",
+        "savedPrompt": "Saved prompts",
+        "savedPromptHelp": "Loads a template you saved in the prompt library.",
         "seedLanguage": "Seed language",
         "startFrom": "Start from",
         "startFromHelp": "Replaces the template below. Yours is kept until you pick one.",
@@ -242,6 +246,57 @@
         "en": "English",
         "es": "Español",
         "pt": "Português"
+      },
+      "library": {
+        "title": "Prompt library",
+        "subtitle": "Reusable templates for RAG sessions. Deleting one also deletes the sessions that use it.",
+        "new": "New prompt",
+        "createTitle": "New prompt",
+        "createSubtitle": "Write or paste a template. To start from an existing one, copy it or use it as a base from the details panel.",
+        "name": "Prompt name",
+        "language": "Language",
+        "save": "Save prompt",
+        "created": "Prompt saved",
+        "createError": "Could not save the prompt",
+        "empty": "No saved prompts yet.",
+        "loadError": "Could not load the prompt library",
+        "builtin": "Built-in",
+        "copyTemplate": "Copy template",
+        "copied": "Template copied",
+        "copyError": "Could not copy the template",
+        "useAsBase": "Use as base",
+        "types": {
+          "generation": "Generation",
+          "augmentation": "Augmentation",
+          "transformation": "Query transformation",
+          "evaluation": "Retriever"
+        },
+        "subtypes": {
+          "rewriting": "Rewriting",
+          "expansion": "Expansion",
+          "decomposition": "Decomposition",
+          "sufficiency": "Sufficiency",
+          "filter": "LLM filter"
+        },
+        "filterType": "Prompt type",
+        "filterSubtype": "Subtype",
+        "allTypes": "All types",
+        "allSubtypes": "All subtypes",
+        "noMatches": "No prompts match these filters.",
+        "view": "View prompt",
+        "delete": "Delete prompt",
+        "sessionCount_one": "{{count}} session",
+        "sessionCount_other": "{{count}} sessions",
+        "deleteConfirm": "Are you sure you want to delete the prompt \"{{name}}\"? This action cannot be undone.",
+        "deleteWarning": "This prompt will be removed from the library.",
+        "deleteCascadeWarning": "The following RAG sessions use this prompt and will be deleted: {{sessions}}.",
+        "deleted": "Prompt deleted",
+        "deleteError": "Could not delete the prompt",
+        "template": "Template",
+        "noTemplate": "This prompt has no template.",
+        "usedBy": "Used by",
+        "notUsed": "No RAG session uses this prompt.",
+        "selectPrompt": "Select a prompt to see its template and sessions."
       }
     },
     "retrieverConfig": {
