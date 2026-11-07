@@ -2,6 +2,7 @@ name: Docs
 on:
   push:
     branches: [production, develop]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,15 +16,14 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      artifact_name: ${{ steps.artifact.outputs.name }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -38,7 +38,7 @@ jobs:
         run: uv pip install --system -e .
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "yarn"
@@ -53,14 +53,35 @@ jobs:
         working-directory: docs
 
       - name: Setup Pages
-        uses: actions/configure-pages@v2
+        uses: actions/configure-pages@v5
+
+      # One artifact name per attempt. Re-running the whole workflow keeps
+      # the previous attempt's artifact on the run, and deploy-pages aborts
+      # when it finds two artifacts with the same name ("Multiple artifacts
+      # named github-pages were unexpectedly found").
+      - name: Pick the artifact name
+        id: artifact
+        run: echo "name=github-pages-${{ github.run_attempt }}" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
+          name: ${{ steps.artifact.outputs.name }}
           path: "docs/build"
           retention-days: 1
 
+  # Separate job so a failed deploy (Pages timing out, as on 2026-11-06)
+  # can be re-run alone without rebuilding or re-uploading anything.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ needs.build.outputs.artifact_name }}
