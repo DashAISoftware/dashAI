@@ -39,7 +39,7 @@ function ProjectDetails({ project, onChange, onClose }) {
       {project && (
         <>
           <DetailSection label="Información">
-            <DetailField label="Owner">
+            <DetailField label="Dueño">
               {getUserName(project.ownerId)}
             </DetailField>
             <DetailField label="Estado">

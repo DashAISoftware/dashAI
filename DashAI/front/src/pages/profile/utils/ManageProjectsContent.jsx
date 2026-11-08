@@ -46,7 +46,7 @@ export default function ManageProjectsContent({
     },
     {
       key: "ownerId",
-      label: "Owner",
+      label: "Dueño",
       render: (project) => (
         <Typography
           variant="body2"

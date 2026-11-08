@@ -1,12 +1,13 @@
 /**
- * Static instance-wide data used by the profile, session and administration
- * views until they are connected to the backend. Names and permission uids
- * mirror the RBAC tables (User, Role, Permission, UserRoleProject).
+ * Static instance-wide data used by the administration views until they are
+ * connected to the backend. Permissions and roles mirror the catalog in
+ * DashAI/back/auth/catalog.py, so keep both in sync.
  */
 
 export const GLOBAL_ROLES = ["Administrador", "Miembro"];
-export const PROJECT_ROLES = ["Owner", "Editor", "Viewer"];
+export const PROJECT_ROLES = ["Dueño", "Gestor", "Colaborador", "Lector"];
 
+// `instance` permissions only make sense in a global role
 export const PERMISSIONS = [
   { uid: "datasets.read", category: "Datos", description: "Ver datasets" },
   {
@@ -14,6 +15,17 @@ export const PERMISSIONS = [
     category: "Datos",
     description: "Crear y modificar datasets",
   },
+  {
+    uid: "datasets.delete",
+    category: "Datos",
+    description: "Eliminar datasets",
+  },
+  {
+    uid: "datasets.export",
+    category: "Datos",
+    description: "Descargar datasets",
+  },
+  { uid: "notebooks.read", category: "Datos", description: "Ver notebooks" },
   {
     uid: "notebooks.write",
     category: "Datos",
@@ -25,14 +37,19 @@ export const PERMISSIONS = [
     description: "Ver sesiones y resultados",
   },
   {
-    uid: "models.execute",
+    uid: "models.write",
     category: "Modelos",
-    description: "Entrenar modelos y ejecutar predicciones",
+    description: "Crear y modificar sesiones de modelos y pipelines",
   },
   {
-    uid: "workflows.write",
+    uid: "models.execute",
     category: "Modelos",
-    description: "Crear y modificar pipelines",
+    description: "Entrenar modelos, ejecutar predicciones y explicaciones",
+  },
+  {
+    uid: "models.delete",
+    category: "Modelos",
+    description: "Eliminar sesiones, runs y pipelines",
   },
   {
     uid: "generative.read",
@@ -42,7 +59,37 @@ export const PERMISSIONS = [
   {
     uid: "generative.execute",
     category: "Generativo",
-    description: "Usar modelos generativos",
+    description: "Usar modelos generativos, incluidas las consultas RAG",
+  },
+  {
+    uid: "generative.delete",
+    category: "Generativo",
+    description: "Eliminar sesiones generativas",
+  },
+  {
+    uid: "documents.read",
+    category: "Documentos",
+    description: "Ver documentos",
+  },
+  {
+    uid: "documents.write",
+    category: "Documentos",
+    description: "Subir, extraer y configurar documentos",
+  },
+  {
+    uid: "documents.index",
+    category: "Documentos",
+    description: "Indexar documentos para RAG",
+  },
+  {
+    uid: "documents.export",
+    category: "Documentos",
+    description: "Descargar documentos",
+  },
+  {
+    uid: "documents.delete",
+    category: "Documentos",
+    description: "Eliminar documentos",
   },
   {
     uid: "projects.manage",
@@ -53,38 +100,48 @@ export const PERMISSIONS = [
     uid: "projects.oversee",
     category: "Instancia",
     description: "Gestionar todos los proyectos de la instancia",
+    instance: true,
   },
   {
     uid: "users.manage",
     category: "Instancia",
     description: "Gestionar usuarios",
+    instance: true,
   },
   {
     uid: "requests.review",
     category: "Instancia",
     description: "Revisar solicitudes de acceso",
+    instance: true,
   },
   {
     uid: "roles.manage",
     category: "Instancia",
     description: "Gestionar roles y permisos",
+    instance: true,
   },
   {
     uid: "instance.manage",
     category: "Instancia",
     description: "Gestionar plugins y actualizaciones",
+    instance: true,
   },
 ];
 
 const ALL_PERMISSIONS = PERMISSIONS.map((permission) => permission.uid);
+const PROJECT_PERMISSIONS = PERMISSIONS.filter(
+  (permission) => !permission.instance,
+).map((permission) => permission.uid);
 
+// `system` roles are fixed: their permissions follow a rule and cannot be
+// edited. The others start with these defaults and can be changed.
 export const MOCK_ROLES = [
   {
     id: "ROLE-ADMIN",
     name: "Administrador",
     scope: "Global",
     system: true,
-    description: "Acceso total a la instancia de DashAI.",
+    description: "Administra la instancia y accede a todos los proyectos.",
     permissions: ALL_PERMISSIONS,
   },
   {
@@ -97,44 +154,42 @@ export const MOCK_ROLES = [
   },
   {
     id: "ROLE-OWNER",
-    name: "Owner",
+    name: "Dueño",
     scope: "Proyecto",
-    system: false,
-    description: "Responsable del proyecto y de sus integrantes.",
-    permissions: [
-      "datasets.read",
-      "datasets.write",
-      "notebooks.write",
-      "models.read",
-      "models.execute",
-      "workflows.write",
-      "generative.read",
-      "generative.execute",
-      "projects.manage",
-    ],
+    system: true,
+    description: "Control total del proyecto, incluidos sus integrantes.",
+    permissions: PROJECT_PERMISSIONS,
   },
   {
-    id: "ROLE-EDITOR",
-    name: "Editor",
+    id: "ROLE-MANAGER",
+    name: "Gestor",
     scope: "Proyecto",
     system: false,
-    description: "Puede trabajar con los datos y modelos del proyecto.",
-    permissions: [
-      "datasets.read",
-      "datasets.write",
-      "notebooks.write",
-      "models.read",
-      "models.execute",
-      "workflows.write",
-    ],
+    description:
+      "Crea y edita los recursos del proyecto, sin gestionar integrantes.",
+    permissions: PROJECT_PERMISSIONS.filter((uid) => uid !== "projects.manage"),
   },
   {
-    id: "ROLE-VIEWER",
-    name: "Viewer",
+    id: "ROLE-COLLABORATOR",
+    name: "Colaborador",
     scope: "Proyecto",
     system: false,
+    description:
+      "Trabaja con los recursos del proyecto, sin eliminarlos ni descargarlos.",
+    permissions: PROJECT_PERMISSIONS.filter(
+      (uid) =>
+        !uid.endsWith(".delete") &&
+        !uid.endsWith(".export") &&
+        uid !== "projects.manage",
+    ),
+  },
+  {
+    id: "ROLE-READER",
+    name: "Lector",
+    scope: "Proyecto",
+    system: true,
     description: "Solo puede consultar el contenido del proyecto.",
-    permissions: ["datasets.read", "models.read"],
+    permissions: PROJECT_PERMISSIONS.filter((uid) => uid.endsWith(".read")),
   },
 ];
 
@@ -248,9 +303,9 @@ export const MOCK_PROJECTS = [
     ownerId: "USR-001",
     archived: false,
     members: [
-      { userId: "USR-001", role: "Owner" },
-      { userId: "USR-002", role: "Editor" },
-      { userId: "USR-003", role: "Editor" },
+      { userId: "USR-001", role: "Dueño" },
+      { userId: "USR-002", role: "Colaborador" },
+      { userId: "USR-003", role: "Gestor" },
     ],
   },
   {
@@ -259,9 +314,9 @@ export const MOCK_PROJECTS = [
     ownerId: "USR-002",
     archived: false,
     members: [
-      { userId: "USR-002", role: "Owner" },
-      { userId: "USR-001", role: "Viewer" },
-      { userId: "USR-003", role: "Editor" },
+      { userId: "USR-002", role: "Dueño" },
+      { userId: "USR-001", role: "Lector" },
+      { userId: "USR-003", role: "Colaborador" },
     ],
   },
   {
@@ -270,9 +325,9 @@ export const MOCK_PROJECTS = [
     ownerId: "USR-001",
     archived: false,
     members: [
-      { userId: "USR-001", role: "Owner" },
-      { userId: "USR-004", role: "Editor" },
-      { userId: "USR-005", role: "Viewer" },
+      { userId: "USR-001", role: "Dueño" },
+      { userId: "USR-004", role: "Colaborador" },
+      { userId: "USR-005", role: "Lector" },
     ],
   },
   {
@@ -281,8 +336,8 @@ export const MOCK_PROJECTS = [
     ownerId: "USR-003",
     archived: false,
     members: [
-      { userId: "USR-003", role: "Owner" },
-      { userId: "USR-004", role: "Editor" },
+      { userId: "USR-003", role: "Dueño" },
+      { userId: "USR-004", role: "Colaborador" },
     ],
   },
   {
@@ -290,7 +345,7 @@ export const MOCK_PROJECTS = [
     name: "Piloto de encuestas",
     ownerId: "USR-005",
     archived: true,
-    members: [{ userId: "USR-005", role: "Owner" }],
+    members: [{ userId: "USR-005", role: "Dueño" }],
   },
 ];
 
@@ -301,7 +356,7 @@ export const MOCK_REQUESTS = [
     projectId: "PRJ-001",
     requesterId: "USR-001",
     status: "Pendiente",
-    permissions: ["datasets.write", "models.execute", "workflows.write"],
+    permissions: ["datasets.write", "models.execute", "models.write"],
     reason:
       "Necesito modificar los datasets utilizados por el workflow de entrenamiento.",
   },

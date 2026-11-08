@@ -13,12 +13,19 @@ import DetailPanel, {
 import { MOCK_ROLES, PERMISSIONS } from "../mem-utils/mockInstance";
 import ManageRolesContent from "../utils/ManageRolesContent";
 
-const PERMISSION_CATEGORIES = [
-  ...new Set(PERMISSIONS.map((permission) => permission.category)),
-];
+// Instance permissions only make sense in a global role
+function permissionsFor(role) {
+  return role.scope === "Global"
+    ? PERMISSIONS
+    : PERMISSIONS.filter((permission) => !permission.instance);
+}
 
 function RoleDetails({ role, onTogglePermission, onClose }) {
   const theme = useTheme();
+  const available = role ? permissionsFor(role) : [];
+  const categories = [
+    ...new Set(available.map((permission) => permission.category)),
+  ];
 
   return (
     <DetailPanel
@@ -32,7 +39,7 @@ function RoleDetails({ role, onTogglePermission, onClose }) {
           <DetailSection label="Información">
             <DetailField label="Descripción">{role.description}</DetailField>
             <DetailField label="Permisos asignados">
-              {role.permissions.length} de {PERMISSIONS.length}
+              {role.permissions.length} de {available.length}
             </DetailField>
             {role.system && (
               <Typography
@@ -43,45 +50,46 @@ function RoleDetails({ role, onTogglePermission, onClose }) {
                   color: theme.palette.text.disabled,
                 }}
               >
-                Rol del sistema: sus permisos no se pueden modificar.
+                Rol fijo: sus permisos se calculan automáticamente y no se
+                pueden modificar.
               </Typography>
             )}
           </DetailSection>
 
-          {PERMISSION_CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <DetailSection key={category} label={category}>
-              {PERMISSIONS.filter(
-                (permission) => permission.category === category,
-              ).map((permission) => (
-                <FormControlLabel
-                  key={permission.uid}
-                  disabled={role.system}
-                  control={
-                    <Checkbox
-                      size="small"
-                      checked={role.permissions.includes(permission.uid)}
-                      onChange={() => onTogglePermission(permission.uid)}
-                    />
-                  }
-                  label={
-                    <Box>
-                      <Typography variant="body2">
-                        {permission.description}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: theme.palette.text.disabled,
-                          fontFamily: '"Geist Mono", monospace',
-                        }}
-                      >
-                        {permission.uid}
-                      </Typography>
-                    </Box>
-                  }
-                  sx={{ display: "flex", alignItems: "flex-start", mb: 1 }}
-                />
-              ))}
+              {available
+                .filter((permission) => permission.category === category)
+                .map((permission) => (
+                  <FormControlLabel
+                    key={permission.uid}
+                    disabled={role.system}
+                    control={
+                      <Checkbox
+                        size="small"
+                        checked={role.permissions.includes(permission.uid)}
+                        onChange={() => onTogglePermission(permission.uid)}
+                      />
+                    }
+                    label={
+                      <Box>
+                        <Typography variant="body2">
+                          {permission.description}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: theme.palette.text.disabled,
+                            fontFamily: '"Geist Mono", monospace',
+                          }}
+                        >
+                          {permission.uid}
+                        </Typography>
+                      </Box>
+                    }
+                    sx={{ display: "flex", alignItems: "flex-start", mb: 1 }}
+                  />
+                ))}
             </DetailSection>
           ))}
         </>
