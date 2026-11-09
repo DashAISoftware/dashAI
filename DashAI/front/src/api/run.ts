@@ -14,12 +14,31 @@ export const getRunById = async (runId: string): Promise<IRun> => {
   return response.data;
 };
 
-export const getHyperparameterPlot = async (
-  runId: string,
-  plotType: string,
-): Promise<IRun> => {
-  const response = await api.get<IRun>(`/v1/run/plot/${runId}/${plotType}`);
+export type RunPlotView = "hyperparameter" | "forecasts";
+
+export const getRunPlots = async (
+  runId: number,
+  view: RunPlotView,
+): Promise<IArtifact[]> => {
+  const response = await api.get<IArtifact[]>(`/v1/run/${runId}/plots/${view}`);
   return response.data;
+};
+
+export const saveRunPlotOverride = async (
+  runId: number,
+  view: RunPlotView,
+  index: number,
+  figure: object,
+): Promise<void> => {
+  await api.put(`/v1/run/${runId}/plots/${view}/override`, { index, figure });
+};
+
+export const deleteRunPlotOverride = async (
+  runId: number,
+  view: RunPlotView,
+  index: number,
+): Promise<void> => {
+  await api.delete(`/v1/run/${runId}/plots/${view}/override/${index}`);
 };
 
 export const createRun = async (
@@ -29,10 +48,6 @@ export const createRun = async (
   parameters: object,
   optimizerName: string,
   optimizerParameters: object,
-  plotHistoryPath: string,
-  plotSlicePath: string,
-  plotContourPath: string,
-  plotImportancePath: string,
   goalMetric: string,
   description: string,
   nested?: object,
@@ -44,10 +59,6 @@ export const createRun = async (
     parameters,
     optimizer_name: optimizerName,
     optimizer_parameters: optimizerParameters,
-    plot_history_path: plotHistoryPath,
-    plot_slice_path: plotSlicePath,
-    plot_contour_path: plotContourPath,
-    plot_importance_path: plotImportancePath,
     goal_metric: goalMetric,
     description,
   };
@@ -157,14 +168,5 @@ export const exportRunModel = async (runId: number): Promise<Blob> => {
   const response = await api.get(`/v1/run/${runId}/export`, {
     responseType: "blob",
   });
-  return response.data;
-};
-
-export const getRunForecastsPlot = async (
-  runId: number,
-): Promise<IArtifact[]> => {
-  const response = await api.get<IArtifact[]>(
-    `/v1/run/${runId}/forecasts/plot`,
-  );
   return response.data;
 };

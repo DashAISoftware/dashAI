@@ -1,72 +1,63 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { CircularProgress, Box, Typography } from "@mui/material";
-import { getHyperparameterPlot as getHyperparameterPlotRequest } from "../../api/run";
 import { enqueueSnackbar } from "notistack";
-import { checkHowManyOptimazers } from "../../utils/schema";
+import {
+  deleteRunPlotOverride,
+  getRunPlots,
+  saveRunPlotOverride,
+} from "../../api/run";
+import { patchArtifactPayload } from "../../utils/artifactOverrides";
 import ArtifactViewer from "../shared/ArtifactViewer";
 
-const PLOT_TYPES = { history: 1, slice: 2, contour: 3, importance: 4 };
+const VIEW = "hyperparameter";
 
 function HyperparameterPlots({ run }) {
-  // Each plot now arrives as a typed artifact ({type, payload, title}) built
-  // server side, same contract Explainers/Explorers use - no client side
-  // parsing or title guessing needed.
   const [plots, setPlots] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const optimizables = checkHowManyOptimazers({
-    params: run.parameters,
-  });
-
-  const getHyperparameterPlot = async () => {
-    const wanted =
-      optimizables >= 2
-        ? [
-            PLOT_TYPES.history,
-            PLOT_TYPES.slice,
-            PLOT_TYPES.contour,
-            PLOT_TYPES.importance,
-          ]
-        : optimizables === 1
-          ? [PLOT_TYPES.history, PLOT_TYPES.slice]
-          : [];
-
-    setLoading(true);
-    const settled = await Promise.allSettled(
-      wanted.map((plotType) => getHyperparameterPlotRequest(run.id, plotType)),
-    );
-
-    const available = [];
-    const failures = [];
-    settled.forEach((result, i) => {
-      if (result.status === "fulfilled") {
-        if (result.value) {
-          available.push({ plotType: wanted[i], artifact: result.value });
-        }
-      } else if (result.reason?.response?.status !== 404) {
-        failures.push(result.reason);
+  const fetchPlots = useCallback(async () => {
+    try {
+      setPlots(await getRunPlots(run.id, VIEW));
+    } catch (error) {
+      setPlots([]);
+      if (error?.response?.status !== 404) {
+        enqueueSnackbar("Error while trying to obtain hyperparameter plots", {
+          variant: "error",
+        });
+        console.error("Error loading hyperparameter plots:", error);
       }
-    });
-
-    setPlots(available);
-    setLoading(false);
-
-    if (failures.length > 0) {
-      enqueueSnackbar("Error while trying to obtain hyperparameter plots", {
-        variant: "error",
-      });
-      console.error("Error loading hyperparameter plots:", failures);
     }
-  };
+  }, [run.id]);
 
   useEffect(() => {
     if (run.status === 3) {
-      getHyperparameterPlot();
+      setLoading(true);
+      fetchPlots().finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
-  }, [run.id, run.status, run.parameters]);
+  }, [run.id, run.status, fetchPlots]);
+
+  const handleSaveOverride = async (index, figure) => {
+    try {
+      await saveRunPlotOverride(run.id, VIEW, index, figure);
+      setPlots((prev) =>
+        patchArtifactPayload(prev, index, JSON.stringify(figure)),
+      );
+    } catch (error) {
+      console.error("Error saving hyperparameter plot override:", error);
+    }
+  };
+
+  const handleResetOverride = async (index) => {
+    try {
+      await deleteRunPlotOverride(run.id, VIEW, index);
+      await fetchPlots();
+    } catch (error) {
+      console.error("Error resetting hyperparameter plot override:", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -152,28 +143,24 @@ function HyperparameterPlots({ run }) {
     );
   }
 
-  const artifacts = plots.map(({ artifact }) => artifact);
-
   return (
     <Box sx={{ p: 4 }}>
       <Box
         sx={{
           display: "grid",
           gap: 4,
-          // Wider floor than Live Metrics' panels (420px) - these plots carry
-          // more horizontal detail (legend, colorbar, wide trial axis) and
-          // look sparse/oversized stretched full width on a wide screen, but
-          // still don't need a whole row to themselves once there's room for
-          // a second column.
           gridTemplateColumns: "repeat(auto-fit, minmax(600px, 1fr))",
         }}
       >
-        {plots.map(({ plotType, artifact }, index) => (
+        {plots.map((artifact, position) => (
           <ArtifactViewer
-            key={plotType}
+            key={artifact.index}
             artifact={artifact}
-            siblingArtifacts={artifacts}
-            siblingIndex={index}
+            siblingArtifacts={plots}
+            siblingIndex={position}
+            canReset={Boolean(artifact.overridden)}
+            onSaveEdit={(figure) => handleSaveOverride(artifact.index, figure)}
+            onResetEdit={() => handleResetOverride(artifact.index)}
           />
         ))}
       </Box>
@@ -185,7 +172,6 @@ HyperparameterPlots.propTypes = {
   run: PropTypes.shape({
     id: PropTypes.number.isRequired,
     status: PropTypes.number.isRequired,
-    parameters: PropTypes.object.isRequired,
   }).isRequired,
 };
 
