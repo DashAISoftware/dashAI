@@ -14,6 +14,7 @@ from DashAI.back.models.RAG.RAG_defaults import (
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     ENABLE_FIELD,
     WINDOW_FIELD,
+    strip_expansion_options,
 )
 
 _SEMANTIC_MODEL_SHORT = DEFAULT_SEMANTIC_MODEL_NAME.rsplit("/", 1)[-1]
@@ -180,7 +181,7 @@ def get_default_retriever(registry, top_k: int = DEFAULT_TOP_K) -> Dict[str, Any
     return {"component": recipe["component"], "params": recipe["params"]}
 
 
-def _strip_match_ignored_keys(value: Any) -> Any:
+def _strip_match_ignored_keys(value: Dict[str, Any]) -> Dict[str, Any]:
     """Drop the keys that never decide a preset match, at every level.
 
     A preset keeps its shape when the user only moves the Top-K slider or
@@ -189,19 +190,7 @@ def _strip_match_ignored_keys(value: Any) -> Any:
     across their children, and expansion options may sit on the parent, on a
     child, or on neither in a legacy session).
     """
-    if isinstance(value, dict):
-        stripped: Dict[str, Any] = {}
-        for key, item in value.items():
-            if key in _IGNORED_MATCH_KEYS:
-                continue
-            stripped[key] = _strip_match_ignored_keys(item)
-        return stripped
-    if isinstance(value, list):
-        stripped_list: List[Any] = []
-        for item in value:
-            stripped_list.append(_strip_match_ignored_keys(item))
-        return stripped_list
-    return value
+    return strip_expansion_options(value, _IGNORED_MATCH_KEYS)
 
 
 def match_preset_key(component: str, params: Dict[str, Any], registry) -> Optional[str]:
