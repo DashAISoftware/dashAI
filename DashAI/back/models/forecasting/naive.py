@@ -65,6 +65,8 @@ class NaiveForecaster(SingleSeriesForecastingModel):
         de="Naive Prognose",
         zh="朴素预测",
     )
+    COLOR: str = "#8D6E63"
+    ICON: str = "TrendingFlat"
 
     SUPPORTS_INTERVALS = True
 

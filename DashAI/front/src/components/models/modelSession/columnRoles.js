@@ -90,19 +90,26 @@ export function defaultRoleSelection(roles, columns, columnTypes = {}) {
 
 /**
  * Whether a selection is complete enough to be checked by the backend:
- * every required role has columns, and the roles the preprocessing may
- * transform have at least one between them.
+ * every required role has columns, and the roles that feed the model's
+ * inputs have at least one between them. An optional input role may stay
+ * empty when another one has columns (forecasting's exogenous variables,
+ * beside its time index); in an x/y task the features are the only input
+ * role, so they still need a column.
  *
  * @param {Array<object>} roles the shown roles
  * @param {Object<string, string[]>} selection role name to its columns
+ * @param {string[]} [inputRoles] the roles that feed the model's inputs
+ *   (`metadata.io_roles.inputs`); without them, the transformable roles
  * @returns {boolean}
  */
-export function selectionReady(roles, selection) {
+export function selectionReady(roles, selection, inputRoles) {
   const has = (role) => (selection[role.name] || []).length > 0;
-  const transformable = roles.filter((role) => role.transformable);
+  const inputs = roles.filter((role) =>
+    inputRoles ? inputRoles.includes(role.name) : role.transformable,
+  );
   return (
     roles.every((role) => !role.required || has(role)) &&
-    (transformable.length === 0 || transformable.some(has))
+    (inputs.length === 0 || inputs.some(has))
   );
 }
 

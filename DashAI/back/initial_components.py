@@ -256,7 +256,6 @@ from DashAI.back.metrics.clustering.calinski_harabasz import CalinskiHarabasz
 from DashAI.back.metrics.clustering.davies_bouldin import DaviesBouldin
 from DashAI.back.metrics.clustering.silhouette import Silhouette
 from DashAI.back.metrics.forecasting.interval_coverage import IntervalCoverage
-from DashAI.back.metrics.forecasting.mase import MASE
 from DashAI.back.metrics.regression.explained_variance import ExplainedVariance
 from DashAI.back.metrics.regression.mae import MAE
 from DashAI.back.metrics.regression.mape import MAPE
@@ -277,9 +276,12 @@ from DashAI.back.models.efficientnet_b0_image_classifier import (
 from DashAI.back.models.faiss.faiss_dbscan_clustering import FaissDBSCANClustering
 from DashAI.back.models.faiss.faiss_kmeans_clustering import FaissKMeansClustering
 from DashAI.back.models.forecasting.arima import ARIMA
+from DashAI.back.models.forecasting.drift import DriftForecaster
 from DashAI.back.models.forecasting.exponential_smoothing import ExponentialSmoothing
+from DashAI.back.models.forecasting.mean import MeanForecaster
 from DashAI.back.models.forecasting.naive import NaiveForecaster
 from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
+from DashAI.back.models.forecasting.theta import Theta
 from DashAI.back.models.hugging_face.albert_transformer import AlbertTransformer
 from DashAI.back.models.hugging_face.bert_transformer import BertTransformer
 from DashAI.back.models.hugging_face.bertin_transformer import BertinTransformer
@@ -701,9 +703,12 @@ def get_initial_components():
         SingleSeriesForecastingTask,
         # Models
         NaiveForecaster,
+        MeanForecaster,
+        DriftForecaster,
         SeasonalNaiveForecaster,
         ARIMA,
         ExponentialSmoothing,
+        Theta,
         FaissDBSCANClustering,
         FaissKMeansClustering,
         AdaBoostClassifier,
@@ -844,7 +849,8 @@ def get_initial_components():
         MAE,
         MAPE,
         SMAPE,
-        MASE,
+        # MASE is left out until its season is configured per session: today
+        # each model scales it by its own season, so runs are not comparable.
         IntervalCoverage,
         R2,
         MedianAbsoluteError,

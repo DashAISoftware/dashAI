@@ -32,8 +32,9 @@ def test_every_forecasting_model_declares_something_to_optimize():
         ExponentialSmoothing,
     )
     from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
+    from DashAI.back.models.forecasting.theta import Theta
 
-    for model in (ARIMA, SeasonalNaiveForecaster, ExponentialSmoothing):
+    for model in (ARIMA, SeasonalNaiveForecaster, ExponentialSmoothing, Theta):
         fields = model.SCHEMA.model_json_schema()["properties"]
         optimizable = [
             name
