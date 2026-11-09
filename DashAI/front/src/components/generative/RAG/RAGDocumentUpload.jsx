@@ -6,6 +6,7 @@ import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAG
 import { getComponents } from "../../../api/component";
 import { loadsDataKind } from "../../../utils/dataKinds";
 import DocumentSourcePicker from "./upload/DocumentSourcePicker";
+import DocumentPipelineEditor from "./upload/DocumentPipelineEditor";
 import ExtensionParserConfig from "./upload/ExtensionParserConfig";
 import UploadProgressPanel from "./upload/UploadProgressPanel";
 import LargeSelectionDialog from "./upload/LargeSelectionDialog";
@@ -19,6 +20,8 @@ import {
 } from "./upload/fileSelection";
 import {
   ATTACH_CLOSE_TIMEOUT_MS,
+  CONVERTERS_STATUS,
+  DOCUMENT_CONTENT_TYPES,
   LOADERS_STATUS,
   SKIP_REASON,
   UPLOAD_MODE,
@@ -33,6 +36,19 @@ import {
  */
 function supportsExtension(loader, extension) {
   return (loader?.metadata?.supported_extensions ?? []).includes(extension);
+}
+
+/**
+ * @param {object} converter - A document converter component.
+ * @returns {boolean} Whether it can process at least one document content type,
+ *   or declares no restriction at all.
+ */
+function supportsDocumentContent(converter) {
+  const types =
+    converter?.metadata?.document_allowed_types ??
+    converter?.metadata?.allowed_types;
+  if (!Array.isArray(types) || types.length === 0) return true;
+  return types.some((type) => DOCUMENT_CONTENT_TYPES.includes(type));
 }
 
 /**
@@ -61,6 +77,13 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
   const [folderNameTouched, setFolderNameTouched] = useState(false);
   const [loaders, setLoaders] = useState([]);
   const [loadersStatus, setLoadersStatus] = useState(LOADERS_STATUS.LOADING);
+  const [converters, setConverters] = useState([]);
+  const [convertersStatus, setConvertersStatus] = useState(
+    CONVERTERS_STATUS.LOADING,
+  );
+  const [pipelineSteps, setPipelineSteps] = useState([]);
+  const [pipelineFormErrors, setPipelineFormErrors] = useState({});
+  const [pipelineMissingDownloads, setPipelineMissingDownloads] = useState({});
   const [selectedByExtension, setSelectedByExtension] = useState({});
   const [formErrors, setFormErrors] = useState({});
   const [missingDownloads, setMissingDownloads] = useState({});
@@ -68,7 +91,10 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
   const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
   const [previewDocument, setPreviewDocument] = useState(null);
   const formRefs = useRef({});
+  const pipelineFormRefs = useRef(new Map());
+  const stepKeyRef = useRef(0);
   const loadersRequestRef = useRef(0);
+  const convertersRequestRef = useRef(0);
   const lastRootRef = useRef("");
   const mountedRef = useRef(true);
   const progressTitleRef = useRef(null);
@@ -103,6 +129,37 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
     }
   }, []);
 
+  const loadConverters = useCallback(async () => {
+    const requestId = convertersRequestRef.current + 1;
+    convertersRequestRef.current = requestId;
+    setConvertersStatus(CONVERTERS_STATUS.LOADING);
+    setConverters([]);
+    try {
+      const list = await getComponents({
+        selectTypes: ["Converter"],
+        dataKind: "document",
+      });
+      if (!mountedRef.current || convertersRequestRef.current !== requestId)
+        return;
+      const available = list
+        .filter((component) => component?.metadata?.supervised !== true)
+        .filter(supportsDocumentContent);
+      setConverters(available);
+      const availableNames = new Set(
+        available.map((converter) => converter.name),
+      );
+      setPipelineSteps((previous) =>
+        previous.filter((step) => availableNames.has(step.name)),
+      );
+      setConvertersStatus(CONVERTERS_STATUS.READY);
+    } catch {
+      if (!mountedRef.current || convertersRequestRef.current !== requestId)
+        return;
+      setConverters([]);
+      setConvertersStatus(CONVERTERS_STATUS.ERROR);
+    }
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     setMode(UPLOAD_MODE.FILE);
@@ -113,14 +170,21 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
     setSelectedByExtension({});
     setFormErrors({});
     setMissingDownloads({});
+    setPipelineSteps([]);
+    setPipelineFormErrors({});
+    setPipelineMissingDownloads({});
     setConfirmLargeOpen(false);
     setCloseConfirmOpen(false);
     setLoaders([]);
+    setConverters([]);
     lastRootRef.current = "";
     formRefs.current = {};
+    pipelineFormRefs.current.clear();
+    stepKeyRef.current = 0;
     resetUpload();
     loadLoaders();
-  }, [open, resetUpload, loadLoaders]);
+    loadConverters();
+  }, [open, resetUpload, loadLoaders, loadConverters]);
 
   useEffect(() => {
     if (upload.phase === UPLOAD_PHASE.UPLOADING) {
@@ -236,6 +300,47 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
     );
   }, []);
 
+  const registerPipelineFormRef = useCallback((key, ref) => {
+    if (ref) pipelineFormRefs.current.set(key, ref);
+    else pipelineFormRefs.current.delete(key);
+  }, []);
+
+  const handlePipelineFormErrorChange = useCallback((key, hasError) => {
+    setPipelineFormErrors((previous) =>
+      previous[key] === hasError ? previous : { ...previous, [key]: hasError },
+    );
+  }, []);
+
+  const handlePipelineDownloadGateChange = useCallback((key, missing) => {
+    setPipelineMissingDownloads((previous) =>
+      previous[key] === missing ? previous : { ...previous, [key]: missing },
+    );
+  }, []);
+
+  const handleAddPipelineStep = useCallback((converterName) => {
+    const key = `${converterName}-${stepKeyRef.current}`;
+    stepKeyRef.current += 1;
+    setPipelineSteps((previous) => [...previous, { key, name: converterName }]);
+  }, []);
+
+  const handleRemovePipelineStep = useCallback((key) => {
+    pipelineFormRefs.current.delete(key);
+    setPipelineSteps((previous) => previous.filter((step) => step.key !== key));
+  }, []);
+
+  const handleMovePipelineStep = useCallback((key, direction) => {
+    setPipelineSteps((previous) => {
+      const index = previous.findIndex((step) => step.key === key);
+      if (index === -1) return previous;
+      const target = index + direction;
+      if (target < 0 || target >= previous.length) return previous;
+      const next = [...previous];
+      const [step] = next.splice(index, 1);
+      next.splice(target, 0, step);
+      return next;
+    });
+  }, []);
+
   const handleSelectLoader = useCallback((extension, loaderName) => {
     setSelectedByExtension((previous) => ({
       ...previous,
@@ -274,6 +379,16 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
   const downloadMissing = selectedLoaders.some((loader) =>
     Boolean(missingDownloads[loader.name]),
   );
+  const pipelineFormHasErrors = pipelineSteps.some((step) =>
+    Boolean(pipelineFormErrors[step.key]),
+  );
+  const pipelineDownloadMissing = pipelineSteps.some((step) =>
+    Boolean(pipelineMissingDownloads[step.key]),
+  );
+  // A failed converter fetch hides the step cards, so submitting them would
+  // send converters the dialog can no longer configure.
+  const pipelineConvertersUnavailable =
+    pipelineSteps.length > 0 && convertersStatus !== CONVERTERS_STATUS.READY;
   const folderNameInvalid = mode === UPLOAD_MODE.FOLDER && !folderName.trim();
   const uploadLocked =
     upload.phase === UPLOAD_PHASE.UPLOADING ||
@@ -286,6 +401,9 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
     !missingParser &&
     !formHasErrors &&
     !downloadMissing &&
+    !pipelineFormHasErrors &&
+    !pipelineDownloadMissing &&
+    !pipelineConvertersUnavailable &&
     !folderNameInvalid &&
     !upload.busy;
 
@@ -307,6 +425,22 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
     }
     return parsers;
   };
+
+  /**
+   * Collects the ordered converter pipeline from the step forms.
+   *
+   * @returns {Array<{converter: string, params: object}>} The steps the upload
+   *   hook forwards to the batch request.
+   */
+  const buildPipeline = () =>
+    pipelineSteps
+      .filter(({ name }) =>
+        converters.some((converter) => converter.name === name),
+      )
+      .map(({ key, name }) => ({
+        converter: name,
+        params: pipelineFormRefs.current.get(key)?.current?.values ?? {},
+      }));
 
   const handleClose = () => {
     if (uploadLocked) {
@@ -337,6 +471,7 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
       entries: supportedEntries,
       skipped: allSkipped,
       parsers: buildParsers(),
+      pipeline: buildPipeline(),
     });
   };
 
@@ -423,6 +558,9 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
                 minHeight: 0,
                 display: "flex",
                 flexDirection: "column",
+                gap: 2,
+                overflowY: "auto",
+                overscrollBehavior: "contain",
                 borderLeft: { xs: 0, md: 1 },
                 borderTop: { xs: 1, md: 0 },
                 borderColor: "divider",
@@ -443,7 +581,7 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
               ) : loadersStatus === LOADERS_STATUS.LOADING ? (
                 <Box
                   sx={{
-                    flex: 1,
+                    py: 2,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -457,10 +595,7 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
               ) : supportedEntries.length === 0 ? (
                 <Box
                   sx={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    py: 2,
                     textAlign: "center",
                     color: "text.secondary",
                   }}
@@ -482,6 +617,20 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
                   disabled={upload.busy}
                 />
               )}
+              <DocumentPipelineEditor
+                converters={converters}
+                status={convertersStatus}
+                steps={pipelineSteps}
+                onAdd={handleAddPipelineStep}
+                onRemove={handleRemovePipelineStep}
+                onMoveUp={(key) => handleMovePipelineStep(key, -1)}
+                onMoveDown={(key) => handleMovePipelineStep(key, 1)}
+                registerFormRef={registerPipelineFormRef}
+                onFormErrorChange={handlePipelineFormErrorChange}
+                onDownloadGateChange={handlePipelineDownloadGateChange}
+                onRetry={loadConverters}
+                disabled={upload.busy}
+              />
             </Box>
           </Box>
         ) : (

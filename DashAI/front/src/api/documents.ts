@@ -12,6 +12,7 @@ export interface IDataDocument {
   file_path: string | null;
   dataloader: string | null;
   dataloader_params: Record<string, unknown> | null;
+  converter_pipeline: IDocumentPipelineStep[] | null;
   content_counts: Record<string, number> | null;
   total_pages: number | null;
   folder_id: number | null;
@@ -39,12 +40,25 @@ export interface IDocumentContentPage {
   items: IDocumentContentItem[];
 }
 
+/**
+ * One converter applied to a document, with the parameters of that step.
+ *
+ * The pipeline is shared by every file of a batch; each converter only runs on
+ * the content types it declares, so a document without matching items skips
+ * the step.
+ */
+export interface IDocumentPipelineStep {
+  converter: string;
+  params?: Record<string, unknown>;
+}
+
 export interface IDocumentCreateParams {
   name: string;
   file_name: string;
   dataloader: string;
   dataloader_params: Record<string, unknown>;
   folder_id?: number | null;
+  converter_pipeline?: IDocumentPipelineStep[] | null;
 }
 
 /**
@@ -64,6 +78,8 @@ export interface IDocumentBatchParams {
   /** Folder that groups every created document, or null for loose documents. */
   folder_name: string | null;
   files: IDocumentBatchFile[];
+  /** Converters applied to every file of the batch, or null for none. */
+  converter_pipeline?: IDocumentPipelineStep[] | null;
 }
 
 export interface IDocumentBatchResult {

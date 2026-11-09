@@ -238,9 +238,6 @@ export default function ExtensionParserConfig({
         flexDirection: "column",
         gap: 2,
         minWidth: 0,
-        height: "100%",
-        overflowY: "auto",
-        overscrollBehavior: "contain",
       }}
     >
       <Typography

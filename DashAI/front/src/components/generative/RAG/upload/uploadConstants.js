@@ -34,6 +34,19 @@ export const LOADERS_STATUS = Object.freeze({
   ERROR: "error",
 });
 
+/** Whether the document converters have been fetched yet. */
+export const CONVERTERS_STATUS = Object.freeze({
+  LOADING: "loading",
+  READY: "ready",
+  ERROR: "error",
+});
+
+/** Content types a document can actually hold. */
+export const DOCUMENT_CONTENT_TYPES = Object.freeze(["Text", "Image"]);
+
+/** 409 detail fragment that identifies a name clash the batch can retry. */
+export const NAME_CONFLICT_DETAIL = "already exists";
+
 /** Lifecycle of a single upload run. */
 export const UPLOAD_PHASE = Object.freeze({
   SELECTING: "selecting",
