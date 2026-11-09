@@ -121,6 +121,11 @@ from DashAI.back.dataloaders.classes.pypdf_document_dataloader import (
     PypdfDocumentDataLoader,
 )
 
+# Dataset Exporters
+from DashAI.back.dataset_exporters.openml_dataset_exporter import (
+    OpenMLDatasetExporter,
+)
+
 # Dataset Sources
 from DashAI.back.dataset_sources.huggingface_dataset_source import (
     HuggingFaceDatasetSource,
@@ -747,6 +752,8 @@ def get_initial_components():
         KaggleDatasetSource,
         OpenMLDatasetSource,
         ZenodoDatasetSource,
+        # Dataset Exporters
+        OpenMLDatasetExporter,
         # Credentials
         HuggingFaceCredential,
         KaggleCredential,
