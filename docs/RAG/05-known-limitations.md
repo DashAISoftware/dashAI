@@ -194,6 +194,28 @@
   `DocumentJob`, so a failure surfaces as an `ERROR` row (with its partial
   folder deleted) rather than a half-parsed document in the library.
 
+## Document Upload
+
+- **A folder upload is one `Folder` plus one `DataDocument` per file.** The
+  batch endpoint has no hard file-count limit (the UI asks for confirmation
+  above 100); each individual file is still capped at 4 GiB by the multipart
+  job endpoint, and the whole file is parsed in memory by `DocumentJob`.
+- **Subfolders are flattened.** The upload dialog keeps each file's relative
+  path for display, but every file becomes a direct member of the requested
+  folder; the `Folder` model has no parent link.
+- **A failed parse leaves an `ERROR` document in Data.** It is never attached
+  to the session; the progress panel reports it and the user can delete it from
+  the Data module. A row renamed to avoid a duplicate name is reported in the
+  upload summary.
+- **Closing the upload dialog mid-run attaches only the documents that already
+  finished.** The rest keep parsing in the background and stay in Data; they
+  must be added later from "Add from Data". The dialog waits at most 10 s for
+  that partial attach before closing.
+- **SQLite foreign keys are still not enabled.** `folder_id` references are
+  protected by an explicit write lock in the create/patch/delete paths, not by
+  `PRAGMA foreign_keys`; any new code that writes `folder_id` outside
+  `DocumentBatchService` or `PATCH /documents/{id}` must take the same lock.
+
 ## Validation
 
 - **Parameters hash** only covers `rag_prompt` and `rag_generation_model`.

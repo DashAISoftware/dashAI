@@ -783,7 +783,11 @@ upload time; the four registered loaders are
 `PypdfDocumentDataLoader`, `PdfPlumberDocumentDataLoader` and
 `PdfMinerDocumentDataLoader` (pdf). A loader turns one file into a
 `DashAIDocument` — an ordered list of `Text` / `DashAIImage` items with pages —
-and RAG keeps only the `Text` items. See
+and RAG keeps only the `Text` items. `DocumentBatchService`
+(`services/documents/document_batch_service.py`) validates and stores a whole
+folder's placeholders in one transaction, and `folder_lock.py` serializes the
+writes that file a document into an existing folder with SQLite's write lock,
+because foreign keys (and therefore `ondelete="SET NULL"`) are not enforced. See
 [`06-document-processing.md`](./06-document-processing.md) for the loader
 parameters, storage layout, upload flow, and the document endpoints.
 

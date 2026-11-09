@@ -36,6 +36,8 @@ import CloseIcon from "@mui/icons-material/Close";
  * @param {object}   [props.paperSx] - Extra styles for the dialog paper.
  * @param {object}   [props.dialogProps] - Extra props for the MUI Dialog
  *   itself, for the rare dialog that has to stack above another one.
+ * @param {boolean}  [props.closeDisabled] - Disables the title-row close
+ *   control while an action must not be interrupted.
  * @returns {JSX.Element} The dialog.
  */
 export default function RAGAdvancedDialog({
@@ -49,6 +51,7 @@ export default function RAGAdvancedDialog({
   contentSx,
   paperSx,
   dialogProps,
+  closeDisabled = false,
 }) {
   const { t } = useTranslation(["common"]);
 
@@ -87,6 +90,7 @@ export default function RAGAdvancedDialog({
         <IconButton
           onClick={onClose}
           size="small"
+          disabled={closeDisabled}
           aria-label={t("common:close")}
           sx={{ color: "text.secondary", flexShrink: 0, mr: -0.5 }}
         >
@@ -127,4 +131,5 @@ RAGAdvancedDialog.propTypes = {
   contentSx: PropTypes.object,
   paperSx: PropTypes.object,
   dialogProps: PropTypes.object,
+  closeDisabled: PropTypes.bool,
 };

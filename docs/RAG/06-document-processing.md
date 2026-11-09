@@ -119,12 +119,15 @@ separate folders.
 
 ## Upload and Parsing
 
-Uploading a document is a two-call Data-module flow, not a RAG one:
+Uploading a document is a Data-module flow, not a RAG one. A single file uses
+two calls:
 
 1. `POST /api/v1/documents/` creates a `NOT_STARTED` row, resolving the loader
    and validating that the file extension is supported and that the loader
-   parameters validate. A taken `name` is `409`; an empty name, an unknown
-   loader, an unsupported extension or invalid parameters are `422`.
+   parameters validate. The optional `folder_id` files the document in an
+   existing Data folder. A taken `name` is `409`; an unknown folder is `404`; an
+   empty name, an unknown loader, an unsupported extension or invalid parameters
+   are `422`.
 2. `POST /api/v1/job/` with `job_type=DocumentJob` and the file as multipart runs
    the parse. `DocumentJob` copies the upload to `source/`, hashes it, calls
    `load_document`, saves the parsed document under `document/`, fills
@@ -132,8 +135,37 @@ Uploading a document is a two-call Data-module flow, not a RAG one:
    redacted loader parameters, and marks the row `FINISHED`. Any failure deletes
    the partial folder and marks the row `ERROR`.
 
+A whole folder (or a multi-file selection) uses one **atomic** batch instead:
+
+`POST /api/v1/documents/batch` with
+`{"folder_name": "thesis" | null, "files": [{name, file_name, dataloader,
+dataloader_params}, ...]}` validates every file and the folder name before
+writing, then creates the optional `Folder` row plus one `NOT_STARTED`
+`DataDocument` per file in a single transaction. It returns
+`{"folder": {...} | null, "documents": [...]}` in request order. Any conflict
+(taken folder or document name) is `409`; an invalid loader, extension or
+parameter set is `422`; nothing is written in either case. There is no hard
+per-batch file limit (the dialog asks for confirmation above 100 files) and each
+file is still capped at 4 GiB by `POST /api/v1/job/`. A name lookup is chunked
+(500 names) so a very large batch cannot exceed SQLite's bound-parameter limit.
+
+The batch service (`services/documents/document_batch_service.py`) owns the
+validation, uniqueness checks and transaction; the endpoint only parses and maps
+errors. It also takes SQLite's write lock before filing a document into an
+existing folder (`services/documents/folder_lock.py`), and `DELETE /folder/{id}`
+takes the same lock before reading its documents. That closes a race where a
+document could keep a `folder_id` pointing at a folder deleted concurrently,
+since the app does not enable `PRAGMA foreign_keys` and the model's
+`ondelete="SET NULL"` is therefore not enforced by SQLite.
+
+Subfolders inside an uploaded folder are flattened: the files keep their
+relative path in the upload dialog for readability, but they all become direct
+members of the one folder requested in the batch.
+
 The status moves `NOT_STARTED → DELIVERED → STARTED → FINISHED` (or `ERROR`);
-`DELIVERED` and `STARTED` are the "busy" states that block deletion.
+`DELIVERED` and `STARTED` are the "busy" states that block deletion. A failed
+parse leaves an `ERROR` row in the Data module so the user can inspect or delete
+it; it is never attached to a session.
 
 ## The RAG Loading Stage
 
@@ -192,6 +224,7 @@ Data-module document endpoints (`api_v1/endpoints/data_documents.py`, prefix
 | Method | Path                                         | Purpose                                                        |
 | ------ | -------------------------------------------- | -------------------------------------------------------------- |
 | POST   | `/api/v1/documents/`                         | Create the placeholder row (201)                               |
+| POST   | `/api/v1/documents/batch`                    | Create an optional folder + N placeholder rows atomically (201) |
 | POST   | `/api/v1/documents/from-notebook`            | Save a document notebook as a new document (201)               |
 | GET    | `/api/v1/documents/`                         | List every document                                            |
 | GET    | `/api/v1/documents/{id}`                     | One document                                                   |
@@ -227,15 +260,27 @@ mounted by `RAGSessionPage`). There is no standalone RAG documents page:
 
 Under `components/generative/RAG/`:
 
-- `DocumentsBar` — the session's document panel: the list, the "add from Data"
-  picker, the upload button, and per-row preview and detach.
-- `AddFromDataDialog` — the "Data documents" picker: lists the Data module's
-  documents, disables the ones already attached or still parsing, and attaches
-  the selection by id.
-- `RAGDocumentUpload` — uploads a new file into the Data module: creates the
-  document, enqueues its parse job, then attaches it to the session once parsing
-  finishes. It offers only the loaders whose `supported_extensions` accept the
-  chosen file.
+- `DocumentsBar` — the session's document panel: the list grouped by Data folder,
+  the "add from Data" picker, the upload button, and per-row preview and detach.
+- `AddFromDataDialog` — the "Data documents" picker: a folder-and-document tree
+  (`DocumentFolderPicker`) that selects whole folders and loose documents
+  together, disables documents already attached or still parsing, shows the
+  focused document's details on the right, and attaches the resulting id set.
+- `useDocumentFolderSelection` — the selection model: a single set of document
+  ids, with each folder's checked/indeterminate state derived from its
+  selectable documents, so a folder selection is the snapshot of its current
+  contents.
+- `RAGDocumentUpload` — uploads one folder or several loose files into the Data
+  module in a single pass. It reads file and directory drops
+  (`webkitRelativePath`/`webkitGetAsEntry`), groups the selection by extension,
+  lets the user pick one parser per extension, creates the folder and the
+  placeholders with `POST /api/v1/documents/batch`, enqueues one `DocumentJob`
+  per file, and attaches every parsed document once at the end. Files with no
+  compatible parser, hidden/system files, empty files and files over 4 GiB are
+  reported as skipped. The run can be aborted: pending job polling is stopped
+  and the documents that already finished are attached before the dialog closes.
+- `DocumentGroupList` — orders the session's documents as loose rows first and
+  one collapsible section per Data folder.
 - `DocumentList` / `DocumentListItem` — presentational list and row; the row
   badges its indexing state (not indexed / indexing / chunk count) and reveals
   its actions on hover.
@@ -245,8 +290,8 @@ Under `components/generative/RAG/`:
 
 The API clients are `api/rag.ts` (`listSessionDocuments`,
 `attachSessionDocuments`, `detachSessionDocument`) and `api/documents.ts`
-(`createDocument`, `enqueueDocumentJob`, `getDocument`, and the content, outline
-and source helpers).
+(`createDocument`, `createDocumentsBatch`, `enqueueDocumentJob`, `getDocument`,
+and the content, outline and source helpers).
 
 ## Related Docs
 

@@ -10,16 +10,17 @@ import os
 import shutil
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, NoReturn
 
 from fastapi import APIRouter, Depends, Query, Response, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import FileResponse
 from kink import di, inject
-from pydantic import ValidationError
 from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.data_documents_params import (
+    DataDocumentBatchCreateParams,
+    DataDocumentBatchSchema,
     DataDocumentCreateParams,
     DataDocumentFromNotebookParams,
     DataDocumentSchema,
@@ -33,16 +34,20 @@ from DashAI.back.api.document_content import (
     require_content_type,
 )
 from DashAI.back.core.enums.status import ConverterStatus, DocumentStatus
-from DashAI.back.dataloaders.classes.dataloader import (
-    DataKindMismatchError,
-    require_data_kind,
-)
 from DashAI.back.dependencies.database.models import (
     Converter,
     DataDocument,
     Folder,
     Notebook,
 )
+from DashAI.back.services.documents.document_batch_service import (
+    DocumentBatchService,
+    DocumentStorageError,
+    DocumentUploadConflictError,
+    FolderNotFoundError,
+    InvalidDocumentUploadError,
+)
+from DashAI.back.services.documents.folder_lock import lock_folder_row
 from DashAI.back.services.RAG.document_service import (
     DocumentBusyError,
     DocumentInUseError,
@@ -64,39 +69,29 @@ router = APIRouter()
 BASE_URL = "/api/v1/documents"
 
 
-def _document_loader_class(component_registry: "ComponentRegistry", name: str) -> type:
-    """Resolve a document loader class by name.
+def _raise_document_error(error: Exception) -> NoReturn:
+    """Translate a document service error into an HTTP error.
 
     Parameters
     ----------
-    component_registry : ComponentRegistry
-        The registry from the DI container.
-    name : str
-        Loader component name.
-
-    Returns
-    -------
-    type
-        The loader class.
+    error : Exception
+        One of the exceptions raised by ``DocumentBatchService``.
 
     Raises
     ------
     HTTPException
-        422 if the name is unknown or the loader does not produce documents.
+        404 for an unknown folder, 409 for a conflict, 422 for an invalid
+        upload and 500 for a storage failure.
     """
-    if name not in component_registry:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Document loader '{name}' does not exist.",
-        )
-    loader_class = component_registry[name]["class"]
-    try:
-        require_data_kind(loader_class, "document")
-    except DataKindMismatchError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
-        ) from e
-    return loader_class
+    if isinstance(error, FolderNotFoundError):
+        code = status.HTTP_404_NOT_FOUND
+    elif isinstance(error, DocumentUploadConflictError):
+        code = status.HTTP_409_CONFLICT
+    elif isinstance(error, InvalidDocumentUploadError):
+        code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    else:
+        code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    raise HTTPException(status_code=code, detail=str(error)) from error
 
 
 def _users_payload(rows) -> list:
@@ -147,17 +142,20 @@ def _get_document_or_404(db: "Session", document_id: int) -> DataDocument:
     "/", response_model=DataDocumentSchema, status_code=status.HTTP_201_CREATED
 )
 @inject
-async def create_data_document(
+def create_data_document(
     params: DataDocumentCreateParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
-):
+) -> DataDocumentSchema:
     """Create a NOT_STARTED document row before its upload job runs.
+
+    The folder is checked before the loader and the extension, so an unknown
+    ``folder_id`` answers 404 even when the rest of the body is invalid.
 
     Parameters
     ----------
     params : DataDocumentCreateParams
-        Name, file name, loader and loader parameters.
+        Name, file name, loader, loader parameters and optional folder.
     session_factory : sessionmaker
         Session factory from the DI container.
     component_registry : ComponentRegistry
@@ -165,84 +163,77 @@ async def create_data_document(
 
     Returns
     -------
-    DataDocument
+    DataDocumentSchema
         The placeholder row, with the loader parameters resolved.
 
     Raises
     ------
     HTTPException
-        409 for a taken name or a loader still to be downloaded; 422 for an
-        empty name, a wrong loader, an unsupported extension or invalid
-        parameters; 500 on database errors.
+        404 for an unknown folder; 409 for a taken name or a loader still to
+        be downloaded; 422 for an empty name, a wrong loader, an unsupported
+        extension or invalid parameters; 500 on database errors.
     """
-    name = params.name.strip()
-    if not name:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Name cannot be empty",
-        )
-    file_name = os.path.basename(params.file_name)
-    loader_class = _document_loader_class(component_registry, params.dataloader)
-    if getattr(
-        loader_class, "REQUIRES_DOWNLOAD", False
-    ) and not component_registry.refresh_download_status(params.dataloader):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=(
-                f"Document loader {params.dataloader} must be downloaded before use."
-            ),
-        )
-    if not loader_class.supports_file(file_name):
-        accepted = ", ".join(sorted(loader_class.SUPPORTED_EXTENSIONS))
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"{params.dataloader} accepts {accepted} files, not '{file_name}'.",
-        )
+    service = DocumentBatchService(session_factory, component_registry)
     try:
-        resolved_params = loader_class().resolve_params(params.dataloader_params)
-    except ValidationError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
-        ) from e
+        return service.create_one(params)
+    except (
+        FolderNotFoundError,
+        DocumentUploadConflictError,
+        InvalidDocumentUploadError,
+        DocumentStorageError,
+    ) as e:
+        _raise_document_error(e)
 
-    with session_factory() as db:
-        taken = db.execute(
-            select(DataDocument.id).where(DataDocument.name == name)
-        ).scalar()
-        if taken:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"A document with the name '{name}' already exists",
-            )
-        document = DataDocument(
-            name=name,
-            file_name=file_name,
-            file_type=Path(file_name).suffix.lower().lstrip("."),
-            file_hash="",
-            file_path="",
-            dataloader=params.dataloader,
-            dataloader_params=resolved_params,
-            content_counts={},
-            status=DocumentStatus.NOT_STARTED,
-        )
-        db.add(document)
-        try:
-            db.commit()
-        except exc.IntegrityError as e:
-            db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"A document with the name '{name}' already exists",
-            ) from e
-        except exc.SQLAlchemyError as e:
-            db.rollback()
-            logger.exception(e)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal database error",
-            ) from e
-        db.refresh(document)
-        return document
+
+@router.post(
+    "/batch",
+    response_model=DataDocumentBatchSchema,
+    status_code=status.HTTP_201_CREATED,
+)
+@inject
+def create_data_documents_batch(
+    params: DataDocumentBatchCreateParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+) -> DataDocumentBatchSchema:
+    """Create an optional folder and its NOT_STARTED documents atomically.
+
+    Every file and the folder name are validated before anything is written,
+    and the folder and its documents are committed in one transaction.
+
+    Parameters
+    ----------
+    params : DataDocumentBatchCreateParams
+        Folder name, if any, and the files to create.
+    session_factory : sessionmaker
+        Session factory from the DI container.
+    component_registry : ComponentRegistry
+        Registry from the DI container.
+
+    Returns
+    -------
+    DataDocumentBatchSchema
+        ``folder``, the created folder or None, and ``documents``, the
+        created rows in request order.
+
+    Raises
+    ------
+    HTTPException
+        409 for a taken folder or document name; 422 for an empty folder
+        name or file name, a wrong loader, a loader still to be downloaded or
+        an unsupported extension; 500 on database errors.
+    """
+    service = DocumentBatchService(session_factory, component_registry)
+    try:
+        result = service.create(params.files, params.folder_name)
+    except (
+        FolderNotFoundError,
+        DocumentUploadConflictError,
+        InvalidDocumentUploadError,
+        DocumentStorageError,
+    ) as e:
+        _raise_document_error(e)
+    return DataDocumentBatchSchema(folder=result.folder, documents=result.documents)
 
 
 def _copy_notebook_document(
@@ -541,6 +532,8 @@ async def update_data_document(
                 document.name = new_name
 
         if "folder_id" in params.model_fields_set:
+            if params.folder_id is not None:
+                lock_folder_row(db, params.folder_id)
             if (
                 params.folder_id is not None
                 and db.get(Folder, params.folder_id) is None
