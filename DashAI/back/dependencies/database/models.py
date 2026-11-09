@@ -327,7 +327,9 @@ class RunPlot(Base):
     view: Mapped[str] = mapped_column(String, nullable=False)
     artifacts_path: Mapped[str] = mapped_column(String, nullable=False)
     plot_overrides: Mapped[JSON] = mapped_column(JSON, nullable=True)
-    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    created: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now, nullable=True
+    )
 
 
 class Prediction(Base):
