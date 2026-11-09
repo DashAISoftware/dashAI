@@ -1,5 +1,6 @@
 import api from "./api";
 import type { IRun } from "../types/run";
+import type { IArtifact } from "../types/artifact";
 
 export const getRuns = async (modelSessionId: string = ""): Promise<IRun[]> => {
   const params =
@@ -159,32 +160,11 @@ export const exportRunModel = async (runId: number): Promise<Blob> => {
   return response.data;
 };
 
-// One origin of a backtest: the window it forecast, what happened and the
-// forecast with its intervals by level ("80", "95"). A value with none is null.
-export interface IForecastOrigin {
-  partition: "validation" | "test";
-  index: number;
-  origin_step: number;
-  dates: string[];
-  actual: (number | null)[];
-  forecast: (number | null)[];
-  lower: Record<string, (number | null)[]>;
-  upper: Record<string, (number | null)[]>;
-}
-
-export interface IRunForecasts {
-  version: number;
-  freq: string;
-  horizon: number;
-  levels: number[];
-  season_length?: number;
-  origins: IForecastOrigin[];
-}
-
-// The forecasts a finished backtest run saved, origin by origin.
-export const getRunForecasts = async (
+export const getRunForecastsPlot = async (
   runId: number,
-): Promise<IRunForecasts> => {
-  const response = await api.get<IRunForecasts>(`/v1/run/${runId}/forecasts`);
+): Promise<IArtifact[]> => {
+  const response = await api.get<IArtifact[]>(
+    `/v1/run/${runId}/forecasts/plot`,
+  );
   return response.data;
 };
