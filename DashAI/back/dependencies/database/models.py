@@ -12,12 +12,14 @@ from sqlalchemy import (
     Enum,
     Float,
     ForeignKey,
+    Index,
     Integer,
     MetaData,
     String,
     Text,
     UniqueConstraint,
     false,
+    text,
     true,
 )
 from sqlalchemy.ext.declarative import declarative_base
@@ -260,9 +262,33 @@ class Project(Base):
 
 
 class Dataset(Base):
+    """
+    A dataset belongs to one project, and its name is unique inside it.
+    Datasets without a project are "universal": they predate projects, every
+    user can see them and only an administrator can change them. New datasets
+    always belong to a project.
+    """
+
     __tablename__ = "dataset"
+    __table_args__ = (
+        UniqueConstraint("project_id", "name", name="uq_dataset_project_id_name"),
+        # SQLite treats every NULL as distinct, so the constraint above does not
+        # stop two universal datasets with the same name; this index does
+        Index(
+            "uq_dataset_universal_name",
+            "name",
+            unique=True,
+            sqlite_where=text("project_id IS NULL"),
+        ),
+    )
+
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    # A project that still has datasets cannot be deleted, so their files on
+    # disk are never left without a row pointing to them
+    project_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("project.id", ondelete="RESTRICT"), nullable=True
+    )
     huey_id: Mapped[str] = mapped_column(String, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
