@@ -37,6 +37,12 @@ from DashAI.back.dataloaders.classes.dataloader import (
     require_data_kind,
 )
 from DashAI.back.dependencies.database.models import DataDocument, Folder
+from DashAI.back.services.documents.document_pipeline_service import (
+    DocumentPipelineDownloadError,
+    DocumentPipelineInvalidError,
+    DocumentPipelineService,
+    PipelineStep,
+)
 from DashAI.back.services.documents.folder_lock import lock_folder_row
 
 if TYPE_CHECKING:
@@ -291,14 +297,18 @@ class DocumentBatchService:
         )
 
     def create(
-        self, files: List[BatchDocumentFile], folder_name: Optional[str]
+        self,
+        files: List[BatchDocumentFile],
+        folder_name: Optional[str],
+        converter_pipeline: Optional[List[Any]] = None,
     ) -> BatchResult:
         """Create the documents and, optionally, their folder atomically.
 
-        Every file and the folder name are validated before anything is
-        written. The folder and its documents are then flushed and committed
-        together; the response models are built from the flushed rows so a
-        failure after the commit cannot turn a success into a 500.
+        Every file, the folder name and the converter pipeline are validated
+        before anything is written. The folder and its documents are then
+        flushed and committed together; the response models are built from the
+        flushed rows so a failure after the commit cannot turn a success into
+        a 500.
 
         Parameters
         ----------
@@ -306,6 +316,8 @@ class DocumentBatchService:
             Documents to create, at least one.
         folder_name : Optional[str]
             Folder to create with them, or None to leave them loose.
+        converter_pipeline : Optional[List[Any]]
+            Converters every document runs after parsing, or None.
 
         Returns
         -------
@@ -316,14 +328,16 @@ class DocumentBatchService:
         ------
         InvalidDocumentUploadError
             422 case: empty folder name or file name, wrong loader,
-            unsupported extension or invalid parameters.
+            unsupported extension, invalid parameters or an invalid pipeline.
         DocumentUploadConflictError
             409 case: a folder or document name is taken, a name repeats
-            inside the batch, or a loader still has to be downloaded.
+            inside the batch, or a loader or converter still has to be
+            downloaded.
         DocumentStorageError
             500 case: the transaction failed.
         """
         clean_folder = self._clean_folder_name(folder_name)
+        pipeline = self._pipeline(converter_pipeline)
         prepared = [
             self.prepare(
                 item.name, item.file_name, item.dataloader, item.dataloader_params
@@ -337,7 +351,9 @@ class DocumentBatchService:
                 folder = Folder(name=clean_folder) if clean_folder else None
                 if folder is not None:
                     db.add(folder)
-                documents = [self._new_document(item, folder) for item in prepared]
+                documents = []
+                for item in prepared:
+                    documents.append(self._new_document(item, folder, pipeline))
                 db.add_all(documents)
                 db.flush()
                 result = self._result(folder, documents)
@@ -366,7 +382,7 @@ class DocumentBatchService:
         Parameters
         ----------
         params : DataDocumentCreateParams
-            Name, file name, loader, loader parameters and folder.
+            Name, file name, loader, loader parameters, folder and pipeline.
 
         Returns
         -------
@@ -378,11 +394,11 @@ class DocumentBatchService:
         FolderNotFoundError
             404 case: the folder does not exist.
         InvalidDocumentUploadError
-            422 case: empty name, wrong loader, unsupported extension or
-            invalid parameters.
+            422 case: empty name, wrong loader, unsupported extension,
+            invalid parameters or an invalid pipeline.
         DocumentUploadConflictError
-            409 case: the name is taken or the loader still has to be
-            downloaded.
+            409 case: the name is taken, the loader still has to be downloaded
+            or a converter of the pipeline does.
         DocumentStorageError
             500 case: the transaction failed.
         """
@@ -391,6 +407,7 @@ class DocumentBatchService:
                 if params.folder_id is not None:
                     lock_folder_row(db, params.folder_id)
                 folder = self._existing_folder(db, params.folder_id)
+                pipeline = self._pipeline(params.converter_pipeline)
                 prepared = self.prepare(
                     params.name,
                     params.file_name,
@@ -404,7 +421,7 @@ class DocumentBatchService:
                     raise DocumentUploadConflictError(
                         f"A document with the name '{prepared.name}' already exists"
                     )
-                document = self._new_document(prepared, folder)
+                document = self._new_document(prepared, folder, pipeline)
                 db.add(document)
                 db.flush()
                 schema = DataDocumentSchema.model_validate(document)
@@ -419,6 +436,37 @@ class DocumentBatchService:
                 log.exception(e)
                 raise DocumentStorageError("Internal database error") from e
         return schema
+
+    def _pipeline(self, pipeline: Optional[List[Any]]) -> Optional[List[PipelineStep]]:
+        """Validate a converter pipeline and translate its errors.
+
+        The service error types are private to the pipeline module; the
+        endpoint only knows the upload errors, so they are mapped here.
+
+        Parameters
+        ----------
+        pipeline : Optional[List[Any]]
+            Pipeline steps as the request sent them.
+
+        Returns
+        -------
+        Optional[List[PipelineStep]]
+            The normalized pipeline, or None when there was none.
+
+        Raises
+        ------
+        InvalidDocumentUploadError
+            422 case: the pipeline has an unknown, non document, supervised
+            or row-changing converter, or invalid parameters.
+        DocumentUploadConflictError
+            409 case: a converter still has to be downloaded.
+        """
+        try:
+            return DocumentPipelineService(self._component_registry).validate(pipeline)
+        except DocumentPipelineInvalidError as e:
+            raise InvalidDocumentUploadError(str(e)) from e
+        except DocumentPipelineDownloadError as e:
+            raise DocumentUploadConflictError(str(e)) from e
 
     def _resolve_loader(self, name: str) -> type:
         """Look the loader up in the registry and check it produces documents.
@@ -596,7 +644,9 @@ class DocumentBatchService:
 
     @staticmethod
     def _new_document(
-        prepared: _PreparedUpload, folder: Optional[Folder]
+        prepared: _PreparedUpload,
+        folder: Optional[Folder],
+        converter_pipeline: Optional[List[Any]],
     ) -> DataDocument:
         """Build a NOT_STARTED row for a validated upload.
 
@@ -606,6 +656,8 @@ class DocumentBatchService:
             The validated upload.
         folder : Optional[Folder]
             Folder receiving the document, or None for a loose one.
+        converter_pipeline : Optional[List[Any]]
+            Normalized pipeline the parse applies, or None.
 
         Returns
         -------
@@ -620,6 +672,7 @@ class DocumentBatchService:
             file_path="",
             dataloader=prepared.dataloader,
             dataloader_params=prepared.dataloader_params,
+            converter_pipeline=converter_pipeline,
             content_counts={},
             folder=folder,
             status=DocumentStatus.NOT_STARTED,
