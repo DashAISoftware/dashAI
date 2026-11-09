@@ -168,6 +168,18 @@ def test_prepare_builds_openml_dataset():
     assert attributes["id"] == "INTEGER"
 
 
+def test_prepare_leaves_blank_optional_fields_out_of_the_description():
+    # OpenML rejects empty elements such as <oml:citation></oml:citation>.
+    params = {**VALID_PARAMS, "citation": "", "creator": "  ", "language": None}
+    payload = OpenMLDatasetExporter().prepare(_real_dataset(), params, ".")
+    xml = payload.metadata["openml_dataset"]._to_xml()
+
+    assert "oml:citation" not in xml
+    assert "oml:creator" not in xml
+    assert "oml:language" not in xml
+    assert "<oml:collection_date>1936</oml:collection_date>" in xml
+
+
 def test_upload_publishes_inside_configured_credential():
     events = []
     openml_dataset = MagicMock(dataset_id=123, openml_url="https://test/d/123")

@@ -321,17 +321,17 @@ class OpenMLDatasetExporter(BaseDatasetExporter):
         openml_dataset = openml.datasets.create_dataset(
             name=params["name"],
             description=params["description"],
-            creator=params.get("creator"),
-            contributor=params.get("contributor"),
-            collection_date=params.get("collection_date"),
-            language=params.get("language"),
+            creator=_optional_text(params, "creator"),
+            contributor=_optional_text(params, "contributor"),
+            collection_date=_optional_text(params, "collection_date"),
+            language=_optional_text(params, "language"),
             licence=params["licence"],
             attributes="auto",
             data=dataframe,
             default_target_attribute=params["default_target_attribute"],
             ignore_attribute=ignored or None,
-            citation=params.get("citation") or "",
-            original_data_url=params.get("original_data_url"),
+            citation=_optional_text(params, "citation"),
+            original_data_url=_optional_text(params, "original_data_url"),
         )
         return ExportPayload(
             metadata={"openml_dataset": openml_dataset, "dropped_columns": dropped}
@@ -387,6 +387,18 @@ class OpenMLDatasetExporter(BaseDatasetExporter):
         if listing.empty:
             return None
         return str(listing.iloc[0]["status"])
+
+
+def _optional_text(params: dict[str, Any], key: str) -> str | None:
+    """Return an optional text parameter, or None when it is missing or blank.
+
+    OpenML rejects empty elements in the dataset description, while ``None``
+    fields are left out of it entirely.
+    """
+    value = params.get(key)
+    if value is None or not str(value).strip():
+        return None
+    return str(value).strip()
 
 
 def _unsupported_columns(dataset: "DashAIDataset") -> list[str]:
