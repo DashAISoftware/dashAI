@@ -2,7 +2,7 @@ import json
 import logging
 from typing import TYPE_CHECKING, Literal, Union
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, Header, Query, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc, select
@@ -344,17 +344,20 @@ async def get_hyperparameter_optimization_plot(
     return normalize_artifacts(plot)[0]
 
 
-@router.get("/{run_id}/forecasts")
-@inject
-async def get_run_forecasts(
-    run_id: int,
-    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
-):
-    """Return the forecasts a backtest made from every origin.
+def _load_forecasts(run_id: int, session_factory: "sessionmaker") -> dict:
+    """Read the forecasts file of a finished run.
 
-    The file ``SaveForecastsUnit`` wrote beside the run's model, as it is: the
-    frequency, the horizon, the interval levels, and per origin its partition,
-    its dates, what actually happened, the forecast and its bounds.
+    Parameters
+    ----------
+    run_id : int
+        The run whose forecasts to read.
+    session_factory : sessionmaker
+        The database session factory.
+
+    Returns
+    -------
+    dict
+        The file ``SaveForecastsUnit`` wrote beside the run's model.
 
     Raises
     ------
@@ -362,8 +365,6 @@ async def get_run_forecasts(
         404 if the run does not exist, has not finished, or has no forecasts:
         a run of a task that is not backtested, or one whose file is gone.
     """
-    import json
-
     from DashAI.back.units.forecast_scope import forecasts_file
 
     with session_factory() as db:
@@ -393,6 +394,63 @@ async def get_run_forecasts(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="The run has no forecasts.",
         ) from e
+
+
+@router.get("/{run_id}/forecasts")
+@inject
+async def get_run_forecasts(
+    run_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Return the forecasts a backtest made from every origin.
+
+    The file ``SaveForecastsUnit`` wrote beside the run's model, as it is: the
+    frequency, the horizon, the interval levels, and per origin its partition,
+    its dates, what actually happened, the forecast and its bounds.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run does not exist, has not finished, or has no forecasts:
+        a run of a task that is not backtested, or one whose file is gone.
+    """
+    return _load_forecasts(run_id, session_factory)
+
+
+@router.get("/{run_id}/forecasts/plot")
+@inject
+async def get_run_forecasts_plot(
+    run_id: int,
+    accept_language: str | None = Header(default=None),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Return the Forecasts view of a backtest as typed artifacts.
+
+    Parameters
+    ----------
+    run_id : int
+        The run whose forecasts to draw.
+    accept_language : str | None
+        The ``Accept-Language`` header, used to name the traces and origins.
+    session_factory : sessionmaker
+        The database session factory.
+
+    Returns
+    -------
+    list of dict
+        A plotly artifact when the backtest had one origin, otherwise one
+        grouped artifact with a figure per origin.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run does not exist, has not finished, or has no forecasts.
+    """
+    from DashAI.back.core.artifacts import normalize_artifacts
+    from DashAI.back.evaluation.forecasts_plot import forecasts_artifacts
+
+    forecasts = _load_forecasts(run_id, session_factory)
+    return normalize_artifacts(forecasts_artifacts(forecasts, accept_language))
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
