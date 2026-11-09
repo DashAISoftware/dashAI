@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from DashAI.back.types.date_utils import (
+    _lies_on_a_grid,
     detect_date_format,
     infer_frequency,
     parse_date_column,
@@ -62,6 +63,46 @@ def test_detect_date_format_resolves_ambiguity_from_the_whole_column():
     detected = detect_date_format(["01/02/2020", "05/02/2020", "13/02/2020"])
 
     assert detected == "%d/%m/%Y"
+
+
+def test_detect_date_format_prefers_the_reading_on_a_regular_grid():
+    values = [
+        f"{month:02d}/01/{year}" for year in (2020, 2021) for month in range(1, 13)
+    ]
+
+    assert detect_date_format(values, hint="date-eu") == "%m/%d/%Y"
+
+
+def test_detect_date_format_prefers_the_regular_day_first_reading():
+    values = [
+        f"01/{month:02d}/{year}" for year in (2020, 2021) for month in range(1, 13)
+    ]
+
+    assert detect_date_format(values) == "%d/%m/%Y"
+
+
+def test_detect_date_format_keeps_day_first_monthly_dates_on_a_later_day():
+    # Read month first, these are 1 to 12 May: consecutive days. The day first
+    # reading, the 5th of every month, has to count as regular too.
+    values = [f"05/{month:02d}/2023" for month in range(1, 13)]
+
+    assert detect_date_format(values, hint="date-eu") == "%d/%m/%Y"
+
+
+def test_detect_date_format_reads_month_first_monthly_dates_on_a_later_day():
+    values = [
+        f"{month:02d}/10/{year}" for year in (2022, 2023) for month in range(1, 13)
+    ]
+
+    assert detect_date_format(values, hint="date-eu") == "%m/%d/%Y"
+
+
+def test_times_within_one_day_are_not_a_monthly_grid():
+    dates = pd.Series(
+        pd.to_datetime(["2023-01-05 10:00", "2023-01-05 11:30", "2023-01-05 17:00"])
+    )
+
+    assert not _lies_on_a_grid(dates)
 
 
 TEST_COLUMNS = [

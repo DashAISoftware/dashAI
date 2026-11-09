@@ -19,6 +19,7 @@ from DashAI.back.models.forecasting.single_series_forecasting_model import (
     Forecast,
     SingleSeriesForecastingModel,
 )
+from DashAI.back.models.forecasting.theta import Theta
 
 ALL_MODELS = [
     NaiveForecaster,
@@ -27,6 +28,7 @@ ALL_MODELS = [
     SeasonalNaiveForecaster,
     ARIMA,
     ExponentialSmoothing,
+    Theta,
 ]
 SERIES = np.arange(1.0, 31.0)
 
@@ -373,6 +375,42 @@ def test_a_multiplicative_trend_gives_the_same_intervals_every_time():
     second = model.predict(3, levels=[80])
 
     assert list(first.lower[80]) == list(second.lower[80])
+
+
+@pytest.mark.parametrize(("theta", "slope"), [(1.0, 0.0), (2.0, 0.5)])
+def test_theta_follows_its_share_of_a_linear_trend(theta, slope):
+    # On a line rising 1 per step, theta 1 forecasts flat and the classical
+    # theta 2 follows half of the slope.
+    forecast = Theta(theta=theta).fit(SERIES).predict(4)
+
+    assert np.diff(forecast.point) == pytest.approx([slope] * 3, abs=1e-3)
+
+
+def test_theta_can_use_a_seasonal_component():
+    season = [10.0, 20.0, 30.0, 40.0]
+    model = Theta(seasonal="add", season_length=4, theta=1.0)
+
+    forecast = model.fit(season * 8).predict(4)
+
+    assert forecast.point == pytest.approx(season, abs=1.0)
+
+
+def test_theta_intervals_cover_what_they_promise():
+    # The Theta method is simple exponential smoothing with drift. On series
+    # drawn from that model, an 80% interval should hold about 80% of the
+    # values to come. statsmodels' own intervals square alpha - 1 instead of
+    # alpha, and with alpha 0.2 they hold about 98% six steps ahead.
+    rng = np.random.default_rng(0)
+    alpha, n, h, reps = 0.2, 120, 6, 200
+    inside = 0
+    for _ in range(reps):
+        noise = rng.normal(0.0, 1.0, n + h + 1)
+        series = 100.0 + np.cumsum(0.3 + noise[1:] - (1 - alpha) * noise[:-1])
+        forecast = Theta().fit(series[:n]).predict(h, levels=[80])
+        actual = series[n + h - 1]
+        inside += forecast.lower[80][-1] <= actual <= forecast.upper[80][-1]
+
+    assert 0.72 <= inside / reps <= 0.88
 
 
 def test_mean_forecasts_the_average_with_intervals_of_one_width():

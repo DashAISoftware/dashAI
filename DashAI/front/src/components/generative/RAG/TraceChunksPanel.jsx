@@ -586,7 +586,8 @@ ChunkCard.propTypes = {
 /**
  * One document's chunk cards with a header, count and "Open document" action.
  * @param {object} props
- * @param {{docId: *, chunks: Array<object>}} props.group - The document group.
+ * @param {{key: string, docId: *, chunks: Array<object>}} props.group - The
+ *   document group; ``docId`` is null for a citation of a deleted document.
  * @param {string|null} props.highlightedRef - The currently highlighted ref.
  * @param {React.RefObject} props.highlightedCardRef - Ref set when highlighted.
  * @param {Map} props.provenanceMap - Ref → per-query deepest retriever names.
@@ -607,7 +608,7 @@ function DocumentGroup({
   const { t } = useTranslation("generative");
   const title = getDocumentTitle(group.chunks[0], group.docId, t);
   return (
-    <Box data-testid={`doc-group-${group.docId}`} sx={{ mb: 2 }}>
+    <Box data-testid={`doc-group-${group.key}`} sx={{ mb: 2 }}>
       <Stack
         direction="row"
         alignItems="center"
@@ -636,15 +637,17 @@ function DocumentGroup({
           <Typography variant="caption" color="text.secondary">
             {describeChunkCount(group.chunks, t)}
           </Typography>
-          <Tooltip title={t("generative:traceChunks.openDocument")}>
-            <IconButton
-              size="small"
-              aria-label={t("generative:traceChunks.openDocument")}
-              onClick={() => onOpenDocument(group.docId)}
-            >
-              <OpenInNewIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          {group.docId != null && (
+            <Tooltip title={t("generative:traceChunks.openDocument")}>
+              <IconButton
+                size="small"
+                aria-label={t("generative:traceChunks.openDocument")}
+                onClick={() => onOpenDocument(group.docId)}
+              >
+                <OpenInNewIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
         </Stack>
       </Stack>
       <Stack spacing={1}>
@@ -728,7 +731,7 @@ function ChunksSection({
       </Stack>
       {groups.map((group) => (
         <DocumentGroup
-          key={group.docId}
+          key={group.key}
           group={group}
           highlightedRef={highlightedRef}
           highlightedCardRef={highlightedCardRef}

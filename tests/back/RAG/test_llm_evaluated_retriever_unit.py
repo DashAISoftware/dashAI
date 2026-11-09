@@ -16,8 +16,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import pytest
 from pydantic import ValidationError
 
-from DashAI.back.models.RAG.documents import Chunk, RAGDocument
-from DashAI.back.models.RAG.documents.rag_document import TextSegment
+from DashAI.back.dataloaders.classes.dashai_document import DashAIDocument
+from DashAI.back.models.RAG.documents import Chunk, SourceDocument
 from DashAI.back.models.RAG.exceptions import (
     RAGRetrieverCompositeValidationError,
     RAGRetrieverEvaluationError,
@@ -676,10 +676,9 @@ def test_depth_prompt_receives_structured_catalog_and_documents():
     llm = _ScriptedLLM(['{"sufficient": true}'])
     prompt = _RecordingPrompt()
     retriever = _depth(child, llm, prompt, max_iters=2, max_chunks=10)
-    document = RAGDocument(
-        id=1,
-        name="alpha",
-        segments=[TextSegment(text="alpha text", page=3)],
+    # The pipeline hands retrievers SourceDocument, named by its file name.
+    document = SourceDocument(
+        id=1, file_name="alpha", content=DashAIDocument(contents={})
     )
     retriever.inject_infra("path", _chunk_map(_chunks(5)), None, {1: document})
 
