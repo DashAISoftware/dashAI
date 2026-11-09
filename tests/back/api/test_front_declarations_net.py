@@ -178,10 +178,6 @@ def test_the_run_payloads_the_frontend_sends_are_accepted(
             "goal_metric": goal_metric,
             "description": "",
             # api/run.ts sends them, always empty: the job writes the plots.
-            "plot_history_path": "",
-            "plot_slice_path": "",
-            "plot_contour_path": "",
-            "plot_importance_path": "",
         },
     )
 

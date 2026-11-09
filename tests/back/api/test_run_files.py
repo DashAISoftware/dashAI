@@ -1,7 +1,7 @@
 """The files of a run go with it, on every path that deletes or resets runs.
 
-A run leaves files in ``RUNS_PATH``: its model, the four plots of its search
-and, for a backtest, its forecasts. Their names come from the run's id, and
+A run leaves files in ``RUNS_PATH``: its model, the file of each of its plot
+views and, for a backtest, its forecasts. Their names come from the run's id, and
 SQLite hands a deleted id to the next run, so a file left behind is read as
 the next run's own. Every path that deletes runs -- the run, the reset, a
 session, sessions in bulk, a dataset, datasets in bulk -- removes all of them,
@@ -17,28 +17,19 @@ import pytest
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from DashAI.back.dependencies.database.models import ModelSession, Run
+from DashAI.back.dependencies.database.models import ModelSession, Run, RunPlot
 from DashAI.back.units.forecast_scope import forecasts_file
 from tests.back.api.test_forecasting_acceptance import _get, _monthly, _session, _train
 
-PLOT_FIELDS = (
-    "plot_history_path",
-    "plot_slice_path",
-    "plot_contour_path",
-    "plot_importance_path",
-)
-
 
 def _trained_run(client, session_id) -> int:
-    """A finished backtest run, with a file standing in for each plot."""
+    """A finished backtest run, with a file standing in for its search plots."""
     run_id = _train(client, session_id, "NaiveForecaster")
     runs_path = Path(client.app.container["config"]["RUNS_PATH"])
+    plot = runs_path / f"hyperparameter_plots_{run_id}.pickle"
+    plot.write_bytes(b"plot")
     with client.app.container["session_factory"]() as db:
-        run = db.get(Run, run_id)
-        for field in PLOT_FIELDS:
-            plot = runs_path / f"{field}_{run_id}.pickle"
-            plot.write_bytes(b"plot")
-            setattr(run, field, str(plot))
+        db.add(RunPlot(run_id=run_id, view="hyperparameter", artifacts_path=str(plot)))
         db.commit()
     return run_id
 
@@ -46,9 +37,15 @@ def _trained_run(client, session_id) -> int:
 def _files(client, run_id) -> list:
     run = _get(client, Run, run_id)
     runs_path = client.app.container["config"]["RUNS_PATH"]
+    with client.app.container["session_factory"]() as db:
+        plots = [
+            Path(path)
+            for (path,) in db.query(RunPlot.artifacts_path).filter_by(run_id=run_id)
+        ]
+    assert len(plots) == 2
     return [
         Path(run.run_path),
-        *(Path(getattr(run, field)) for field in PLOT_FIELDS),
+        *plots,
         forecasts_file(runs_path, str(run_id)),
     ]
 

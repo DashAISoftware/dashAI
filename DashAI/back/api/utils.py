@@ -177,10 +177,6 @@ def run_file_paths(runs) -> list:
         for run in runs
         for path in (
             run.run_path,
-            run.plot_history_path,
-            run.plot_slice_path,
-            run.plot_contour_path,
-            run.plot_importance_path,
             str(forecasts_file(runs_path, str(run.id))),
             *_run_plot_files(run),
         )

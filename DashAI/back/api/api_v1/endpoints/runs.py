@@ -713,10 +713,6 @@ async def upload_run(
                 parameters=params.parameters,
                 optimizer_name=params.optimizer_name,
                 optimizer_parameters=params.optimizer_parameters,
-                plot_history_path=params.plot_history_path,
-                plot_slice_path=params.plot_slice_path,
-                plot_contour_path=params.plot_contour_path,
-                plot_importance_path=params.plot_importance_path,
                 goal_metric=params.goal_metric,
                 name=params.name,
                 description=params.description,
@@ -1218,15 +1214,7 @@ def reset_run(run) -> list:
 
     run.plots.clear()
 
-    for field in (
-        "run_path",
-        "plot_history_path",
-        "plot_slice_path",
-        "plot_contour_path",
-        "plot_importance_path",
-    ):
-        if getattr(run, field):
-            setattr(run, field, None)
+    run.run_path = None
     return paths
 
 

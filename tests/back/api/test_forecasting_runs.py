@@ -379,10 +379,6 @@ def test_coverage_as_the_goal_metric_fails_the_run(client, tmp_path):
                 "pruner": "None",
             },
             goal_metric="IntervalCoverage",
-            plot_history_path="",
-            plot_slice_path="",
-            plot_contour_path="",
-            plot_importance_path="",
         )
         db.add(run)
         db.commit()
