@@ -104,3 +104,67 @@ def test_the_downgrade_brings_the_columns_back_empty(tmp_path):
         "plot_importance_path",
     } <= columns
     engine.dispose()
+
+
+def _migration():
+    import importlib.util
+    from pathlib import Path
+
+    path = next(Path("DashAI/alembic/versions").glob(f"{REVISION}_*.py"))
+    spec = importlib.util.spec_from_file_location("move_hpo_plots", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_an_unreadable_pickle_is_skipped_not_fatal(tmp_path):
+    db_path = tmp_path / "test.db"
+    cfg = _alembic_config(db_path)
+    down_revision = (
+        ScriptDirectory.from_config(cfg).get_revision(REVISION).down_revision
+    )
+    command.upgrade(cfg, down_revision)
+    engine = sa.create_engine(f"sqlite:///{db_path}")
+    history = tmp_path / "history_objective_plot_1.pickle"
+    history.write_bytes(pickle.dumps(FIGURE))
+    truncated = tmp_path / "slice_plot_1.pickle"
+    truncated.write_bytes(b"")
+    _insert_run(
+        engine,
+        1,
+        {"plot_history_path": str(history), "plot_slice_path": str(truncated)},
+    )
+    empty = tmp_path / "history_objective_plot_2.pickle"
+    empty.write_bytes(b"")
+    _insert_run(engine, 2, {"plot_history_path": str(empty)})
+
+    command.upgrade(cfg, REVISION)
+
+    with engine.connect() as conn:
+        rows = conn.execute(
+            sa.text("SELECT run_id, artifacts_path FROM run_plot")
+        ).all()
+    assert [run_id for run_id, _ in rows] == [1]
+    with open(rows[0][1], "rb") as file:
+        assert len(pickle.load(file)) == 1
+    engine.dispose()
+
+
+def test_moving_the_plots_leaves_the_old_pickles_for_after_the_drop(tmp_path):
+    db_path = tmp_path / "test.db"
+    cfg = _alembic_config(db_path)
+    down_revision = (
+        ScriptDirectory.from_config(cfg).get_revision(REVISION).down_revision
+    )
+    command.upgrade(cfg, down_revision)
+    engine = sa.create_engine(f"sqlite:///{db_path}")
+    history = tmp_path / "history_objective_plot_1.pickle"
+    history.write_bytes(pickle.dumps(FIGURE))
+    _insert_run(engine, 1, {"plot_history_path": str(history)})
+
+    with engine.begin() as conn:
+        moved = _migration().move_legacy_plots(conn)
+
+    assert history.exists()
+    assert moved == [str(history)]
+    engine.dispose()
