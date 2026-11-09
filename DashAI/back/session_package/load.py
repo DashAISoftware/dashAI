@@ -52,7 +52,9 @@ def _import_run_plots(
     """Copy a run's saved plots out of the package, for its ``run_plot`` rows.
 
     A package with ``run_plots`` carries every view and its edits; an item
-    whose file is not in the archive is skipped. A package without it carries
+    whose file is not in the archive, whose view is not one of ``VIEWS`` or
+    whose view came already is skipped. The view names the file written, so
+    an unknown one is never trusted. A package without it carries
     only the legacy one-pickle-per-plot HPO entries, combined here into the
     ``hyperparameter`` view.
 
@@ -62,6 +64,7 @@ def _import_run_plots(
         ``(view, path, plot_overrides)`` per view to insert.
     """
     from DashAI.back.core.run_plots import (
+        VIEWS,
         legacy_hpo_leaves,
         run_plot_file,
         write_run_plot_file,
@@ -69,10 +72,14 @@ def _import_run_plots(
 
     plots = []
     if entry.get("run_plots") is not None:
+        seen = set()
         for item in entry["run_plots"]:
             source = workdir / item["artifacts_entry"]
+            if item.get("view") not in VIEWS or item["view"] in seen:
+                continue
             if not source.is_file():
                 continue
+            seen.add(item["view"])
             target = run_plot_file(runs_dir, item["view"], key)
             created.append(target)
             shutil.copy2(source, target)

@@ -775,3 +775,27 @@ def test_a_run_plot_missing_from_the_archive_is_skipped(client, tmp_path):
     imported = _imported_run(client, broken)
 
     assert _views(client, imported) == {"forecasts"}
+
+
+def test_an_imported_view_that_is_unknown_or_repeated_is_skipped(client, tmp_path):
+    from tests.back.api.test_session_package import _rewrite
+
+    tuned = _tuned_run(client, tmp_path)
+    package = _export(client, tuned, tmp_path / "views.dashai")
+
+    def tamper(recipe):
+        [entry] = recipe["runs"]
+        forecasts = next(i for i in entry["run_plots"] if i["view"] == "forecasts")
+        entry["run_plots"] += [
+            {**forecasts, "view": "../escaped"},
+            {**forecasts},
+        ]
+        return recipe
+
+    imported = _imported_run(
+        client, _rewrite(package, tmp_path / "t.dashai", recipe=tamper)
+    )
+
+    assert _views(client, imported) == {"hyperparameter", "forecasts"}
+    runs_path = Path(client.app.container["config"]["RUNS_PATH"])
+    assert not list(runs_path.parent.glob("escaped_plots_*"))
