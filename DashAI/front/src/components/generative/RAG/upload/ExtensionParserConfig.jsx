@@ -56,6 +56,7 @@ function LoaderParameters({
   registerFormRef,
   onFormErrorChange,
   onDownloadGateChange,
+  onValuesChange,
 }) {
   const { t } = useTranslation("generative");
   const formRef = useRef(null);
@@ -107,6 +108,7 @@ function LoaderParameters({
             formSubmitRef={formRef}
             setError={setError}
             initialValues={{}}
+            onValuesChange={() => onValuesChange?.(loader.name)}
             showBorder={false}
             hideButtons
           />
@@ -217,6 +219,7 @@ export default function ExtensionParserConfig({
   registerFormRef,
   onFormErrorChange,
   onDownloadGateChange,
+  onValuesChange,
   disabled,
 }) {
   const { t } = useTranslation(["generative"]);
@@ -283,6 +286,7 @@ export default function ExtensionParserConfig({
               registerFormRef={registerFormRef}
               onFormErrorChange={onFormErrorChange}
               onDownloadGateChange={onDownloadGateChange}
+              onValuesChange={onValuesChange}
             />
           ))}
         </Box>
@@ -296,6 +300,7 @@ LoaderParameters.propTypes = {
   registerFormRef: PropTypes.func.isRequired,
   onFormErrorChange: PropTypes.func.isRequired,
   onDownloadGateChange: PropTypes.func.isRequired,
+  onValuesChange: PropTypes.func,
 };
 
 ExtensionRow.propTypes = {
@@ -316,5 +321,6 @@ ExtensionParserConfig.propTypes = {
   registerFormRef: PropTypes.func.isRequired,
   onFormErrorChange: PropTypes.func.isRequired,
   onDownloadGateChange: PropTypes.func.isRequired,
+  onValuesChange: PropTypes.func,
   disabled: PropTypes.bool,
 };

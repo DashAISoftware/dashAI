@@ -117,6 +117,7 @@
     "pipelineRunsOnAll": "Se ejecuta en todos los tipos de contenido",
     "pipelineSkipHint": "Cada convertidor solo se ejecuta sobre los tipos de contenido que declara; si un documento no tiene elementos compatibles, se omite ese paso.",
     "pipelineImageHint": "Los convertidores de imágenes, como el OCR, necesitan un procesador que extraiga imágenes. Si tus PDF están escaneados, activa \"extraer imágenes\" en el procesador de PDF.",
+    "pipelineImageParserMismatch": "Los convertidores de imágenes, como el OCR, necesitan un procesador que extraiga imágenes. Activa \"extraer imágenes\" para {{extensions}} o quita el convertidor de imágenes.",
     "pipelineLoadersFailed": "No se pudieron cargar los convertidores de documentos",
     "pipelineRetry": "Reintentar",
     "pipelineDownloadHint": "Los convertidores que requieren descarga deben descargarse antes de subir.",

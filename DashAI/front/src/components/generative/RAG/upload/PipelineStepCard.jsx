@@ -11,7 +11,7 @@ import ComponentDownloadControl, {
 import DescriptionText from "../../../shared/DescriptionText";
 import FormSchema from "../../../shared/FormSchema";
 import FormSchemaContainer from "../../../shared/FormSchemaContainer";
-import { DOCUMENT_CONTENT_TYPES } from "./uploadConstants";
+import { documentConverterTypes } from "./uploadConstants";
 
 /** Height cap for one step's parameter form, so the dialog keeps one scroll. */
 const PARAMETERS_MAX_HEIGHT = 240;
@@ -30,19 +30,6 @@ function converterLabel(converter) {
  */
 function converterDescription(converter) {
   return converter?.description ?? converter?.schema?.description ?? "";
-}
-
-/**
- * @param {object} converter - A document converter component.
- * @returns {Array<string>} The document content types it declares, empty when
- *   it is unrestricted.
- */
-function converterTypes(converter) {
-  const types =
-    converter?.metadata?.document_allowed_types ??
-    converter?.metadata?.allowed_types;
-  if (!Array.isArray(types)) return [];
-  return types.filter((type) => DOCUMENT_CONTENT_TYPES.includes(type));
 }
 
 /**
@@ -89,7 +76,7 @@ function PipelineStepCard({
     converter.name,
   );
   const description = converterDescription(converter);
-  const types = converterTypes(converter);
+  const types = documentConverterTypes(converter);
 
   useEffect(() => {
     registerFormRef(stepKey, formRef);

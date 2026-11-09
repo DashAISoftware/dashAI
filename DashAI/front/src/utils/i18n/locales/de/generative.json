@@ -116,6 +116,7 @@
     "pipelineRunsOnAll": "Läuft auf allen Inhaltstypen",
     "pipelineSkipHint": "Jeder Konverter läuft nur auf den Inhaltstypen, die er deklariert; ein Dokument ohne passende Elemente überspringt diesen Schritt.",
     "pipelineImageHint": "Bildkonverter wie OCR benötigen einen Parser, der Bilder extrahiert. Wenn deine PDFs gescannt sind, aktiviere \"Bilder extrahieren\" im PDF-Parser.",
+    "pipelineImageParserMismatch": "Bildkonverter wie OCR benötigen einen Parser, der Bilder extrahiert. Aktiviere \"Bilder extrahieren\" für {{extensions}} oder entferne den Bildkonverter.",
     "pipelineLoadersFailed": "Die Dokumentkonverter konnten nicht geladen werden",
     "pipelineRetry": "Erneut versuchen",
     "pipelineDownloadHint": "Konverter, die einen Download erfordern, müssen vor dem Hochladen heruntergeladen werden.",

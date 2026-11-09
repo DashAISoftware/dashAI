@@ -23,6 +23,7 @@ import {
   CONVERTERS_STATUS,
   DOCUMENT_CONTENT_TYPES,
   LOADERS_STATUS,
+  documentConverterTypes,
   SKIP_REASON,
   UPLOAD_MODE,
   UPLOAD_PHASE,
@@ -84,6 +85,7 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
   const [pipelineSteps, setPipelineSteps] = useState([]);
   const [pipelineFormErrors, setPipelineFormErrors] = useState({});
   const [pipelineMissingDownloads, setPipelineMissingDownloads] = useState({});
+  const [pipelineGuardError, setPipelineGuardError] = useState(null);
   const [selectedByExtension, setSelectedByExtension] = useState({});
   const [formErrors, setFormErrors] = useState({});
   const [missingDownloads, setMissingDownloads] = useState({});
@@ -173,6 +175,7 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
     setPipelineSteps([]);
     setPipelineFormErrors({});
     setPipelineMissingDownloads({});
+    setPipelineGuardError(null);
     setConfirmLargeOpen(false);
     setCloseConfirmOpen(false);
     setLoaders([]);
@@ -317,6 +320,12 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
     );
   }, []);
 
+  const handleParserValuesChange = useCallback(() => {
+    // Any parser edit may fix the guard, so retire the old message. Returning
+    // the same state when there is no message keeps this off the render path.
+    setPipelineGuardError((previous) => (previous ? null : previous));
+  }, []);
+
   const handleAddPipelineStep = useCallback((converterName) => {
     const key = `${converterName}-${stepKeyRef.current}`;
     stepKeyRef.current += 1;
@@ -442,6 +451,37 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
         params: pipelineFormRefs.current.get(key)?.current?.values ?? {},
       }));
 
+  /**
+   * Refuse a batch where an image converter is configured but a selected
+   * parser explicitly turns image extraction off. Those documents would parse
+   * with no Image items and the converter would silently skip them, leaving
+   * the user with empty documents.
+   *
+   * @returns {string|null} The blocking message, or null when the batch is safe.
+   */
+  const imageParserError = () => {
+    const hasImageStep = pipelineSteps.some((step) => {
+      const converter = converters.find((item) => item.name === step.name);
+      return converter && documentConverterTypes(converter).includes("Image");
+    });
+    if (!hasImageStep) return null;
+    const parsers = buildParsers();
+    const blocked = [];
+    for (const extension of extensions) {
+      const parser = parsers[extension];
+      if (!parser) continue;
+      const loader = loaders.find((item) => item.name === parser.loaderName);
+      const extractImages =
+        parser.params?.extract_images ??
+        loader?.schema?.properties?.extract_images?.placeholder;
+      if (extractImages === false) blocked.push(extension);
+    }
+    if (blocked.length === 0) return null;
+    return t("generative:documentUpload.pipelineImageParserMismatch", {
+      extensions: blocked.join(", "),
+    });
+  };
+
   const handleClose = () => {
     if (uploadLocked) {
       setCloseConfirmOpen(true);
@@ -465,6 +505,12 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
   const startUpload = async () => {
     setConfirmLargeOpen(false);
     if (!canUpload) return;
+    const guardError = imageParserError();
+    if (guardError) {
+      setPipelineGuardError(guardError);
+      return;
+    }
+    setPipelineGuardError(null);
     await upload.start({
       mode,
       folderName,
@@ -567,6 +613,9 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
                 p: 2,
               }}
             >
+              {pipelineGuardError && (
+                <Alert severity="error">{pipelineGuardError}</Alert>
+              )}
               {loadersStatus === LOADERS_STATUS.ERROR ? (
                 <Alert
                   severity="error"
@@ -614,6 +663,7 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
                   registerFormRef={registerFormRef}
                   onFormErrorChange={handleFormErrorChange}
                   onDownloadGateChange={handleDownloadGateChange}
+                  onValuesChange={handleParserValuesChange}
                   disabled={upload.busy}
                 />
               )}
