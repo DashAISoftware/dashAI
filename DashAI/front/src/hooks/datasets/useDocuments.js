@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSnackbar } from "notistack";
 import {
   deleteDocument,
@@ -12,6 +12,9 @@ import {
   TERMINAL_JOB_STATUSES,
 } from "../../utils/jobPoller";
 
+/** Window that groups the terminal DocumentJob events of a large upload. */
+const DOCUMENT_REFRESH_DEBOUNCE_MS = 500;
+
 export const DOCUMENT_STATUS = Object.freeze({
   NOT_STARTED: 0,
   DELIVERED: 1,
@@ -24,11 +27,14 @@ export function useDocuments({ t }) {
   const { enqueueSnackbar } = useSnackbar();
   const [documents, setDocuments] = useState([]);
   const [selectedDocumentId, setSelectedDocumentId] = useState(null);
+  const fetchRequestRef = useRef(0);
 
   const fetchDocuments = useCallback(async () => {
+    const requestId = fetchRequestRef.current + 1;
+    fetchRequestRef.current = requestId;
     try {
       const data = await getDocuments();
-      setDocuments(data);
+      if (requestId === fetchRequestRef.current) setDocuments(data);
       return data;
     } catch (error) {
       console.error("Error fetching documents:", error);
@@ -41,17 +47,37 @@ export function useDocuments({ t }) {
   }, [fetchDocuments]);
 
   useEffect(() => {
+    let refreshTimer = null;
+    let refreshPending = false;
+
     const unsubscribe = subscribeJobs((jobs) => {
-      const finished =
-        Array.isArray(jobs) &&
-        jobs.some(
-          (job) =>
-            job.task_type === "DocumentJob" &&
-            TERMINAL_JOB_STATUSES.includes(job.status),
-        );
-      if (finished) fetchDocuments();
+      if (!Array.isArray(jobs)) return;
+      const finishedDocument = jobs.some(
+        (job) =>
+          job.task_type === "DocumentJob" &&
+          TERMINAL_JOB_STATUSES.includes(job.status),
+      );
+      if (!finishedDocument) return;
+
+      // The first event of a burst refreshes immediately; the rest are folded
+      // into one trailing refresh so a 300-file upload does not fire 300 GETs.
+      if (refreshTimer == null) {
+        fetchDocuments();
+        refreshTimer = setTimeout(() => {
+          refreshTimer = null;
+          if (!refreshPending) return;
+          refreshPending = false;
+          fetchDocuments();
+        }, DOCUMENT_REFRESH_DEBOUNCE_MS);
+        return;
+      }
+      refreshPending = true;
     });
-    return unsubscribe;
+
+    return () => {
+      unsubscribe();
+      if (refreshTimer != null) clearTimeout(refreshTimer);
+    };
   }, [fetchDocuments]);
 
   const selectDocument = useCallback((id) => setSelectedDocumentId(id), []);
