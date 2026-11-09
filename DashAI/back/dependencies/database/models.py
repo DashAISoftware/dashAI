@@ -26,6 +26,7 @@ from DashAI.back.core.enums.plugin_tags import PluginTag
 from DashAI.back.core.enums.status import (
     ConverterStatus,
     DatafileStatus,
+    DatasetExportStatus,
     DatasetStatus,
     DocumentStatus,
     ExplainerStatus,
@@ -97,6 +98,10 @@ class Dataset(Base):
         "Prediction", cascade="all, delete-orphan", back_populates="dataset"
     )
     folder: Mapped[Optional["Folder"]] = relationship(back_populates="datasets")
+    # No delete cascade: an export record outlives its dataset, because the
+    # published copy stays on the platform. Deleting a dataset through the ORM
+    # sets ``dataset_id`` to NULL on its exports.
+    exports: Mapped[List["DatasetExport"]] = relationship(back_populates="dataset")
 
     status: Mapped[Enum] = mapped_column(
         Enum(DatasetStatus), nullable=False, default=DatasetStatus.NOT_STARTED
@@ -1632,6 +1637,41 @@ class Datafile(Base):
             name="uq_datafile_source_dataset",
         ),
     )
+
+
+class DatasetExport(Base):
+    __tablename__ = "dataset_export"
+    """
+    A dataset published, or being published, to an external platform.
+    """
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    dataset_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("dataset.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    # Copy of the dataset name, kept so the record still reads after the
+    # dataset is deleted.
+    dataset_name: Mapped[str] = mapped_column(String, nullable=False)
+    exporter_name: Mapped[str] = mapped_column(String, nullable=False)
+    # Export parameters sent to the exporter (never credentials).
+    params: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    status: Mapped[Enum] = mapped_column(
+        Enum(DatasetExportStatus),
+        nullable=False,
+        default=DatasetExportStatus.PENDING,
+    )
+    remote_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    remote_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    huey_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+    dataset: Mapped[Optional["Dataset"]] = relationship(back_populates="exports")
 
 
 class StatisticalTest(Base):

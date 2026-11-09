@@ -77,6 +77,14 @@ class DatafileStatus(Enum):
     ERROR = "error"
 
 
+class DatasetExportStatus(Enum):
+    PENDING = "pending"
+    PREPARING = "preparing"
+    UPLOADING = "uploading"
+    PUBLISHED = "published"
+    ERROR = "error"
+
+
 class PipelineRunStatus(Enum):
     NOT_STARTED = 0
     DELIVERED = 1
