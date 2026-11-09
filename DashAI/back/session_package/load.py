@@ -44,13 +44,51 @@ if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
 NOT_A_SESSION = "{path} is not a DashAI session file"
-# The file names the training job gives each plot, with the run id appended.
-PLOT_PREFIXES = {
-    "plot_history_path": "history_objective_plot",
-    "plot_slice_path": "slice_plot",
-    "plot_contour_path": "contour_plot",
-    "plot_importance_path": "importance_plot",
-}
+
+
+def _import_run_plots(
+    entry: Dict[str, Any], workdir: Path, runs_dir: Path, key: str, created: list
+) -> List[tuple]:
+    """Copy a run's saved plots out of the package, for its ``run_plot`` rows.
+
+    A package with ``run_plots`` carries every view and its edits; an item
+    whose file is not in the archive is skipped. A package without it carries
+    only the legacy one-pickle-per-plot HPO entries, combined here into the
+    ``hyperparameter`` view.
+
+    Returns
+    -------
+    list of tuple
+        ``(view, path, plot_overrides)`` per view to insert.
+    """
+    from DashAI.back.core.run_plots import (
+        legacy_hpo_leaves,
+        run_plot_file,
+        write_run_plot_file,
+    )
+
+    plots = []
+    if entry.get("run_plots") is not None:
+        for item in entry["run_plots"]:
+            source = workdir / item["artifacts_entry"]
+            if not source.is_file():
+                continue
+            target = run_plot_file(runs_dir, item["view"], key)
+            created.append(target)
+            shutil.copy2(source, target)
+            plots.append((item["view"], target, item.get("plot_overrides")))
+        return plots
+
+    legacy = entry.get("plots") or {}
+    leaves = legacy_hpo_leaves(
+        [str(workdir / legacy[field]) for field in PLOT_FIELDS if legacy.get(field)]
+    )
+    if leaves:
+        target = run_plot_file(runs_dir, "hyperparameter", key)
+        created.append(target)
+        write_run_plot_file(target, leaves)
+        plots.append(("hyperparameter", target, None))
+    return plots
 
 
 class UnsafePackageError(ModelPackageError):
@@ -283,6 +321,7 @@ def import_session_package(
         Metric,
         ModelSession,
         Run,
+        RunPlot,
     )
     from DashAI.back.job.preprocessing_job import PreprocessingJob
 
@@ -328,14 +367,7 @@ def import_session_package(
                 run_path = runs_dir / key
                 created.append(run_path)
                 _copy_model(workdir / entry["model_entry"], run_path)
-                plots = {}
-                for field in PLOT_FIELDS:
-                    source = entry.get("plots", {}).get(field)
-                    if source:
-                        plot = runs_dir / f"{PLOT_PREFIXES[field]}_{key}.pickle"
-                        created.append(plot)
-                        shutil.copy2(workdir / source, plot)
-                        plots[field] = str(plot)
+                plots = _import_run_plots(entry, workdir, runs_dir, key, created)
                 run_files.append((run_path, plots))
 
             with session_factory() as db:
@@ -394,13 +426,20 @@ def import_session_package(
 
                         run_path, plots = files
                         run.run_path = str(run_path)
-                        for field, plot in plots.items():
-                            setattr(run, field, plot)
                         run.status = RunStatus.FINISHED
                         run.start_time = _date(entry.get("start_time"))
                         run.end_time = _date(entry.get("end_time"))
                         db.add(run)
                         db.flush()
+                        db.add_all(
+                            RunPlot(
+                                run_id=run.id,
+                                view=view,
+                                artifacts_path=str(path),
+                                plot_overrides=overrides,
+                            )
+                            for view, path, overrides in plots
+                        )
                         if entry.get("forecasts_entry"):
                             # Named after the run's id, which only exists now.
                             # Small, unlike a model, so it is copied inside

@@ -34,7 +34,10 @@ SESSION_EXTENSION = ".dashai"
 # DashAI that reads format 2 would refuse the null at the database instead of
 # the file, so the version moves; formats 1 and 2 still import. A run of 3 may
 # also carry its backtest forecasts (``forecasts_entry``); a package without
-# the key, or with it null, imports the run without them.
+# the key, or with it null, imports the run without them. It may also carry
+# its saved plots and their edits (``run_plots``); a package without the key
+# imports its HPO plots from the legacy ``plots`` entries, which every
+# package keeps writing so older installs still read them.
 SESSION_FORMAT_VERSION = 3
 KIND_SESSION = "session"
 SESSION_ENTRY = "session.json"
@@ -224,6 +227,55 @@ def _metric_row(metric) -> Dict[str, Any]:
     }
 
 
+def legacy_hpo_fields(count: int) -> tuple:
+    """The legacy ``plots`` keys of a search that produced ``count`` plots.
+
+    The optimizer lists history, slice, contour and importance, and skips the
+    contour plot when fewer than two searched parameters are numeric, so the
+    count says which plots are there.
+
+    Parameters
+    ----------
+    count : int
+        How many plots the search saved.
+
+    Returns
+    -------
+    tuple of str
+        The ``PLOT_FIELDS`` names of those plots, in order.
+    """
+    history, slice_, contour, importance = PLOT_FIELDS
+    if count == 2:
+        return (history, slice_)
+    if count == 3:
+        return (history, slice_, importance)
+    return PLOT_FIELDS[:count]
+
+
+def _legacy_plots(path: Path, staging: Path, run_dir: str) -> Dict[str, str]:
+    """Write a run's HPO plots one pickle per plot, as format 3 first did.
+
+    A DashAI that predates ``run_plots`` reads only these.
+
+    Returns
+    -------
+    dict
+        The legacy ``plots`` entry: field name to its path in the package.
+    """
+    import pickle
+
+    from DashAI.back.core.run_plots import read_run_plot_file
+
+    leaves = read_run_plot_file(path)
+    plots = {}
+    for field, leaf in zip(legacy_hpo_fields(len(leaves)), leaves, strict=False):
+        plots[field] = f"{run_dir}/{field}.pickle"
+        target = staging / plots[field]
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(pickle.dumps(leaf))
+    return plots
+
+
 def export_preview(session_id: int, session_factory: "sessionmaker") -> Dict[str, Any]:
     """What the export dialog shows: runs, what each can carry, and sizes.
 
@@ -265,7 +317,7 @@ def export_preview(session_id: int, session_factory: "sessionmaker") -> Dict[str
                 forecasts = _forecasts_path(run)
                 models_size += (
                     _size(run.run_path)
-                    + sum(_size(getattr(run, field)) for field in PLOT_FIELDS)
+                    + sum(_size(plot.artifacts_path) for plot in run.plots)
                     + _size(str(forecasts) if forecasts else None)
                 )
             runs.append(
@@ -381,7 +433,14 @@ def build_session_package(
                     },
                     "with_model": with_model,
                     "run_path": run.run_path,
-                    "plots": {field: getattr(run, field) for field in PLOT_FIELDS},
+                    "run_plots": [
+                        {
+                            "view": plot.view,
+                            "path": plot.artifacts_path,
+                            "plot_overrides": plot.plot_overrides,
+                        }
+                        for plot in run.plots
+                    ],
                     "forecasts": _forecasts_path(run) if with_model else None,
                     "created": _iso(run.created),
                     "start_time": _iso(run.start_time),
@@ -416,6 +475,7 @@ def build_session_package(
                 "end_time": run["end_time"] if run["with_model"] else None,
                 "model_entry": None,
                 "plots": {},
+                "run_plots": [],
                 "forecasts_entry": None,
                 "metrics": run["metrics"],
             }
@@ -423,10 +483,22 @@ def build_session_package(
                 run_dir = f"{RUNS_ENTRY}/{index}"
                 entry["model_entry"] = f"{run_dir}/model"
                 _copy(Path(run["run_path"]), staging / entry["model_entry"])
-                for field, path in run["plots"].items():
-                    if path and Path(path).is_file():
-                        entry["plots"][field] = f"{run_dir}/{field}.pickle"
-                        _copy(Path(path), staging / entry["plots"][field])
+                for plot in run["run_plots"]:
+                    if not Path(plot["path"]).is_file():
+                        continue
+                    artifacts_entry = f"{run_dir}/{plot['view']}_plots.pickle"
+                    _copy(Path(plot["path"]), staging / artifacts_entry)
+                    entry["run_plots"].append(
+                        {
+                            "view": plot["view"],
+                            "artifacts_entry": artifacts_entry,
+                            "plot_overrides": plot["plot_overrides"],
+                        }
+                    )
+                    if plot["view"] == "hyperparameter":
+                        entry["plots"] = _legacy_plots(
+                            Path(plot["path"]), staging, run_dir
+                        )
                 if run["forecasts"]:
                     entry["forecasts_entry"] = f"{run_dir}/forecasts.json"
                     _copy(run["forecasts"], staging / entry["forecasts_entry"])

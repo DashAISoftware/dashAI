@@ -658,3 +658,124 @@ def test_a_session_package_carries_what_a_trained_run_recorded(
     with container["session_factory"]() as db:
         (imported,) = db.query(Run).filter(Run.model_session_id == result["session_id"])
         assert imported.exogenous == RECORDED
+
+
+def _tuned_run(client, tmp_path):
+    from DashAI.back.job.model_job import ModelJob
+
+    session_id = _session(client, tmp_path, _monthly())
+    searched = {
+        "season_length": {
+            "optimize": True,
+            "fixed_value": 12,
+            "lower_bound": 2,
+            "upper_bound": 12,
+        }
+    }
+    tuned = _create_run(
+        client,
+        session_id,
+        "SeasonalNaiveForecaster",
+        searched,
+        goal_metric="MAE",
+        optimizer="OptunaOptimizer",
+    )
+    ModelJob(run_id=tuned).run()
+    return tuned
+
+
+def _export(client, run_id, package):
+    from tests.back.api.test_session_package import _build
+
+    _build(client, _get(client, Run, run_id).model_session_id, [run_id], package)
+    return package
+
+
+def _imported_run(client, package):
+    from tests.back.api.test_session_package import _import
+
+    result = _import(client, package)
+    with client.app.container["session_factory"]() as db:
+        (imported,) = db.query(Run).filter(Run.model_session_id == result["session_id"])
+        return imported.id
+
+
+def _first_leaf(client, run_id, view):
+    body = client.get(f"/api/v1/run/{run_id}/plots/{view}").json()
+    first = body[0]
+    return first["groups"][0]["artifacts"][0] if first["type"] == "grouped" else first
+
+
+EDIT = {"data": [{"type": "scatter", "y": [3, 4]}], "layout": {"title": "edit"}}
+
+
+def test_a_package_carries_run_plots_and_their_edits(client, tmp_path):
+    from tests.back.api.test_session_package import _read
+
+    tuned = _tuned_run(client, tmp_path)
+    index = _first_leaf(client, tuned, "forecasts")["index"]
+    client.put(
+        f"/api/v1/run/{tuned}/plots/forecasts/override",
+        json={"index": index, "figure": EDIT},
+    )
+
+    package = _export(client, tuned, tmp_path / "plots.dashai")
+    _, manifest, _, _ = _read(package)
+    imported = _imported_run(client, package)
+
+    assert manifest["format_version"] == 3
+    assert _views(client, imported) == {"hyperparameter", "forecasts"}
+    leaf = _first_leaf(client, imported, "forecasts")
+    assert leaf["overridden"] is True
+    assert json.loads(leaf["payload"]) == EDIT
+
+
+def test_a_package_still_carries_the_legacy_hpo_plots(client, tmp_path):
+    from tests.back.api.test_session_package import _read
+
+    tuned = _tuned_run(client, tmp_path)
+
+    names, _, recipe, _ = _read(_export(client, tuned, tmp_path / "legacy.dashai"))
+
+    [entry] = recipe["runs"]
+    assert set(entry["plots"]) == {"plot_history_path", "plot_slice_path"}
+    assert all(path in names for path in entry["plots"].values())
+    assert {item["view"] for item in entry["run_plots"]} == {
+        "hyperparameter",
+        "forecasts",
+    }
+
+
+def test_an_old_package_without_run_plots_imports_its_hpo_plots(client, tmp_path):
+    from tests.back.api.test_session_package import _rewrite
+
+    tuned = _tuned_run(client, tmp_path)
+    package = _export(client, tuned, tmp_path / "new.dashai")
+
+    def strip(recipe):
+        for entry in recipe["runs"]:
+            entry.pop("run_plots", None)
+        return recipe
+
+    old = _rewrite(package, tmp_path / "old.dashai", recipe=strip)
+    imported = _imported_run(client, old)
+
+    assert _views(client, imported) == {"hyperparameter"}
+    body = client.get(f"/api/v1/run/{imported}/plots/hyperparameter").json()
+    assert [leaf["type"] for leaf in body] == ["plotly", "plotly"]
+
+
+def test_a_run_plot_missing_from_the_archive_is_skipped(client, tmp_path):
+    import zipfile
+
+    tuned = _tuned_run(client, tmp_path)
+    package = _export(client, tuned, tmp_path / "full.dashai")
+    broken = tmp_path / "broken.dashai"
+    with zipfile.ZipFile(package) as source, zipfile.ZipFile(broken, "w") as out:
+        for item in source.infolist():
+            if not item.filename.endswith("hyperparameter_plots.pickle"):
+                out.writestr(item, source.read(item.filename))
+
+    imported = _imported_run(client, broken)
+
+    assert _views(client, imported) == {"forecasts"}
