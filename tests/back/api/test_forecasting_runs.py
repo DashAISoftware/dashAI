@@ -450,6 +450,36 @@ def test_a_run_without_a_search_has_no_hyperparameter_row(client, run_id):
     assert "hyperparameter" not in _views(client, run_id)
 
 
+def test_a_forecasting_run_gets_a_forecasts_row(client, run_id):
+    assert _views(client, run_id) == {"forecasts"}
+
+
+def test_a_tuned_forecasting_run_gets_both_rows(client, tmp_path):
+    from DashAI.back.job.model_job import ModelJob
+
+    session_id = _session(client, tmp_path, _monthly())
+    searched = {
+        "season_length": {
+            "optimize": True,
+            "fixed_value": 12,
+            "lower_bound": 2,
+            "upper_bound": 12,
+        }
+    }
+    tuned = _create_run(
+        client,
+        session_id,
+        "SeasonalNaiveForecaster",
+        searched,
+        goal_metric="MAE",
+        optimizer="OptunaOptimizer",
+    )
+
+    ModelJob(run_id=tuned).run()
+
+    assert _views(client, tuned) == {"hyperparameter", "forecasts"}
+
+
 def test_the_forecasts_plot_has_a_figure_per_origin(client, run_id):
     forecasts = client.get(f"/api/v1/run/{run_id}/forecasts").json()
 
@@ -472,17 +502,6 @@ def test_the_forecasts_plot_has_a_figure_per_origin(client, run_id):
         assert traces["Forecast"]["y"] == pytest.approx(origin["forecast"])
         assert traces["95% interval"]["y"] == pytest.approx(origin["lower"]["95"])
         assert traces["80% interval"]["y"] == pytest.approx(origin["lower"]["80"])
-
-
-def test_the_forecasts_plot_speaks_the_requested_language(client, run_id):
-    response = client.get(
-        f"/api/v1/run/{run_id}/forecasts/plot", headers={"Accept-Language": "es"}
-    )
-
-    [grouped] = response.json()
-    assert grouped["groups"][-1]["title"] == "Prueba"
-    payload = json.loads(grouped["groups"][-1]["artifacts"][0]["payload"])
-    assert {t["name"] for t in payload["data"]} >= {"Real", "Pronóstico"}
 
 
 def test_a_single_origin_is_one_figure_without_a_selector():

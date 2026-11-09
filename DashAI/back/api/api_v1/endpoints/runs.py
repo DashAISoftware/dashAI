@@ -450,7 +450,7 @@ async def get_run_forecasts_plot(
     from DashAI.back.evaluation.forecasts_plot import forecasts_artifacts
 
     forecasts = _load_forecasts(run_id, session_factory)
-    return normalize_artifacts(forecasts_artifacts(forecasts, accept_language))
+    return normalize_artifacts(forecasts_artifacts(forecasts))
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)

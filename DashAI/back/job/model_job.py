@@ -36,6 +36,7 @@ from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
 from DashAI.back.units.prepare_series_unit import PrepareSeriesUnit
 from DashAI.back.units.prepare_without_target_unit import PrepareWithoutTargetUnit
+from DashAI.back.units.save_forecasts_plot_unit import SaveForecastsPlotUnit
 from DashAI.back.units.save_forecasts_unit import SaveForecastsUnit
 from DashAI.back.units.save_model_unit import SaveModelUnit
 from DashAI.back.units.score_clusters_unit import ScoreClustersUnit
@@ -371,10 +372,16 @@ class ModelJob(BaseJob):
                     # A backtest's forecasts are kept beside its model; the
                     # results and the reports read them, never the model.
                     SaveForecastsUnit(artifact_prefix=str(run_id))(ctx)
+                    SaveForecastsPlotUnit(artifact_prefix=str(run_id))(ctx)
 
                 try:
                     stale_plots = self._store_run_plots(
-                        db, run_id, {"hyperparameter": plots_path}
+                        db,
+                        run_id,
+                        {
+                            "hyperparameter": plots_path,
+                            "forecasts": ctx.get("forecasts_plot_path"),
+                        },
                     )
                     db.commit()
                 except Exception as e:

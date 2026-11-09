@@ -493,6 +493,23 @@ def test_the_forecasts_are_written_where_the_endpoint_reads_them(client):
     path.unlink()
 
 
+def test_the_forecasts_plot_is_written_where_the_row_points(client):
+    from DashAI.back.core.run_plots import read_run_plot_file, run_plot_file
+    from DashAI.back.units.save_forecasts_plot_unit import SaveForecastsPlotUnit
+
+    ctx = _backtested()
+
+    SaveForecastsPlotUnit(artifact_prefix="unit-test")(ctx)
+
+    path = run_plot_file(
+        client.app.container["config"]["RUNS_PATH"], "forecasts", "unit-test"
+    )
+    assert ctx.require("forecasts_plot_path") == str(path)
+    [grouped] = read_run_plot_file(path)
+    assert grouped["type"] == "grouped"
+    path.unlink()
+
+
 def test_a_forecast_that_is_not_a_number_is_not_written(client):
     # NaN is not JSON: the file would hold a bare NaN that the frontend
     # cannot parse. The origins carry None where a value is not finite, so a
