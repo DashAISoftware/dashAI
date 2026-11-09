@@ -799,3 +799,21 @@ def test_an_imported_view_that_is_unknown_or_repeated_is_skipped(client, tmp_pat
     assert _views(client, imported) == {"hyperparameter", "forecasts"}
     runs_path = Path(client.app.container["config"]["RUNS_PATH"])
     assert not list(runs_path.parent.glob("escaped_plots_*"))
+
+
+def test_a_forecasts_plot_that_cannot_be_drawn_does_not_fail_the_training(
+    client, tmp_path, monkeypatch
+):
+    from DashAI.back.core.enums.status import RunStatus
+    from DashAI.back.evaluation import forecasts_plot
+
+    def broken(forecasts):
+        raise ValueError("cannot draw")
+
+    monkeypatch.setattr(forecasts_plot, "forecasts_artifacts", broken)
+    session_id = _session(client, tmp_path, _monthly())
+
+    run_id = _train(client, session_id, "NaiveForecaster")
+
+    assert _get(client, Run, run_id).status == RunStatus.FINISHED
+    assert "forecasts" not in _views(client, run_id)

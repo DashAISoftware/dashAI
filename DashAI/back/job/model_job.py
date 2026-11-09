@@ -372,7 +372,10 @@ class ModelJob(BaseJob):
                     # A backtest's forecasts are kept beside its model; the
                     # results and the reports read them, never the model.
                     SaveForecastsUnit(artifact_prefix=str(run_id))(ctx)
-                    SaveForecastsPlotUnit(artifact_prefix=str(run_id))(ctx)
+                    try:
+                        SaveForecastsPlotUnit(artifact_prefix=str(run_id))(ctx)
+                    except Exception as e:
+                        log.exception(e)
 
                 try:
                     stale_plots = self._store_run_plots(
