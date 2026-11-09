@@ -6,6 +6,10 @@ from fastapi.testclient import TestClient
 from DashAI.back.core.enums.status import DatasetStatus
 from DashAI.back.dependencies.database.models import Dataset
 
+# Dataset routes need a session; the shared fixtures create universal
+# datasets, which only an administrator can change
+pytestmark = pytest.mark.usefixtures("admin_project")
+
 
 @pytest.fixture(scope="module")
 def dataset_not_started(client) -> Dataset:
@@ -26,8 +30,12 @@ def dataset_not_started(client) -> Dataset:
 
 
 @pytest.mark.dependency
-def test_create_dataset(client: TestClient) -> None:
-    response = client.post("/api/v1/dataset/", json={"name": "test_csv"})
+def test_create_dataset(client: TestClient, admin_project: int) -> None:
+    response = client.post(
+        "/api/v1/dataset/",
+        params={"project_id": admin_project},
+        json={"name": "test_csv"},
+    )
 
     assert response.status_code == 201, response.text
     data = response.json()
@@ -44,8 +52,11 @@ def test_create_dataset(client: TestClient) -> None:
 
 
 @pytest.mark.dependency(depends=["test_create_dataset"])
-def test_get_all_datasets(client: TestClient, dataset_1: Dataset) -> None:
-    response = client.get("/api/v1/dataset/")
+def test_get_all_datasets(
+    client: TestClient, dataset_1: Dataset, admin_project: int
+) -> None:
+    # The project's datasets plus the universal ones
+    response = client.get("/api/v1/dataset/", params={"project_id": admin_project})
     assert response.status_code == 200, response.text
     data = response.json()
 
@@ -225,10 +236,14 @@ def test_delete_dataset(client: TestClient, dataset_1: Dataset) -> None:
     assert response.status_code == 404, response.text
 
 
-def test_bulk_delete_datasets(client: TestClient) -> None:
+def test_bulk_delete_datasets(client: TestClient, admin_project: int) -> None:
     created_ids = []
     for name in ["bulk_delete_1", "bulk_delete_2"]:
-        response = client.post("/api/v1/dataset/", json={"name": name})
+        response = client.post(
+            "/api/v1/dataset/",
+            params={"project_id": admin_project},
+            json={"name": name},
+        )
         assert response.status_code == 201, response.text
         created_ids.append(response.json()["id"])
 

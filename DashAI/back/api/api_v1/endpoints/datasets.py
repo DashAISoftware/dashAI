@@ -26,11 +26,23 @@ from DashAI.back.api.api_v1.schemas.datasets_params import (
     DatasetRenameColumnParams,
     DatasetUpdateParams,
 )
-from DashAI.back.dependencies.database.models import Dataset, Folder, ModelSession
+from DashAI.back.auth.dependencies import (
+    ProjectAccess,
+    get_current_user,
+    get_user_permissions,
+    require_project_permission,
+    resolve_project_access,
+)
+from DashAI.back.dependencies.database.models import (
+    Dataset,
+    Folder,
+    ModelSession,
+    User,
+)
 
 if TYPE_CHECKING:
     import pyarrow as pa
-    from sqlalchemy.orm.session import sessionmaker
+    from sqlalchemy.orm.session import Session, sessionmaker
 
     from DashAI.back.dependencies.registry import ComponentRegistry
 
@@ -121,6 +133,91 @@ def _image_bytes_to_thumbnail_data_uri(img_bytes: bytes, max_size: int = 64) -> 
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+# ---------------------------------------------------------------------------
+# Access control
+#
+# A dataset of a project needs ``datasets.<action>`` inside that project.
+# Datasets without a project are "universal": every user can read and export
+# them, and only an administrator (``projects.oversee``) can change them.
+# ---------------------------------------------------------------------------
+
+_UNIVERSAL_OPEN_ACTIONS = {"read", "export"}
+
+
+def _dataset_not_found() -> HTTPException:
+    # Also used for datasets of projects the user cannot enter, so their
+    # existence does not leak
+    return HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found"
+    )
+
+
+def _forbidden() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="You do not have permission to perform this action",
+    )
+
+
+def check_dataset_access(
+    db: "Session", user: User, dataset: Optional[Dataset], action: str
+) -> Dataset:
+    """Return ``dataset`` if ``user`` may perform ``action`` on it.
+
+    Parameters
+    ----------
+    db : Session
+        Open database session.
+    user : User
+        The current user.
+    dataset : Optional[Dataset]
+        The dataset, or None if it does not exist.
+    action : str
+        One of "read", "write", "delete" or "export".
+
+    Raises
+    ------
+    HTTPException
+        404 if the dataset does not exist or belongs to a project the user
+        cannot enter, 403 if the user lacks the permission.
+    """
+    if dataset is None:
+        raise _dataset_not_found()
+
+    if dataset.project_id is None:
+        if action in _UNIVERSAL_OPEN_ACTIONS:
+            return dataset
+        if "projects.oversee" not in get_user_permissions(user):
+            raise _forbidden()
+        return dataset
+
+    access = resolve_project_access(db, user, dataset.project_id)
+    if access is None:
+        raise _dataset_not_found()
+    if f"datasets.{action}" not in access.permissions:
+        raise _forbidden()
+    return dataset
+
+
+def dataset_permission(action: str):
+    """Build a dependency that checks ``action`` on the path's ``dataset_id``.
+
+    Usage: ``_: User = Depends(dataset_permission("read"))``.
+    """
+
+    def dependency(
+        dataset_id: int,
+        user: User = Depends(get_current_user),
+        session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    ) -> User:
+        with session_factory() as db:
+            check_dataset_access(db, user, db.get(Dataset, dataset_id), action)
+        return user
+
+    return dependency
+
 
 _SEED_MANIFEST_PATH = (
     Path(__file__).parent.parent.parent.parent / "seeds" / "manifest.json"
@@ -428,14 +525,20 @@ async def filter_dataset_file(
 @inject
 async def create_dataset(
     params: DatasetCreateParams,
+    access: ProjectAccess = Depends(require_project_permission("datasets.write")),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Create a new dataset entry in the database with NOT_STARTED status.
+
+    The dataset belongs to the project given in the ``project_id`` query
+    parameter, which needs ``datasets.write``.
 
     Parameters
     ----------
     params : DatasetCreateParams
         A schema containing the dataset creation parameters.
+    access : ProjectAccess
+        The current user's access to the project.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
 
@@ -444,9 +547,15 @@ async def create_dataset(
     Dataset
         The newly created dataset with NOT_STARTED status.
     """
+    project_id = access.project.id
     with session_factory() as db:
         try:
-            existing = db.query(Dataset).filter(Dataset.name == params.name).first()
+            # Names are unique inside a project, not across the instance
+            existing = db.execute(
+                select(Dataset.id).where(
+                    Dataset.name == params.name, Dataset.project_id == project_id
+                )
+            ).first()
             if existing:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
@@ -456,6 +565,7 @@ async def create_dataset(
             dataset = Dataset(
                 name=params.name,
                 file_path="",
+                project_id=project_id,
             )
             db.add(dataset)
             db.commit()
@@ -483,12 +593,22 @@ async def create_dataset(
 @router.get("/")
 @inject
 async def get_datasets(
+    project_id: Optional[int] = None,
+    user: User = Depends(get_current_user),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Retrieve a list of the stored datasets in the database.
 
+    Universal datasets (without a project) are always listed. With
+    ``project_id``, the datasets of that project are listed too, which needs
+    ``datasets.read`` inside it.
+
     Parameters
     ----------
+    project_id : Optional[int]
+        Project whose datasets are listed along with the universal ones.
+    user : User
+        The current user.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -501,10 +621,29 @@ async def get_datasets(
         type, description, and creation date.
         If no datasets are found, an empty list will be returned.
     """
-    logger.debug("Retrieving all datasets.")
+    logger.debug("Retrieving datasets of project %s.", project_id)
     with session_factory() as db:
+        if project_id is not None:
+            access = resolve_project_access(db, user, project_id)
+            if access is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Project not found",
+                )
+            if "datasets.read" not in access.permissions:
+                raise _forbidden()
+
         try:
-            datasets = db.query(Dataset).all()
+            datasets = (
+                db.execute(
+                    select(Dataset).where(
+                        Dataset.project_id.is_(None)
+                        | (Dataset.project_id == project_id)
+                    )
+                )
+                .scalars()
+                .all()
+            )
 
         except exc.SQLAlchemyError as e:
             logger.exception(e)
@@ -525,6 +664,7 @@ async def get_datasets(
 @inject
 async def get_dataset(
     dataset_id: int,
+    _: User = Depends(dataset_permission("read")),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Retrieve the dataset associated with the provided ID.
@@ -567,6 +707,7 @@ async def get_dataset(
 @inject
 async def get_sample(
     dataset_id: int,
+    _: User = Depends(dataset_permission("read")),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Return a sample of 10 rows from the dataset with id dataset_id from the
@@ -730,6 +871,7 @@ async def get_info_by_file(
 @inject
 async def get_info(
     dataset_id: int,
+    _: User = Depends(dataset_permission("read")),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Return the dataset with id dataset_id from the database.
@@ -779,6 +921,7 @@ async def get_info(
 @inject
 async def get_model_sessions_exist(
     dataset_id: int,
+    _: User = Depends(dataset_permission("read")),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get a boolean indicating if there are model sessions associated with the dataset.
@@ -835,6 +978,7 @@ async def get_model_sessions_exist(
 @inject
 async def get_types(
     dataset_id: int,
+    _: User = Depends(dataset_permission("read")),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Return the dataset with id dataset_id from the database.
@@ -927,15 +1071,22 @@ async def get_types_by_file_path(
 @inject
 async def copy_dataset(
     dataset: Dict[str, int],
+    access: ProjectAccess = Depends(require_project_permission("datasets.write")),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
     """Copy an existing dataset to create a new one.
 
+    The copy goes to the project given in the ``project_id`` query parameter,
+    which needs ``datasets.write``. Copying a dataset out of another project
+    takes data out of it, so that also needs ``datasets.export`` there.
+
     Parameters
     ----------
     dataset_id : int
         ID of the dataset to copy.
+    access : ProjectAccess
+        The current user's access to the target project.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -949,36 +1100,43 @@ async def copy_dataset(
         The newly created dataset.
     """
     import shutil
+    import uuid
 
     from DashAI.back.core.enums.status import DatasetStatus
 
     dataset_id = dataset["dataset_id"]
+    project_id = access.project.id
     logger.debug(f"Copying dataset with ID {dataset_id}.")
 
     with session_factory() as db:
         # Retrieve the existing dataset
-        original_dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
-        if not original_dataset:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Original dataset not found.",
-            )
+        original_dataset = db.get(Dataset, dataset_id)
+        check_dataset_access(db, access.user, original_dataset, "read")
+        if original_dataset.project_id not in (None, project_id):
+            check_dataset_access(db, access.user, original_dataset, "export")
         if original_dataset.status != DatasetStatus.FINISHED:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="Original dataset is not in finished state",
             )
 
-        # Create a new folder for the copied dataset
         new_name = f"{original_dataset.name}_copy"
-        new_folder_path = config["DATASETS_PATH"] / new_name
-        try:
-            shutil.copytree(original_dataset.file_path, new_folder_path)
-        except FileExistsError:
+        taken = db.execute(
+            select(Dataset.id).where(
+                Dataset.name == new_name, Dataset.project_id == project_id
+            )
+        ).first()
+        if taken:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"A dataset with the name '{new_name}' already exists.",
-            ) from None
+            )
+
+        # Folder names are random, as in the upload job, because names are
+        # only unique inside a project and two copies must not share a folder
+        new_folder_path = config["DATASETS_PATH"] / str(uuid.uuid4())
+        try:
+            shutil.copytree(original_dataset.file_path, new_folder_path)
         except Exception as e:
             logger.exception(e)
             raise HTTPException(
@@ -991,6 +1149,7 @@ async def copy_dataset(
             new_dataset = Dataset(
                 name=new_name,
                 file_path=str(new_folder_path),
+                project_id=project_id,
             )
             db.add(new_dataset)
             db.commit()
@@ -1011,6 +1170,7 @@ async def copy_dataset(
 @inject
 async def delete_datasets(
     params: DatasetBulkDeleteParams,
+    user: User = Depends(get_current_user),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete multiple datasets, in a single transaction.
@@ -1020,6 +1180,9 @@ async def delete_datasets(
     params : DatasetBulkDeleteParams
         The IDs of the datasets to delete. IDs that do not match an existing
         dataset are silently skipped rather than failing the whole request.
+        If the user cannot delete any of the others, nothing is deleted.
+    user : User
+        The current user.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -1036,6 +1199,8 @@ async def delete_datasets(
                 dataset = db.get(Dataset, dataset_id)
                 if not dataset:
                     continue
+                # Raising before the commit leaves every dataset in place
+                check_dataset_access(db, user, dataset, "delete")
                 file_paths.append(dataset.file_path)
                 db.delete(dataset)
 
@@ -1062,6 +1227,7 @@ async def delete_datasets(
 @inject
 async def delete_dataset(
     dataset_id: int,
+    _: User = Depends(dataset_permission("delete")),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete the dataset associated with the provided ID from the database.
@@ -1119,6 +1285,7 @@ async def delete_dataset(
 async def update_dataset(
     dataset_id: int,
     params: DatasetUpdateParams,
+    _: User = Depends(dataset_permission("write")),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Updates the name and/or folder of a dataset with the provided ID.
@@ -1157,7 +1324,9 @@ async def update_dataset(
             if new_name != dataset.name:
                 exists = db.execute(
                     select(Dataset.id).where(
-                        Dataset.name == new_name, Dataset.id != dataset_id
+                        Dataset.name == new_name,
+                        Dataset.project_id == dataset.project_id,
+                        Dataset.id != dataset_id,
                     )
                 ).scalar()
                 if exists:
@@ -1201,6 +1370,7 @@ async def update_dataset(
 async def rename_dataset_column(
     dataset_id: int,
     params: DatasetRenameColumnParams,
+    _: User = Depends(dataset_permission("write")),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Rename a column in a dataset.
@@ -1420,6 +1590,7 @@ async def update_column_encoder(
     dataset_id: int,
     column_name: str,
     params: DatasetColumnEncoderParams,
+    _: User = Depends(dataset_permission("write")),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Update the encoder preference for a single Categorical column.
@@ -1821,6 +1992,7 @@ async def export_dataset_as_csv(
 @inject
 async def export_dataset_csv_by_id(
     dataset_id: int,
+    _: User = Depends(dataset_permission("export")),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Export the entire dataset as a CSV or ZIP file by dataset ID.

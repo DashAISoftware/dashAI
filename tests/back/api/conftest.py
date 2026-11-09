@@ -4,9 +4,10 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from DashAI.back.app import create_app
-from DashAI.back.dependencies.database.models import Dataset
+from DashAI.back.dependencies.database.models import Dataset, Role, User
 from DashAI.back.dependencies.job_queues.huey_job_queue import HueyJobQueue
 from DashAI.back.job.dataset_job import DatasetJob
 
@@ -61,6 +62,37 @@ def _mark_stable_diffusion2_downloaded(client):
     repo_dir.mkdir(parents=True, exist_ok=True)
     (repo_dir / "config.json").write_text("{}", encoding="utf-8")
     return
+
+
+@pytest.fixture(scope="module")
+def admin_project(client) -> int:
+    """Log the client in as an administrator and return a project of theirs.
+
+    Dataset routes need a session, and the shared fixtures create universal
+    datasets that only an administrator may change. Returns the id of a
+    project to create datasets in.
+    """
+    client.cookies.clear()
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": "testadmin",
+            "email": "testadmin@example.com",
+            "password": "secret-pass-123",
+            "social_name": "Test Admin",
+        },
+    )
+    assert response.status_code == 201, response.text
+
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        admin = db.execute(select(Role).where(Role.uid == "admin")).scalar_one()
+        db.get(User, response.json()["id"]).global_role_id = admin.id
+        db.commit()
+
+    response = client.post("/api/v1/project/", json={"name": "Test project"})
+    assert response.status_code == 201, response.text
+    return response.json()["id"]
 
 
 @pytest.fixture(name="dataset_1", scope="module")

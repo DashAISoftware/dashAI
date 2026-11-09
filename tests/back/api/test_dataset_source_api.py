@@ -18,6 +18,10 @@ from DashAI.back.dependencies.database.models import Datafile, Dataset
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.dataset_job import DatasetJob
 
+# Dataset routes need a session; the shared fixtures create universal
+# datasets, which only an administrator can change
+pytestmark = pytest.mark.usefixtures("admin_project")
+
 
 class MockDataLoader(BaseDataLoader):
     """Minimal DataLoader for testing the hub import path."""
@@ -185,9 +189,15 @@ def test_post_preview_missing_datafile_id(client: TestClient):
     assert response.status_code == 422
 
 
-def test_import_endpoint_creates_dataset_and_job(client: TestClient):
+def test_import_endpoint_creates_dataset_and_job(
+    client: TestClient, admin_project: int
+):
     """POST import creates a Dataset record and enqueues a DatasetJob."""
-    create_resp = client.post("/api/v1/dataset/", json={"name": "hub_import_test"})
+    create_resp = client.post(
+        "/api/v1/dataset/",
+        params={"project_id": admin_project},
+        json={"name": "hub_import_test"},
+    )
     assert create_resp.status_code == 201
     dataset_id = create_resp.json()["id"]
 

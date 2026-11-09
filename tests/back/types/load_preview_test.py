@@ -148,8 +148,23 @@ def test_schema_change(client: TestClient):
     modified_schema = payload["schema"].copy()
     modified_schema["Species"] = {"type": "Categorical", "dtype": "string"}
 
+    # Datasets are created inside a project, which needs a session
+    register_resp = client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": "schemauser",
+            "email": "schemauser@example.com",
+            "password": "secret-pass-123",
+            "social_name": "Schema User",
+        },
+    )
+    assert register_resp.status_code == 201, register_resp.text
+    project_resp = client.post("/api/v1/project/", json={"name": "Schema"})
+    assert project_resp.status_code == 201, project_resp.text
+
     create_ds_resp = client.post(
         "/api/v1/dataset/",
+        params={"project_id": project_resp.json()["id"]},
         json={"name": "iris_testing_schema"},
     )
     assert create_ds_resp.status_code == 201, create_ds_resp.text

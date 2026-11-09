@@ -50,6 +50,7 @@ class Dataset(BaseModel):
     total_rows: Optional[int] = None
     total_columns: Optional[int] = None
     folder_id: Optional[int] = None
+    project_id: Optional[int] = None
 
 
 class DatasetCreateParams(BaseModel):
