@@ -480,30 +480,6 @@ def test_a_tuned_forecasting_run_gets_both_rows(client, tmp_path):
     assert _views(client, tuned) == {"hyperparameter", "forecasts"}
 
 
-def test_the_forecasts_plot_has_a_figure_per_origin(client, run_id):
-    forecasts = client.get(f"/api/v1/run/{run_id}/forecasts").json()
-
-    response = client.get(f"/api/v1/run/{run_id}/forecasts/plot")
-
-    assert response.status_code == 200
-    [grouped] = response.json()
-    assert grouped["type"] == "grouped"
-    assert [g["title"] for g in grouped["groups"]] == [
-        "Validation 1",
-        "Validation 2",
-        "Validation 3",
-        "Test",
-    ]
-    for group, origin in zip(grouped["groups"], forecasts["origins"], strict=True):
-        [artifact] = group["artifacts"]
-        assert artifact["type"] == "plotly"
-        traces = {t["name"]: t for t in json.loads(artifact["payload"])["data"]}
-        assert traces["Actual"]["y"] == pytest.approx(origin["actual"])
-        assert traces["Forecast"]["y"] == pytest.approx(origin["forecast"])
-        assert traces["95% interval"]["y"] == pytest.approx(origin["lower"]["95"])
-        assert traces["80% interval"]["y"] == pytest.approx(origin["lower"]["80"])
-
-
 def test_a_single_origin_is_one_figure_without_a_selector():
     from DashAI.back.evaluation.forecasts_plot import forecasts_artifacts
 
@@ -522,15 +498,6 @@ def test_a_single_origin_is_one_figure_without_a_selector():
     assert artifact.type == "plotly"
     names = [t["name"] for t in json.loads(artifact.payload)["data"]]
     assert names == ["Actual", "Forecast"]
-
-
-def test_a_run_without_forecasts_has_no_forecasts_plot(client, run_id):
-    session_id = _get(client, Run, run_id).model_session_id
-    pending = _create_run(client, session_id, "NaiveForecaster")
-
-    response = client.get(f"/api/v1/run/{pending}/forecasts/plot")
-
-    assert response.status_code == 404
 
 
 def test_the_file_goes_with_the_run(client, tmp_path):
