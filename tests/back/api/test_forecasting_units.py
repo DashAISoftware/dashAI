@@ -334,7 +334,7 @@ def test_without_a_search_the_best_parameters_are_the_ones_given():
     ctx = _backtested("SeasonalNaiveForecaster", {"season_length": 3})
 
     assert ctx.require("best_parameters") == {"season_length": 3}
-    assert ctx.require("plot_paths") == []
+    assert ctx.require("hyperparameter_plots_path") is None
     assert ctx.require("forecasts")["season_length"] == 3
 
 

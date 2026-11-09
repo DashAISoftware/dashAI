@@ -15,7 +15,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from DashAI.back.dependencies.database.models import Metric, Run
+from DashAI.back.dependencies.database.models import Metric, Run, RunPlot
 from DashAI.back.session_package.export import build_session_package
 from DashAI.back.session_package.load import import_session_package
 from DashAI.back.units.forecast_scope import forecasts_file
@@ -33,6 +33,11 @@ CUTS = {
     "test_origin": 45,
     "n_steps": 48,
 }
+
+
+def _views(client, run_id):
+    with client.app.container["session_factory"]() as db:
+        return {view for (view,) in db.query(RunPlot.view).filter_by(run_id=run_id)}
 
 
 @pytest.fixture(scope="module", name="run_id")
@@ -439,6 +444,10 @@ def test_a_finished_run_without_its_file_has_no_forecasts(client, run_id, tmp_pa
 
     assert response.status_code == 404
     assert "has no forecasts" in response.text
+
+
+def test_a_run_without_a_search_has_no_hyperparameter_row(client, run_id):
+    assert "hyperparameter" not in _views(client, run_id)
 
 
 def test_the_forecasts_plot_has_a_figure_per_origin(client, run_id):

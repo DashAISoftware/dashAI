@@ -16,6 +16,7 @@ from fastapi.testclient import TestClient
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.enums.status import RunStatus
+from DashAI.back.core.run_plots import read_run_plot_file
 from DashAI.back.core.schema_fields import BaseSchema, int_field, schema_field
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dependencies.database.models import (
@@ -23,6 +24,7 @@ from DashAI.back.dependencies.database.models import (
     Metric,
     ModelSession,
     Run,
+    RunPlot,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
@@ -327,17 +329,15 @@ def test_hyperparameter_search_persists_the_best_parameters(tuned_run: Run):
     assert 1 <= best <= 5
 
 
-def test_hyperparameter_search_saves_two_plots_for_a_single_parameter(
-    tuned_run: Run,
+def test_hyperparameter_search_saves_one_row_with_two_plots(
+    client: TestClient, tuned_run: Run
 ):
-    assert tuned_run.plot_history_path is not None
-    assert tuned_run.plot_slice_path is not None
-    assert os.path.exists(tuned_run.plot_history_path)
-    assert os.path.exists(tuned_run.plot_slice_path)
-    # create_plots only produces the contour and importance plots when more
-    # than one hyperparameter is being searched.
-    assert tuned_run.plot_contour_path is None
-    assert tuned_run.plot_importance_path is None
+    with client.app.container["session_factory"]() as db:
+        [row] = db.query(RunPlot).filter_by(run_id=tuned_run.id).all()
+
+    assert row.view == "hyperparameter"
+    leaves = read_run_plot_file(row.artifacts_path)
+    assert [leaf["type"] for leaf in leaves] == ["plotly", "plotly"]
 
 
 def test_the_tuned_model_still_logs_its_metrics(client: TestClient, tuned_run: Run):

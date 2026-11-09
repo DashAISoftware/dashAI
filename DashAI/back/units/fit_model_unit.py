@@ -56,7 +56,7 @@ class FitModelUnit(BaseUnit, ModelFitScopeMixin):
         "x",
         "y",
     )
-    PROVIDES = ("model", "plot_paths")
+    PROVIDES = ("model", "hyperparameter_plots_path")
     RUNTIME_PARAMS = ("run_id", "artifact_prefix")
 
     def __init__(self, **config) -> None:
@@ -82,13 +82,13 @@ class FitModelUnit(BaseUnit, ModelFitScopeMixin):
         model.x_data = x
         model.y_data = y
 
-        plot_paths = []
+        plots_path = None
         try:
             if self._will_search(optimizable_parameters):
                 # Every read of the context happens here rather than in the
                 # shared helper: the contract audit parses this file, so a
                 # require moved out of it makes a declared key look unread.
-                model, best_parameters, plot_paths = self._search(
+                model, best_parameters, plots_path = self._search(
                     model,
                     x,
                     y,
@@ -120,7 +120,7 @@ class FitModelUnit(BaseUnit, ModelFitScopeMixin):
             ) from e
 
         ctx.put("model", model)
-        ctx.put_ref("plot_paths", plot_paths)
+        ctx.put_ref("hyperparameter_plots_path", plots_path)
 
     def _fit_kept_model(self, model, x, y) -> None:
         """Fit the model that gets kept, on the partitions it was given."""

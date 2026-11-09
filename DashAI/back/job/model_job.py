@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from kink import inject
 from sqlalchemy import exc
@@ -11,6 +11,7 @@ from DashAI.back.dependencies.database.models import (
     Metric,
     ModelSession,
     Run,
+    RunPlot,
 )
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics.base_metric import BaseMetric
@@ -222,7 +223,7 @@ class ModelJob(BaseJob):
 
                 self.report_progress(0.2, "Training")
                 try:
-                    plot_paths = []
+                    plots_path = None
                     kind = getattr(strategy_class, "KIND", "holdout")
 
                     if kind == "full":
@@ -251,7 +252,7 @@ class ModelJob(BaseJob):
                             run_id=run_id,
                             artifact_prefix=str(run_id),
                         )(ctx)
-                        plot_paths = ctx.require("plot_paths")
+                        plots_path = ctx.require("hyperparameter_plots_path")
                         run.parameters = ctx.require("best_parameters")
                         flag_modified(run, "parameters")
                         run.exogenous = self._exogenous_record(
@@ -288,7 +289,7 @@ class ModelJob(BaseJob):
                         )
                         fit_model(ctx)
 
-                        plot_paths = ctx.require("plot_paths")
+                        plots_path = ctx.require("hyperparameter_plots_path")
                         if ctx.has("best_parameters"):
                             run.parameters = ctx.get("best_parameters")
                             flag_modified(run, "parameters")
@@ -324,7 +325,7 @@ class ModelJob(BaseJob):
 
                         fit_folds(ctx)
 
-                        plot_paths = ctx.require("plot_paths")
+                        plots_path = ctx.require("hyperparameter_plots_path")
                         if ctx.has("best_parameters"):
                             run.parameters = ctx.get("best_parameters")
                             flag_modified(run, "parameters")
@@ -364,27 +365,24 @@ class ModelJob(BaseJob):
                         f"Model training and evaluation failed {e}",
                     ) from e
 
-                try:
-                    paths = plot_paths + [None] * (4 - len(plot_paths))
-                    (
-                        run.plot_history_path,
-                        run.plot_slice_path,
-                        run.plot_contour_path,
-                        run.plot_importance_path,
-                    ) = paths[:4]
-                    db.commit()
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        f"Hyperparameter plot path saving failed {e}",
-                    ) from e
-
                 self.report_progress(0.95, "Saving model")
                 SaveModelUnit(artifact_prefix=str(run_id))(ctx)
                 if ctx.has("forecasts"):
                     # A backtest's forecasts are kept beside its model; the
                     # results and the reports read them, never the model.
                     SaveForecastsUnit(artifact_prefix=str(run_id))(ctx)
+
+                try:
+                    stale_plots = self._store_run_plots(
+                        db, run_id, {"hyperparameter": plots_path}
+                    )
+                    db.commit()
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(f"Saving the run's plots failed {e}") from e
+                from DashAI.back.api.utils import remove_run_files
+
+                remove_run_files(stale_plots)
 
                 try:
                     run.run_path = ctx.require("model_path")
@@ -843,6 +841,42 @@ class ModelJob(BaseJob):
             ) from e
 
         return metrics
+
+    @staticmethod
+    def _store_run_plots(db, run_id: int, paths: Dict[str, Optional[str]]) -> List[str]:
+        """Point the run's plot rows at the files its training just wrote.
+
+        Any row the run already had is replaced, edits included: they were
+        made on figures this training no longer shows.
+
+        Parameters
+        ----------
+        db : Session
+            The open session; the caller commits.
+        run_id : int
+            The run whose plots these are.
+        paths : dict
+            The file of each view, ``None`` for a view the run did not
+            produce.
+
+        Returns
+        -------
+        list of str
+            The files of the replaced rows that no new row points at, for the
+            caller to remove once it has committed.
+        """
+        old_rows = db.query(RunPlot).filter_by(run_id=run_id).all()
+        kept = {path for path in paths.values() if path}
+        stale = [
+            row.artifacts_path for row in old_rows if row.artifacts_path not in kept
+        ]
+        for row in old_rows:
+            db.delete(row)
+        db.flush()
+        for view, path in paths.items():
+            if path:
+                db.add(RunPlot(run_id=run_id, view=view, artifacts_path=path))
+        return stale
 
     @staticmethod
     def _write_full_metrics(db, run_id: int, results: Dict[str, float]) -> None:
