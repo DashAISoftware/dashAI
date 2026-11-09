@@ -441,6 +441,70 @@ def test_a_finished_run_without_its_file_has_no_forecasts(client, run_id, tmp_pa
     assert "has no forecasts" in response.text
 
 
+def test_the_forecasts_plot_has_a_figure_per_origin(client, run_id):
+    forecasts = client.get(f"/api/v1/run/{run_id}/forecasts").json()
+
+    response = client.get(f"/api/v1/run/{run_id}/forecasts/plot")
+
+    assert response.status_code == 200
+    [grouped] = response.json()
+    assert grouped["type"] == "grouped"
+    assert [g["title"] for g in grouped["groups"]] == [
+        "Validation 1",
+        "Validation 2",
+        "Validation 3",
+        "Test",
+    ]
+    for group, origin in zip(grouped["groups"], forecasts["origins"], strict=True):
+        [artifact] = group["artifacts"]
+        assert artifact["type"] == "plotly"
+        traces = {t["name"]: t for t in json.loads(artifact["payload"])["data"]}
+        assert traces["Actual"]["y"] == pytest.approx(origin["actual"])
+        assert traces["Forecast"]["y"] == pytest.approx(origin["forecast"])
+        assert traces["95% interval"]["y"] == pytest.approx(origin["lower"]["95"])
+        assert traces["80% interval"]["y"] == pytest.approx(origin["lower"]["80"])
+
+
+def test_the_forecasts_plot_speaks_the_requested_language(client, run_id):
+    response = client.get(
+        f"/api/v1/run/{run_id}/forecasts/plot", headers={"Accept-Language": "es"}
+    )
+
+    [grouped] = response.json()
+    assert grouped["groups"][-1]["title"] == "Prueba"
+    payload = json.loads(grouped["groups"][-1]["artifacts"][0]["payload"])
+    assert {t["name"] for t in payload["data"]} >= {"Real", "Pronóstico"}
+
+
+def test_a_single_origin_is_one_figure_without_a_selector():
+    from DashAI.back.evaluation.forecasts_plot import forecasts_artifacts
+
+    origin = {
+        "partition": "test",
+        "index": 0,
+        "dates": ["2023-01-01T00:00:00", "2023-02-01T00:00:00"],
+        "actual": [1.0, None],
+        "forecast": [1.5, 2.0],
+        "lower": {},
+        "upper": {},
+    }
+
+    [artifact] = forecasts_artifacts({"levels": [], "origins": [origin]})
+
+    assert artifact.type == "plotly"
+    names = [t["name"] for t in json.loads(artifact.payload)["data"]]
+    assert names == ["Actual", "Forecast"]
+
+
+def test_a_run_without_forecasts_has_no_forecasts_plot(client, run_id):
+    session_id = _get(client, Run, run_id).model_session_id
+    pending = _create_run(client, session_id, "NaiveForecaster")
+
+    response = client.get(f"/api/v1/run/{pending}/forecasts/plot")
+
+    assert response.status_code == 404
+
+
 def test_the_file_goes_with_the_run(client, tmp_path):
     def path_of(run):
         return forecasts_file(client.app.container["config"]["RUNS_PATH"], str(run))
