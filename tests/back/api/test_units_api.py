@@ -21,6 +21,7 @@ EXPECTED_UNITS = {
     "ScoreForecastsUnit",
     "FitFinalForecasterUnit",
     "SaveForecastsUnit",
+    "SaveForecastsPlotUnit",
     "ForecastHorizonUnit",
     "FitModelOverFoldsUnit",
     "FitModelOverNestedFoldsUnit",
@@ -306,6 +307,7 @@ EXPECTED_RUNTIME_PARAMS = {
     ("BacktestForecasterUnit", "run_id"),
     ("BacktestForecasterUnit", "artifact_prefix"),
     ("SaveForecastsUnit", "artifact_prefix"),
+    ("SaveForecastsPlotUnit", "artifact_prefix"),
     ("ApplyCutPreprocessingUnit", "preprocessing_artifacts_path"),
 }
 
