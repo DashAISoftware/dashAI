@@ -150,7 +150,8 @@ export const MOCK_ROLES = [
     scope: "Global",
     system: false,
     description: "Usuario de la organización sin privilegios de gestión.",
-    permissions: ["datasets.read", "models.read"],
+    // Transitional, see the note in catalog.py
+    permissions: PROJECT_PERMISSIONS.filter((uid) => uid !== "projects.manage"),
   },
   {
     id: "ROLE-OWNER",

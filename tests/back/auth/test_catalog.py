@@ -121,19 +121,18 @@ def test_editable_role_edits_are_kept(session_factory):
     sync_auth_catalog(session_factory)
     with session_factory() as db:
         member = db.execute(select(Role).where(Role.uid == "member")).scalar_one()
-        extra = db.execute(
-            select(Permission).where(Permission.uid == "datasets.write")
+        removed = db.execute(
+            select(Permission).where(Permission.uid == "datasets.delete")
         ).scalar_one()
-        member.permissions.append(extra)
+        member.permissions.remove(removed)
         db.commit()
 
     sync_auth_catalog(session_factory)
 
-    assert _role_permissions(session_factory, "member") == {
-        "datasets.read",
-        "datasets.write",
-        "models.read",
-    }
+    member_spec = next(spec for spec in ROLES if spec.uid == "member")
+    assert _role_permissions(session_factory, "member") == (
+        set(member_spec.permissions()) - {"datasets.delete"}
+    )
 
 
 def test_unknown_permission_is_kept_and_reported(session_factory, caplog):

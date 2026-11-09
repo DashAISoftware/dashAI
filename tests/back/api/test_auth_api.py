@@ -60,7 +60,10 @@ def test_register_creates_a_member_and_logs_in(client, account):
     # Emails are stored in lowercase
     assert body["email"] == account["email"].lower()
     assert body["global_role"] == {"uid": "member", "name": "Miembro"}
-    assert body["permissions"] == ["datasets.read", "models.read"]
+    # Every project permission except managing other people's access
+    assert "datasets.write" in body["permissions"]
+    assert "projects.manage" not in body["permissions"]
+    assert "users.manage" not in body["permissions"]
     assert "password_hash" not in body
     assert "token_version" not in body
 

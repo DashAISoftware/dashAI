@@ -120,7 +120,14 @@ ROLES: List[RoleSpec] = [
         "Usuario de la organización sin privilegios de gestión.",
         "global",
         fixed=False,
-        permissions=lambda: ["datasets.read", "models.read"],
+        # Transitional: until resources belong to projects, the global role
+        # is the only one checked, so members get every project permission
+        # except managing other people. Once project roles are checked, this
+        # must shrink back, or a project "Lector" could still write through
+        # the global role.
+        permissions=lambda: [
+            uid for uid in PROJECT_PERMISSIONS if uid != "projects.manage"
+        ],
     ),
     RoleSpec(
         "owner",
