@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Callable, Final
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import schema_field, string_field
@@ -184,7 +184,11 @@ class BaseDatasetExporter(ConfigObject, ABC):
         ...
 
     def export(
-        self, dataset: "DashAIDataset", params: dict[str, Any], temp_path: str
+        self,
+        dataset: "DashAIDataset",
+        params: dict[str, Any],
+        temp_path: str,
+        on_step: Callable[[str], None] | None = None,
     ) -> ExportResult:
         """Validate, prepare and upload a dataset.
 
@@ -200,6 +204,10 @@ class BaseDatasetExporter(ConfigObject, ABC):
             Raw export parameters as sent by the user.
         temp_path : str
             Local directory where generated files can be written.
+        on_step : Callable[[str], None] or None, optional
+            Called with ``"prepare"`` right before :meth:`prepare` and with
+            ``"upload"`` right before :meth:`upload`, so the caller can track
+            the export phase. By default nothing is called.
 
         Returns
         -------
@@ -217,7 +225,11 @@ class BaseDatasetExporter(ConfigObject, ABC):
         errors = self.validate(dataset, params)
         if errors:
             raise DatasetExportValidationError(errors)
+        if on_step is not None:
+            on_step("prepare")
         payload = self.prepare(dataset, params, temp_path)
+        if on_step is not None:
+            on_step("upload")
         return self.upload(payload, params)
 
     def get_remote_status(self, remote_id: str) -> str | None:

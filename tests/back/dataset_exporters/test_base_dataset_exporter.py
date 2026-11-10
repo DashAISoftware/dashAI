@@ -67,6 +67,26 @@ def test_export_runs_validate_prepare_upload_in_order():
     assert result == ExportResult(remote_id="42", url="https://example.com/d/42")
 
 
+def test_export_reports_each_step_before_running_it():
+    exporter = ConcreteExporter()
+    steps = []
+
+    def on_step(step):
+        steps.append(step)
+        exporter.calls.append(f"on_step:{step}")
+
+    exporter.export(_dataset(), VALID_PARAMS, "/tmp/export", on_step=on_step)
+
+    assert steps == ["prepare", "upload"]
+    assert exporter.calls == [
+        "validate",
+        "on_step:prepare",
+        "prepare",
+        "on_step:upload",
+        "upload",
+    ]
+
+
 def test_export_stops_when_validation_fails():
     exporter = ConcreteExporter()
 

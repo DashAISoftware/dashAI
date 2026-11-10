@@ -224,6 +224,7 @@ from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
 from DashAI.back.job.component_download_job import ComponentDownloadJob
 from DashAI.back.job.converter_job import ConverterJob
 from DashAI.back.job.datafile_job import DatafileJob
+from DashAI.back.job.dataset_export_job import DatasetExportJob
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.document_job import DocumentJob
 from DashAI.back.job.explainer_job import ExplainerJob
@@ -794,6 +795,7 @@ def get_initial_components():
         PredictJob,
         ConverterJob,
         DatasetJob,
+        DatasetExportJob,
         DocumentJob,
         GenerativeJob,
         PipelineJob,
