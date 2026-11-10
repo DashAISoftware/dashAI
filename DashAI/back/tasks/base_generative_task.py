@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict, Final, List, Tuple
+from typing import Any, Dict, Final, List, Optional, Tuple
 
 from DashAI.back.dependencies.database.models import ProcessData
 
@@ -119,6 +119,29 @@ class BaseGenerativeTask:
             Processed output data as a list of tuples containing the data and its type
         """
         raise NotImplementedError
+
+    def extract_message_from_output(self, output: List[ProcessData]) -> Optional[str]:
+        """Return the message of a finished process, or ``None``.
+
+        The message is the first output row whose ``data_type`` is ``"str"``,
+        wherever it sits, so outputs that carry extra rows (a workflow's
+        retrieval trace, for instance) fold into the history the same way a
+        plain chat answer does.
+
+        Parameters
+        ----------
+        output : List[ProcessData]
+            Output rows of a finished process.
+
+        Returns
+        -------
+        Optional[str]
+            The message text, or ``None`` when no ``str`` row is present.
+        """
+        for row in output:
+            if row.data_type == "str":
+                return row.data
+        return None
 
     @abstractmethod
     def process_output_from_database(

@@ -365,6 +365,46 @@ def test_prepare_for_task_text_to_text_with_history():
     assert prepared == expected
 
 
+def test_extract_message_finds_the_str_row_after_other_rows():
+    """The message is the first ``str`` row wherever it sits."""
+    rows = [
+        ProcessData(data="[]", data_type="Queries"),
+        ProcessData(data="{}", data_type="Dict"),
+        ProcessData(data="the answer", data_type="str"),
+    ]
+
+    assert TextToTextGenerationTask().extract_message_from_output(rows) == (
+        "the answer"
+    )
+
+
+def test_extract_message_finds_a_leading_str_row():
+    """A plain chat output holds the message in its only row."""
+    rows = [
+        ProcessData(data="legacy answer", data_type="str"),
+        ProcessData(data="{}", data_type="Dict"),
+    ]
+
+    assert TextToTextGenerationTask().extract_message_from_output(rows) == (
+        "legacy answer"
+    )
+
+
+def test_extract_message_is_none_without_a_str_row():
+    """No ``str`` row means no message to fold into the history."""
+    rows = [
+        ProcessData(data="[]", data_type="Queries"),
+        ProcessData(data="{}", data_type="Dict"),
+    ]
+
+    assert TextToTextGenerationTask().extract_message_from_output(rows) is None
+
+
+def test_extract_message_is_none_for_an_empty_output():
+    """An empty output has no message."""
+    assert TextToTextGenerationTask().extract_message_from_output([]) is None
+
+
 def prepare_input_for_database_text_to_text():
     text_to_text_task = TextToTextGenerationTask()
     input_data = ["What is the capital of France?"]
