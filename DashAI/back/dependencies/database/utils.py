@@ -203,6 +203,7 @@ def find_entity_by_huey_id(huey_id: str) -> dict:
         Converter,
         DataDocument,
         Dataset,
+        DatasetExport,
         Explorer,
         GlobalExplainer,
         LocalExplainer,
@@ -289,6 +290,19 @@ def find_entity_by_huey_id(huey_id: str) -> dict:
                 "entity_name": converter.name,
                 "created_at": converter.created,
                 "last_modified": converter.last_modified,
+            }
+
+        dataset_export = (
+            db.query(DatasetExport).filter(DatasetExport.huey_id == huey_id).first()
+        )
+        if dataset_export:
+            return {
+                "entity_type": "dataset_export",
+                "entity_id": dataset_export.id,
+                "entity_name": dataset_export.dataset_name,
+                "created_at": dataset_export.created,
+                "last_modified": dataset_export.last_modified,
+                "status": dataset_export.status,
             }
 
         return None
