@@ -7,6 +7,7 @@
         "column_roles": [
           {
             "name": "features",
+            "label": "Features",
             "types": [
               "Float",
               "Integer"
@@ -59,6 +60,7 @@
         "column_roles": [
           {
             "name": "features",
+            "label": "Features",
             "types": [
               "Image"
             ],
@@ -69,6 +71,7 @@
           },
           {
             "name": "target",
+            "label": "Target",
             "types": [
               "Categorical"
             ],
@@ -143,6 +146,7 @@
         "column_roles": [
           {
             "name": "features",
+            "label": "Features",
             "types": [
               "Float",
               "Integer",
@@ -155,6 +159,7 @@
           },
           {
             "name": "target",
+            "label": "Target",
             "types": [
               "Float",
               "Integer"
@@ -229,6 +234,7 @@
         "column_roles": [
           {
             "name": "time_index",
+            "label": "Time index",
             "types": [
               "Date"
             ],
@@ -239,6 +245,7 @@
           },
           {
             "name": "series",
+            "label": "Series",
             "types": [
               "Float",
               "Integer"
@@ -250,6 +257,7 @@
           },
           {
             "name": "exogenous",
+            "label": "Exogenous variables",
             "types": [
               "Float",
               "Integer"
@@ -257,7 +265,8 @@
             "min": 0,
             "max": "n",
             "required": false,
-            "transformable": true
+            "transformable": true,
+            "description": "Only variables known ahead of time, whose future values you will have when you predict: the calendar, holidays, planned promotions, prices already set."
           }
         ],
         "io_roles": {
@@ -334,6 +343,7 @@
         "column_roles": [
           {
             "name": "features",
+            "label": "Features",
             "types": [
               "Float",
               "Integer",
@@ -346,6 +356,7 @@
           },
           {
             "name": "target",
+            "label": "Target",
             "types": [
               "Categorical"
             ],
@@ -419,6 +430,7 @@
         "column_roles": [
           {
             "name": "features",
+            "label": "Features",
             "types": [
               "Text"
             ],
@@ -429,6 +441,7 @@
           },
           {
             "name": "target",
+            "label": "Target",
             "types": [
               "Categorical"
             ],
@@ -503,6 +516,7 @@
         "column_roles": [
           {
             "name": "features",
+            "label": "Features",
             "types": [
               "Text"
             ],
@@ -513,6 +527,7 @@
           },
           {
             "name": "target",
+            "label": "Target",
             "types": [
               "Text"
             ],

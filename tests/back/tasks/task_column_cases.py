@@ -49,12 +49,19 @@ def _tasks() -> List[type]:
     return sorted(tasks, key=lambda task: task.__name__)
 
 
+def _english(text: Any) -> Any:
+    """A multilingual text as the API sends it to an English client."""
+    return text.get("en") if hasattr(text, "get") else text
+
+
 def _role_metadata(role: ColumnRole) -> Dict[str, Any]:
-    """What the wizard reads of a role; the label is left out, as no rule
-    depends on it."""
+    """The role as the wizard reads it, with its texts in English: the API
+    localizes them before they reach the frontend."""
     metadata = role.to_metadata()
-    keys = ("name", "types", "min", "max", "required", "transformable")
-    return {key: metadata[key] for key in keys}
+    for key in ("label", "description"):
+        if key in metadata:
+            metadata[key] = _english(metadata[key])
+    return metadata
 
 
 def _columns(role: ColumnRole, count: int) -> List[str]:
