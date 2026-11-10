@@ -70,9 +70,16 @@ jest.mock("notistack", () => ({
 // ChatBubble's subtree pulls ESM-only deps Jest cannot parse; the branch under
 // test only needs to distinguish "waiting bubble shown" from "status line".
 jest.mock("./ChatBubble", () => {
-  const MockChatBubble = ({ isWaiting }) => (
-    <div data-testid={isWaiting ? "waiting-bubble" : "answer-bubble"} />
-  );
+  const MockChatBubble = ({ isWaiting, isError, messages }) => {
+    if (isError) {
+      return (
+        <div data-testid="error-bubble">
+          {messages?.map((message) => message.data).join(" ")}
+        </div>
+      );
+    }
+    return <div data-testid={isWaiting ? "waiting-bubble" : "answer-bubble"} />;
+  };
   return { ChatBubble: MockChatBubble };
 });
 
@@ -95,7 +102,7 @@ const {
   getComponentById,
   getComponentDownloadStatus,
 } = require("../../api/component");
-const { getProcessById } = require("../../api/process");
+const { getProcessById, deleteProcessById } = require("../../api/process");
 
 const inFlightProcess = (progress) => ({
   id: "11",
@@ -161,4 +168,50 @@ test("in-flight RAG message without progress falls back to the waiting bubble", 
   expect(
     screen.queryByText(/Searching sources with query/),
   ).not.toBeInTheDocument();
+});
+
+// A failed reply stays in the conversation with its error (#969): the turn is
+// neither removed from the screen nor deleted on the server.
+const failedProcess = {
+  ...inFlightProcess(null),
+  status: 4,
+  end_time: "2026-10-16T10:00:09",
+  output: [
+    {
+      id: 2,
+      process_id: 11,
+      data: "Error during model generation. Requested tokens exceed context",
+      data_type: "str",
+      is_input: false,
+    },
+  ],
+};
+
+test("a failed reply loaded with the session shows its error", async () => {
+  getSessionById.mockResolvedValue({
+    id: 7,
+    name: "S",
+    task_name: "TextToTextGenerationTask",
+  });
+  renderChat(failedProcess);
+
+  expect(await screen.findByTestId("error-bubble")).toHaveTextContent(
+    "Requested tokens exceed context",
+  );
+  expect(deleteProcessById).not.toHaveBeenCalled();
+});
+
+test("a reply that fails while the chat waits for it stays, with its error", async () => {
+  getSessionById.mockResolvedValue({
+    id: 7,
+    name: "S",
+    task_name: "TextToTextGenerationTask",
+  });
+  getProcessById.mockResolvedValue(failedProcess);
+  renderChat(inFlightProcess(null));
+
+  expect(
+    await screen.findByTestId("error-bubble", {}, { timeout: 4000 }),
+  ).toHaveTextContent("Requested tokens exceed context");
+  expect(deleteProcessById).not.toHaveBeenCalled();
 });

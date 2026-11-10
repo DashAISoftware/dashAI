@@ -118,7 +118,7 @@
     "failedToUpdateSession": "Failed to update session",
     "modelSwitchFailed": "Failed to change the session model",
     "nameRequired": "Name is required",
-    "processError": "The process has failed. Deleting it... {{error}}",
+    "replyFailed": "The model could not answer",
     "sessionNameEmpty": "Session name cannot be empty",
     "sessionNameExists": "A session with this name already exists"
   },

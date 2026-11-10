@@ -118,7 +118,7 @@
     "failedToUpdateSession": "更新会话失败",
     "modelSwitchFailed": "更改会话模型失败",
     "nameRequired": "名称为必填项",
-    "processError": "处理失败，正在删除...{{error}}",
+    "replyFailed": "模型无法回答",
     "sessionNameEmpty": "会话名称不能为空",
     "sessionNameExists": "已存在同名会话"
   },

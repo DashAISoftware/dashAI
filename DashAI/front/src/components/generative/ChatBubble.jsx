@@ -10,6 +10,7 @@ function ChatBubbleComponent({
   timestamp = null,
   isUser = false,
   isWaiting = false,
+  isError = false,
 }) {
   return (
     <Box
@@ -44,6 +45,7 @@ function ChatBubbleComponent({
           messages={messages}
           isUser={isUser}
           isWaiting={isWaiting}
+          isError={isError}
         />
 
         <ChatTimestamp timestamp={timestamp} isUser={isUser} />

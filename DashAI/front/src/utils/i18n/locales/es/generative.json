@@ -119,7 +119,7 @@
     "failedToUpdateSession": "Error al actualizar la sesión",
     "modelSwitchFailed": "No se pudo cambiar el modelo de la sesión",
     "nameRequired": "Se requiere un nombre",
-    "processError": "El proceso ha fallado. Eliminándolo... {{error}}",
+    "replyFailed": "El modelo no pudo responder",
     "sessionNameEmpty": "El nombre de la sesión no puede estar vacío",
     "sessionNameExists": "Ya existe una sesión con este nombre"
   },

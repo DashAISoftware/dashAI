@@ -118,7 +118,7 @@
     "failedToUpdateSession": "Sitzung konnte nicht aktualisiert werden",
     "modelSwitchFailed": "Sitzungsmodell konnte nicht geändert werden",
     "nameRequired": "Name ist erforderlich",
-    "processError": "Der Prozess ist fehlgeschlagen. Wird gelöscht... {{error}}",
+    "replyFailed": "Das Modell konnte nicht antworten",
     "sessionNameEmpty": "Sitzungsname darf nicht leer sein",
     "sessionNameExists": "Eine Sitzung mit diesem Namen existiert bereits"
   },

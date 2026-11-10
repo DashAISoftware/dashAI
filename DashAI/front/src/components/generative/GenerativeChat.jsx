@@ -4,11 +4,7 @@ import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { ChatBubble } from "./ChatBubble";
 import RAGChatProgress from "./RAGChatProgress";
-import {
-  getProcessById,
-  getProcessesBySessionId,
-  deleteProcessById,
-} from "../../api/process";
+import { getProcessById, getProcessesBySessionId } from "../../api/process";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { postProcess } from "../../api/process";
 import { enqueueGenerativeProcessJob } from "../../api/job";
@@ -283,14 +279,15 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
     const POLL_INTERVAL = 1500;
 
     const intervalId = setInterval(() => {
+      // Finished (3) and failed (4) turns are done: a failed turn stays in
+      // the conversation with its error, and is not polled again (#969).
+      const isDone = (m) => m.status === 3 || m.status === 4;
       const unfinished = messages.filter(
-        (m) =>
-          m.status !== 3 && // Not Finished
-          !pollingProcessIdsRef.current.has(m.id),
+        (m) => !isDone(m) && !pollingProcessIdsRef.current.has(m.id),
       );
 
       if (unfinished.length === 0) {
-        if (messages.every((m) => m.status === 3)) {
+        if (messages.every(isDone)) {
           clearInterval(intervalId); // nothing left to poll
         }
         return;
@@ -301,28 +298,8 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
         pollingProcessIdsRef.current.add(msg.id);
         getProcessById(msg.id)
           .then((process) => {
-            const status = process.status;
-
-            // Error
-            if (status === 4) {
-              setMessages((prev) => prev.filter((m) => m.id !== process.id));
-              enqueueSnackbar(
-                t("generative:error.processError", {
-                  error: process.output?.[0]?.data
-                    ? `\n${process.output[0].data}`
-                    : "",
-                }),
-                {
-                  autoHideDuration: 8000,
-                  style: { whiteSpace: "pre-line" },
-                },
-              );
-
-              return deleteProcessById(process.id).catch((error) =>
-                console.error("Failed to delete errored process:", error),
-              );
-            }
-            // Update progress or final result
+            // Update progress, the final result or the error: a failed turn
+            // keeps its input and shows its error in place (#969).
             setMessages((prev) =>
               prev.map((m) => (m.id === process.id ? process : m)),
             );
@@ -677,6 +654,17 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
                           />
                         )}
                       </>
+                    ) : message.status === 4 ? (
+                      <ChatBubble
+                        messages={message.output}
+                        sender={"Model"}
+                        isError={true}
+                        timestamp={
+                          message.end_time
+                            ? new Date(message.end_time).toLocaleTimeString()
+                            : null
+                        }
+                      />
                     ) : (
                       <>
                         {/* Resolve here too: a truthy payload the helper
