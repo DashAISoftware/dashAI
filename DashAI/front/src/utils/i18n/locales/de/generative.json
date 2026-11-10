@@ -186,6 +186,7 @@
     "breadcrumbs": {
       "generative": "Generativ",
       "goBack": "Zurück",
+      "prompts": "Prompts",
       "rag": "RAG",
       "sessionSuffix": "Sitzung"
     },
@@ -283,6 +284,7 @@
     },
     "placeholders": {
       "insert": "{{placeholder}} einfügen",
+      "optionalTitle": "Optionale Platzhalter",
       "title": "Erforderliche Platzhalter"
     },
     "prompt": {

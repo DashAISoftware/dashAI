@@ -186,6 +186,7 @@
     "breadcrumbs": {
       "generative": "生成式",
       "goBack": "返回",
+      "prompts": "提示词",
       "rag": "RAG",
       "sessionSuffix": "会话"
     },
@@ -281,6 +282,7 @@
     },
     "placeholders": {
       "insert": "插入 {{placeholder}}",
+      "optionalTitle": "可选占位符",
       "title": "必填占位符"
     },
     "prompt": {
