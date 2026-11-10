@@ -817,3 +817,41 @@ def test_a_forecasts_plot_that_cannot_be_drawn_does_not_fail_the_training(
 
     assert _get(client, Run, run_id).status == RunStatus.FINISHED
     assert "forecasts" not in _views(client, run_id)
+
+
+def test_a_grouped_hpo_plot_goes_to_the_legacy_entries_as_its_first_figure(
+    tmp_path,
+):
+    import pickle
+
+    from DashAI.back.core.artifacts import (
+        ArtifactGroup,
+        GroupedArtifacts,
+        PlotlyArtifact,
+    )
+    from DashAI.back.core.run_plots import write_run_plot_file
+    from DashAI.back.session_package.export import _legacy_plots
+
+    def figure(title):
+        return PlotlyArtifact(payload='{"data": [], "layout": {}}', title=title)
+
+    path = tmp_path / "hyperparameter_plots_1.pickle"
+    write_run_plot_file(
+        path,
+        [
+            figure("history"),
+            GroupedArtifacts(
+                title="Slice plot",
+                groups=[
+                    ArtifactGroup(title="a", artifacts=[figure("slice a")]),
+                    ArtifactGroup(title="b", artifacts=[figure("slice b")]),
+                ],
+            ),
+        ],
+    )
+
+    plots = _legacy_plots(path, tmp_path, "runs/0")
+
+    leaves = [pickle.loads((tmp_path / entry).read_bytes()) for entry in plots.values()]
+    assert [leaf["type"] for leaf in leaves] == ["plotly", "plotly"]
+    assert [leaf["title"] for leaf in leaves] == ["history", "slice a"]

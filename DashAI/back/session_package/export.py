@@ -255,7 +255,8 @@ def legacy_hpo_fields(count: int) -> tuple:
 def _legacy_plots(path: Path, staging: Path, run_dir: str) -> Dict[str, str]:
     """Write a run's HPO plots one pickle per plot, as format 3 first did.
 
-    A DashAI that predates ``run_plots`` reads only these.
+    A DashAI that predates ``run_plots`` reads only these, one figure per
+    file, so a plot saved as a group goes as its first figure.
 
     Returns
     -------
@@ -266,7 +267,10 @@ def _legacy_plots(path: Path, staging: Path, run_dir: str) -> Dict[str, str]:
 
     from DashAI.back.core.run_plots import read_run_plot_file
 
-    leaves = read_run_plot_file(path)
+    leaves = [
+        item["groups"][0]["artifacts"][0] if item.get("type") == "grouped" else item
+        for item in read_run_plot_file(path)
+    ]
     plots = {}
     for field, leaf in zip(legacy_hpo_fields(len(leaves)), leaves, strict=False):
         plots[field] = f"{run_dir}/{field}.pickle"
