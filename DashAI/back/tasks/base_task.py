@@ -43,6 +43,14 @@ class BaseTask:
     #: The estimated structure refuses such a step (``changes_rows``).
     PREPROCESSING_KEEPS_ROWS: bool = False
 
+    #: Whether the roles that feed a model's inputs (``io_roles()["inputs"]``)
+    #: need at least one column between them. Each role's own cardinality may
+    #: allow none (a ``"n"`` cardinality starts at 0, and forecasting's
+    #: exogenous variables are optional), but a model with no inputs at all
+    #: has nothing to read. A task that really takes no input columns sets
+    #: this to False.
+    REQUIRES_INPUT_COLUMNS: bool = True
+
     #: The task's icon in the task list: the name of a Material UI icon, as a
     #: model declares its own.
     ICON: str = "Science"
@@ -413,6 +421,37 @@ class BaseTask:
         self.check_role_names(roles)
         for role in self.column_roles():
             self.validate_role(role.name, list(roles.get(role.name) or []), types)
+
+    def validate_inputs_given(self, roles: Mapping[str, Sequence]) -> None:
+        """Check that the input roles, together, get at least one column.
+
+        It needs a session's whole selection, converter outputs included, so
+        it is not part of :meth:`validate_roles`: jobs call that one with the
+        original columns only, before the converters that produce the rest
+        have run, and a session fed only by converter outputs would look
+        empty there.
+
+        Parameters
+        ----------
+        roles : mapping
+            Role name to the role's columns, as names or as column refs. A
+            role the mapping leaves out counts as given no columns.
+
+        Raises
+        ------
+        ValueError
+            If the task requires input columns and none of its input roles
+            gets one.
+        """
+        if not self.REQUIRES_INPUT_COLUMNS:
+            return
+        inputs = self.io_roles()["inputs"]
+        if not inputs or any(roles.get(name) for name in inputs):
+            return
+        raise ValueError(
+            f"{type(self).__name__} needs at least one input column: give one "
+            f"to {' or '.join(inputs)}."
+        )
 
     def validate_dataset_for_task(
         self,

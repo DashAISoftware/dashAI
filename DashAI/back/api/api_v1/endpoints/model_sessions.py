@@ -291,6 +291,10 @@ def _roles_problem(
             return f"Column {e.args[0]!r} is not in the dataset."
         except (TypeError, ValueError) as e:
             return str(e)
+    try:
+        task.validate_inputs_given(roles)
+    except ValueError as e:
+        return str(e)
     return None
 
 
