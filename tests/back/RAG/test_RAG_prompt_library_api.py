@@ -6,8 +6,10 @@ from DashAI.back.dependencies.database.models import (
     GenerativeSession,
     RAGPipeline,
     RAGPrompt,
+    RAGSessionPrompt,
 )
 from DashAI.back.services.RAG.prompt_service import PromptService
+from DashAI.back.services.RAG.utils import build_prompt_hash
 
 
 def _unique_name(prefix: str = "prompt") -> str:
@@ -57,8 +59,88 @@ def _create_session_with_prompt(client, prompt_id: int, template: str) -> int:
                 prompt_id=prompt_id,
             )
         )
+        db.add(
+            RAGSessionPrompt(
+                session_id=session.id,
+                slot_path="generation",
+                prompt_id=prompt_id,
+            )
+        )
         db.commit()
         return session.id
+
+
+def test_creating_a_built_in_default_class_is_rejected(client):
+    """A library row cannot claim a built-in default class or its hash."""
+    before = client.get("/api/v1/prompt/library").json()
+    default_before = next(
+        prompt
+        for prompt in before
+        if prompt["class_name"] == "DefaultRAGGenerationPrompt"
+    )
+
+    response = client.post(
+        "/api/v1/prompt/",
+        json={
+            "class_name": "DefaultRAGGenerationPrompt",
+            "name": _unique_name("default_copy"),
+            "parameters": {
+                "language": "en",
+                "templates": {"en": "Q: {input}\nC: {chunks}"},
+            },
+        },
+    )
+
+    assert response.status_code == 400, response.text
+    assert "built-in default" in response.json()["detail"].lower()
+
+    after = client.get("/api/v1/prompt/library").json()
+    default_after = next(
+        prompt
+        for prompt in after
+        if prompt["class_name"] == "DefaultRAGGenerationPrompt"
+    )
+    assert default_after["id"] == default_before["id"]
+    assert default_after["parameters"] == default_before["parameters"]
+    assert default_after["is_default"] is True
+
+
+def test_seeding_demotes_a_non_canonical_default_row(client):
+    """A legacy default body is demoted and a canonical row takes its class."""
+    legacy_parameters = {"template": _unique_template()}
+    with client.app.container["session_factory"]() as db:
+        legacy = RAGPrompt(
+            class_name="DefaultQueryExpansionPrompt",
+            name="legacy expanded",
+            parameters=legacy_parameters,
+            parameters_hash=build_prompt_hash(
+                "DefaultQueryExpansionPrompt", legacy_parameters
+            ),
+            is_library=False,
+            is_default=True,
+        )
+        db.add(legacy)
+        db.commit()
+        legacy_id = legacy.id
+
+    response = client.get("/api/v1/prompt/library")
+    assert response.status_code == 200, response.text
+
+    with client.app.container["session_factory"]() as db:
+        demoted = db.get(RAGPrompt, legacy_id)
+        assert demoted is not None
+        assert demoted.is_default is False
+        assert demoted.parameters == legacy_parameters
+        canonical = (
+            db.query(RAGPrompt)
+            .filter(
+                RAGPrompt.class_name == "DefaultQueryExpansionPrompt",
+                RAGPrompt.is_default.is_(True),
+            )
+            .all()
+        )
+        assert len(canonical) == 1
+        assert isinstance(canonical[0].parameters.get("templates"), dict)
 
 
 def test_library_lists_user_prompts_and_built_ins(client):
@@ -253,6 +335,14 @@ def test_sessions_using_ignores_language_only_differences(client):
         )
         db.add(session)
         db.commit()
+        db.add(
+            RAGSessionPrompt(
+                session_id=session.id,
+                slot_path="generation",
+                prompt_id=prompt_id,
+            )
+        )
+        db.commit()
         session_id = session.id
 
         service = PromptService(db, client.app.container["component_registry"])
@@ -291,13 +381,41 @@ def test_sessions_using_finds_nested_transformation_prompts(client):
         )
         db.add(session)
         db.commit()
+        db.add(
+            RAGSessionPrompt(
+                session_id=session.id,
+                slot_path="query_transformation.prompt",
+                prompt_id=prompt_id,
+            )
+        )
+        db.commit()
         session_id = session.id
 
         service = PromptService(db, client.app.container["component_registry"])
         assert [item.id for item in service.sessions_using(prompt_id)] == [session_id]
 
 
-def test_sessions_using_matches_the_stored_prompt_parameters(client):
+def test_catalog_hides_internal_drafts(client):
+    """The catalog never exposes a session-local draft, by list or by id."""
+    with client.app.container["session_factory"]() as db:
+        draft = PromptService(
+            db, client.app.container["component_registry"]
+        ).get_or_create(
+            "CustomRAGGenerationPrompt",
+            "pipeline_hidden_CustomRAGGenerationPrompt",
+            {"template": _unique_template()},
+        )
+        draft_id = draft.id
+
+    listing = client.get("/api/v1/prompt/")
+    assert listing.status_code == 200, listing.text
+    assert draft_id not in {prompt["id"] for prompt in listing.json()}
+
+    single = client.get(f"/api/v1/prompt/{draft_id}")
+    assert single.status_code in (404, 409), single.text
+
+
+def test_sessions_using_reads_session_bindings(client):
     template = _unique_template()
     prompt_id = _create_prompt(client, _unique_name("match"), template)
     with client.app.container["session_factory"]() as db:
@@ -305,27 +423,23 @@ def test_sessions_using_matches_the_stored_prompt_parameters(client):
             name=_unique_name("matching"),
             task_name="RAGTask",
             model_name="RAGPipeline",
-            parameters={
-                "documents": [],
-                "prompt": {
-                    "component": "CustomRAGGenerationPrompt",
-                    "params": {"template": template},
-                },
-            },
+            parameters={"documents": []},
         )
         other = GenerativeSession(
             name=_unique_name("other"),
             task_name="RAGTask",
             model_name="RAGPipeline",
-            parameters={
-                "documents": [],
-                "prompt": {
-                    "component": "CustomRAGGenerationPrompt",
-                    "params": {"template": _unique_template()},
-                },
-            },
+            parameters={"documents": []},
         )
         db.add_all([matching, other])
+        db.commit()
+        db.add(
+            RAGSessionPrompt(
+                session_id=matching.id,
+                slot_path="generation",
+                prompt_id=prompt_id,
+            )
+        )
         db.commit()
         matching_id = matching.id
 

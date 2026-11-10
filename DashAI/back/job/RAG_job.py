@@ -21,6 +21,7 @@ from DashAI.back.models.RAG.RAG_pipeline import (
     RAGPipeline,
     RAGPipelineConfig,
 )
+from DashAI.back.services.RAG.prompt_service import PromptService
 from DashAI.back.services.RAG.setup_service import SetupService
 from DashAI.back.tasks.RAG_task import RAGTask
 
@@ -277,7 +278,14 @@ class RAGJob(BaseJob):
                         )
 
                     # Whitelist-only: accept only known RAG pipeline keys.
-                    raw_params = dict(generative_session.parameters)
+                    # Prompts live in their own table, so materialize them
+                    # back into the configuration before building the pipeline.
+                    raw_params = PromptService(
+                        db, component_registry
+                    ).materialize_session_parameters(
+                        generative_session.id,
+                        dict(generative_session.parameters or {}),
+                    )
                     extra_keys: set[str] = set(raw_params) - _RAG_PARAM_KEYS
                     if extra_keys:
                         log.debug(

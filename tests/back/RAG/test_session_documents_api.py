@@ -10,8 +10,11 @@ from DashAI.back.dependencies.database.models import (
     Notebook,
     RAGChunkSet,
     RAGChunkSetDocument,
+    RAGPrompt,
     RAGSessionDocument,
+    RAGSessionPrompt,
 )
+from DashAI.back.services.RAG.utils import build_prompt_hash
 from tests.back.RAG.conftest import (
     _create_data_document,
     _create_holder_session,
@@ -183,6 +186,41 @@ def test_deleting_a_session_keeps_the_document_and_other_links(client):
         assert db.get(DataDocument, document_id) is not None
         assert db.get(RAGChunkSet, second_set) is not None
     assert [row["id"] for row in client.get(_url(second)).json()] == [document_id]
+
+
+def test_deleting_a_session_through_the_api_drops_its_prompt_bindings(client):
+    """The DELETE endpoint leaves no prompt binding for the removed session."""
+    session_id = _session(client)
+    parameters = {"template": "Rewrite {input} using {history} api"}
+    with client.app.container["session_factory"]() as db:
+        prompt = RAGPrompt(
+            class_name="CustomQueryRewritingPrompt",
+            name=None,
+            parameters=parameters,
+            parameters_hash=build_prompt_hash("CustomQueryRewritingPrompt", parameters),
+            is_library=False,
+            is_default=False,
+        )
+        db.add(prompt)
+        db.flush()
+        db.add(
+            RAGSessionPrompt(
+                session_id=session_id,
+                slot_path="query_transformation.prompt",
+                prompt_id=prompt.id,
+            )
+        )
+        db.commit()
+
+    assert client.delete(f"/api/v1/generative-session/{session_id}").status_code == 204
+
+    with client.app.container["session_factory"]() as db:
+        assert (
+            db.query(RAGSessionPrompt)
+            .filter(RAGSessionPrompt.session_id == session_id)
+            .count()
+            == 0
+        )
 
 
 def test_deleting_a_document_a_session_uses_is_refused(client):

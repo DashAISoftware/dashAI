@@ -1032,6 +1032,12 @@ class GenerativeSessionParameterHistory(Base):
         nullable=False,
     )
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=False)
+    # Snapshot of every prompt slot binding at the time of the snapshot, keyed
+    # by slot path. Nullable because rows written before the prompt redesign
+    # stored prompts inside ``parameters`` and have no snapshot.
+    prompt_bindings: Mapped[Optional[dict[str, Any]]] = mapped_column(
+        JSON, nullable=True
+    )
     # Model active when this snapshot was taken. Nullable so pre-migration rows
     # remain valid; the parameters-history derivation only emits a model-change
     # event when two consecutive snapshots both carry a model name that differs.
@@ -1301,6 +1307,16 @@ class RAGPrompt(Base):
     is_library: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="0"
     )
+    #: Whether this row is a code-owned default. Defaults are immutable: the
+    #: service refuses to edit or delete them, and forks create custom rows.
+    is_default: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
+    #: Prompt this row was forked from, kept for lineage. Null for new prompts.
+    #: A soft reference on purpose: a self-referential FK makes SQLite batch
+    #: table rebuilds fail with a circular dependency, and deletion already
+    #: clears the column explicitly.
+    based_on_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
@@ -1317,7 +1333,35 @@ class RAGPrompt(Base):
 
     __table_args__ = (
         UniqueConstraint("parameters_hash", name="uq_rag_prompt_params_hash"),
+        # Prompt ids are referenced by session bindings and pipeline snapshots.
+        # Without AUTOINCREMENT, SQLite reuses the id of a deleted row, so a
+        # stale reference could silently resolve to an unrelated prompt.
+        {"sqlite_autoincrement": True},
     )
+
+
+class RAGSessionPrompt(Base):
+    """Table mapping each prompt slot of a RAG session to the prompt row it uses.
+
+    The pairs ``(session_id, slot_path)`` are the primary key: a slot holds one
+    prompt at a time, and reassigning it replaces the link. ``slot_path`` names
+    the pipeline location (for example ``generation`` or
+    ``query_transformation.prompt``), so a session can reference prompts that
+    live outside its top-level ``parameters.prompt`` entry.
+    """
+
+    __tablename__ = "rag_session_prompt"
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("generative_session.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    slot_path: Mapped[str] = mapped_column(String, primary_key=True)
+    prompt_id: Mapped[int] = mapped_column(
+        ForeignKey("rag_prompt.id", ondelete="RESTRICT"), nullable=False
+    )
+    #: Language selected on the binding. Only meaningful for default prompts,
+    #: whose parameters carry one template per language.
+    language: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 
 class RAGGenerationModel(Base):
@@ -1375,7 +1419,7 @@ class RAGPipeline(Base):
         ForeignKey("rag_chunking_model.id", ondelete="CASCADE"), nullable=True
     )
     prompt_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("rag_prompt.id", ondelete="CASCADE"), nullable=True
+        ForeignKey("rag_prompt.id", ondelete="SET NULL"), nullable=True
     )
     generation_model_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("rag_generation_model.id", ondelete="CASCADE"), nullable=True

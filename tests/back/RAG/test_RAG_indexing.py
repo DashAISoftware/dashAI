@@ -27,6 +27,7 @@ from DashAI.back.models.RAG.RAG_pipeline import RAGPipelineConfig
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
+from DashAI.back.services.RAG.prompt_service import PromptService
 from DashAI.back.services.RAG.setup_service import SetupService
 from tests.back.RAG.conftest import RAG_E2E_DOC_TEXT, _add_document_to_session
 
@@ -118,11 +119,10 @@ def _setup_service(client: TestClient, session_id: int):
 
         def make_config() -> RAGPipelineConfig:
             session = db.get(GenerativeSession, session_id)
-            clean = {
-                k: v
-                for k, v in dict(session.parameters or {}).items()
-                if k in RAG_PARAM_KEYS
-            }
+            materialized = PromptService(
+                db, container["component_registry"]
+            ).materialize_session_parameters(session_id, dict(session.parameters or {}))
+            clean = {k: v for k, v in materialized.items() if k in RAG_PARAM_KEYS}
             return RAGPipelineConfig.from_kwargs(
                 db=db,
                 component_registry=container["component_registry"],

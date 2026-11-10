@@ -26,7 +26,10 @@ from DashAI.back.models.text_to_text_generation_model import (
 from DashAI.back.services.RAG.chunking_service import ChunkingService
 from DashAI.back.services.RAG.document_service import DocumentService
 from DashAI.back.services.RAG.llm_service import LLMService
-from DashAI.back.services.RAG.prompt_service import PromptService
+from DashAI.back.services.RAG.prompt_service import (
+    GENERATION_SLOT_PATH,
+    PromptService,
+)
 from DashAI.back.services.RAG.retriever_setup_service import (
     RetrieverSetupResult,
     RetrieverSetupService,
@@ -246,11 +249,20 @@ class SetupService:
             config.prompt.params,
         )
         prompt_model = prompt_result.model
-        prompt_response = self._prompts.get_or_create(
-            class_name=config.prompt.component,
-            name=f"pipeline_{config.session_id}_{config.prompt.component}",
-            parameters=config.prompt.params,
+        # A session bound to a prompt keeps that exact row as the pipeline's
+        # history; ``get_or_create`` would otherwise insert a duplicate draft
+        # for the same content. Legacy sessions without a binding keep the old
+        # behaviour.
+        prompt_id = self._prompts.prompt_id_for_slot(
+            config.session_id, GENERATION_SLOT_PATH
         )
+        if prompt_id is None:
+            prompt_response = self._prompts.get_or_create(
+                class_name=config.prompt.component,
+                name=f"pipeline_{config.session_id}_{config.prompt.component}",
+                parameters=config.prompt.params,
+            )
+            prompt_id = prompt_response.id
 
         transformation_model: Optional[BaseQueryTransformation] = None
         if config.query_transformation is not None:
@@ -263,7 +275,7 @@ class SetupService:
         self._update_db_record(
             config.session_id,
             index.chunking_model_id,
-            prompt_response.id,
+            prompt_id,
             llm_result.db_record_id,
         )
 

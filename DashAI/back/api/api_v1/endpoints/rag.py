@@ -19,12 +19,14 @@ from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_KEYS
 from DashAI.back.services.RAG.chunking_presets import (
     get_chunking_presets as resolve_chunking_presets,
 )
+from DashAI.back.services.RAG.exceptions import RAGPromptValidationError
 from DashAI.back.services.RAG.index_status_service import (
     STATUS_INDEXED,
     STATUS_INDEXING,
     STATUS_NO_DOCUMENTS,
     IndexStatusService,
 )
+from DashAI.back.services.RAG.prompt_service import PromptService
 from DashAI.back.services.RAG.retriever_presets import (
     get_retriever_presets as resolve_retriever_presets,
 )
@@ -282,7 +284,19 @@ def start_session_indexing(
             return localize(state, accept_language)
 
         session = db.get(GenerativeSession, session_id)
-        missing = RAG_PARAM_KEYS - set(session.parameters or {})
+        # Prompts live in their own table; materialize them so the completeness
+        # check still sees a full pipeline before the job is enqueued.
+        try:
+            parameters = PromptService(
+                db, component_registry
+            ).materialize_session_parameters(session_id, dict(session.parameters or {}))
+        except RAGPromptValidationError as e:
+            # An unusable stored prompt is a state conflict the user can fix by
+            # choosing another prompt, not an internal server error.
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(e)
+            ) from e
+        missing = RAG_PARAM_KEYS - set(parameters)
         if missing:
             # Unreachable for sessions created through the API, which always
             # get every key; a legacy row would otherwise fail deep inside the
@@ -296,7 +310,7 @@ def start_session_indexing(
 
         try:
             SessionValidationService(db, component_registry).validate_stored_retriever(
-                session.parameters or {}
+                parameters
             )
         except ValueError as e:
             raise HTTPException(

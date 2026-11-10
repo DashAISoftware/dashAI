@@ -22,11 +22,15 @@ from DashAI.back.dependencies.database.models import (
     ProcessData,
     RAGPipeline,
     RAGSessionDocument,
+    RAGSessionPrompt,
 )
 from DashAI.back.dependencies.job_queues.base_job_queue import BaseJobQueue
 from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_DOCUMENTS
 from DashAI.back.services.RAG.cleanup_service import CleanupService
 from DashAI.back.services.RAG.index_job_service import cancel_live_index_job
+from DashAI.back.services.RAG.prompt_service import (
+    snapshot_bindings as snapshot_session_bindings,
+)
 
 log = logging.getLogger(__name__)
 
@@ -220,7 +224,8 @@ class SessionDocumentService:
 
         SQLite foreign keys are not enforced, so every dependant row is
         deleted explicitly: process data, processes, parameter history,
-        document links, chunk sets and the ``rag_pipeline`` row.
+        document links, prompt-slot bindings, chunk sets and the
+        ``rag_pipeline`` row.
 
         Parameters
         ----------
@@ -260,6 +265,12 @@ class SessionDocumentService:
             )
             self._delete_history(session_id)
             self._delete_document_links(session_id)
+            # SQLite foreign keys are not enforced in this application, so the
+            # ``ondelete="CASCADE"`` of ``rag_session_prompt`` never fires.
+            # Delete the bindings explicitly in the same transaction as the
+            # session: a dangling binding would make the next session that
+            # reuses the id inherit another session's prompts.
+            self._delete_prompt_bindings(session_id)
             # The bulk delete above bypasses the identity map. If the
             # collection had been loaded, the session's delete-orphan cascade
             # would otherwise try to delete those rows a second time.
@@ -375,10 +386,13 @@ class SessionDocumentService:
             return
         parameters[RAG_PARAM_DOCUMENTS] = document_ids
         session.parameters = parameters
+        # ``PromptService.snapshot_bindings`` delegates to this same helper, so
+        # document-driven entries capture prompts exactly like session edits.
         self.db.add(
             GenerativeSessionParameterHistory(
                 session_id=session.id,
                 parameters=parameters,
+                prompt_bindings=snapshot_session_bindings(self.db, session.id),
                 model_name=session.model_name,
             )
         )
@@ -428,5 +442,17 @@ class SessionDocumentService:
         """
         self.db.query(RAGSessionDocument).filter(
             RAGSessionDocument.session_id == session_id
+        ).delete(synchronize_session="fetch")
+        self.db.flush()
+
+    def _delete_prompt_bindings(self, session_id: int) -> None:
+        """Delete the session's prompt-slot bindings.
+
+        ``rag_session_prompt`` has an ``ondelete="CASCADE"`` foreign key, but
+        SQLite does not enforce it. The rows are removed explicitly here so a
+        deleted session can never leave a binding behind.
+        """
+        self.db.query(RAGSessionPrompt).filter(
+            RAGSessionPrompt.session_id == session_id
         ).delete(synchronize_session="fetch")
         self.db.flush()

@@ -97,6 +97,8 @@ class DefaultAugmentationPrompt(AugmentationPrompt):
     """Default prompt template for generating augmented retrieval queries."""
 
     SCHEMA = DefaultAugmentationPromptSchema
+    #: Registered component used when a user forks this default.
+    CUSTOM_CLASS: str = "CustomAugmentationPrompt"
     DESCRIPTION: str = MultilingualString(
         en="Default prompt template for generating augmented retrieval queries.",
         es="Plantilla de prompt predeterminada para generar consultas de "

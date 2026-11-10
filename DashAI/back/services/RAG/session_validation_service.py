@@ -37,10 +37,13 @@ from DashAI.back.models.RAG.prompts.generation.default_RAG_generation_prompt imp
 )
 from DashAI.back.models.RAG.RAG_constants import (
     RAG_MODEL_KEYS,
+    RAG_OPTIONAL_MODEL_KEYS,
     RAG_PARAM_DOCUMENTS,
     RAG_PARAM_GENERATION_MODEL,
+    RAG_PARAM_KEYS,
     RAG_PARAM_RETRIEVER_MODEL,
 )
+from DashAI.back.services.RAG.exceptions import RAGPromptValidationError
 from DashAI.back.services.RAG.prompt_service import PromptService
 from DashAI.back.services.RAG.query_transformation_validation import (
     DEFAULT_TRANSFORMATION_PROMPT_NAMES,
@@ -66,6 +69,14 @@ _DOCUMENTS_NOT_SETTABLE = (
 STALE_RETRIEVER_MESSAGE = (
     "This session's retriever configuration uses components that no longer "
     "exist or have changed. Choose a retriever again."
+)
+
+#: Top-level keys a RAG session configuration may carry. ``prompts`` is
+#: accepted here because the create payload may merge it back for the binding
+#: sync. Anything else is a client bug: it would be stored verbatim and never
+#: read by the pipeline.
+_ALLOWED_SESSION_KEYS = frozenset(
+    {*RAG_PARAM_KEYS, *RAG_OPTIONAL_MODEL_KEYS, "prompt_id", "prompts"}
 )
 
 DEFAULT_PROMPT_NAMES = frozenset(
@@ -142,7 +153,8 @@ class SessionValidationService:
         -------
         dict
             Normalised and validated parameters dict, with
-            ``prompt_id`` resolved to ``prompt`` if applicable.
+            ``prompt_id`` resolved into ``prompt`` and kept for the binding
+            sync.
 
         Raises
         ------
@@ -150,6 +162,7 @@ class SessionValidationService:
             If any validation check fails.
         """
         normalized = normalize_payload(dict(raw_params))
+        self._reject_unknown_keys(normalized)
 
         # ── 0a. Fill in the components the user does not have to choose ──
         # Only keys the caller actually omitted are defaulted; anything sent
@@ -161,13 +174,16 @@ class SessionValidationService:
 
         # ── 0b. Resolve prompt_id early (before structure validation) ──
         # The caller may provide prompt_id (an integer FK) instead of a full
-        # prompt component ref.  Convert it *before* validating model keys so
-        # that prompt_id is transparently treated as prompt.
+        # prompt component ref. Convert it *before* validating model keys so
+        # that prompt_id is transparently treated as prompt. The id is kept in
+        # the generation input: the binding sync needs it to tell an explicit
+        # selection (which must pass the draft-ownership guard) from a
+        # content-addressed edit.
         if "prompt_id" in normalized:
             self._prompt_service.validate_prompt_exists(normalized["prompt_id"])
-            prompt_id = normalized.pop("prompt_id")
+            prompt_id = normalized["prompt_id"]
             prompt = self._prompt_service.resolve_prompt_id_to_component(prompt_id)
-            normalized["prompt"] = prompt
+            normalized["prompt"] = {**prompt, "prompt_id": prompt_id}
 
         # ── 1. Validate structure of every model key (defaults applied) ──
         self._validate_model_keys(normalized, require_all=True)
@@ -225,7 +241,7 @@ class SessionValidationService:
         -------
         dict
             Normalised and validated params dict, with ``prompt_id``
-            resolved to ``prompt`` if applicable.
+            resolved into ``prompt`` and kept for the binding sync.
 
         Raises
         ------
@@ -233,17 +249,21 @@ class SessionValidationService:
             If any validation check fails.
         """
         normalized = normalize_payload(dict(new_params))
+        self._reject_unknown_keys(normalized)
 
         # ── 0. Resolve prompt_id early (before schema validation) ──
         # Mirror the POST flow: resolve prompt_id to a ``{component, params}``
         # ref BEFORE validating component schemas so the resolved prompt is
         # validated against its own schema (strict contract on updates too).
+        # ``prompt_id`` is preserved so the binding sync can enforce the
+        # draft-ownership guard instead of treating the edit as content-only.
         if "prompt_id" in normalized:
             self._prompt_service.validate_prompt_exists(normalized["prompt_id"])
-            normalized["prompt"] = self._prompt_service.resolve_prompt_id_to_component(
-                normalized["prompt_id"]
-            )
-            del normalized["prompt_id"]
+            prompt_id = normalized["prompt_id"]
+            normalized["prompt"] = {
+                **self._prompt_service.resolve_prompt_id_to_component(prompt_id),
+                "prompt_id": prompt_id,
+            }
 
         # ── 1. Validate structure of provided model keys ──
         self._validate_model_keys(normalized, require_all=False)
@@ -309,6 +329,31 @@ class SessionValidationService:
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
+
+    def _reject_unknown_keys(self, normalized: dict[str, Any]) -> None:
+        """Reject top-level keys no RAG component reads.
+
+        A typo such as ``retreiver_model`` would otherwise be stored in the
+        session configuration, silently ignored by the pipeline, and the user
+        would see the parameter they set disappear from the session.
+
+        Parameters
+        ----------
+        normalized : dict
+            Normalised parameters dict.
+
+        Raises
+        ------
+        ValueError
+            If the payload carries keys outside the RAG contract.
+        """
+        unknown = sorted(set(normalized) - _ALLOWED_SESSION_KEYS)
+        if unknown:
+            raise ValueError(
+                "Unknown session parameter(s): "
+                + ", ".join(repr(key) for key in unknown)
+                + "."
+            )
 
     def _validate_model_keys(
         self,
@@ -471,6 +516,18 @@ class SessionValidationService:
                 or name in DEFAULT_TRANSFORMATION_PROMPT_NAMES
                 or name in DEFAULT_LLM_PROMPT_NAMES
             )
+            if is_default_prompt:
+                # A default prompt may leave its template blank so the language
+                # text is injected below, but a value of the wrong type (a
+                # number, a list, a malformed ``templates`` map) is a client
+                # error: the schema would coerce or ignore it silently.
+                try:
+                    self._prompt_service.validate_prompt_params_shape(
+                        candidate, allow_missing=True, allow_blank_template=True
+                    )
+                except RAGPromptValidationError as e:
+                    errors.append(f"Invalid parameters for '{name}' at '{path}': {e}")
+                    continue
             if is_default_prompt and not (
                 isinstance(template, str) and template.strip()
             ):

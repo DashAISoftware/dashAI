@@ -108,6 +108,8 @@ class DefaultQARAGGenerationPrompt(RAGGenerationPrompt):
     """
 
     SCHEMA = DefaultQARAGGenerationPromptSchema
+    #: Registered component used when a user forks this default.
+    CUSTOM_CLASS: str = "CustomRAGGenerationPrompt"
     DESCRIPTION: str = MultilingualString(
         en="Default prompt template used in the language generation step"
         " of RAG for Question Answering tasks.",

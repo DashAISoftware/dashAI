@@ -162,18 +162,51 @@ pattern is used by `DELETE /api/v1/documents/{id}?cascade_sessions=true` and
 `DELETE /api/v1/prompt/{id}?cascade_sessions=true`, so the sessions and the
 resource disappear in one transaction.
 
-### Prompt deletion
+### Prompt scopes and deletion
 
-`PromptService` marks rows created from `POST /api/v1/prompt/` with
-`is_library=True`; `get_or_create` rows and built-in seeds keep `False`.
+`rag_prompt` has three scopes, tracked by `is_default` and `is_library`:
+
+- **default** (`is_default`) — code-owned rows seeded from the registered
+  `Default*` prompt components. Immutable: `PATCH` and `DELETE` refuse them.
+- **library** (`is_library`) — user-owned rows created from
+  `POST /api/v1/prompt/` or `POST /api/v1/prompt/{id}/fork`. Editable in place.
+- **draft** (neither flag) — internal, content-addressed rows written by
+  `get_or_create` and by session-local edits. Hidden from the library list.
+
+`parameters_hash` is a SHA-256 over `{"class_name", normalize(parameters)}`, so
+two prompt families with identical text never collide. Defaults are
+deduplicated by class name; library and draft rows by content hash, which makes
+them content-addressed.
+
+Each session stores its prompt slots in `rag_session_prompt`
+(`(session_id, slot_path)` primary key). `slot_path` names the pipeline
+location — `generation` for the top-level `parameters.prompt`, or component
+paths such as `query_transformation.prompt` and
+`retriever_model.children[0].prompt`. A `language` column records the selected
+default template language.
+
+Session edits are copy-on-write: a session that changes a prompt gets a draft
+row and its binding is repointed, so other sessions keep the original. Library
+edits propagate to every session bound to the row. Editing a default in a
+session forks it to its `Custom*` counterpart; editing via the API's `PATCH`
+requires forking first. `rag_pipeline.prompt_id` is only a last-build snapshot
+and is not the source of truth for a session's prompts.
+
 `GET /api/v1/prompt/library` returns the user-created rows and the built-in
-defaults, plus the sessions using each one. Built-ins are discovered from the
-`Prompt` components in the registry (generation, augmentation, query
-transformation, retrieval sufficiency and LLM filter), so registering a new
-default prompt family automatically makes it visible. `DELETE /api/v1/prompt/{id}`
-refuses internal rows and built-ins, refuses a prompt in use unless
-`cascade_sessions=true`, and deletes the referencing `rag_pipeline` rows
-explicitly before the prompt itself.
+defaults, plus the sessions using each one. `DELETE /api/v1/prompt/{id}`:
+
+- refuses defaults and internal drafts (409);
+- refuses a library prompt in use unless `detach=true` (repoint bindings to an
+  internal draft and keep the sessions) or `cascade_sessions=true` (delete the
+  sessions with it) is given;
+- rejects `detach` + `cascade_sessions` together (400);
+- deletes the referencing `rag_pipeline` rows explicitly before the prompt
+  itself, because SQLite does not enforce the prompt foreign keys.
+
+`PATCH /api/v1/prompt/{id}` edits a library prompt in place; duplicate content
+is a 409, invalid templates a 400. `POST /api/v1/prompt/{id}/fork` creates a
+library copy — for a default it uses the default's `CUSTOM_CLASS` and records
+`based_on_id`, and it is idempotent when the content already exists.
 
 The split exists so indexing never loads generation weights. It is also LLM-free
 in its own right: every RAG LLM is obtained as a
@@ -215,12 +248,20 @@ Chunk set identity via SHA-256 signature (migrated from `chunk_set_utils.py`)
 
 ### PromptService
 
-Prompt CRUD + get_or_create via deterministic `parameters_hash` (SHA-256 of
-`json.dumps(params, sort_keys=True)`). Uses `services/RAG/utils.py` shared
-helpers. Template validation delegates to the component's declared
-`required_placeholders` (for generation prompts `{input}` and `{chunks}`; for
-transformation prompts `{input}` and `{history}`, plus `{n}` for expansion).
-Session-scoped prompt copies.
+Prompt CRUD + get_or_create via the class-aware deterministic
+`parameters_hash` (SHA-256 of
+`json.dumps({"class_name": ..., "parameters": normalize(params)}, sort_keys=True)`).
+Uses `services/RAG/utils.py` shared helpers. Template validation delegates to
+the component's declared `required_placeholders` (for generation prompts
+`{input}` and `{chunks}`; for transformation prompts `{input}` and `{history}`,
+plus `{n}` for expansion).
+
+Also owns prompt slots and bindings: slot discovery, splitting prompts out of
+session parameters, `sync_session_bindings`, injection for reads, and
+`materialize_history_parameters`, which rebuilds a history entry from that
+entry's own `prompt_bindings` snapshot instead of the session's current
+bindings. Session-scoped edits become immutable drafts; library rows stay
+shared.
 
 ### LLMService
 

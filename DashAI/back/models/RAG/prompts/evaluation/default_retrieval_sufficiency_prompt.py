@@ -297,6 +297,8 @@ class DefaultRetrievalSufficiencyPrompt(RetrievalSufficiencyPrompt):
     """Default prompt template for judging retrieval sufficiency."""
 
     SCHEMA = DefaultRetrievalSufficiencyPromptSchema
+    #: Registered component used when a user forks this default.
+    CUSTOM_CLASS: str = "CustomRetrievalSufficiencyPrompt"
     DESCRIPTION: str = MultilingualString(
         en="Default prompt template for deciding whether retrieved chunks are"
         " sufficient and which retrievers to consult next.",

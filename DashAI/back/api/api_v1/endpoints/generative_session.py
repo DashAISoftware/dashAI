@@ -1,6 +1,7 @@
+import copy
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Union
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from kink import di
@@ -17,9 +18,17 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
-from DashAI.back.models.RAG.exceptions.base import RAGWorkflowError
+from DashAI.back.models.RAG.exceptions import (
+    RAGDatabaseError,
+    RAGWorkflowError,
+)
 from DashAI.back.services.RAG.cleanup_service import CleanupService
+from DashAI.back.services.RAG.exceptions import RAGPromptValidationError
 from DashAI.back.services.RAG.index_job_service import cancel_live_index_job
+from DashAI.back.services.RAG.prompt_service import (
+    PromptConflictError,
+    PromptService,
+)
 from DashAI.back.services.RAG.session_document_service import (
     SessionDocumentService,
 )
@@ -37,6 +46,62 @@ if TYPE_CHECKING:
 
 router = APIRouter()
 log = logging.getLogger(__name__)
+
+
+def _is_rag_session(session: GenerativeSession) -> bool:
+    """Whether a session runs the RAG task and therefore has prompt slots."""
+    return session.task_name == RAGTask.__name__
+
+
+def _session_payload(
+    session: GenerativeSession,
+    *,
+    parameters: dict[str, Any],
+    prompts: Union[dict[str, Any], None] = None,
+) -> dict[str, Any]:
+    """Serialize one session from already-resolved parts.
+
+    The caller resolves the prompts, so the same serializer can run before a
+    commit (into a still-uncommitted session) and degrade gracefully when one
+    stored prompt is unusable.
+    """
+    payload = {
+        "id": session.id,
+        "task_name": session.task_name,
+        "model_name": session.model_name,
+        "parameters": parameters,
+        "name": session.name,
+        "description": session.description,
+        "created": session.created,
+        "last_modified": session.last_modified,
+        "index_job_id": session.index_job_id,
+        "needs_reindex": session.needs_reindex,
+    }
+    if prompts is not None:
+        payload["prompts"] = prompts
+    return payload
+
+
+def _session_snapshot(
+    session: GenerativeSession,
+    prompt_service: PromptService,
+) -> dict[str, Any]:
+    """Serialize a session, injecting its prompts for the current frontend.
+
+    Non-RAG sessions are returned with their stored parameters untouched. RAG
+    sessions get a materialized copy (prompts resolved from storage, or from
+    legacy parameters) plus the resolved binding map.
+    """
+    parameters = dict(session.parameters or {})
+    if _is_rag_session(session):
+        return _session_payload(
+            session,
+            parameters=prompt_service.materialize_session_parameters(
+                session.id, parameters
+            ),
+            prompts=prompt_service.list_bindings(session.id),
+        )
+    return _session_payload(session, parameters=parameters)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -87,13 +152,24 @@ async def upload_generative_session(
                 )
             task_class = component_registry[params.task_name]["class"]
 
+            # Prompt resolution validates every slot and reads stored rows, so
+            # the service is created before the RAG parameter validation runs.
+            prompt_service = PromptService(db, component_registry)
+
             # RAG: validate and normalise RAG-specific parameters, filling in
-            # the components the caller did not choose.
+            # the components the caller did not choose. A prompt supplied only
+            # through the ``prompts`` map is placed at its slot first, so a
+            # required nested slot can be configured from scratch.
             if task_class == RAGTask:
+                candidate_parameters = params.parameters
+                if isinstance(params.prompts, dict):
+                    candidate_parameters = prompt_service.apply_prompt_map(
+                        params.parameters, params.prompts
+                    )
                 try:
                     params.parameters = SessionValidationService(
                         db, component_registry
-                    ).prepare_RAG_params(params.parameters, accept_language)
+                    ).prepare_RAG_params(candidate_parameters, accept_language)
                 except (ValueError, RAGWorkflowError) as e:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
@@ -129,11 +205,26 @@ async def upload_generative_session(
                     detail=f"Task {params.task_name} is not a valid generative task.",
                 )
 
+            # Prompts are stored in their own table: split them out of the
+            # validated configuration before persisting it. Any explicit
+            # ``prompts`` map wins over prompts embedded in ``parameters``.
+            if task_class == RAGTask:
+                generation_default = params.parameters.get("prompt")
+                clean_parameters, prompt_inputs = prompt_service.split_prompts(
+                    params.parameters
+                )
+                if isinstance(params.prompts, dict):
+                    prompt_inputs.update(params.prompts)
+            else:
+                generation_default = None
+                clean_parameters = params.parameters
+                prompt_inputs = {}
+
             now = datetime.now()
             session = GenerativeSession(
                 model_name=params.model_name,
                 task_name=params.task_name,
-                parameters=params.parameters,
+                parameters=clean_parameters,
                 name=params.name,
                 description=params.description,
                 created=now,
@@ -141,7 +232,11 @@ async def upload_generative_session(
             )
             db.add(session)
             try:
-                db.commit()
+                # Flush only: the id is needed to create the bindings, but the
+                # row must stay uncommitted until every binding and the history
+                # entry exist. A failed prompt must never leave a session
+                # behind without its prompts.
+                db.flush()
             except exc.IntegrityError as e:
                 db.rollback()
                 raise HTTPException(
@@ -150,33 +245,68 @@ async def upload_generative_session(
                         f"Generative session with name '{params.name}' already exists."
                     ),
                 ) from e
-            db.refresh(session)
+
+            prompt_snapshot = None
+            injected_parameters = dict(clean_parameters)
+            if task_class == RAGTask:
+                prompt_snapshot = prompt_service.sync_session_bindings(
+                    session.id,
+                    clean_parameters,
+                    prompt_inputs,
+                    generation_default=generation_default,
+                )
+                # Materialise the prompts before the commit: a prompt that
+                # cannot be rendered must fail the request, not leave a
+                # committed session whose next read fails.
+                injected_parameters = prompt_service.inject_prompt_slots(
+                    session.id, clean_parameters
+                )
 
             session_params_entry = GenerativeSessionParameterHistory(
                 session_id=session.id,
-                parameters=session.parameters,
+                parameters=clean_parameters,
+                prompt_bindings=prompt_snapshot,
                 model_name=session.model_name,
                 modified_at=datetime.now(),
             )
             db.add(session_params_entry)
             db.commit()
+            db.refresh(session)
 
-            return {
-                "id": session.id,
-                "model_name": session.model_name,
-                "task_name": session.task_name,
-                "parameters": session.parameters,
-                "name": session.name,
-                "description": session.description,
-                "created": session.created,
-                "last_modified": session.last_modified,
-                # Localized here so the client never receives a language object.
-                "display_name": localize(
-                    component_registry[session.task_name]["display_name"],
-                    accept_language,
-                ),
-            }
+            response = _session_payload(
+                session,
+                parameters=injected_parameters,
+                prompts=prompt_snapshot if task_class == RAGTask else None,
+            )
+            # Localized here so the client never receives a language object.
+            response["display_name"] = localize(
+                component_registry[session.task_name]["display_name"],
+                accept_language,
+            )
+            return response
+        except HTTPException:
+            db.rollback()
+            raise
+        except PromptConflictError as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(e)
+            ) from e
+        except RAGDatabaseError as e:
+            # Database errors are a server fault, not a bad prompt payload.
+            db.rollback()
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+        except (RAGWorkflowError, ValueError, LookupError) as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            ) from e
         except exc.SQLAlchemyError as e:
+            db.rollback()
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -188,6 +318,7 @@ async def upload_generative_session(
 async def get_generative_session(
     session_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Get a generative session by its ID.
 
@@ -198,6 +329,8 @@ async def get_generative_session(
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    component_registry : ComponentRegistry
+        Registry used to resolve the session's prompts.
 
     Returns
     -------
@@ -219,7 +352,14 @@ async def get_generative_session(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=(f"Generative session {session_id} does not exist in DB."),
                 )
-            return session
+            return _session_snapshot(session, PromptService(db, component_registry))
+        except RAGPromptValidationError as e:
+            # The stored prompts are unusable (an unreadable default, a row
+            # deleted under the session). That is a state conflict, not a
+            # server fault, so report it instead of failing with a 500.
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(e)
+            ) from e
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
@@ -232,6 +372,7 @@ async def get_generative_session(
 async def get_all_generative_sessions(
     task_name: Union[str, None] = None,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Get all generative sessions ordered by creation date.
 
@@ -244,12 +385,16 @@ async def get_all_generative_sessions(
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    component_registry : ComponentRegistry
+        Registry used to resolve each session's prompts.
 
     Returns
     -------
     list
         A list of dictionaries with the matching generative sessions, ordered by
-        creation date.
+        creation date. A session whose stored prompts cannot be resolved is
+        returned with prompt-free ``parameters`` and a ``prompt_error`` field
+        instead of failing the whole list.
 
     Raises
     ------
@@ -270,21 +415,29 @@ async def get_all_generative_sessions(
                 detail="Internal database error",
             ) from e
 
-        session_list = []
+        prompt_service = PromptService(db, component_registry)
+        payloads = []
         for session in sessions:
-            session_list.append(
-                {
-                    "id": session.id,
-                    "task_name": session.task_name,
-                    "model_name": session.model_name,
-                    "parameters": session.parameters,
-                    "name": session.name,
-                    "description": session.description,
-                    "created": session.created,
-                    "last_modified": session.last_modified,
-                }
-            )
-        return session_list
+            try:
+                payloads.append(_session_snapshot(session, prompt_service))
+            except (RAGPromptValidationError, LookupError) as e:
+                # One session whose stored prompt became unreadable (a deleted
+                # row, an unseeded default) must not hide every other session.
+                # Return it without prompts so the client can still list it and
+                # show why it cannot be opened.
+                log.warning(
+                    "Could not resolve the prompts of session %s: %s",
+                    session.id,
+                    e,
+                )
+                payload = _session_payload(
+                    session,
+                    parameters=dict(session.parameters or {}),
+                    prompts={},
+                )
+                payload["prompt_error"] = str(e)
+                payloads.append(payload)
+        return payloads
 
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
@@ -499,10 +652,20 @@ async def update_generative_session(
 
                 session.model_name = model_name
                 session.parameters = new_parameters
+                # Every history writer captures the prompts active at the time
+                # of the entry. A model switch does not change them, but the
+                # entry must still own its snapshot so a later prompt edit
+                # cannot rewrite it in the diff.
+                prompt_snapshot = None
+                if _is_rag_session(session):
+                    prompt_snapshot = PromptService(
+                        db, component_registry
+                    ).snapshot_bindings(session.id)
                 db.add(
                     GenerativeSessionParameterHistory(
                         session_id=session.id,
                         parameters=new_parameters,
+                        prompt_bindings=prompt_snapshot,
                         model_name=model_name,
                         modified_at=datetime.now(),
                     )
@@ -512,7 +675,7 @@ async def update_generative_session(
                 session.last_modified = datetime.now()
                 db.commit()
                 db.refresh(session)
-                return session
+                return _session_snapshot(session, PromptService(db, component_registry))
             else:
                 raise HTTPException(
                     status_code=status.HTTP_304_NOT_MODIFIED,
@@ -538,7 +701,7 @@ async def update_generative_session(
 @router.put("/{session_id}/parameters", status_code=status.HTTP_200_OK)
 async def update_generative_session_params(
     session_id: int,
-    new_params: dict,
+    new_params: dict[str, Any],
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
@@ -551,7 +714,7 @@ async def update_generative_session_params(
                     detail=f"Generative session {session_id} does not exist in DB.",
                 )
 
-            old_parameters = dict(session.parameters or {})
+            old_raw_parameters = dict(session.parameters or {})
             try:
                 task_class = component_registry[session.task_name]["class"]
             except KeyError as e:
@@ -563,12 +726,59 @@ async def update_generative_session_params(
                     ),
                 ) from e
 
+            # Accept both the bare parameter body and a wrapper carrying an
+            # explicit ``prompts`` map. Explicit inputs win over prompts
+            # embedded in ``parameters``.
+            body = dict(new_params)
+            body_prompts = None
+            if "parameters" in body and not isinstance(body["parameters"], dict):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="'parameters' must be an object of session parameters.",
+                )
+            if isinstance(body.get("parameters"), dict):
+                body_prompts = body.get("prompts")
+                body = dict(body["parameters"])
+            elif "prompts" in body:
+                body_prompts = body.get("prompts")
+                bare_body: dict[str, Any] = {}
+                for key, value in body.items():
+                    if key != "prompts":
+                        bare_body[key] = value
+                body = bare_body
+            if body_prompts is not None and not isinstance(body_prompts, dict):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="'prompts' must be an object keyed by prompt slot path.",
+                )
+
+            prompt_service = PromptService(db, component_registry)
+            prompt_snapshot = None
+
             # ── RAG-specific validation of new_params ──
             if task_class is not None and task_class == RAGTask:
+                old_parameters, _ = prompt_service.split_prompts(old_raw_parameters)
+                validation_payload = body
+                if isinstance(body_prompts, dict):
+                    # Fold the map into a candidate configuration first so a
+                    # prompt can be sent for a slot the request does not repeat,
+                    # and validate only the keys the request (or the map)
+                    # touches, keeping partial-update semantics.
+                    candidate = {
+                        **copy.deepcopy(old_parameters),
+                        **copy.deepcopy(body),
+                    }
+                    prepared = prompt_service.apply_prompt_map(candidate, body_prompts)
+                    touched = set(body) | {
+                        prompt_service.slot_top_level_key(path) for path in body_prompts
+                    }
+                    validation_payload = {
+                        key: prepared.get(key, body.get(key)) for key in touched
+                    }
                 try:
                     normalized = SessionValidationService(
                         db, component_registry
-                    ).validate_update_payload(new_params)
+                    ).validate_update_payload(validation_payload)
                 except (ValueError, RAGWorkflowError) as e:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
@@ -584,25 +794,71 @@ async def update_generative_session_params(
                         ),
                     )
 
-                # Merge validated new params into old params
-                updated_parameters = {**old_parameters, **normalized}
+                generation_default = normalized.get("prompt")
+                new_clean, new_prompt_inputs = prompt_service.split_prompts(normalized)
+                if isinstance(body_prompts, dict):
+                    new_prompt_inputs.update(body_prompts)
+
+                # Merge validated, prompt-free new params into old params
+                updated_parameters = {**old_parameters, **new_clean}
+
+                # A save that changes neither the configuration nor the bound
+                # prompts must not add a history row or bump last_modified.
+                if updated_parameters == old_parameters:
+                    preview = prompt_service.preview_session_bindings(
+                        session.id,
+                        updated_parameters,
+                        new_prompt_inputs,
+                        generation_default=generation_default,
+                    )
+                    current_bindings = prompt_service.snapshot_bindings(session.id)
+                    if preview == current_bindings:
+                        return {
+                            "id": session.id,
+                            "parameters": prompt_service.inject_prompt_slots(
+                                session.id, old_parameters
+                            ),
+                            "prompts": current_bindings,
+                        }
 
                 # A running index writes the very rows the cleanup below
                 # deletes, so it has to be stopped before, not after.
                 cancel_live_index_job(session, di["job_queue"])
 
-                # Cleanup orphaned RAG resources
+                # Cleanup orphaned RAG resources. Both sides are prompt-free, so
+                # editing a prompt never invalidates the retriever or index.
+                # ``commit=False`` keeps the update in the same transaction as
+                # the binding sync and history entry below: an error must not
+                # leave the session half-updated.
                 CleanupService(db).cleanup_orphaned_resources(
-                    session_id, old_parameters, updated_parameters
+                    session_id,
+                    old_parameters,
+                    updated_parameters,
+                    commit=False,
+                )
+
+                prompt_snapshot = prompt_service.sync_session_bindings(
+                    session.id,
+                    updated_parameters,
+                    new_prompt_inputs,
+                    generation_default=generation_default,
+                )
+                # Materialise before the commit: a prompt that cannot be
+                # rendered must fail the request instead of leaving a committed
+                # session whose next read fails.
+                injected_parameters = prompt_service.inject_prompt_slots(
+                    session.id, updated_parameters
                 )
             else:
                 # Non-RAG update: simple merge without RAG validation
-                updated_parameters = {**old_parameters, **new_params}
+                updated_parameters = {**old_raw_parameters, **body}
+                injected_parameters = updated_parameters
 
             # ── Persist ──
             session_params_entry = GenerativeSessionParameterHistory(
                 session_id=session.id,
                 parameters=updated_parameters,
+                prompt_bindings=prompt_snapshot,
                 model_name=session.model_name,
                 modified_at=datetime.now(),
             )
@@ -613,9 +869,34 @@ async def update_generative_session_params(
             db.commit()
             db.refresh(session)
 
+            if task_class is not None and task_class == RAGTask:
+                return {
+                    "id": session.id,
+                    "parameters": injected_parameters,
+                    "prompts": prompt_snapshot,
+                }
             return {"id": session.id, "parameters": session.parameters}
         except HTTPException:
+            db.rollback()
             raise
+        except PromptConflictError as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(e)
+            ) from e
+        except RAGDatabaseError as e:
+            # Database errors are a server fault, not a bad prompt payload.
+            db.rollback()
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+        except (RAGWorkflowError, ValueError, LookupError) as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            ) from e
         except exc.SQLAlchemyError as e:
             db.rollback()
             log.exception(e)
@@ -629,6 +910,7 @@ async def update_generative_session_params(
 async def get_generative_session_parameters_history(
     session_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """
     Get all parameter history entries for a generative session.
@@ -639,6 +921,8 @@ async def get_generative_session_parameters_history(
         The ID of the generative session to retrieve the parameter history for.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
+    component_registry : ComponentRegistry
+        Registry used to resolve prompts for RAG history entries.
 
     Returns
     -------
@@ -669,18 +953,33 @@ async def get_generative_session_parameters_history(
                 .all()
             )
 
+            prompt_service = PromptService(db, component_registry)
+            materialize = _is_rag_session(session)
+
             # Convert the objects to dictionaries (explicit loop for clarity)
             history_list = []
             for entry in parameters_history:
+                entry_parameters = dict(entry.parameters or {})
+                if materialize:
+                    entry_parameters = prompt_service.materialize_history_parameters(
+                        entry_parameters,
+                        getattr(entry, "prompt_bindings", None),
+                        session_id=session_id,
+                    )
                 history_list.append(
                     {
                         "id": entry.id,
                         "session_id": entry.session_id,
-                        "parameters": entry.parameters,
+                        "parameters": entry_parameters,
+                        "prompt_bindings": getattr(entry, "prompt_bindings", None),
                         "modified_at": entry.modified_at,
                     }
                 )
             return history_list
+        except RAGPromptValidationError as e:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(e)
+            ) from e
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
@@ -693,6 +992,7 @@ async def get_generative_session_parameters_history(
 async def get_parameter_history_entry(
     session_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """
     Get history entry for a generative session by its ID.
@@ -704,6 +1004,8 @@ async def get_parameter_history_entry(
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    component_registry : ComponentRegistry
+        Registry used to resolve prompts for RAG history entries.
 
     Returns
     -------
@@ -735,16 +1037,35 @@ async def get_parameter_history_entry(
                 .all()
             )
 
-            parameters_history = [p.__dict__ for p in parameters_history]
-            if not parameters_history:
+            prompt_service = PromptService(db, component_registry)
+            materialize = _is_rag_session(session)
+            entries = []
+            for entry in parameters_history:
+                entry_parameters = dict(entry.parameters or {})
+                if materialize:
+                    entry_parameters = prompt_service.materialize_history_parameters(
+                        entry_parameters,
+                        getattr(entry, "prompt_bindings", None),
+                        session_id=session_id,
+                    )
+                entries.append(
+                    {
+                        "id": entry.id,
+                        "parameters": entry_parameters,
+                        "model_name": getattr(entry, "model_name", None),
+                        "modified_at": entry.modified_at,
+                    }
+                )
+
+            if not entries:
                 return []
 
             events = []
-            prev_params = parameters_history[0]["parameters"]
-            prev_model = parameters_history[0].get("model_name")
+            prev_params = entries[0]["parameters"]
+            prev_model = entries[0].get("model_name")
 
-            for i in range(1, len(parameters_history)):
-                curr = parameters_history[i]
+            for i in range(1, len(entries)):
+                curr = entries[i]
                 curr_params = curr["parameters"]
                 curr_model = curr.get("model_name")
                 changes = []
@@ -785,6 +1106,10 @@ async def get_parameter_history_entry(
 
             return events
 
+        except RAGPromptValidationError as e:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(e)
+            ) from e
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(

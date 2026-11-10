@@ -166,6 +166,8 @@ class DefaultLLMFilterPrompt(LLMFilterPrompt):
     """Default prompt template for selecting the best candidate chunks."""
 
     SCHEMA = DefaultLLMFilterPromptSchema
+    #: Registered component used when a user forks this default.
+    CUSTOM_CLASS: str = "CustomLLMFilterPrompt"
     DESCRIPTION: str = MultilingualString(
         en="Default prompt template for selecting the best candidate chunks"
         " with a function call.",
