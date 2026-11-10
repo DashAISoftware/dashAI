@@ -2,7 +2,9 @@
   "button": {
     "backToTaskSelection": "Zurück zur Aufgabenauswahl",
     "createSession": "Sitzung erstellen",
-    "generativeHub": "Generative Zentrale"
+    "dismissReply": "Verwerfen",
+    "generativeHub": "Generative Zentrale",
+    "retryReply": "Erneut versuchen"
   },
   "documentsBar": {
     "addFromData": "Aus Daten hinzufügen",
@@ -106,6 +108,7 @@
     "parserAriaLabel": "Parser für {{extension}}"
   },
   "error": {
+    "dismissFailed": "Die Antwort konnte nicht entfernt werden",
     "failedToCreateSession": "Sitzung konnte nicht erstellt werden",
     "failedToDeleteSession": "Sitzung konnte nicht gelöscht werden",
     "failedToDeleteSessions": "Die ausgewählten Sitzungen konnten nicht gelöscht werden",
@@ -119,6 +122,7 @@
     "modelSwitchFailed": "Sitzungsmodell konnte nicht geändert werden",
     "nameRequired": "Name ist erforderlich",
     "replyFailed": "Das Modell konnte nicht antworten",
+    "retryFailed": "Die Antwort konnte nicht erneut versucht werden",
     "sessionNameEmpty": "Sitzungsname darf nicht leer sein",
     "sessionNameExists": "Eine Sitzung mit diesem Namen existiert bereits"
   },

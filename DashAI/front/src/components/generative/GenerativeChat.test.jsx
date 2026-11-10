@@ -1,5 +1,5 @@
 import React from "react";
-import { screen } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../../test-utils/renderWithProviders";
 import GenerativeChat from "./GenerativeChat";
 
@@ -14,6 +14,7 @@ jest.mock("../../api/process", () => ({
   getProcessesBySessionId: jest.fn(),
   deleteProcessById: jest.fn(),
   postProcess: jest.fn(),
+  retryProcessById: jest.fn(),
 }));
 
 jest.mock("../../api/job", () => ({
@@ -70,11 +71,12 @@ jest.mock("notistack", () => ({
 // ChatBubble's subtree pulls ESM-only deps Jest cannot parse; the branch under
 // test only needs to distinguish "waiting bubble shown" from "status line".
 jest.mock("./ChatBubble", () => {
-  const MockChatBubble = ({ isWaiting, isError, messages }) => {
+  const MockChatBubble = ({ isWaiting, isError, messages, actions }) => {
     if (isError) {
       return (
         <div data-testid="error-bubble">
           {messages?.map((message) => message.data).join(" ")}
+          {actions}
         </div>
       );
     }
@@ -102,7 +104,12 @@ const {
   getComponentById,
   getComponentDownloadStatus,
 } = require("../../api/component");
-const { getProcessById, deleteProcessById } = require("../../api/process");
+const {
+  getProcessById,
+  deleteProcessById,
+  retryProcessById,
+} = require("../../api/process");
+const { enqueueGenerativeProcessJob } = require("../../api/job");
 
 const inFlightProcess = (progress) => ({
   id: "11",
@@ -213,5 +220,40 @@ test("a reply that fails while the chat waits for it stays, with its error", asy
   expect(
     await screen.findByTestId("error-bubble", {}, { timeout: 4000 }),
   ).toHaveTextContent("Requested tokens exceed context");
+  expect(deleteProcessById).not.toHaveBeenCalled();
+});
+
+const renderFailedTextChat = async () => {
+  getSessionById.mockResolvedValue({
+    id: 7,
+    name: "S",
+    task_name: "TextToTextGenerationTask",
+  });
+  renderChat(failedProcess);
+  await screen.findByTestId("error-bubble");
+};
+
+test("dismissing a failed reply removes the turn", async () => {
+  deleteProcessById.mockResolvedValue();
+  await renderFailedTextChat();
+
+  fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+
+  await waitFor(() =>
+    expect(screen.queryByTestId("error-bubble")).not.toBeInTheDocument(),
+  );
+  expect(deleteProcessById).toHaveBeenCalledWith("11");
+});
+
+test("retrying a failed reply runs the same turn again", async () => {
+  retryProcessById.mockResolvedValue({ ...inFlightProcess(null), status: 0 });
+  enqueueGenerativeProcessJob.mockResolvedValue({});
+  await renderFailedTextChat();
+
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+  expect(await screen.findByTestId("waiting-bubble")).toBeInTheDocument();
+  expect(retryProcessById).toHaveBeenCalledWith("11");
+  expect(enqueueGenerativeProcessJob).toHaveBeenCalledWith("11");
   expect(deleteProcessById).not.toHaveBeenCalled();
 });

@@ -2,7 +2,9 @@
   "button": {
     "backToTaskSelection": "返回任务选择",
     "createSession": "创建会话",
-    "generativeHub": "生成式中心"
+    "dismissReply": "忽略",
+    "generativeHub": "生成式中心",
+    "retryReply": "重试"
   },
   "documentsBar": {
     "addFromData": "从数据中添加",
@@ -106,6 +108,7 @@
     "parserAriaLabel": "{{extension}} 的解析器"
   },
   "error": {
+    "dismissFailed": "无法移除该回复",
     "failedToCreateSession": "创建会话失败",
     "failedToDeleteSession": "删除会话失败",
     "failedToDeleteSessions": "删除所选会话失败",
@@ -119,6 +122,7 @@
     "modelSwitchFailed": "更改会话模型失败",
     "nameRequired": "名称为必填项",
     "replyFailed": "模型无法回答",
+    "retryFailed": "无法重试该回复",
     "sessionNameEmpty": "会话名称不能为空",
     "sessionNameExists": "已存在同名会话"
   },

@@ -177,3 +177,44 @@ def test_a_failed_turn_is_left_out_of_the_history(client: TestClient):
     prompt = str(_PROMPTS[-1])
     assert "kept question" in prompt
     assert "failed question" not in prompt
+
+
+def _retry(client: TestClient, process_id: int):
+    return client.post(f"/api/v1/generative-process/{process_id}/retry")
+
+
+def test_retrying_a_failed_turn_runs_it_again_in_place(client: TestClient):
+    """The same turn, with its input, is queued again: it keeps its place in
+    the conversation and needs no new upload of its files."""
+    session_id = _session(client, _RecordingModel)
+    process_id = _turn(
+        client, session_id, "the question", RunStatus.ERROR, "Error details: x"
+    )
+
+    response = _retry(client, process_id)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["id"] == process_id
+    assert body["status"] == RunStatus.NOT_STARTED.value
+    assert [data["data"] for data in body["input"]] == ["the question"]
+    assert body["output"] == []
+
+    _run(process_id)
+    with client.app.container["session_factory"]() as db:
+        process = db.get(GenerativeProcess, process_id)
+        assert process.status == RunStatus.FINISHED
+        assert [data.data for data in process.output] == ["an answer"]
+
+
+def test_only_a_failed_turn_can_be_retried(client: TestClient):
+    session_id = _session(client, _RecordingModel)
+    process_id = _turn(client, session_id, "q", RunStatus.FINISHED, "an answer")
+
+    response = _retry(client, process_id)
+
+    assert response.status_code == 409, response.text
+
+
+def test_retrying_a_missing_turn_answers_404(client: TestClient):
+    assert _retry(client, 999999).status_code == 404

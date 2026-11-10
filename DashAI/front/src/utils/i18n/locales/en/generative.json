@@ -2,7 +2,9 @@
   "button": {
     "backToTaskSelection": "Back to Task Selection",
     "createSession": "Create a session",
-    "generativeHub": "Generative Hub"
+    "dismissReply": "Dismiss",
+    "generativeHub": "Generative Hub",
+    "retryReply": "Retry"
   },
   "documentsBar": {
     "addFromData": "Add from Data",
@@ -106,6 +108,7 @@
     "parserAriaLabel": "Parser for {{extension}}"
   },
   "error": {
+    "dismissFailed": "Could not remove the reply",
     "failedToCreateSession": "Failed to create session",
     "failedToDeleteSession": "Failed to delete session",
     "failedToDeleteSessions": "Failed to delete the selected sessions",
@@ -119,6 +122,7 @@
     "modelSwitchFailed": "Failed to change the session model",
     "nameRequired": "Name is required",
     "replyFailed": "The model could not answer",
+    "retryFailed": "Could not retry the reply",
     "sessionNameEmpty": "Session name cannot be empty",
     "sessionNameExists": "A session with this name already exists"
   },

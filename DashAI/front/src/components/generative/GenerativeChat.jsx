@@ -4,7 +4,12 @@ import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { ChatBubble } from "./ChatBubble";
 import RAGChatProgress from "./RAGChatProgress";
-import { getProcessById, getProcessesBySessionId } from "../../api/process";
+import {
+  deleteProcessById,
+  getProcessById,
+  getProcessesBySessionId,
+  retryProcessById,
+} from "../../api/process";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { postProcess } from "../../api/process";
 import { enqueueGenerativeProcessJob } from "../../api/job";
@@ -251,6 +256,38 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
           { variant: "error" },
         );
       });
+  };
+
+  // A failed turn is removed, or reset and queued again with the same input
+  // (its files stay on the server), in its place in the conversation (#969).
+  const handleDismissFailed = (processId) => {
+    deleteProcessById(processId)
+      .then(() => setMessages((prev) => prev.filter((m) => m.id !== processId)))
+      .catch((error) =>
+        enqueueSnackbar(
+          getApiErrorMessage(error, t("generative:error.dismissFailed")),
+          { variant: "error" },
+        ),
+      );
+  };
+
+  const handleRetryFailed = (processId) => {
+    setShouldAutoScroll(true);
+    retryProcessById(processId)
+      .then((process) => {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === processId ? process : m)),
+        );
+        return enqueueGenerativeProcessJob(processId).then(() =>
+          startJobQueue(true),
+        );
+      })
+      .catch((error) =>
+        enqueueSnackbar(
+          getApiErrorMessage(error, t("generative:error.retryFailed")),
+          { variant: "error" },
+        ),
+      );
   };
 
   useEffect(() => {
@@ -659,6 +696,23 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
                         messages={message.output}
                         sender={"Model"}
                         isError={true}
+                        actions={
+                          <Box sx={{ display: "flex", gap: 1, mt: 1, ml: 2 }}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => handleRetryFailed(message.id)}
+                            >
+                              {t("generative:button.retryReply")}
+                            </Button>
+                            <Button
+                              size="small"
+                              onClick={() => handleDismissFailed(message.id)}
+                            >
+                              {t("generative:button.dismissReply")}
+                            </Button>
+                          </Box>
+                        }
                         timestamp={
                           message.end_time
                             ? new Date(message.end_time).toLocaleTimeString()

@@ -2,7 +2,9 @@
   "button": {
     "backToTaskSelection": "Voltar para Seleção de Tarefa",
     "createSession": "Criar uma sessão",
-    "generativeHub": "Central Generativa"
+    "dismissReply": "Descartar",
+    "generativeHub": "Central Generativa",
+    "retryReply": "Tentar novamente"
   },
   "documentsBar": {
     "addFromData": "Adicionar de Dados",
@@ -107,6 +109,7 @@
     "parserAriaLabel": "Processador para {{extension}}"
   },
   "error": {
+    "dismissFailed": "Não foi possível remover a resposta",
     "failedToCreateSession": "Erro ao criar a sessão",
     "failedToDeleteSession": "Erro ao excluir sessão",
     "failedToDeleteSessions": "Erro ao excluir as sessões selecionadas",
@@ -120,6 +123,7 @@
     "modelSwitchFailed": "Falha ao alterar o modelo da sessão",
     "nameRequired": "É necessário um nome",
     "replyFailed": "O modelo não conseguiu responder",
+    "retryFailed": "Não foi possível tentar a resposta novamente",
     "sessionNameEmpty": "O nome da sessão não pode estar vazio",
     "sessionNameExists": "Já existe uma sessão com este nome"
   },
