@@ -88,7 +88,7 @@ User query
 | Exceptions                      | `DashAI/back/models/RAG/exceptions/`                                                                                                                                                             |
 | Retrievers                      | `DashAI/back/models/RAG/retrievers/` (subdirs: `dense/`, `sparse/`, `composite/`, `cross_encoder/`)                                                                                              |
 | Chunking                        | `DashAI/back/models/RAG/chunking_models/`                                                                                                                                                        |
-| Prompts                         | `DashAI/back/models/RAG/prompts/` (subdirs: `generation/`, `augmentation/`, `transformation/`)                                                                                                   |
+| Prompts                         | `DashAI/back/models/RAG/prompts/` (subdirs: `generation/`, `transformation/`, `evaluation/`)                                                                                                      |
 | Documents                       | `DashAI/back/models/RAG/documents/`                                                                                                                                                              |
 | Embeddings                      | `DashAI/back/converters/hugging_face/text_embedding/` (dense vectors) and `DashAI/back/converters/scikit_learn/` (`bag_of_words.py`, `tf_idf.py`)                                                |
 | Jobs                            | `DashAI/back/job/RAG_job.py`                                                                                                                                                                     |
@@ -132,8 +132,7 @@ Browser / PyWebView
   that turn the user message into one or more search queries before retrieval
 - **Prompts** — Generation prompts (Default, Custom, QA) in en/es/pt;
   query transformation prompts (Rewriting, Expansion, Decomposition, each
-  Default + Custom); augmentation prompts (Default, Custom) are registered but
-  not wired into the pipeline
+  Default + Custom); retrieval evaluation prompts (sufficiency and LLM filter)
 - **LLMs** — GGUF chat checkpoints (Llama, Mistral, Mixtral, Qwen, SmolLM,
   Phi-4) plus any other `TextToTextGenerationTaskModel` registered in the
   component registry

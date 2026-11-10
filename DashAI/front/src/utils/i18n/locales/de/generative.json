@@ -352,7 +352,6 @@
         "duplicateExisting": "Ein Prompt namens \"{{name}}\" enthielt diesen Inhalt bereits und wurde deshalb geöffnet, statt dupliziert zu werden.",
         "types": {
           "generation": "Generierung",
-          "augmentation": "Augmentierung",
           "transformation": "Abfragetransformation",
           "evaluation": "Retriever"
         },

@@ -152,7 +152,7 @@ seeds it from a template stored in the prompt library.
 The prompt library is `/app/generative/rag/prompts` (`RAGPromptsPage`). It lists
 the user-created rows (`is_library=True`) and the built-in defaults
 (`is_library=False`, marked "Built-in" and read-only) from every prompt family:
-generation, augmentation, query transformation and retrieval evaluation. Type
+generation, query transformation and retrieval evaluation. Type
 and subtype selects filter the list (for example "Query transformation" +
 "Rewriting", or "Retrieval" + "LLM filter"). It shows the sessions using each
 one and supports create and delete. Deleting asks for confirmation; when

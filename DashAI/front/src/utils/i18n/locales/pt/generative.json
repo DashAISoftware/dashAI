@@ -356,7 +356,6 @@
         "duplicateExisting": "Já existia um prompt chamado \"{{name}}\" com este conteúdo, então ele foi aberto em vez de duplicado.",
         "types": {
           "generation": "Geração",
-          "augmentation": "Aumento",
           "transformation": "Transformação de consultas",
           "evaluation": "Retriever"
         },

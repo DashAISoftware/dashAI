@@ -395,9 +395,7 @@ from DashAI.back.models.RAG.chunking_models import (
     TokenChunkModel,
 )
 from DashAI.back.models.RAG.prompts import (
-    CustomAugmentationPrompt,
     CustomRAGGenerationPrompt,
-    DefaultAugmentationPrompt,
     DefaultQARAGGenerationPrompt,
     DefaultRAGGenerationPrompt,
 )
@@ -1086,8 +1084,6 @@ def get_initial_components():
         DefaultRAGGenerationPrompt,
         CustomRAGGenerationPrompt,
         DefaultQARAGGenerationPrompt,
-        DefaultAugmentationPrompt,
-        CustomAugmentationPrompt,
         # Query Transformation Prompts
         DefaultQueryRewritingPrompt,
         CustomQueryRewritingPrompt,

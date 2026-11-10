@@ -168,7 +168,6 @@ def test_library_lists_user_prompts_and_built_ins(client):
     assert {
         "DefaultRAGGenerationPrompt",
         "DefaultQARAGGenerationPrompt",
-        "DefaultAugmentationPrompt",
         "DefaultQueryRewritingPrompt",
         "DefaultQueryExpansionPrompt",
         "DefaultQueryDecompositionPrompt",

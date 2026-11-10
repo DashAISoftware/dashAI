@@ -354,7 +354,6 @@
         "duplicateExisting": "A prompt named \"{{name}}\" already had this content, so it was opened instead of duplicated.",
         "types": {
           "generation": "Generation",
-          "augmentation": "Augmentation",
           "transformation": "Query transformation",
           "evaluation": "Retriever"
         },

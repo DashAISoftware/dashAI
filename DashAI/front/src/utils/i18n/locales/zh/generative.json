@@ -350,7 +350,6 @@
         "duplicateExisting": "已存在名为“{{name}}”且内容相同的提示词，因此直接打开它，而不是新建副本。",
         "types": {
           "generation": "生成",
-          "augmentation": "增强",
           "transformation": "查询改写",
           "evaluation": "检索器"
         },

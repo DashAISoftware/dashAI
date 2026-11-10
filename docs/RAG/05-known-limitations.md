@@ -103,12 +103,7 @@
   progress before the job is marked errored, so a failed turn leaves neither
   loaded weights nor a stale progress payload behind.
 
-## Unused Components
-
-- **`DefaultAugmentationPrompt`** and **`CustomAugmentationPrompt`** are
-  registered in `get_initial_components()` but are not referenced by any
-  pipeline or validation code. The augmentation prompt family (query expansion
-  / HyDE-style) is not yet wired into the pipeline.
+## Prompt Wiring
 
 - The query-transformation prompts (`Default`/`Custom` `QueryRewriting`,
   `QueryExpansion`, `QueryDecomposition`) and the `LLMQueryRewriter`,

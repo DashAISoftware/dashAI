@@ -14,9 +14,6 @@ from DashAI.back.dependencies.database.models import (
     RAGSessionPrompt,
 )
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
-from DashAI.back.models.RAG.prompts.augmentation.augmentation_prompt import (
-    AugmentationPrompt,
-)
 from DashAI.back.models.RAG.prompts.base_prompt import BasePrompt
 from DashAI.back.models.RAG.prompts.evaluation.llm_filter_prompt import LLMFilterPrompt
 from DashAI.back.models.RAG.prompts.evaluation.retrieval_sufficiency_prompt import (
@@ -84,7 +81,6 @@ _PROMPT_BASE_CLASSES: tuple[type, ...] = (
     RetrievalSufficiencyPrompt,
     LLMFilterPrompt,
     QueryTransformationPrompt,
-    AugmentationPrompt,
     BasePrompt,
 )
 
@@ -397,8 +393,8 @@ class PromptService:
     ) -> tuple[tuple[str, str, dict[str, Any]], ...]:
         """Return every built-in prompt registered in the component registry.
 
-        Generation, augmentation, query-transformation and evaluation prompts
-        all declare their language templates in ``metadata["templates"]`` and
+        Generation, query-transformation and evaluation prompts all declare
+        their language templates in ``metadata["templates"]`` and
         are named ``Default*`` (or tagged ``variant="default"``). Discovering
         them here keeps the library from silently showing only generation
         prompts when a new prompt family is registered.
