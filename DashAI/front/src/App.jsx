@@ -30,14 +30,14 @@ import SessionRouter from "./pages/generative/SessionRouter";
 import { DatasetsAndNotebooksProvider } from "./components/custom/contexts/DatasetsAndNotebooksContext";
 import { DatasetsProvider } from "./contexts/DatasetsContext";
 import { ModelsProvider } from "./components/models/ModelsContext";
-import { RAG_TASK_NAME } from "./api/rag";
+import { RAG_WORKFLOW_NAME } from "./constants/generativeWorkflows";
 
 /**
  * Scopes a RAG route to its own session list.
  *
- * The app-level provider serves the shared "create session" flow, which must
- * not see RAG sessions; RAG routes get a provider of their own asking the
- * backend for exactly its task. It also provides the Data module documents,
+ * The app-level provider serves the shared session list; RAG routes get a
+ * provider of their own asking the backend for exactly the RAG workflow's
+ * sessions. It also provides the Data module documents,
  * which RAG sessions attach, upload and preview.
  *
  * @param {object} props
@@ -46,7 +46,7 @@ import { RAG_TASK_NAME } from "./api/rag";
  */
 function RAGScope({ children }) {
   return (
-    <GenerativeProvider sessionFilter={{ taskName: RAG_TASK_NAME }}>
+    <GenerativeProvider sessionFilter={{ workflowName: RAG_WORKFLOW_NAME }}>
       <DatasetsAndNotebooksProvider>{children}</DatasetsAndNotebooksProvider>
     </GenerativeProvider>
   );

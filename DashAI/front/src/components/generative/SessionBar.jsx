@@ -3,7 +3,7 @@ import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import FolderIcon from "@mui/icons-material/Folder";
 import SearchBar from "../threeSectionLayout/SearchBar";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import InfoSessionModal from "./InfoSessionModal";
 import GroupedCollapsibleList from "../threeSectionLayout/GroupedCollapsibleList";
 import Footer from "../threeSectionLayout/Footer";
@@ -11,7 +11,7 @@ import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import GenerativeHubHeader from "./GenerativeHubHeader";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
-import { standaloneRouteFor } from "./standaloneEntryPoints";
+import { sessionRouteFor } from "./workflowEntryPoints";
 
 /**
  * The generative module's session list.
@@ -46,6 +46,7 @@ export default function SessionBar({
   const navigate = useNavigate();
   const {
     tasks,
+    workflows,
     sessions: sessionsCtx,
     selectedSessionId: selectedSessionIdCtx,
     deleteSessionById,
@@ -78,22 +79,35 @@ export default function SessionBar({
     [tasks],
   );
 
+  const workflowsByName = useMemo(
+    () =>
+      (workflows ?? []).reduce((map, workflow) => {
+        map[workflow.name] = workflow;
+        return map;
+      }, {}),
+    [workflows],
+  );
+
+  const groupLabelFor = useCallback(
+    (session) => {
+      const workflow = workflowsByName[session.workflow_name];
+      if (workflow?.metadata?.task) {
+        return workflow.display_name || t("common:other");
+      }
+      return taskDisplayNameMap[session.task_name] || t("common:other");
+    },
+    [workflowsByName, taskDisplayNameMap, t],
+  );
+
   useEffect(() => {
     // Initialize all sections as closed based on unique task display names
-    const uniqueDisplayNames = [
-      ...new Set(
-        sessions.map(
-          (session) =>
-            taskDisplayNameMap[session.task_name] || t("common:other"),
-        ),
-      ),
-    ];
+    const uniqueDisplayNames = [...new Set(sessions.map(groupLabelFor))];
     setOpenSections((prev) => {
       const prevKeys = Object.keys(prev).sort().join(",");
       const newKeys = uniqueDisplayNames.slice().sort().join(",");
       if (prevKeys === newKeys) return prev;
       // Preserve existing open/close state; initialize new keys as open, so
-      // every task's sessions -- the shared ones and a standalone task's, such
+      // every group's sessions -- the shared ones and a workflow's own, such
       // as RAG -- are visible on arrival rather than behind a closed header.
       const merged = {};
       uniqueDisplayNames.forEach((displayName) => {
@@ -101,7 +115,7 @@ export default function SessionBar({
       });
       return merged;
     });
-  }, [sessions, tasks, taskDisplayNameMap, t]);
+  }, [sessions, groupLabelFor]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -139,18 +153,15 @@ export default function SessionBar({
     if (!session) return;
 
     if (handleSessionClickProp) {
-      const displayName =
-        taskDisplayNameMap[session.task_name] || t("common:other");
-      handleSessionClickProp(sessionId, session.task_name, displayName);
+      handleSessionClickProp(
+        sessionId,
+        session.task_name,
+        groupLabelFor(session),
+      );
       return;
     }
 
-    const standaloneRoute = standaloneRouteFor(session.task_name);
-    navigate(
-      standaloneRoute
-        ? `${standaloneRoute}/sessions/${sessionId}`
-        : `/app/generative/sessions/${sessionId}`,
-    );
+    navigate(sessionRouteFor(session.workflow_name, sessionId));
   };
 
   const handleSessionDelete = async (id) => {
@@ -195,9 +206,7 @@ export default function SessionBar({
   // effect dependency, so a fresh literal every render would re-run it.
   const sortedGroupedSessions = useMemo(() => {
     const groupedSessions = filteredSessions?.reduce((groups, session) => {
-      // Get the display name from the task using the session's task_name
-      const displayName =
-        taskDisplayNameMap[session.task_name] || t("common:other");
+      const displayName = groupLabelFor(session);
 
       if (!groups[displayName]) {
         groups[displayName] = [];
@@ -214,7 +223,7 @@ export default function SessionBar({
             return sorted;
           }, {})
       : {};
-  }, [filteredSessions, taskDisplayNameMap, t]);
+  }, [filteredSessions, groupLabelFor]);
 
   return (
     <SideBar>

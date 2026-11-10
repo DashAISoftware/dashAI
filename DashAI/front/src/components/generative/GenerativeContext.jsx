@@ -11,9 +11,9 @@ export const useGenerative = () => useContext(GenerativeContext);
  * @param {object} props
  * @param {JSX.Element} props.children
  * @param {object} [props.sessionFilter] - Which sessions this subtree owns.
- *   Unset lists every session, grouped by task — so a task with its own entry
- *   point is still reachable from the module. A dedicated entry point passes
- *   its own task to scope its views to it.
+ *   Unset lists every session — so a workflow with its own entry point is
+ *   still reachable from the module. A dedicated entry point passes its own
+ *   workflow to scope its views to it.
  */
 export function GenerativeProvider({ children, sessionFilter }) {
   const { t, i18n } = useTranslation(["generative", "common"]);
@@ -23,8 +23,11 @@ export function GenerativeProvider({ children, sessionFilter }) {
     setSelectedSessionId,
     tasks,
     setTasks,
+    workflows,
     selectedTaskName,
     setSelectedTaskName,
+    selectedWorkflowName,
+    setSelectedWorkflowName,
     selectedDisplayName,
     setSelectedDisplayName,
     sessions,
@@ -33,6 +36,7 @@ export function GenerativeProvider({ children, sessionFilter }) {
     setParamsVersion,
     fetchSessions,
     fetchTasks,
+    fetchWorkflows,
     deleteSessionById,
     deleteSessionsByIds,
     editSession,
@@ -46,6 +50,7 @@ export function GenerativeProvider({ children, sessionFilter }) {
 
   useEffect(() => {
     fetchTasks();
+    fetchWorkflows();
   }, [i18n.language]);
 
   const value = {
@@ -53,8 +58,11 @@ export function GenerativeProvider({ children, sessionFilter }) {
     setSelectedSessionId,
     tasks,
     setTasks,
+    workflows,
     selectedTaskName,
     setSelectedTaskName,
+    selectedWorkflowName,
+    setSelectedWorkflowName,
     selectedDisplayName,
     setSelectedDisplayName,
     sessions,
@@ -63,6 +71,7 @@ export function GenerativeProvider({ children, sessionFilter }) {
     setParamsVersion,
     fetchSessions,
     fetchTasks,
+    fetchWorkflows,
     stepIndex,
     setStepIndex,
     openSections,

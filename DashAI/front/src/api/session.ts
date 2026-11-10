@@ -3,15 +3,18 @@ import type { ISession } from "../types/session";
 
 /**
  * Fetches generative sessions, optionally narrowed by the backend.
- * @param filters.taskName - Only sessions of this generative task. A view
- *   scoped to one task uses this; the shared list asks for everything.
+ * @param filters.taskName - Only sessions of this generative task.
+ * @param filters.workflowName - Only sessions run by this workflow. A view
+ *   scoped to one workflow uses this; the shared list asks for everything.
  * @returns The matching sessions, oldest first.
  */
 export const getSessions = async (filters?: {
   taskName?: string;
+  workflowName?: string;
 }): Promise<ISession[]> => {
   const params: Record<string, string> = {};
   if (filters?.taskName) params.task_name = filters.taskName;
+  if (filters?.workflowName) params.workflow_name = filters.workflowName;
   const response = await api.get<ISession[]>("/v1/generative-session", {
     params,
   });
