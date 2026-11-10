@@ -8,7 +8,7 @@ import {
   saveRunPlotOverride,
 } from "../../api/run";
 import { patchArtifactPayload } from "../../utils/artifactOverrides";
-import ArtifactViewer from "../shared/ArtifactViewer";
+import ArtifactList from "../shared/ArtifactList";
 
 const VIEW = "hyperparameter";
 
@@ -145,25 +145,13 @@ function HyperparameterPlots({ run }) {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Box
-        sx={{
-          display: "grid",
-          gap: 4,
-          gridTemplateColumns: "repeat(auto-fit, minmax(600px, 1fr))",
+      <ArtifactList
+        items={plots}
+        ctx={{
+          onSaveOverride: handleSaveOverride,
+          onResetOverride: handleResetOverride,
         }}
-      >
-        {plots.map((artifact, position) => (
-          <ArtifactViewer
-            key={artifact.index}
-            artifact={artifact}
-            siblingArtifacts={plots}
-            siblingIndex={position}
-            canReset={Boolean(artifact.overridden)}
-            onSaveEdit={(figure) => handleSaveOverride(artifact.index, figure)}
-            onResetEdit={() => handleResetOverride(artifact.index)}
-          />
-        ))}
-      </Box>
+      />
     </Box>
   );
 }
