@@ -53,7 +53,7 @@ def test_upgrade_moves_prompts_into_bindings_and_history_snapshots(tmp_path):
                     "params": {"k1": 1.5},
                 },
                 "prompt": {
-                    "component": "CustomRetrievalSufficiencyPrompt",
+                    "component": "CustomAgenticRetrieverPrompt",
                     "params": {"template": sufficiency_template},
                 },
                 "top_k": 5,
@@ -70,7 +70,7 @@ def test_upgrade_moves_prompts_into_bindings_and_history_snapshots(tmp_path):
             "component": "BM25Retriever",
             "params": {
                 "prompt": {
-                    "component": "CustomRetrievalSufficiencyPrompt",
+                    "component": "CustomAgenticRetrieverPrompt",
                     "params": {"template": history_sufficiency},
                 },
                 "top_k": 5,
@@ -145,7 +145,7 @@ def test_upgrade_moves_prompts_into_bindings_and_history_snapshots(tmp_path):
         assert generation_prompt["is_library"] == 0
 
         sufficiency_prompt = prompts[bindings["retriever_model.prompt"]]
-        assert sufficiency_prompt["class_name"] == "CustomRetrievalSufficiencyPrompt"
+        assert sufficiency_prompt["class_name"] == "CustomAgenticRetrieverPrompt"
         assert sufficiency_prompt["parameters"] == {"template": sufficiency_template}
 
         history_row = connection.execute(
@@ -166,7 +166,7 @@ def test_upgrade_moves_prompts_into_bindings_and_history_snapshots(tmp_path):
             "template": history_generation
         }
         assert prompt_bindings["retriever_model.prompt"]["class_name"] == (
-            "CustomRetrievalSufficiencyPrompt"
+            "CustomAgenticRetrieverPrompt"
         )
         assert prompt_bindings["retriever_model.prompt"]["parameters"] == {
             "template": history_sufficiency

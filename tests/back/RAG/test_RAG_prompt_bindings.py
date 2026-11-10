@@ -15,11 +15,11 @@ from DashAI.back.dependencies.database.models import (
     RAGPrompt,
     RAGSessionPrompt,
 )
-from DashAI.back.models.RAG.prompts.evaluation.llm_filter_prompt import (
-    LLMFilterPrompt,
+from DashAI.back.models.RAG.prompts.evaluation.agentic_reranker_prompt import (
+    AgenticRerankerPrompt,
 )
-from DashAI.back.models.RAG.prompts.evaluation.retrieval_sufficiency_prompt import (
-    RetrievalSufficiencyPrompt,
+from DashAI.back.models.RAG.prompts.evaluation.agentic_retriever_prompt import (
+    AgenticRetrieverPrompt,
 )
 from DashAI.back.models.RAG.prompts.generation.RAG_generation_prompt import (
     RAGGenerationPrompt,
@@ -70,20 +70,20 @@ def _nested_parameters() -> dict:
             },
         },
         "retriever_model": {
-            "component": "LLMEvaluatedDepthRetriever",
+            "component": "AgenticSingleRetriever",
             "params": {
                 "prompt": {
-                    "component": "CustomRetrievalSufficiencyPrompt",
+                    "component": "CustomAgenticRetrieverPrompt",
                     "params": {
                         "template": _template("{input} {chunks}", "sufficiency")
                     },
                 },
                 "children": [
                     {
-                        "component": "LLMFilterRetriever",
+                        "component": "AgenticRerankerRetriever",
                         "params": {
                             "prompt": {
-                                "component": "CustomLLMFilterPrompt",
+                                "component": "CustomAgenticRerankerPrompt",
                                 "params": {
                                     "template": _template("{input} {chunks}", "filter")
                                 },
@@ -125,17 +125,16 @@ def test_discover_prompt_slots_for_every_prompt_family(client):
     )
 
     sufficiency = by_path["retriever_model.prompt"]
-    assert sufficiency.expected_base is RetrievalSufficiencyPrompt
-    assert sufficiency.default_component == "DefaultRetrievalSufficiencyPrompt"
+    assert sufficiency.expected_base is AgenticRetrieverPrompt
+    assert sufficiency.default_component == "DefaultAgenticRetrieverPrompt"
     assert (
-        sufficiency.container["prompt"]["component"]
-        == "CustomRetrievalSufficiencyPrompt"
+        sufficiency.container["prompt"]["component"] == "CustomAgenticRetrieverPrompt"
     )
 
     child = by_path["retriever_model.children[0].prompt"]
-    assert child.expected_base is LLMFilterPrompt
-    assert child.default_component == "DefaultLLMFilterPrompt"
-    assert child.container["prompt"]["component"] == "CustomLLMFilterPrompt"
+    assert child.expected_base is AgenticRerankerPrompt
+    assert child.default_component == "DefaultAgenticRerankerPrompt"
+    assert child.container["prompt"]["component"] == "CustomAgenticRerankerPrompt"
 
 
 def test_split_and_inject_restore_the_same_prompt_contents(client):

@@ -1,25 +1,25 @@
-"""User-defined retrieval sufficiency evaluation prompt."""
+"""User-defined agentic retriever prompt."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from DashAI.back.models.RAG.prompts.evaluation.retrieval_sufficiency_prompt import (
-    RetrievalSufficiencyPrompt,
+from DashAI.back.models.RAG.prompts.evaluation.agentic_retriever_prompt import (
+    AgenticRetrieverPrompt,
 )
 
 
-class CustomRetrievalSufficiencyPrompt(RetrievalSufficiencyPrompt):
-    """User-defined prompt template for judging retrieval sufficiency."""
+class CustomAgenticRetrieverPrompt(AgenticRetrieverPrompt):
+    """User-defined prompt template for an agentic retriever."""
 
     metadata = {
-        "name": "Custom Retrieval Sufficiency Prompt",
+        "name": "Custom Agentic Retriever Prompt",
         "description": "User-defined prompt template for judging retrieval"
         " sufficiency and choosing which retrievers to consult next.",
         "type": "evaluation",
         "technique": "sufficiency",
-        "required_placeholders": RetrievalSufficiencyPrompt.required_placeholders,
-        "optional_placeholders": RetrievalSufficiencyPrompt.optional_placeholders,
+        "required_placeholders": AgenticRetrieverPrompt.required_placeholders,
+        "optional_placeholders": AgenticRetrieverPrompt.optional_placeholders,
         "placeholder_descriptions": {
             "{input}": "The current user message the chunks must answer.",
             "{chunks}": (
@@ -51,7 +51,7 @@ class CustomRetrievalSufficiencyPrompt(RetrievalSufficiencyPrompt):
     }
 
     def __init__(self, **kwargs: Any) -> None:
-        """Initialize the custom sufficiency prompt.
+        """Initialize the custom agentic retriever prompt.
 
         Parameters
         ----------

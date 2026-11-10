@@ -1,6 +1,6 @@
 """Shared construction and cleanup helpers for LLM-backed retrievers.
 
-The LLM-evaluated retrievers and the LLM filter retriever validate their
+The agentic retrievers and the agentic reranker retriever validate their
 positive-integer budgets and required component references the same way, and
 both swallow LLM close failures without hiding them. Keeping those mechanics in
 one module removes the duplicated implementation while preserving each

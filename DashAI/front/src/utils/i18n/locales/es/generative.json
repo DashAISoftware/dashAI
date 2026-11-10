@@ -363,8 +363,8 @@
           "rewriting": "Reescritura",
           "expansion": "Expansión",
           "decomposition": "Descomposición",
-          "sufficiency": "Suficiencia",
-          "filter": "Filtro LLM"
+          "sufficiency": "Retriever agéntico",
+          "filter": "Reranker agéntico"
         },
         "filterType": "Tipo de prompt",
         "filterSubtype": "Subtipo",

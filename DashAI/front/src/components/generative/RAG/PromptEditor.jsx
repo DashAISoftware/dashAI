@@ -98,8 +98,8 @@ export default function PromptEditor({
       .then((options) => {
         // Built-in templates are already offered by the "Start from" select;
         // only user-saved prompts belong in the second one. This editor writes
-        // a generation template, so query-rewriting or sufficiency prompts
-        // would be loaded into a slot that never runs them.
+        // a generation template, so query-rewriting or agentic retriever
+        // prompts would be loaded into a slot that never runs them.
         if (!cancelled) {
           setSavedPrompts(
             options.filter(

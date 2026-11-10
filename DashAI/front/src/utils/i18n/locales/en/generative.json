@@ -361,8 +361,8 @@
           "rewriting": "Rewriting",
           "expansion": "Expansion",
           "decomposition": "Decomposition",
-          "sufficiency": "Sufficiency",
-          "filter": "LLM filter"
+          "sufficiency": "Agentic retriever",
+          "filter": "Agentic reranker"
         },
         "filterType": "Prompt type",
         "filterSubtype": "Subtype",

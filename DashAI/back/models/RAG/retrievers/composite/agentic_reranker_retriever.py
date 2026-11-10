@@ -1,4 +1,4 @@
-"""LLM filter composite retriever.
+"""Agentic reranker retriever.
 
 Takes exactly one child retriever and delegates the candidate retrieval to it
 with a ``k1`` size hint. When more than ``top_k`` unique candidates come back,
@@ -28,22 +28,28 @@ from DashAI.back.models.RAG.exceptions import (
     RAGRetrieverCompositeValidationError,
 )
 from DashAI.back.models.RAG.progress_utils import report_progress
-from DashAI.back.models.RAG.prompts.evaluation import LLMFilterPrompt
+from DashAI.back.models.RAG.prompts.evaluation import AgenticRerankerPrompt
 from DashAI.back.models.RAG.RAG_constants import (
     RAG_PROGRESS_JUSTIFICATION_KEY,
     RAG_PROGRESS_MESSAGE_KEY,
     RAG_PROGRESS_STAGE_RETRIEVING,
 )
 from DashAI.back.models.RAG.RAG_defaults import (
-    DEFAULT_FILTER_K1,
-    DEFAULT_FILTER_TOP_K,
     DEFAULT_FUNCTION_CALL_MAX_TRIALS,
+    DEFAULT_RERANKER_K1,
+    DEFAULT_RERANKER_TOP_K,
     MAX_FUNCTION_CALL_TRIALS,
+    default_agentic_reranker_prompt,
     default_function_calling_llm,
     default_hybrid_retriever,
-    default_llm_filter_prompt,
 )
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
+from DashAI.back.models.RAG.retrievers.composite.agentic_retriever_support import (
+    LLM_RETRIEVER_CATEGORY,
+    close_llm,
+    pop_positive_int,
+    pop_required,
+)
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
@@ -52,12 +58,6 @@ from DashAI.back.models.RAG.retrievers.composite.filter_evaluator import (
 )
 from DashAI.back.models.RAG.retrievers.composite.filter_selection import (
     ChunkSelection,
-)
-from DashAI.back.models.RAG.retrievers.composite.llm_retriever_support import (
-    LLM_RETRIEVER_CATEGORY,
-    close_llm,
-    pop_positive_int,
-    pop_required,
 )
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
@@ -92,8 +92,8 @@ _SELECTION_SELECTED_KEY = "selected"
 _SELECTION_LLM_USED_KEY = "llm_used"
 
 
-class LLMFilterRetrieverSchema(RetrievalExpansionSchema):
-    """Schema for :class:`LLMFilterRetriever`.
+class AgenticRerankerRetrieverSchema(RetrievalExpansionSchema):
+    """Schema for :class:`AgenticRerankerRetriever`.
 
     Attributes:
         children: Exactly one child retriever that produces the candidates.
@@ -124,7 +124,7 @@ class LLMFilterRetrieverSchema(RetrievalExpansionSchema):
 
     k1: schema_field(
         int_field(gt=0),
-        placeholder=DEFAULT_FILTER_K1,
+        placeholder=DEFAULT_RERANKER_K1,
         description=MultilingualString(
             en="Number of candidate chunks fetched from the child retriever.",
             es="Número de fragmentos candidatos obtenidos del recuperador hijo.",
@@ -143,7 +143,7 @@ class LLMFilterRetrieverSchema(RetrievalExpansionSchema):
 
     top_k: schema_field(
         int_field(gt=0),
-        placeholder=DEFAULT_FILTER_TOP_K,
+        placeholder=DEFAULT_RERANKER_TOP_K,
         description=MultilingualString(
             en="Number of best chunks the model selects. Cannot exceed k1.",
             es="Número de mejores fragmentos que selecciona el modelo. No puede"
@@ -196,8 +196,8 @@ class LLMFilterRetrieverSchema(RetrievalExpansionSchema):
     ) = DEFAULT_FUNCTION_CALL_MAX_TRIALS  # type: ignore
 
     prompt: schema_field(
-        component_field(parent="LLMFilterPrompt"),
-        placeholder=default_llm_filter_prompt(),
+        component_field(parent="AgenticRerankerPrompt"),
+        placeholder=default_agentic_reranker_prompt(),
         description=MultilingualString(
             en="The prompt used to select the best candidate chunks.",
             es="El prompt usado para seleccionar los mejores fragmentos candidatos.",
@@ -227,7 +227,7 @@ class LLMFilterRetrieverSchema(RetrievalExpansionSchema):
     )  # type: ignore
 
 
-class LLMFilterRetriever(CompositeRetriever):
+class AgenticRerankerRetriever(CompositeRetriever):
     """Selects the best ``top_k`` candidates from a child with an LLM.
 
     The child is queried with ``k1`` as a retrieval-size hint. Its output is
@@ -238,26 +238,29 @@ class LLMFilterRetriever(CompositeRetriever):
     ``llm_model`` must support function calling.
     """
 
-    SCHEMA = LLMFilterRetrieverSchema
+    SCHEMA = AgenticRerankerRetrieverSchema
     CATEGORY: MultilingualString = LLM_RETRIEVER_CATEGORY
     DISPLAY_NAME: str = MultilingualString(
-        en="LLM Filter Retriever",
-        es="Recuperador de Filtro LLM",
-        pt="Retriever de Filtro LLM",
-        de="LLM-Filter-Retriever",
-        zh="LLM 过滤检索器",
+        en="Agentic Reranker Retriever",
+        es="Recuperador Agéntico de Reranking",
+        pt="Retriever Agêntico de Reranking",
+        de="Agentischer Reranker-Retriever",
+        zh="智能体重排检索器",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Retrieves k1 candidates from one child retriever and uses an LLM to"
-        " select the best top-k chunks with a function call.",
-        es="Recupera k1 candidatos de un recuperador hijo y usa un LLM para"
-        " seleccionar los mejores top-k fragmentos con una llamada a función.",
-        pt="Recupera k1 candidatos de um recuperador filho e usa um LLM para"
-        " selecionar os melhores top-k trechos com uma chamada de função.",
-        de="Ruft k1 Kandidaten von einem Kind-Retriever ab und wählt mit einem"
-        " LLM die besten Top-k-Fragmente über einen Funktionsaufruf aus.",
+        en="Retrieves k1 candidates from one child retriever and uses the"
+        " agentic reranker to select the best top-k chunks with a function call.",
+        es="Recupera k1 candidatos de un recuperador hijo y usa el recuperador"
+        " agéntico de reranking para seleccionar los mejores top-k fragmentos"
+        " con una llamada a función.",
+        pt="Recupera k1 candidatos de um recuperador filho e usa o retriever"
+        " agêntico de reranking para selecionar os melhores top-k trechos com"
+        " uma chamada de função.",
+        de="Ruft k1 Kandidaten von einem Kind-Retriever ab und wählt mit dem"
+        " agentischen Reranker die besten Top-k-Fragmente über einen"
+        " Funktionsaufruf aus.",
         zh=(
-            "从一个子检索器获取 k1 个候选，并使用 LLM 通过函数调用选择最佳的"
+            "从一个子检索器获取 k1 个候选，并使用智能体重排器通过函数调用选择最佳的"
             " top-k 片段。"
         ),
     )
@@ -274,7 +277,7 @@ class LLMFilterRetriever(CompositeRetriever):
     COMPONENT_PARAMS: tuple[str, ...] = (_PARAM_LLM_MODEL, _PARAM_PROMPT)
 
     #: Prompt family this retriever accepts.
-    EVALUATION_PROMPT_BASE = LLMFilterPrompt
+    EVALUATION_PROMPT_BASE = AgenticRerankerPrompt
 
     EXPECTED_FUNCTION: ClassVar[str] = SELECT_BEST_CHUNKS_FUNCTION
     FUNCTION_DESCRIPTION: ClassVar[str] = (
@@ -319,7 +322,7 @@ class LLMFilterRetriever(CompositeRetriever):
         return {_PARAM_K1: _PARAM_K1, _PARAM_TOP_K: _PARAM_TOP_K}
 
     def __init__(self, **kwargs: Any) -> None:
-        """Initialize the filter retriever and validate its budgets.
+        """Initialize the reranker retriever and validate its budgets.
 
         Parameters
         ----------
@@ -343,12 +346,12 @@ class LLMFilterRetriever(CompositeRetriever):
         self._k1 = pop_positive_int(
             self.params,
             _PARAM_K1,
-            component_label="LLM filter retriever",
+            component_label="agentic reranker retriever",
         )
         self._top_k = pop_positive_int(
             self.params,
             _PARAM_TOP_K,
-            component_label="LLM filter retriever",
+            component_label="agentic reranker retriever",
         )
         if self._top_k > self._k1:
             raise RAGRetrieverCompositeValidationError(
@@ -358,19 +361,19 @@ class LLMFilterRetriever(CompositeRetriever):
         self.function_call_max_trials = pop_positive_int(
             self.params,
             _PARAM_FUNCTION_CALL_MAX_TRIALS,
-            component_label="LLM filter retriever",
+            component_label="agentic reranker retriever",
             default=DEFAULT_FUNCTION_CALL_MAX_TRIALS,
             maximum=MAX_FUNCTION_CALL_TRIALS,
         )
         self.prompt = pop_required(
             self.params,
             _PARAM_PROMPT,
-            component_label="LLM filter retriever",
+            component_label="agentic reranker retriever",
         )
         self.llm_model = pop_required(
             self.params,
             _PARAM_LLM_MODEL,
-            component_label="LLM filter retriever",
+            component_label="agentic reranker retriever",
         )
         if not self.llm_model.supports_function_calling():
             raise RAGRetrieverCompositeValidationError(
@@ -401,7 +404,7 @@ class LLMFilterRetriever(CompositeRetriever):
             The search query string.
         **kwargs
             Ignored. A parent composite may pass a ``top_k`` hint, but the
-            filter retriever keeps its own configured ``k1`` candidate budget
+            reranker retriever keeps its own configured ``k1`` candidate budget
             and ``top_k`` final budget.
 
         Returns
@@ -477,11 +480,11 @@ class LLMFilterRetriever(CompositeRetriever):
         Raises
         ------
         RAGRetrieverCompositeValidationError
-            Always. The filter retriever requires exactly one child configured
+            Always. The reranker retriever requires exactly one child configured
             through the constructor.
         """
         raise RAGRetrieverCompositeValidationError(
-            "LLMFilterRetriever requires exactly one child retriever configured"
+            "AgenticRerankerRetriever requires exactly one child retriever configured"
             " via the constructor; add() is not supported."
         )
 
@@ -496,11 +499,11 @@ class LLMFilterRetriever(CompositeRetriever):
         Raises
         ------
         RAGRetrieverCompositeValidationError
-            Always. The filter retriever requires exactly one child configured
+            Always. The reranker retriever requires exactly one child configured
             through the constructor.
         """
         raise RAGRetrieverCompositeValidationError(
-            "LLMFilterRetriever requires exactly one child retriever configured"
+            "AgenticRerankerRetriever requires exactly one child retriever configured"
             " via the constructor; remove() is not supported."
         )
 
@@ -519,7 +522,7 @@ class LLMFilterRetriever(CompositeRetriever):
         """
         if len(self._children) != 1:
             raise RAGRetrieverCompositeValidationError(
-                "LLMFilterRetriever requires exactly one child retriever, "
+                "AgenticRerankerRetriever requires exactly one child retriever, "
                 f"got {len(self._children)}."
             )
         return self._children[0]

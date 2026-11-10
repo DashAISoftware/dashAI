@@ -1,4 +1,4 @@
-"""Default LLM filter evaluation prompt."""
+"""Default agentic reranker prompt."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.exceptions import RAGPromptTemplateError
-from DashAI.back.models.RAG.prompts.evaluation.llm_filter_prompt import (
-    LLMFilterPrompt,
+from DashAI.back.models.RAG.prompts.evaluation.agentic_reranker_prompt import (
+    AgenticRerankerPrompt,
 )
 
 TEMPLATES = {
@@ -136,8 +136,8 @@ TEMPLATES = {
 }
 
 
-class DefaultLLMFilterPromptSchema(BaseSchema):
-    """Schema for the default LLM filter prompt.
+class DefaultAgenticRerankerPromptSchema(BaseSchema):
+    """Schema for the default agentic reranker prompt.
 
     Attributes:
         language: Language code for the generated instructions (en, es, pt).
@@ -162,36 +162,37 @@ class DefaultLLMFilterPromptSchema(BaseSchema):
     )
 
 
-class DefaultLLMFilterPrompt(LLMFilterPrompt):
+class DefaultAgenticRerankerPrompt(AgenticRerankerPrompt):
     """Default prompt template for selecting the best candidate chunks."""
 
-    SCHEMA = DefaultLLMFilterPromptSchema
+    SCHEMA = DefaultAgenticRerankerPromptSchema
     #: Registered component used when a user forks this default.
-    CUSTOM_CLASS: str = "CustomLLMFilterPrompt"
+    CUSTOM_CLASS: str = "CustomAgenticRerankerPrompt"
     DESCRIPTION: str = MultilingualString(
-        en="Default prompt template for selecting the best candidate chunks"
-        " with a function call.",
-        es="Plantilla de prompt predeterminada para seleccionar los mejores"
-        " fragmentos candidatos con una llamada a función.",
-        pt="Modelo de prompt padrão para selecionar os melhores trechos"
-        " candidatos com uma chamada de função.",
-        de="Standard-Prompt-Vorlage zur Auswahl der besten Kandidatenfragmente"
-        " über einen Funktionsaufruf.",
-        zh="通过函数调用选择最佳候选片段的默认提示词模板。",
+        en="Default agentic reranker prompt template for selecting the best"
+        " candidate chunks with a function call.",
+        es="Plantilla de prompt agéntico de reranking predeterminada para"
+        " seleccionar los mejores fragmentos candidatos con una llamada a"
+        " función.",
+        pt="Modelo de prompt agêntico de reranking padrão para selecionar os"
+        " melhores trechos candidatos com uma chamada de função.",
+        de="Standard-Prompt-Vorlage für den agentischen Reranker zur Auswahl der"
+        " besten Kandidatenfragmente über einen Funktionsaufruf.",
+        zh="通过函数调用选择最佳候选片段的默认智能体重排提示词模板。",
     )
     DISPLAY_NAME: str = MultilingualString(
-        en="Default LLM Filter Prompt",
-        es="Prompt de Filtro LLM Predeterminado",
-        pt="Prompt de Filtro LLM Padrão",
-        de="Standard-LLM-Filter-Prompt",
-        zh="默认 LLM 过滤提示词",
+        en="Default Agentic Reranker Prompt",
+        es="Prompt Agéntico de Reranking Predeterminado",
+        pt="Prompt Agêntico de Reranking Padrão",
+        de="Standard-Prompt für den agentischen Reranker",
+        zh="默认智能体重排提示词",
     )
 
-    required_placeholders = LLMFilterPrompt.required_placeholders
-    optional_placeholders = LLMFilterPrompt.optional_placeholders
+    required_placeholders = AgenticRerankerPrompt.required_placeholders
+    optional_placeholders = AgenticRerankerPrompt.optional_placeholders
 
     metadata = {
-        "name": "Default LLM Filter Prompt",
+        "name": "Default Agentic Reranker Prompt",
         "description": "Default prompt template for selecting the best"
         " candidate chunks with the select_best_chunks function call.",
         "type": "evaluation",
@@ -221,7 +222,7 @@ class DefaultLLMFilterPrompt(LLMFilterPrompt):
     }
 
     def __init__(self, **kwargs: Any) -> None:
-        """Initialize the default filter prompt.
+        """Initialize the default agentic reranker prompt.
 
         Parameters
         ----------

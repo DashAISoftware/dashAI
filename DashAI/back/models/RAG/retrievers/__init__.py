@@ -2,10 +2,10 @@
 
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 from DashAI.back.models.RAG.retrievers.composite import (
+    AgenticEnsembleRetriever,
+    AgenticRerankerRetriever,
+    AgenticSingleRetriever,
     CompositeRetriever,
-    LLMEvaluatedDepthRetriever,
-    LLMEvaluatedEnsembleRetriever,
-    LLMFilterRetriever,
     MMRRerankerRetriever,
     ParallelRetriever,
     SequentialRetriever,
@@ -40,9 +40,9 @@ __all__ = [
     "DenseEmbeddingRetriever",
     "MergeStrategy",
     "MissingParameterError",
-    "LLMEvaluatedDepthRetriever",
-    "LLMEvaluatedEnsembleRetriever",
-    "LLMFilterRetriever",
+    "AgenticEnsembleRetriever",
+    "AgenticRerankerRetriever",
+    "AgenticSingleRetriever",
     "MMRRerankerRetriever",
     "ParallelRetriever",
     "RetrieverError",

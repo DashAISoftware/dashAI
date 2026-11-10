@@ -357,8 +357,8 @@
           "rewriting": "重写",
           "expansion": "扩展",
           "decomposition": "分解",
-          "sufficiency": "充分性",
-          "filter": "LLM 过滤"
+          "sufficiency": "智能体检索器",
+          "filter": "智能体重排器"
         },
         "filterType": "提示词类型",
         "filterSubtype": "子类型",

@@ -1,4 +1,4 @@
-"""LLM-evaluated depth retriever.
+"""Agentic single retriever.
 
 Takes exactly one child retriever and delegates retrieval to it. After each
 round (except the last) the retriever asks its language model whether the
@@ -36,18 +36,18 @@ from DashAI.back.models.RAG.RAG_defaults import (
     DEFAULT_MAX_CHUNKS,
     DEFAULT_MAX_ITERS,
     MAX_FUNCTION_CALL_TRIALS,
+    default_agentic_retriever_prompt,
     default_function_calling_llm,
     default_hybrid_retriever,
-    default_retrieval_sufficiency_prompt,
+)
+from DashAI.back.models.RAG.retrievers.composite.agentic_retriever import (
+    AgenticRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.agentic_retriever_support import (
+    LLM_RETRIEVER_CATEGORY,
 )
 from DashAI.back.models.RAG.retrievers.composite.evaluation_output import (
     RetrievalVerdict,
-)
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_retriever import (
-    LLMEvaluatedRetriever,
-)
-from DashAI.back.models.RAG.retrievers.composite.llm_retriever_support import (
-    LLM_RETRIEVER_CATEGORY,
 )
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
@@ -65,15 +65,15 @@ from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
 )
 
 
-class LLMEvaluatedDepthRetrieverSchema(RetrievalExpansionSchema):
-    """Schema for :class:`LLMEvaluatedDepthRetriever`.
+class AgenticSingleRetrieverSchema(RetrievalExpansionSchema):
+    """Schema for :class:`AgenticSingleRetriever`.
 
     Attributes:
         children: Exactly one child retriever that is delegated to. Defaults to
             the default hybrid retriever; the value is fully modifiable.
         max_chunks: Maximum number of chunks the pool may hold.
         max_iters: Maximum number of retrieval rounds (judgements = iters - 1).
-        prompt: The retrieval-sufficiency prompt component.
+        prompt: The agentic retriever prompt component.
         llm_model: The text-to-text model that judges sufficiency. Defaults to
             the default RAG function-calling LLM; the value is fully modifiable.
         function_call_max_trials: Maximum number of evaluation attempts, the
@@ -167,8 +167,8 @@ class LLMEvaluatedDepthRetrieverSchema(RetrievalExpansionSchema):
     ) = DEFAULT_FUNCTION_CALL_MAX_TRIALS  # type: ignore
 
     prompt: schema_field(
-        component_field(parent="RetrievalSufficiencyPrompt"),
-        placeholder=default_retrieval_sufficiency_prompt(),
+        component_field(parent="AgenticRetrieverPrompt"),
+        placeholder=default_agentic_retriever_prompt(),
         description=MultilingualString(
             en="The prompt used to judge whether the retrieved chunks suffice.",
             es="El prompt usado para juzgar si los fragmentos recuperados son"
@@ -199,7 +199,7 @@ class LLMEvaluatedDepthRetrieverSchema(RetrievalExpansionSchema):
     )  # type: ignore
 
 
-class LLMEvaluatedDepthRetriever(LLMEvaluatedRetriever):
+class AgenticSingleRetriever(AgenticRetriever):
     """Iteratively deepens a single child's retrieval under LLM supervision.
 
     Round 1 delegates to the child with no size override (its own configuration
@@ -214,30 +214,30 @@ class LLMEvaluatedDepthRetriever(LLMEvaluatedRetriever):
     honours the hint when deeper rounds are required.
     """
 
-    SCHEMA = LLMEvaluatedDepthRetrieverSchema
+    SCHEMA = AgenticSingleRetrieverSchema
     CATEGORY: MultilingualString = LLM_RETRIEVER_CATEGORY
     DISPLAY_NAME: str = MultilingualString(
-        en="LLM-Evaluated Depth Retriever",
-        es="Recuperador de Profundidad Evaluado por LLM",
-        pt="Retriever de Profundidade Avaliado por LLM",
-        de="LLM-bewerteter Tiefen-Retriever",
-        zh="LLM 评估深度检索器",
+        en="Agentic Single Retriever",
+        es="Recuperador Agéntico Único",
+        pt="Retriever Agêntico Único",
+        de="Agentischer Einzel-Retriever",
+        zh="智能体单检索器",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Delegates to one child retriever and iteratively deepens it: an LLM"
-        " decides whether the pool suffices and how many chunks to retrieve"
-        " next.",
-        es="Delega en un recuperador hijo y lo profundiza iterativamente: un"
-        " LLM decide si el conjunto es suficiente y cuántos fragmentos"
-        " recuperar después.",
-        pt="Delega a um recuperador filho e aprofunda iterativamente: um LLM"
-        " decide se o conjunto é suficiente e quantos trechos recuperar em"
-        " seguida.",
-        de="Delegiert an einen Kind-Retriever und vertieft ihn iterativ: ein"
-        " LLM entscheidet, ob der Pool ausreicht und wie viele Fragmente als"
-        " Nächstes abzurufen sind.",
+        en="Delegates to one child retriever and iteratively deepens it: the"
+        " agentic retriever decides whether the pool suffices and how many"
+        " chunks to retrieve next.",
+        es="Delega en un recuperador hijo y lo profundiza iterativamente: el"
+        " recuperador agéntico decide si el conjunto es suficiente y cuántos"
+        " fragmentos recuperar después.",
+        pt="Delega a um recuperador filho e aprofunda iterativamente: o"
+        " retriever agêntico decide se o conjunto é suficiente e quantos trechos"
+        " recuperar em seguida.",
+        de="Delegiert an einen Kind-Retriever und vertieft ihn iterativ: der"
+        " agentische Retriever entscheidet, ob der Pool ausreicht und wie viele"
+        " Fragmente als Nächstes abzurufen sind.",
         zh=(
-            "委派给一个子检索器并迭代加深：由 LLM 决定池是否充分"
+            "委派给一个子检索器并迭代加深：由智能体检索器决定池是否充分"
             "以及下一步检索多少片段。"
         ),
     )
@@ -325,12 +325,12 @@ class LLMEvaluatedDepthRetriever(LLMEvaluatedRetriever):
     }
 
     def __init__(self, **kwargs: Any) -> None:
-        """Initialize the depth retriever and enforce a single child.
+        """Initialize the single retriever and enforce a single child.
 
         Parameters
         ----------
         **kwargs
-            The common LLM-evaluated retriever parameters.
+            The common agentic retriever parameters.
 
         Raises
         ------
@@ -340,7 +340,7 @@ class LLMEvaluatedDepthRetriever(LLMEvaluatedRetriever):
         super().__init__(**kwargs)
         if len(self._children) != 1:
             raise CompositeValidationError(
-                "LLMEvaluatedDepthRetriever requires exactly one child retriever, "
+                "AgenticSingleRetriever requires exactly one child retriever, "
                 f"got {len(self._children)}."
             )
 

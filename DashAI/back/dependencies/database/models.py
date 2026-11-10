@@ -1387,7 +1387,7 @@ class RAGGenerationModel(Base):
 class RAGRetrievalModel(Base):
     __tablename__ = "rag_retrieval_model"
     """
-    Table to store the LLM used by the LLM-evaluated composite retrievers to
+    Table to store the LLM used by the agentic composite retrievers to
     judge retrieval sufficiency. Kept separate from the generation model table:
     a retrieval-evaluation model is a distinct role and must be deduplicated on
     its own.

@@ -2,7 +2,7 @@
 
 This module is the single source of truth for the backend defaults shared by
 the retriever presets, the RAG session defaults and the placeholders of the
-LLM-evaluated composite retrievers:
+agentic composite retrievers:
 
 * the default keyword, semantic and hybrid retrievers (and the converters they
   nest: the bag-of-words word counter and the multilingual embedding model),
@@ -10,7 +10,7 @@ LLM-evaluated composite retrievers:
 * the default RAG function-calling LLM (the registered Qwen 2.5 1.5B, with
   the sampling parameters and context window the RAG helper stages need),
 * the RAG *LLM parameter overrides* shared by the query-transformation stage
-  and the LLM-evaluated retrievers, plus the merge rule that applies them.
+  and the agentic retrievers, plus the merge rule that applies them.
 
 The recipes are expressed as plain ``{component, params}`` dictionaries with
 component names as strings, so this module never imports component classes and
@@ -54,7 +54,7 @@ DEFAULT_RAG_CONTEXT_WINDOW = 10_000
 DEFAULT_FUNCTION_CALLING_LLM_CONTEXT_WINDOW = DEFAULT_RAG_CONTEXT_WINDOW
 
 #: Sampling temperature for the RAG helper LLMs (query transformation and the
-#: LLM-evaluated retrievers). Lower than the shared text-generation
+#: agentic retrievers). Lower than the shared text-generation
 #: placeholder: those stages must emit a structured function call, not prose.
 DEFAULT_RAG_LLM_TEMPERATURE = 0.1
 
@@ -63,13 +63,13 @@ DEFAULT_RAG_LLM_TEMPERATURE = 0.1
 #: text-generation placeholder.
 DEFAULT_RAG_LLM_MAX_TOKENS = 300
 
-#: Default pool and round budgets for the LLM-evaluated retrievers.
+#: Default pool and round budgets for the agentic retrievers.
 DEFAULT_MAX_CHUNKS = 10
 DEFAULT_MAX_ITERS = 3
 
-#: Default candidate and final budgets for the LLM filter retriever.
-DEFAULT_FILTER_K1 = 10
-DEFAULT_FILTER_TOP_K = 5
+#: Default candidate and final budgets for the agentic reranker retriever.
+DEFAULT_RERANKER_K1 = 10
+DEFAULT_RERANKER_TOP_K = 5
 
 #: Default maximum number of function-call attempts (first call included).
 DEFAULT_FUNCTION_CALL_MAX_TRIALS = 3
@@ -78,11 +78,11 @@ DEFAULT_FUNCTION_CALL_MAX_TRIALS = 3
 #: turn a single RAG turn into an effectively unbounded LLM retry loop.
 MAX_FUNCTION_CALL_TRIALS = 10
 
-#: Default retrieval-sufficiency prompt component.
-DEFAULT_SUFFICIENCY_PROMPT_COMPONENT = "DefaultRetrievalSufficiencyPrompt"
+#: Default agentic retriever prompt component.
+DEFAULT_AGENTIC_RETRIEVER_PROMPT_COMPONENT = "DefaultAgenticRetrieverPrompt"
 
-#: Default LLM filter prompt component.
-DEFAULT_LLM_FILTER_PROMPT_COMPONENT = "DefaultLLMFilterPrompt"
+#: Default agentic reranker prompt component.
+DEFAULT_AGENTIC_RERANKER_PROMPT_COMPONENT = "DefaultAgenticRerankerPrompt"
 
 #: Component names used by the recipes.
 KEYWORD_RETRIEVER_COMPONENT = "BM25Retriever"
@@ -232,33 +232,33 @@ def default_hybrid_retriever(top_k: int = DEFAULT_TOP_K) -> Dict[str, Any]:
     }
 
 
-def default_retrieval_sufficiency_prompt() -> Dict[str, Any]:
-    """Return the default retrieval-sufficiency prompt reference.
+def default_agentic_retriever_prompt() -> Dict[str, Any]:
+    """Return the default agentic retriever prompt reference.
 
     Returns
     -------
     Dict[str, Any]
         A fresh
-        ``{"component": "DefaultRetrievalSufficiencyPrompt", "params": {}}``
+        ``{"component": "DefaultAgenticRetrieverPrompt", "params": {}}``
         reference. The backend injects the language template.
     """
     return {
-        "component": DEFAULT_SUFFICIENCY_PROMPT_COMPONENT,
+        "component": DEFAULT_AGENTIC_RETRIEVER_PROMPT_COMPONENT,
         "params": {},
     }
 
 
-def default_llm_filter_prompt() -> Dict[str, Any]:
-    """Return the default LLM filter prompt reference.
+def default_agentic_reranker_prompt() -> Dict[str, Any]:
+    """Return the default agentic reranker prompt reference.
 
     Returns
     -------
     Dict[str, Any]
-        A fresh ``{"component": "DefaultLLMFilterPrompt", "params": {}}``
+        A fresh ``{"component": "DefaultAgenticRerankerPrompt", "params": {}}``
         reference. The backend injects the language template.
     """
     return {
-        "component": DEFAULT_LLM_FILTER_PROMPT_COMPONENT,
+        "component": DEFAULT_AGENTIC_RERANKER_PROMPT_COMPONENT,
         "params": {},
     }
 
@@ -290,7 +290,7 @@ def default_function_calling_llm() -> Dict[str, Any]:
 def rag_llm_param_overrides() -> Dict[str, Any]:
     """Return the LLM parameters the RAG helper stages set on every model.
 
-    Both the query-transformation stage and the LLM-evaluated retrievers call
+    Both the query-transformation stage and the agentic retrievers call
     a text-generation model to emit a function call. The shared model schemas
     are tuned for free-form generation, so RAG overrides the three parameters
     that decide whether the call fits and stays deterministic.

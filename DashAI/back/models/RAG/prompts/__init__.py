@@ -1,11 +1,11 @@
 from DashAI.back.models.RAG.prompts.base_prompt import BasePrompt
 from DashAI.back.models.RAG.prompts.evaluation import (
-    CustomLLMFilterPrompt,
-    CustomRetrievalSufficiencyPrompt,
-    DefaultLLMFilterPrompt,
-    DefaultRetrievalSufficiencyPrompt,
-    LLMFilterPrompt,
-    RetrievalSufficiencyPrompt,
+    AgenticRerankerPrompt,
+    AgenticRetrieverPrompt,
+    CustomAgenticRerankerPrompt,
+    CustomAgenticRetrieverPrompt,
+    DefaultAgenticRerankerPrompt,
+    DefaultAgenticRetrieverPrompt,
 )
 from DashAI.back.models.RAG.prompts.generation import (
     CustomRAGGenerationPrompt,
@@ -15,15 +15,15 @@ from DashAI.back.models.RAG.prompts.generation import (
 )
 
 __all__ = [
+    "AgenticRerankerPrompt",
+    "AgenticRetrieverPrompt",
     "BasePrompt",
-    "CustomLLMFilterPrompt",
-    "CustomRetrievalSufficiencyPrompt",
+    "CustomAgenticRerankerPrompt",
+    "CustomAgenticRetrieverPrompt",
     "CustomRAGGenerationPrompt",
-    "DefaultLLMFilterPrompt",
+    "DefaultAgenticRerankerPrompt",
+    "DefaultAgenticRetrieverPrompt",
     "DefaultQARAGGenerationPrompt",
     "DefaultRAGGenerationPrompt",
-    "DefaultRetrievalSufficiencyPrompt",
-    "LLMFilterPrompt",
     "RAGGenerationPrompt",
-    "RetrievalSufficiencyPrompt",
 ]

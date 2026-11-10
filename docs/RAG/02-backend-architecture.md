@@ -212,7 +212,7 @@ The split exists so indexing never loads generation weights. It is also LLM-free
 in its own right: every RAG LLM is obtained as a
 [`LazyLLM`](#lazy-llms-and-per-stage-release) proxy, so the configuration record
 is resolved and committed while the backend itself is constructed on first use.
-`build_index()` sets up the retriever — an LLM-evaluated retriever's evaluation
+`build_index()` sets up the retriever — an agentic retriever's evaluation
 model is a proxy too — without loading it; `build_pipeline()` adds the
 generation LLM, the prompt and the optional transformer, and still constructs no
 LLM model. `build_pipeline` delegates rather than repeating the steps, so the two
@@ -274,7 +274,7 @@ validation and commit, but returns a `LazyLLM` proxy instead of an instance:
 the real backend is constructed on the first `generate` /
 `generate_function_call` and released by `close()`. The eager
 `get_or_create()` remains for callers that need an instance immediately.
-`RetrievalLLMService` inherits the lazy path for LLM-evaluated retrievers,
+`RetrievalLLMService` inherits the lazy path for agentic retrievers,
 persisting into its own `rag_retrieval_model` table.
 
 ### RetrieverDBService
@@ -518,7 +518,7 @@ constructed on first use and released when its stage ends:
   been taken.
 - **Retrieval** — the retriever's evaluation LLM loads on its first query;
   `retriever.close()` runs once `retrieval_ms` has been taken. Composite
-  retrievers close every child, and LLM-evaluated retrievers close their own
+  retrievers close every child, and agentic retrievers close their own
   evaluation LLM before delegating to the base.
 - **Generation** — the generation LLM loads on `_generate_answer` and is closed
   once `generation_ms` (and `total_ms`) have been taken.
@@ -534,7 +534,7 @@ include the first-use model construction inside that stage and exclude that
 stage's teardown; `total_ms` includes all teardowns.
 
 The hooks live on `BaseRetriever` / `CompositeRetriever` /
-`LLMEvaluatedRetriever` and `BaseQueryTransformation` /
+`AgenticRetriever` and `BaseQueryTransformation` /
 `LLMQueryTransformation`. Their defaults are no-ops; subclasses holding a model
 extend them.
 
@@ -579,7 +579,7 @@ LLM-backed stages may add two optional, LLM-authored keys to any payload:
 `message` (a short user-facing sentence) and `justification` (a short
 rationale). `LLMQueryTransformation` emits a `transforming` update when the
 model supplies them; the pipeline forwards the transformation narrative in the
-initial `retrieving` payload; and the LLM-evaluated retrievers emit additional
+initial `retrieving` payload; and the agentic retrievers emit additional
 `retrieving` updates after each valid verdict. Those retriever updates omit
 `queries` because a retriever only knows the single query it is working on.
 When the model supplies no narrative, no extra keys or events are emitted, so
@@ -714,7 +714,7 @@ format that also keys the pipeline's `Dict` row. `children` is always a list
 (even for single-child composites) and is omitted for unit retrievers;
 techniques may add extras (the cross-encoder adds `scores` when it re-ranks).
 Composites capture their children's nodes while keeping their merge/rerank
-mathematics unchanged. The LLM-evaluated retrievers add a `rounds` list. A
+mathematics unchanged. The agentic retrievers add a `rounds` list. A
 post-round verdict entry carries the canonical `call_retrievers`,
 `request_specific_chunks`, `discard_specific_chunks` and `dropped_operations`
 keys. The ensemble's first (planning-only) entry instead carries the consulted

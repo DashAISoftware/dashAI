@@ -1,6 +1,6 @@
-"""Strict parser for the LLM filter selection contract.
+"""Strict parser for the agentic reranker selection contract.
 
-The LLM filter retriever asks its language model to return the 1-based indices
+The agentic reranker retriever asks its language model to return the 1-based indices
 of the best candidate chunks. Surrounding prose and markdown fences are
 tolerated, but the selection itself is strict: selecting the same index twice,
 an out-of-range or non-integer index, or more than ``top_k`` entries rejects the

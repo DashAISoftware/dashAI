@@ -1,4 +1,4 @@
-"""LLM-evaluated ensemble retriever.
+"""Agentic ensemble retriever.
 
 Takes two or more child retrievers. The language model is shown a catalog of the
 children (index, class name and configured ``top_k``), chooses which children to
@@ -35,15 +35,15 @@ from DashAI.back.models.RAG.RAG_defaults import (
     DEFAULT_MAX_CHUNKS,
     DEFAULT_MAX_ITERS,
     MAX_FUNCTION_CALL_TRIALS,
+    default_agentic_retriever_prompt,
     default_function_calling_llm,
     default_keyword_retriever,
-    default_retrieval_sufficiency_prompt,
     default_semantic_retriever,
 )
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_retriever import (
-    LLMEvaluatedRetriever,
+from DashAI.back.models.RAG.retrievers.composite.agentic_retriever import (
+    AgenticRetriever,
 )
-from DashAI.back.models.RAG.retrievers.composite.llm_retriever_support import (
+from DashAI.back.models.RAG.retrievers.composite.agentic_retriever_support import (
     LLM_RETRIEVER_CATEGORY,
 )
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
@@ -65,8 +65,8 @@ from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
 _PLANNING_NARRATIVE_PREFIX = "planning_"
 
 
-class LLMEvaluatedEnsembleRetrieverSchema(RetrievalExpansionSchema):
-    """Schema for :class:`LLMEvaluatedEnsembleRetriever`.
+class AgenticEnsembleRetrieverSchema(RetrievalExpansionSchema):
+    """Schema for :class:`AgenticEnsembleRetriever`.
 
     Attributes:
         children: At least two child retrievers, from which the LLM chooses.
@@ -74,7 +74,7 @@ class LLMEvaluatedEnsembleRetrieverSchema(RetrievalExpansionSchema):
             is fully modifiable.
         max_chunks: Maximum number of chunks the pool may hold.
         max_iters: Maximum number of retrieval rounds.
-        prompt: The retrieval-sufficiency prompt component.
+        prompt: The agentic retriever prompt component.
         llm_model: The text-to-text model that chooses children and judges.
             Defaults to the default RAG function-calling LLM; the value is
             fully modifiable.
@@ -172,8 +172,8 @@ class LLMEvaluatedEnsembleRetrieverSchema(RetrievalExpansionSchema):
     ) = DEFAULT_FUNCTION_CALL_MAX_TRIALS  # type: ignore
 
     prompt: schema_field(
-        component_field(parent="RetrievalSufficiencyPrompt"),
-        placeholder=default_retrieval_sufficiency_prompt(),
+        component_field(parent="AgenticRetrieverPrompt"),
+        placeholder=default_agentic_retriever_prompt(),
         description=MultilingualString(
             en="The prompt used to choose children and judge sufficiency.",
             es="El prompt usado para elegir hijos y juzgar la suficiencia.",
@@ -207,7 +207,7 @@ class LLMEvaluatedEnsembleRetrieverSchema(RetrievalExpansionSchema):
     )  # type: ignore
 
 
-class LLMEvaluatedEnsembleRetriever(LLMEvaluatedRetriever):
+class AgenticEnsembleRetriever(AgenticRetriever):
     """Consults LLM-chosen children across rounds to build a sufficient pool.
 
     A planning evaluation over an empty pool selects the first round's children.
@@ -216,29 +216,30 @@ class LLMEvaluatedEnsembleRetriever(LLMEvaluatedRetriever):
     judges the pool. An insufficient verdict selects the next round's children.
     """
 
-    SCHEMA = LLMEvaluatedEnsembleRetrieverSchema
+    SCHEMA = AgenticEnsembleRetrieverSchema
     CATEGORY: MultilingualString = LLM_RETRIEVER_CATEGORY
     DISPLAY_NAME: str = MultilingualString(
-        en="LLM-Evaluated Ensemble Retriever",
-        es="Recuperador Conjunto Evaluado por LLM",
-        pt="Retriever em Conjunto Avaliado por LLM",
-        de="LLM-bewerteter Ensemble-Retriever",
-        zh="LLM 评估集成检索器",
+        en="Agentic Ensemble Retriever",
+        es="Recuperador Agéntico de Conjunto",
+        pt="Retriever Agêntico de Conjunto",
+        de="Agentischer Ensemble-Retriever",
+        zh="智能体集成检索器",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Consults two or more child retrievers chosen by an LLM, using the"
-        " explicit per-child top_k supplied for each call until the pool"
-        " suffices.",
-        es="Consulta dos o más recuperadores hijos elegidos por un LLM, usando"
-        " el top_k explícito por hijo indicado en cada llamada hasta que el"
-        " conjunto sea suficiente.",
-        pt="Consulta dois ou mais recuperadores filhos escolhidos por um LLM,"
-        " usando o top_k explícito por filho indicado em cada chamada até que o"
-        " conjunto seja suficiente.",
-        de="Konsultiert zwei oder mehr vom LLM gewählte Kind-Retriever mit dem"
-        " für jeden Aufruf angegebenen top_k pro Kind, bis der Pool ausreicht.",
+        en="Consults two or more child retrievers chosen by the agentic"
+        " retriever, using the explicit per-child top_k supplied for each call"
+        " until the pool suffices.",
+        es="Consulta dos o más recuperadores hijos elegidos por el recuperador"
+        " agéntico, usando el top_k explícito por hijo indicado en cada llamada"
+        " hasta que el conjunto sea suficiente.",
+        pt="Consulta dois ou mais recuperadores filhos escolhidos pelo retriever"
+        " agêntico, usando o top_k explícito por filho indicado em cada chamada"
+        " até que o conjunto seja suficiente.",
+        de="Konsultiert zwei oder mehr vom agentischen Retriever gewählte"
+        " Kind-Retriever mit dem für jeden Aufruf angegebenen top_k pro Kind, bis"
+        " der Pool ausreicht.",
         zh=(
-            "咨询由 LLM 选择的两个或更多子检索器，并使用每次调用指定的"
+            "咨询由智能体检索器选择的两个或更多子检索器，并使用每次调用指定的"
             "每个子检索器的 top_k，直到池足够。"
         ),
     )

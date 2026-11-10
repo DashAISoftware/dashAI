@@ -20,7 +20,7 @@ from DashAI.back.models.RAG.exceptions import (
 from DashAI.back.models.RAG.exceptions.retriever import RAGRetrieverEvaluationError
 from DashAI.back.models.RAG.llm_factory import LLMFactory
 from DashAI.back.models.RAG.prompts.base_prompt import BasePrompt
-from DashAI.back.models.RAG.prompts.evaluation import RetrievalSufficiencyPrompt
+from DashAI.back.models.RAG.prompts.evaluation import AgenticRetrieverPrompt
 from DashAI.back.models.RAG.prompts.prompt_factory import PromptFactory
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
@@ -92,7 +92,7 @@ def _resolve_prompt(
     component: str,
     params: dict[str, Any],
     registry: ComponentRegistry,
-    prompt_base: type = RetrievalSufficiencyPrompt,
+    prompt_base: type = AgenticRetrieverPrompt,
 ) -> BasePrompt:
     """Instantiate a nested ``prompt`` reference and type-check it.
 
@@ -106,8 +106,8 @@ def _resolve_prompt(
         Application component registry.
     prompt_base : type, optional
         Required prompt family. Defaults to
-        :class:`RetrievalSufficiencyPrompt`; a retriever that declares
-        ``EVALUATION_PROMPT_BASE`` (for example the LLM filter retriever) is
+        :class:`AgenticRetrieverPrompt`; a retriever that declares
+        ``EVALUATION_PROMPT_BASE`` (for example the agentic reranker retriever) is
         checked against its own family instead.
 
     Returns
@@ -162,9 +162,7 @@ def resolve_component_params(
         A new params mapping with resolved component instances.
     """
     resolved = dict(params)
-    prompt_base = getattr(
-        model_class, "EVALUATION_PROMPT_BASE", RetrievalSufficiencyPrompt
-    )
+    prompt_base = getattr(model_class, "EVALUATION_PROMPT_BASE", AgenticRetrieverPrompt)
     for key in getattr(model_class, "COMPONENT_PARAMS", ()):
         value = resolved.get(key)
         if not _is_component_ref(value):

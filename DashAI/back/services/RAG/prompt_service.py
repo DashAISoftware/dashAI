@@ -15,9 +15,11 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.RAG.prompts.base_prompt import BasePrompt
-from DashAI.back.models.RAG.prompts.evaluation.llm_filter_prompt import LLMFilterPrompt
-from DashAI.back.models.RAG.prompts.evaluation.retrieval_sufficiency_prompt import (
-    RetrievalSufficiencyPrompt,
+from DashAI.back.models.RAG.prompts.evaluation.agentic_reranker_prompt import (
+    AgenticRerankerPrompt,
+)
+from DashAI.back.models.RAG.prompts.evaluation.agentic_retriever_prompt import (
+    AgenticRetrieverPrompt,
 )
 from DashAI.back.models.RAG.prompts.generation.RAG_generation_prompt import (
     RAGGenerationPrompt,
@@ -78,8 +80,8 @@ _RAG_TASK_NAME = "RAGTask"
 #: the default component declared by its schema placeholder.
 _PROMPT_BASE_CLASSES: tuple[type, ...] = (
     RAGGenerationPrompt,
-    RetrievalSufficiencyPrompt,
-    LLMFilterPrompt,
+    AgenticRetrieverPrompt,
+    AgenticRerankerPrompt,
     QueryTransformationPrompt,
     BasePrompt,
 )

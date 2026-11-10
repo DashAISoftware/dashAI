@@ -171,8 +171,8 @@ def test_library_lists_user_prompts_and_built_ins(client):
         "DefaultQueryRewritingPrompt",
         "DefaultQueryExpansionPrompt",
         "DefaultQueryDecompositionPrompt",
-        "DefaultRetrievalSufficiencyPrompt",
-        "DefaultLLMFilterPrompt",
+        "DefaultAgenticRetrieverPrompt",
+        "DefaultAgenticRerankerPrompt",
     }.issubset(builtin_classes)
     assert all(
         prompt["is_library"]

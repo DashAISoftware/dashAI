@@ -1,9 +1,10 @@
-"""Abstract contract for LLM filter evaluation prompts.
+"""Abstract contract for agentic reranker prompts.
 
-A filter prompt renders the user message plus a numbered list of candidate
-chunks and asks the model to select the best ones. It never declares a ``TYPE``
-of its own: every concrete prompt registers under the generic ``"Prompt"`` type
-via :class:`~DashAI.back.models.RAG.prompts.base_prompt.BasePrompt`.
+An agentic reranker prompt renders the user message plus a numbered list of
+candidate chunks and asks the model to select the best ones. It never declares a
+``TYPE`` of its own: every concrete prompt registers under the generic
+``"Prompt"`` type via
+:class:`~DashAI.back.models.RAG.prompts.base_prompt.BasePrompt`.
 """
 
 from __future__ import annotations
@@ -23,8 +24,8 @@ from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
 )
 
 
-class LLMFilterPrompt(BasePrompt):
-    """Base contract for prompts used by the LLM filter retriever.
+class AgenticRerankerPrompt(BasePrompt):
+    """Base contract for prompts used by the agentic reranker retriever.
 
     Templates are rendered with plain literal ``.replace`` calls rather than
     ``str.format`` because the strict JSON output contract embedded in the

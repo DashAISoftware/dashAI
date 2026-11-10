@@ -43,7 +43,7 @@
   when its stage starts and is closed as soon as the stage ends, so peak memory
   is the largest **top-level** stage — the generation model, the retriever LLM
   and the transformer are never resident at the same time. A **nested**
-  LLM-evaluated retriever can keep its parent and child evaluation LLMs live
+  agentic retriever can keep its parent and child evaluation LLMs live
   simultaneously, so peak can exceed one model in that configuration. The
   trade-off is reloading weights per turn/stage whenever the same checkpoint is
   used more than once. `context_window` still dominates the KV-cache footprint —
@@ -133,11 +133,11 @@
   Sessions created before this default changed keep their stored parameters:
   clear the `context_window` field to pick up the new value.
 
-- **Sessions created before the sufficiency prompt changed keep their stored
-  template.** The zero-based chunk-position rule is part of the default
+- **Sessions created before the agentic retriever prompt changed keep their
+  stored template.** The zero-based chunk-position rule is part of the default
   template; an existing session that already stores the previous template must
-  clear the prompt template (or reselect the default sufficiency prompt) to
-  receive it.
+  clear the prompt template (or reselect the default agentic retriever prompt)
+  to receive it.
 
 - **`prompt` and `llm_model` refs are mandatory.** A transformer is built only
   from an explicit prompt component and an explicit text-to-text model

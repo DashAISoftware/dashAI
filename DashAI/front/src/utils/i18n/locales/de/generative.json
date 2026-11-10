@@ -359,8 +359,8 @@
           "rewriting": "Umformulierung",
           "expansion": "Erweiterung",
           "decomposition": "Zerlegung",
-          "sufficiency": "Ausreichendheit",
-          "filter": "LLM-Filter"
+          "sufficiency": "Agentischer Retriever",
+          "filter": "Agentischer Reranker"
         },
         "filterType": "Prompt-Typ",
         "filterSubtype": "Untertyp",

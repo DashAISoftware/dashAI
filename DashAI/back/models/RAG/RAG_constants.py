@@ -79,7 +79,7 @@ RAG_OUTPUT_MESSAGE_TYPE = "str"
 # payloads above remain byte-identical for non-LLM or silent runs.
 #
 # The pipeline's initial ``retrieving`` payload carries the full resolved
-# ``queries`` list. Narrative updates emitted by an LLM-evaluated retriever
+# ``queries`` list. Narrative updates emitted by an agentic retriever
 # deliberately omit ``queries``: a retriever only knows the single query it is
 # working on, and overwriting the full list with that one query would corrupt
 # the contract. Consumers that need the query list should treat a
@@ -110,19 +110,19 @@ COMPOSITE_RETRIEVER_NAMES = frozenset(
         "ParallelRetriever",
         "MMRRerankerRetriever",
         "SentenceTransformerCrossEncoderRetriever",
-        "LLMEvaluatedDepthRetriever",
-        "LLMEvaluatedEnsembleRetriever",
-        "LLMFilterRetriever",
+        "AgenticSingleRetriever",
+        "AgenticEnsembleRetriever",
+        "AgenticRerankerRetriever",
     }
 )
 
 #: LLM-backed composite retrievers whose nested ``llm_model``/``prompt`` refs
-#: need special validation and default resolution. The set name is kept for
-#: backwards compatibility; it now covers every LLM-backed retriever family.
-LLM_EVALUATED_RETRIEVER_NAMES = frozenset(
+#: need special validation and default resolution. It covers every LLM-backed
+#: retriever family.
+AGENTIC_RETRIEVER_NAMES = frozenset(
     {
-        "LLMEvaluatedDepthRetriever",
-        "LLMEvaluatedEnsembleRetriever",
-        "LLMFilterRetriever",
+        "AgenticSingleRetriever",
+        "AgenticEnsembleRetriever",
+        "AgenticRerankerRetriever",
     }
 )

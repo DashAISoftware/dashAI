@@ -50,7 +50,7 @@ from DashAI.back.services.RAG.query_transformation_validation import (
     QueryTransformationValidationService,
 )
 from DashAI.back.services.RAG.retriever_evaluation_validation import (
-    DEFAULT_LLM_PROMPT_NAMES,
+    DEFAULT_AGENTIC_PROMPT_NAMES,
     RetrieverEvaluationValidationService,
 )
 from DashAI.back.services.RAG.session_defaults_service import (
@@ -191,7 +191,7 @@ class SessionValidationService:
         # Validate the optional query transformation stage.
         self._transformation_validator.validate(normalized)
 
-        # Validate the LLM-evaluated retriever's nested refs.
+        # Validate the agentic retriever's nested refs.
         self._validate_retriever_evaluation(normalized)
 
         # ── 2. Validate components exist in registry ──
@@ -271,7 +271,7 @@ class SessionValidationService:
         # Validate the optional query transformation stage.
         self._transformation_validator.validate(normalized)
 
-        # Validate the LLM-evaluated retriever's nested refs.
+        # Validate the agentic retriever's nested refs.
         self._validate_retriever_evaluation(normalized)
 
         # ── 2. Validate components exist in registry ──
@@ -428,7 +428,7 @@ class SessionValidationService:
         ref["params"] = {**defaults, **generation_model_overrides(), **params}
 
     def _validate_retriever_evaluation(self, normalized: dict[str, Any]) -> None:
-        """Validate the nested refs of every LLM-evaluated retriever, when used.
+        """Validate the nested refs of every agentic retriever, when used.
 
         The retriever does not have to be the top-level ``retriever_model``: it
         can be nested inside another composite, so the walk mirrors
@@ -443,7 +443,7 @@ class SessionValidationService:
         Raises
         ------
         ValueError
-            If an LLM-evaluated retriever's nested ``prompt``/``llm_model``
+            If an agentic retriever's nested ``prompt``/``llm_model``
             refs are malformed.
         """
         self._retriever_evaluation_validator.validate_recursive(
@@ -451,9 +451,9 @@ class SessionValidationService:
         )
 
     def _apply_retriever_evaluation_defaults(self, normalized: dict[str, Any]) -> None:
-        """Fill every LLM-evaluated retriever's omitted nested params.
+        """Fill every agentic retriever's omitted nested params.
 
-        The LLM-evaluated retriever does not have to be the top-level
+        The agentic retriever does not have to be the top-level
         ``retriever_model``: it can be nested inside another composite, so the
         defaults pass walks the whole retriever tree.
 
@@ -477,8 +477,8 @@ class SessionValidationService:
         generation pair (``DefaultRAGGenerationPrompt`` /
         ``DefaultQARAGGenerationPrompt``), the transformation trio
         (``DefaultQueryRewritingPrompt`` / ``DefaultQueryExpansionPrompt`` /
-        ``DefaultQueryDecompositionPrompt``) or an LLM-evaluated prompt
-        (``DefaultRetrievalSufficiencyPrompt`` / ``DefaultLLMFilterPrompt``) —
+        ``DefaultQueryDecompositionPrompt``) or an agentic prompt
+        (``DefaultAgenticRetrieverPrompt`` / ``DefaultAgenticRerankerPrompt``) —
         with a language-only ``{"language": ...}`` body: the template is
         injected from the component's ``metadata["templates"]`` *before*
         validation and written back into ``normalized`` so the session stores
@@ -514,7 +514,7 @@ class SessionValidationService:
             is_default_prompt = (
                 name in DEFAULT_PROMPT_NAMES
                 or name in DEFAULT_TRANSFORMATION_PROMPT_NAMES
-                or name in DEFAULT_LLM_PROMPT_NAMES
+                or name in DEFAULT_AGENTIC_PROMPT_NAMES
             )
             if is_default_prompt:
                 # A default prompt may leave its template blank so the language
