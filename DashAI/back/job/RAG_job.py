@@ -16,13 +16,13 @@ from DashAI.back.models.RAG.RAG_constants import (
     RAG_OPTIONAL_MODEL_KEYS,
     RAG_OUTPUT_MESSAGE_TYPE,
     RAG_PARAM_KEYS,
+    RAG_WORKFLOW_NAME,
 )
 from DashAI.back.models.RAG.RAG_pipeline import (
     RAGPipeline,
     RAGPipelineConfig,
 )
 from DashAI.back.services.RAG.setup_service import SetupService
-from DashAI.back.tasks.RAG_task import RAGTask
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -275,6 +275,12 @@ class RAGJob(BaseJob):
                         raise JobError(
                             f"Session {generative_process.session_id} not found in DB."
                         )
+                    if generative_session.workflow_name != RAG_WORKFLOW_NAME:
+                        raise JobError(
+                            f"Session {generative_session.id} is run by "
+                            f"{generative_session.workflow_name}, not "
+                            f"{RAG_WORKFLOW_NAME}."
+                        )
 
                     # Whitelist-only: accept only known RAG pipeline keys.
                     raw_params = dict(generative_session.parameters)
@@ -303,7 +309,10 @@ class RAGJob(BaseJob):
 
                     # Build conversation history from prior finished processes
                     input_data = generative_process.input
-                    task = RAGTask()
+                    task = component_registry[generative_session.task_name]["class"]()
+                    workflow = component_registry[generative_session.workflow_name][
+                        "class"
+                    ]()
                     finished_processes: list[GenerativeProcess] = (
                         db.query(GenerativeProcess)
                         .filter(
@@ -368,7 +377,7 @@ class RAGJob(BaseJob):
                             "saving output."
                         )
 
-                    output_data = task.process_output(
+                    output_data = workflow.process_output(
                         output, images_path=config["IMAGES_PATH"]
                     )
                     outputs_for_database = []

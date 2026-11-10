@@ -20,13 +20,14 @@ from DashAI.back.dependencies.database.models import (
     RAGSessionDocument,
 )
 from DashAI.back.dependencies.job_queues.base_job_queue import BaseJobQueue
-from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_DOCUMENTS
+from DashAI.back.models.RAG.RAG_constants import (
+    RAG_PARAM_DOCUMENTS,
+    RAG_WORKFLOW_NAME,
+)
 from DashAI.back.services.RAG.cleanup_service import CleanupService
 from DashAI.back.services.RAG.index_job_service import cancel_live_index_job
 
 log = logging.getLogger(__name__)
-
-_RAG_TASK_NAME = "RAGTask"
 
 
 class DocumentNotReadyError(ValueError):
@@ -72,10 +73,10 @@ class SessionDocumentService:
         session = self.db.get(GenerativeSession, session_id)
         if session is None:
             raise LookupError(f"Generative session {session_id} does not exist.")
-        if session.task_name != _RAG_TASK_NAME:
+        if session.workflow_name != RAG_WORKFLOW_NAME:
             raise ValueError(
-                f"Session {session_id} is a '{session.task_name}' session; only "
-                "RAG sessions use documents."
+                f"Session {session_id} is a '{session.workflow_name}' session; "
+                "only RAG sessions use documents."
             )
         return session
 

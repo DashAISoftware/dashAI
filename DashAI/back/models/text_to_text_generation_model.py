@@ -25,7 +25,8 @@ class TextToTextGenerationTaskModel(BaseGenerativeModel):
     """Base class for models that generate text from a text input.
 
     Concrete text-to-text models must extend this class and implement
-    ``generate``. Compatible with ``TextToTextGenerationTask`` and ``RAGTask``.
+    ``generate``. Compatible with ``TextToTextGenerationTask``, which also
+    makes them the generators the RAG workflow offers.
 
     Backends that can constrain their output to a function's JSON schema
     (llama.cpp grammar-constrained sampling, the OpenAI tools API, ...) also
@@ -33,7 +34,7 @@ class TextToTextGenerationTaskModel(BaseGenerativeModel):
     so callers can select the structural route instead of prompt obedience.
     """
 
-    COMPATIBLE_COMPONENTS = ["TextToTextGenerationTask", "RAGTask"]
+    COMPATIBLE_COMPONENTS = ["TextToTextGenerationTask"]
 
     REQUIRED_EXTRA_KWARGS = []
 

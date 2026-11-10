@@ -43,6 +43,7 @@ from tests.back.RAG.conftest import (
     RAG_E2E_DOC_TEXT,
     _create_test_document,
     bm25_retriever_params,
+    rag_session_columns,
     write_test_doc_file,
 )
 
@@ -151,9 +152,7 @@ def _create_session_process(
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
         session = GenerativeSession(
-            task_name="RAGTask",
-            model_name="RAGPipeline",
-            parameters=session_params,
+            **rag_session_columns(session_params),
             name=f"job_transformation_{tag}",
             description=None,
         )

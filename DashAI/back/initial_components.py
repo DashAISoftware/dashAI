@@ -388,7 +388,6 @@ from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
 from DashAI.back.models.lenet5_image_classifier import LeNet5ImageClassifier
 from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
-from DashAI.back.models.RAG import RAGPipeline
 from DashAI.back.models.RAG.chunking_models import (
     CharacterChunkModel,
     RecursiveCharacterChunkModel,
@@ -595,7 +594,6 @@ from DashAI.back.tasks.controlnet_task import ControlNetTask
 from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 
 # Tasks
-from DashAI.back.tasks.RAG_task import RAGTask
 from DashAI.back.tasks.regression_task import RegressionTask
 from DashAI.back.tasks.single_series_forecasting_task import (
     SingleSeriesForecastingTask,
@@ -698,7 +696,6 @@ def get_initial_components():
         TextToImageGenerationTask,
         TextToTextGenerationTask,
         ControlNetTask,
-        RAGTask,
         ImageClassificationTask,
         ClusteringTask,
         SingleSeriesForecastingTask,
@@ -743,7 +740,6 @@ def get_initial_components():
         HistGradientBoostingClassifier,
         HistGradientBoostingRegression,
         KNeighborsClassifier,
-        RAGPipeline,
         KNeighborsRegression,
         KMeansClustering,
         LassoRegression,

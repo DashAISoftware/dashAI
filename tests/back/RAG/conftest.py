@@ -32,6 +32,7 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.dependencies.job_queues.huey_job_queue import HueyJobQueue
 from DashAI.back.types.value_types import Text
+from DashAI.back.workflows import RAGWorkflow
 
 BOW_PARAMS = {
     "max_features": None,
@@ -52,6 +53,47 @@ TFIDF_PARAMS = {
     "smooth_idf": True,
     "sublinear_tf": False,
 }
+
+RAG_TEST_GENERATOR = "Llama32_1BInstruct"
+RAG_WORKFLOW_PAYLOAD = {"workflow_name": "RAGWorkflow"}
+
+
+def rag_session_columns(parameters: dict) -> dict:
+    """Return the columns of a RAG session row holding ``parameters``.
+
+    Parameters
+    ----------
+    parameters : dict
+        The session parameters.
+
+    Returns
+    -------
+    dict
+        Task, workflow, model and parameters of a RAG session. The model is the
+        generation model the parameters name, or ``RAG_TEST_GENERATOR``.
+    """
+    return {
+        "task_name": "TextToTextGenerationTask",
+        "workflow_name": "RAGWorkflow",
+        "model_name": RAGWorkflow.model_name_from(parameters) or RAG_TEST_GENERATOR,
+        "parameters": parameters,
+    }
+
+
+def assert_rag_identity(data: dict, generator: str) -> None:
+    """Assert a session payload describes a RAG session run with ``generator``.
+
+    Parameters
+    ----------
+    data : dict
+        Session payload returned by the API.
+    generator : str
+        Expected generation model.
+    """
+    assert data["task_name"] == "TextToTextGenerationTask"
+    assert data["workflow_name"] == "RAGWorkflow"
+    assert data["model_name"] == generator
+
 
 # Shared constants for RAG E2E tests
 RAG_E2E_DOC_TEXT = (
@@ -285,12 +327,7 @@ def _insert_rag_session(db, name: str) -> GenerativeSession:
     GenerativeSession
         The committed session.
     """
-    session = GenerativeSession(
-        name=name,
-        task_name="RAGTask",
-        model_name="RAGPipeline",
-        parameters={"documents": []},
-    )
+    session = GenerativeSession(name=name, **rag_session_columns({"documents": []}))
     db.add(session)
     db.commit()
     db.refresh(session)

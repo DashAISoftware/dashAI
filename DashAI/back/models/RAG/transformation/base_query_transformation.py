@@ -66,7 +66,7 @@ class BaseQueryTransformation(ConfigObject):
 
     TYPE: Final[str] = "QueryTransformation"
     SCHEMA = QueryTransformationSchema
-    COMPATIBLE_COMPONENTS: List[str] = ["RAGTask"]
+    COMPATIBLE_COMPONENTS: List[str] = ["RAGWorkflow"]
     REQUIRED_EXTRA_KWARGS = []
 
     DESCRIPTION: str = MultilingualString(

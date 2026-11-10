@@ -1,6 +1,14 @@
 import json
-from typing import Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
+from DashAI.back.core.schema_fields import (
+    BaseSchema,
+    component_field,
+    int_field,
+    list_field,
+    none_type,
+    schema_field,
+)
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.RAG_constants import (
     RAG_OUTPUT_CHUNKS_TYPE,
@@ -10,8 +18,102 @@ from DashAI.back.models.RAG.RAG_constants import (
     RAG_OUTPUT_TRACE_TYPE,
     RAG_PARAM_GENERATION_MODEL,
 )
-from DashAI.back.models.RAG.RAG_pipeline import RAGGenerationOutput, RAGPipelineSchema
 from DashAI.back.workflows.base_generative_workflow import BaseGenerativeWorkflow
+
+if TYPE_CHECKING:
+    from DashAI.back.models.RAG.RAG_pipeline import RAGGenerationOutput
+
+
+class RAGWorkflowSchema(BaseSchema):
+    """Schema of the parameters of a RAG session.
+
+    Defines the six configurable fields: documents, prompt,
+    chunking_model, retriever_model, generation_model, and the optional
+    query_transformation stage. Each model field accepts a
+    ``{"component": str, "params": dict}`` structure resolved by the
+    ComponentRegistry.
+    """
+
+    documents: schema_field(
+        list_field(int_field(gt=0)),
+        placeholder=None,
+        description=MultilingualString(
+            en="List of document IDs to use in the RAG pipeline.",
+            es="Lista de IDs de documentos a usar en el pipeline RAG.",
+            pt="Lista de IDs de documentos a usar no pipeline RAG.",
+            de="Liste der Dokument-IDs, die im RAG-Pipeline verwendet werden sollen.",
+            zh="要在 RAG 流水线中使用的文档 ID 列表。",
+        ),
+    )  # type: ignore
+
+    prompt: schema_field(
+        component_field(parent="BasePrompt"),
+        placeholder={"component": "DefaultRAGGenerationPrompt", "params": {}},
+        description=MultilingualString(
+            en="Prompt template used in the RAG pipeline.",
+            es="Plantilla de prompt usada en el pipeline RAG.",
+            pt="Modelo de prompt usado no pipeline RAG.",
+            de="Prompt-Vorlage, die im RAG-Pipeline verwendet wird.",
+            zh="用于 RAG 流水线的提示词模板。",
+        ),
+    )  # type: ignore
+
+    chunking_model: schema_field(
+        component_field(parent="BaseChunkingModel"),
+        description=MultilingualString(
+            en="Chunking model used to split documents into smaller pieces.",
+            es="Modelo de fragmentación para dividir documentos en piezas.",
+            pt=(
+                "Modelo de fragmentação usado para dividir documentos em"
+                " fragmentos menores."
+            ),
+            de="Chunking-Modell zum Aufteilen von Dokumenten in kleinere Stücke.",
+            zh="用于将文档拆分为更小块的切分模型。",
+        ),
+        placeholder={"component": "CharacterChunkModel", "params": {}},
+    )  # type: ignore
+
+    retriever_model: schema_field(
+        component_field(parent="BaseRetriever"),
+        placeholder={"component": "BM25Retriever", "params": {}},
+        description=MultilingualString(
+            en="Retriever component used in the RAG pipeline.",
+            es="Componente recuperador usado en el pipeline RAG.",
+            pt="Componente recuperador usado no pipeline RAG.",
+            de="Retriever-Komponente, die im RAG-Pipeline verwendet wird.",
+            zh="用于 RAG 流水线的检索器组件。",
+        ),
+    )  # type: ignore
+
+    generation_model: schema_field(
+        component_field(parent="TextToTextGenerationTaskModel"),
+        placeholder={"component": "", "params": {}},
+        description=MultilingualString(
+            en="Text generation model used in the RAG pipeline.",
+            es="Modelo de generación de texto usado en el pipeline RAG.",
+            pt="Modelo de geração de texto usado no pipeline RAG.",
+            de="Textgenerierungsmodell, das im RAG-Pipeline verwendet wird.",
+            zh="用于 RAG 流水线的文本生成模型。",
+        ),
+    )  # type: ignore
+
+    query_transformation: schema_field(
+        none_type(component_field(parent="BaseQueryTransformation")),
+        placeholder=None,
+        description=MultilingualString(
+            en="Optional query transformation stage that turns the user message"
+            " into one or more search queries before retrieval.",
+            es="Etapa opcional de transformación de consulta que convierte el"
+            " mensaje del usuario en una o varias consultas de búsqueda antes"
+            " de la recuperación.",
+            pt="Etapa opcional de transformação de consulta que converte a"
+            " mensagem do usuário em uma ou mais consultas de busca antes da"
+            " recuperação.",
+            de="Optionale Abfrage-Transformationsstufe, die die Benutzernachricht"
+            " vor dem Abruf in eine oder mehrere Suchanfragen umwandelt.",
+            zh="可选的查询转换阶段，在检索前将用户消息转换为一个或多个搜索查询。",
+        ),
+    ) = None  # type: ignore
 
 
 class RAGWorkflow(BaseGenerativeWorkflow):
@@ -25,7 +127,7 @@ class RAGWorkflow(BaseGenerativeWorkflow):
 
     TASK = "TextToTextGenerationTask"
     MODEL_PARAMETER = RAG_PARAM_GENERATION_MODEL
-    SCHEMA = RAGPipelineSchema
+    SCHEMA = RAGWorkflowSchema
     JOB = "RAGJob"
 
     metadata: Dict[str, Any] = {
@@ -81,7 +183,7 @@ class RAGWorkflow(BaseGenerativeWorkflow):
 
     def process_output(
         self,
-        output: RAGGenerationOutput,
+        output: "RAGGenerationOutput",
         **kwargs: Any,
     ) -> List[Tuple[str, str]]:
         """Turn a pipeline output into the five typed output rows.

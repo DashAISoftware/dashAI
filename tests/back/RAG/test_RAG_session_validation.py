@@ -20,7 +20,13 @@ Document existence is only enforced during POST (via
 import pytest
 from fastapi.testclient import TestClient
 
-from tests.back.RAG.conftest import BOW_PARAMS, TFIDF_PARAMS, _create_test_document
+from tests.back.RAG.conftest import (
+    BOW_PARAMS,
+    RAG_WORKFLOW_PAYLOAD,
+    TFIDF_PARAMS,
+    _create_test_document,
+    assert_rag_identity,
+)
 
 # ---------------------------------------------------------------------------
 # helpers
@@ -36,8 +42,7 @@ def test_doc_id(client: TestClient) -> int:
 def _base_session_params() -> dict:
     """Return the minimal valid RAG session payload (BM25 + Llama + DefaultPrompt)."""
     return {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "parameters": {
             "chunking_model": {
                 "component": "CharacterChunkModel",
@@ -105,8 +110,7 @@ class TestCreateRAGSession:
         assert data["id"] is not None
         assert isinstance(data["id"], int)
         assert data["id"] > 0
-        assert data["model_name"] == "RAGPipeline"
-        assert data["task_name"] == "RAGTask"
+        assert_rag_identity(data, data["parameters"]["generation_model"]["component"])
         assert data["name"] == "test_create_valid_rag_session"
         assert data["description"] is None
         assert "created" in data
@@ -132,7 +136,7 @@ class TestCreateRAGSession:
         assert response.status_code == 201, response.text
         assert response.json()["description"] == "A test session for RAG validation"
 
-    @pytest.mark.parametrize("missing_key", ["model_name", "task_name", "name"])
+    @pytest.mark.parametrize("missing_key", ["workflow_name", "name", "parameters"])
     def test_create_rag_session_missing_top_level_field(
         self, client: TestClient, missing_key: str
     ):
@@ -196,8 +200,7 @@ class TestCreateRAGSession:
         """A name and a generation model are enough to create a session."""
         base = _base_session_params()
         params = {
-            "model_name": base["model_name"],
-            "task_name": base["task_name"],
+            **RAG_WORKFLOW_PAYLOAD,
             "name": "test_minimal_creation",
             "parameters": {
                 "generation_model": base["parameters"]["generation_model"],

@@ -616,9 +616,6 @@ def _remove_empty_blobs_dir(documents_root: pathlib.Path) -> None:
         blobs.rmdir()
 
 
-_RAG_TASK_NAME = "RAGTask"
-
-
 def backfill_rag_retrievers(
     session_factory: "sessionmaker", component_registry
 ) -> None:
@@ -639,6 +636,7 @@ def backfill_rag_retrievers(
         Registry resolving the current RAG components.
     """
     from DashAI.back.dependencies.database.models import GenerativeSession
+    from DashAI.back.models.RAG.RAG_constants import RAG_WORKFLOW_NAME
     from DashAI.back.services.RAG.legacy_retrievers import translate_legacy_retriever
     from DashAI.back.services.RAG.session_validation_service import (
         SessionValidationService,
@@ -648,7 +646,7 @@ def backfill_rag_retrievers(
         validator = SessionValidationService(db, component_registry)
         sessions = (
             db.query(GenerativeSession)
-            .filter(GenerativeSession.task_name == _RAG_TASK_NAME)
+            .filter(GenerativeSession.workflow_name == RAG_WORKFLOW_NAME)
             .all()
         )
         converted = 0

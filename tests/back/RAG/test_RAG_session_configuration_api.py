@@ -23,7 +23,11 @@ from DashAI.back.job.RAG_job import RAGJob
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
-from tests.back.RAG.conftest import RAG_E2E_DOC_TEXT, _add_document_to_session
+from tests.back.RAG.conftest import (
+    RAG_E2E_DOC_TEXT,
+    RAG_WORKFLOW_PAYLOAD,
+    _add_document_to_session,
+)
 
 STUB_ANSWER = "stub answer"
 
@@ -91,8 +95,7 @@ def _create_minimal_session(
     response = client.post(
         "/api/v1/generative-session/",
         json={
-            "model_name": "RAGPipeline",
-            "task_name": "RAGTask",
+            **RAG_WORKFLOW_PAYLOAD,
             "name": name,
             "parameters": {
                 "generation_model": {"component": "StubConfigLLM", "params": {}},
@@ -243,8 +246,7 @@ def test_explicit_context_window_survives_the_override(
     response = client.post(
         "/api/v1/generative-session/",
         json={
-            "model_name": "RAGPipeline",
-            "task_name": "RAGTask",
+            **RAG_WORKFLOW_PAYLOAD,
             "name": "config_explicit_window",
             "parameters": {
                 "generation_model": base,

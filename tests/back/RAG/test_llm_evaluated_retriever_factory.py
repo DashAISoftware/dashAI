@@ -68,6 +68,7 @@ from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
 from DashAI.back.services.RAG.retriever_setup_service import RetrieverSetupService
+from tests.back.RAG.conftest import rag_session_columns
 
 # ---------------------------------------------------------------------------
 # stubs
@@ -464,9 +465,7 @@ def test_pure_factory_parallel_retriever_unchanged():
 def _create_pipeline(db) -> RAGPipeline:
     """Insert and return a committed session + pipeline pair."""
     session = GenerativeSession(
-        task_name="RAGTask",
-        model_name="RAGPipeline",
-        parameters={},
+        **rag_session_columns({}),
         name=f"adaptive_{uuid.uuid4().hex[:8]}",
         description=None,
     )

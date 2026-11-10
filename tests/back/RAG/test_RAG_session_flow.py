@@ -22,7 +22,12 @@ Coverage
 
 from fastapi.testclient import TestClient
 
-from tests.back.RAG.conftest import BOW_PARAMS, TFIDF_PARAMS, _add_document_to_session
+from tests.back.RAG.conftest import (
+    BOW_PARAMS,
+    RAG_WORKFLOW_PAYLOAD,
+    TFIDF_PARAMS,
+    _add_document_to_session,
+)
 
 # ---------------------------------------------------------------------------
 # helpers
@@ -32,8 +37,7 @@ from tests.back.RAG.conftest import BOW_PARAMS, TFIDF_PARAMS, _add_document_to_s
 def _base_session_params() -> dict:
     """Return the minimal valid RAG session payload."""
     return {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "parameters": {
             "chunking_model": {
                 "component": "CharacterChunkModel",

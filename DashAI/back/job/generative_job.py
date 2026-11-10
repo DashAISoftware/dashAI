@@ -11,10 +11,8 @@ from DashAI.back.dependencies.database.models import (
     ProcessData,
 )
 from DashAI.back.job.base_job import BaseJob, JobError, _release_frames
-from DashAI.back.job.RAG_job import RAGJob
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
-from DashAI.back.tasks.RAG_task import RAGTask
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -116,10 +114,10 @@ class GenerativeJob(BaseJob):
         session_factory = di["session_factory"]
         config = di["config"]
 
-        # Resolve the task in a short-lived session and close it before the RAG
-        # run: RAGJob opens its own sessions and must not inherit a connection
-        # held open for the whole LLM turn.
-        rag_job: RAGJob | None = None
+        # Resolve the workflow in a short-lived session and close it before
+        # handing the turn over: the workflow's job opens its own sessions and
+        # must not inherit a connection held open for the whole turn.
+        workflow_job: BaseJob | None = None
         with session_factory() as db:
             process = db.get(
                 GenerativeProcess, self.kwargs.get("generative_process_id")
@@ -127,11 +125,18 @@ class GenerativeJob(BaseJob):
             if process is not None:
                 session = db.get(GenerativeSession, process.session_id)
                 if session is not None:
-                    task_class = component_registry[session.task_name]["class"]
-                    if issubclass(task_class, RAGTask):
-                        rag_job = RAGJob(**self.kwargs)
-        if rag_job is not None:
-            rag_job.run()
+                    if session.workflow_name not in component_registry:
+                        process.set_status_as_error()
+                        db.commit()
+                        raise JobError(
+                            f"Workflow '{session.workflow_name}' is not registered."
+                        )
+                    workflow_class = component_registry[session.workflow_name]["class"]
+                    if type(self).__name__ != workflow_class.JOB:
+                        job_class = component_registry[workflow_class.JOB]["class"]
+                        workflow_job = job_class(**self.kwargs)
+        if workflow_job is not None:
+            workflow_job.run()
             return
 
         model = None
@@ -219,15 +224,19 @@ class GenerativeJob(BaseJob):
                 try:
                     use_history = getattr(task_class, "USE_HISTORY", False)
                     if use_history:
-                        history = [
-                            (proc.input[0].data, proc.output[0].data)
-                            for proc in db.query(GenerativeProcess)
+                        history = []
+                        for proc in (
+                            db.query(GenerativeProcess)
                             .filter(
                                 GenerativeProcess.session_id == generative_session.id
                             )
                             .filter(GenerativeProcess.status == RunStatus.FINISHED)
+                            .order_by(GenerativeProcess.id)
                             .all()
-                        ]
+                        ):
+                            message = task.extract_message_from_output(proc.output)
+                            if message is not None:
+                                history.append((proc.input[0].data, message))
                         input_data = task.prepare_for_task(
                             input_data,
                             history=history,
