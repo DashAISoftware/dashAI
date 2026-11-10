@@ -21,7 +21,9 @@ export function useDatasets({ t }) {
   const [datasetRowCount, setDatasetRowCount] = useState(null);
 
   useEffect(() => {
-    fetchDatasets();
+    // Without a session (as on the login page) the request answers 401;
+    // the list stays empty and is loaded again once the user logs in
+    fetchDatasets().catch(() => {});
   }, []);
 
   // ---------------- actions ----------------
