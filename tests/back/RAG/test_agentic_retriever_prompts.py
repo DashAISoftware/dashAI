@@ -77,7 +77,7 @@ class TestDefaultTemplates:
             assert '"call_retrievers"' in template
             assert '"request_specific_chunks"' in template
             assert '"discard_specific_chunks"' in template
-            assert "evaluate_retrieval_sufficiency" in template
+            assert "evaluate_agentic_retrieval" in template
             assert "```" not in template
 
     def test_templates_reference_supported_placeholders(self):

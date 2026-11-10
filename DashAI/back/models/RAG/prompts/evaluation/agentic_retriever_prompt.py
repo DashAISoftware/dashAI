@@ -54,7 +54,7 @@ class AgenticRetrieverPrompt(BasePrompt):
 
     metadata = {
         "type": "evaluation",
-        "technique": "sufficiency",
+        "technique": "retriever",
         "required_placeholders": required_placeholders,
         "optional_placeholders": optional_placeholders,
         "placeholder_descriptions": {

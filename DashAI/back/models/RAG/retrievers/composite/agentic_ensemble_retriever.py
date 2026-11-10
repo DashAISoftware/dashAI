@@ -244,7 +244,7 @@ class AgenticEnsembleRetriever(AgenticRetriever):
         ),
     )
 
-    EXPECTED_FUNCTION: ClassVar[str] = "evaluate_retrieval_sufficiency"
+    EXPECTED_FUNCTION: ClassVar[str] = "evaluate_agentic_retrieval"
     FUNCTION_DESCRIPTION: ClassVar[str] = (
         "Decide whether the retrieved chunks are sufficient to answer the user "
         "message. Calling retrievers is not mandatory every round: when the "

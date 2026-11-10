@@ -17,7 +17,7 @@ class CustomAgenticRetrieverPrompt(AgenticRetrieverPrompt):
         "description": "User-defined prompt template for judging retrieval"
         " sufficiency and choosing which retrievers to consult next.",
         "type": "evaluation",
-        "technique": "sufficiency",
+        "technique": "retriever",
         "required_placeholders": AgenticRetrieverPrompt.required_placeholders,
         "optional_placeholders": AgenticRetrieverPrompt.optional_placeholders,
         "placeholder_descriptions": {

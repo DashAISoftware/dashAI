@@ -359,8 +359,8 @@
           "rewriting": "Umformulierung",
           "expansion": "Erweiterung",
           "decomposition": "Zerlegung",
-          "sufficiency": "Agentischer Retriever",
-          "filter": "Agentischer Reranker"
+          "retriever": "Agentischer Retriever",
+          "reranker": "Agentischer Reranker"
         },
         "filterType": "Prompt-Typ",
         "filterSubtype": "Untertyp",

@@ -111,7 +111,7 @@ class StubFactoryLLM(TextToTextGenerationTaskModel):
     ) -> FunctionCallResult:
         """Return a fixed sufficient verdict."""
         return FunctionCallResult(
-            "evaluate_retrieval_sufficiency",
+            "evaluate_agentic_retrieval",
             {"sufficient": True},
         )
 

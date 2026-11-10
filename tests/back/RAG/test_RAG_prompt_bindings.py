@@ -74,9 +74,7 @@ def _nested_parameters() -> dict:
             "params": {
                 "prompt": {
                     "component": "CustomAgenticRetrieverPrompt",
-                    "params": {
-                        "template": _template("{input} {chunks}", "sufficiency")
-                    },
+                    "params": {"template": _template("{input} {chunks}", "retriever")},
                 },
                 "children": [
                     {
@@ -85,7 +83,9 @@ def _nested_parameters() -> dict:
                             "prompt": {
                                 "component": "CustomAgenticRerankerPrompt",
                                 "params": {
-                                    "template": _template("{input} {chunks}", "filter")
+                                    "template": _template(
+                                        "{input} {chunks}", "reranker"
+                                    )
                                 },
                             }
                         },

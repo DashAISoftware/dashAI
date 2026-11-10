@@ -38,7 +38,7 @@ class CustomAgenticRerankerPrompt(AgenticRerankerPrompt):
         "description": "User-defined prompt template for selecting the best"
         " candidate chunks with the select_best_chunks function call.",
         "type": "evaluation",
-        "technique": "filter",
+        "technique": "reranker",
         "required_placeholders": AgenticRerankerPrompt.required_placeholders,
         "optional_placeholders": AgenticRerankerPrompt.optional_placeholders,
         "placeholder_descriptions": {

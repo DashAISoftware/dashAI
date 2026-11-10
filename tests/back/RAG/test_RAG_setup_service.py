@@ -84,7 +84,7 @@ class CountingLLMSetup(TextToTextGenerationTaskModel):
     def generate_function_call(self, messages, functions):
         """Return a sufficient retrieval verdict."""
         return FunctionCallResult(
-            "evaluate_retrieval_sufficiency",
+            "evaluate_agentic_retrieval",
             {"sufficient": True},
         )
 

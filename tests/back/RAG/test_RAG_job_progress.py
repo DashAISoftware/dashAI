@@ -153,7 +153,7 @@ class NarrativeVerdictLLM(TextToTextGenerationTaskModel):
     def generate_function_call(self, messages, functions):
         """Return a sufficient function-call verdict with narrative."""
         return FunctionCallResult(
-            "evaluate_retrieval_sufficiency",
+            "evaluate_agentic_retrieval",
             {
                 "sufficient": True,
                 "message": RETRIEVAL_MESSAGE,

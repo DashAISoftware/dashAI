@@ -196,7 +196,7 @@ class DefaultAgenticRerankerPrompt(AgenticRerankerPrompt):
         "description": "Default prompt template for selecting the best"
         " candidate chunks with the select_best_chunks function call.",
         "type": "evaluation",
-        "technique": "filter",
+        "technique": "reranker",
         "required_placeholders": required_placeholders,
         "optional_placeholders": optional_placeholders,
         "placeholder_descriptions": {

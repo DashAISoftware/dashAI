@@ -52,7 +52,7 @@ TEMPLATES = {
         "chunks take priority. Use the document chunk counts to choose valid "
         "positions in 0..C-1.\n"
         "\n"
-        "Respond by calling the function evaluate_retrieval_sufficiency with a "
+        "Respond by calling the function evaluate_agentic_retrieval with a "
         "single JSON object with this shape:\n"
         '{"sufficient": <true or false>, "call_retrievers": '
         '{"<retriever index>": <top_k>}, "request_specific_chunks": '
@@ -132,7 +132,7 @@ TEMPLATES = {
         "prioridad. Usa el número de fragmentos de cada documento para elegir "
         "posiciones válidas en 0..C-1.\n"
         "\n"
-        "Responde llamando a la función evaluate_retrieval_sufficiency con un "
+        "Responde llamando a la función evaluate_agentic_retrieval con un "
         "único objeto JSON con esta forma:\n"
         '{"sufficient": <true o false>, "call_retrievers": '
         '{"<índice del recuperador>": <top_k>}, "request_specific_chunks": '
@@ -216,7 +216,7 @@ TEMPLATES = {
         "solicitados; os trechos solicitados têm prioridade. Use o número de "
         "trechos de cada documento para escolher posições válidas em 0..C-1.\n"
         "\n"
-        "Responda chamando a função evaluate_retrieval_sufficiency com um "
+        "Responda chamando a função evaluate_agentic_retrieval com um "
         "único objeto JSON com esta forma:\n"
         '{"sufficient": <true ou false>, "call_retrievers": '
         '{"<índice do recuperador>": <top_k>}, "request_specific_chunks": '
@@ -329,7 +329,7 @@ class DefaultAgenticRetrieverPrompt(AgenticRetrieverPrompt):
         "description": "Default prompt template for deciding whether retrieved"
         " chunks are sufficient and which retrievers or chunks to fetch next.",
         "type": "evaluation",
-        "technique": "sufficiency",
+        "technique": "retriever",
         "required_placeholders": required_placeholders,
         "optional_placeholders": optional_placeholders,
         "placeholder_descriptions": {

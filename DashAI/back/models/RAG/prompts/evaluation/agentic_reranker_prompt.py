@@ -46,7 +46,7 @@ class AgenticRerankerPrompt(BasePrompt):
 
     metadata = {
         "type": "evaluation",
-        "technique": "filter",
+        "technique": "reranker",
         "required_placeholders": required_placeholders,
         "optional_placeholders": optional_placeholders,
         "placeholder_descriptions": {
