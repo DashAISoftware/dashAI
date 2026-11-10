@@ -13,11 +13,17 @@ import {
 } from "@mui/material";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import { useTranslation } from "react-i18next";
+import { useSnackbar } from "notistack";
 import HighlightedTextarea from "./HighlightedTextarea";
 import PlaceholdersList from "./PlaceholdersList";
 import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
-import { getDefaultPrompts, getLibraryPrompts } from "../../../api/rag";
+import {
+  createRAGPrompt,
+  getDefaultPrompts,
+  getLibraryPrompts,
+} from "../../../api/rag";
 import { getChildComponents } from "../../../api/component";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import { LANGUAGE_CODES } from "../../../constants/languages";
 
 /** The component a hand-written template is stored under. */
@@ -56,8 +62,13 @@ export default function PromptEditor({
   componentName = CUSTOM_PROMPT_COMPONENT,
 }) {
   const { t } = useTranslation(["generative", "common"]);
+  const { enqueueSnackbar } = useSnackbar();
   const [seeds, setSeeds] = useState([]);
   const [savedPrompts, setSavedPrompts] = useState([]);
+  const [libraryVersion, setLibraryVersion] = useState(0);
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  const [saving, setSaving] = useState(false);
   const [placeholderSpec, setPlaceholderSpec] = useState({
     required: FALLBACK_REQUIRED,
     optional: [],
@@ -86,9 +97,16 @@ export default function PromptEditor({
     getLibraryPrompts()
       .then((options) => {
         // Built-in templates are already offered by the "Start from" select;
-        // only user-saved prompts belong in the second one.
+        // only user-saved prompts belong in the second one. This editor writes
+        // a generation template, so query-rewriting or sufficiency prompts
+        // would be loaded into a slot that never runs them.
         if (!cancelled) {
-          setSavedPrompts(options.filter((prompt) => prompt.is_library));
+          setSavedPrompts(
+            options.filter(
+              (prompt) =>
+                prompt.is_library && prompt.prompt_type === "generation",
+            ),
+          );
         }
       })
       .catch((error) => {
@@ -98,7 +116,7 @@ export default function PromptEditor({
     return () => {
       cancelled = true;
     };
-  }, [showSeeding]);
+  }, [showSeeding, libraryVersion]);
 
   useEffect(() => {
     let cancelled = false;
@@ -215,6 +233,51 @@ export default function PromptEditor({
     update(templateText);
     if (parameters.language) setSeedLanguage(parameters.language);
   };
+
+  /**
+   * Save the current template into the prompt library.
+   *
+   * Only offered for a custom prompt whose template is already complete: a
+   * library row the API cannot store or a half-written template would just be
+   * rejected. The saved prompt then appears in the seeding selects.
+   */
+  const handleSaveToLibrary = async () => {
+    if (!saveName.trim() || missing.length > 0) return;
+    setSaving(true);
+    try {
+      await createRAGPrompt({
+        class_name: componentName,
+        name: saveName.trim(),
+        parameters: { template },
+      });
+      // This flow always creates a new row, so it must not claim an update.
+      enqueueSnackbar(t("generative:rag.prompt.library.created"), {
+        variant: "success",
+      });
+      setSaveName("");
+      setSaveOpen(false);
+      // Reload the saved prompts so the new row shows up in the selector.
+      setLibraryVersion((version) => version + 1);
+    } catch (error) {
+      console.error("Failed to save prompt to the library:", error);
+      enqueueSnackbar(
+        getApiErrorMessage(
+          error,
+          t("generative:rag.prompt.library.createError"),
+        ),
+        { variant: "error" },
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const canSaveToLibrary = Boolean(
+    showSeeding &&
+    componentName?.startsWith("Custom") &&
+    template.trim() &&
+    missing.length === 0,
+  );
 
   const insertPlaceholder = useCallback(
     (placeholder) => {
@@ -335,6 +398,51 @@ export default function PromptEditor({
         </Stack>
         {editor(textareaRef, 8)}
       </Box>
+
+      {showSeeding && (
+        <Typography variant="caption" color="text.secondary">
+          {t("generative:rag.prompt.editor.sessionOnlyHelp")}
+        </Typography>
+      )}
+
+      {canSaveToLibrary && (
+        <Box>
+          {saveOpen ? (
+            <Stack direction="row" spacing={1} alignItems="flex-start">
+              <TextField
+                autoFocus
+                size="small"
+                fullWidth
+                label={t("generative:rag.prompt.editor.saveToLibraryName")}
+                value={saveName}
+                onChange={(event) => setSaveName(event.target.value)}
+              />
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleSaveToLibrary}
+                disabled={!saveName.trim() || saving}
+              >
+                {t("generative:rag.prompt.editor.saveToLibrary")}
+              </Button>
+              <Button size="small" onClick={() => setSaveOpen(false)}>
+                {t("common:cancel")}
+              </Button>
+            </Stack>
+          ) : (
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                setSaveName("");
+                setSaveOpen(true);
+              }}
+            >
+              {t("generative:rag.prompt.editor.saveToLibrary")}
+            </Button>
+          )}
+        </Box>
+      )}
 
       {missing.length > 0 && (
         <Alert severity="error" sx={{ py: 0.5 }}>

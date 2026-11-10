@@ -277,6 +277,9 @@ export interface IRAGPrompt {
   created: string;
   last_modified: string;
   is_library: boolean;
+  is_default: boolean;
+  based_on_id?: number | null;
+  origin?: "default" | "library";
   prompt_type?: string | null;
   prompt_subtype?: string | null;
   sessions: IPromptSession[];
@@ -286,6 +289,16 @@ export interface IRAGPromptCreate {
   class_name: string;
   name: string;
   parameters: { template: string; language?: string };
+}
+
+export interface IRAGPromptUpdate {
+  name?: string;
+  parameters?: { template?: string; templates?: Record<string, string> };
+}
+
+export interface IRAGPromptFork {
+  name: string;
+  parameters?: { template?: string; templates?: Record<string, string> };
 }
 
 /** Fetches the prompts saved by the user (not internal pipeline rows). */
@@ -308,13 +321,53 @@ export const createRAGPrompt = async (
   return response.data;
 };
 
-/** Deletes a library prompt, optionally deleting the sessions using it. */
+/** Fetches a single prompt from the library by ID. */
+export const getRAGPrompt = async (promptId: number): Promise<IRAGPrompt> => {
+  const response = await api.get<IRAGPrompt>(`/v1/prompt/${promptId}`);
+  if (response.status !== 200) {
+    throw new Error(`Failed to fetch RAG prompt: ${response.statusText}`);
+  }
+  return response.data;
+};
+
+/** Edits a library prompt in place. Defaults and drafts are rejected by the API. */
+export const updateRAGPrompt = async (
+  promptId: number,
+  payload: IRAGPromptUpdate,
+): Promise<IRAGPrompt> => {
+  const response = await api.patch<IRAGPrompt>(
+    `/v1/prompt/${promptId}`,
+    payload,
+  );
+  if (response.status !== 200) {
+    throw new Error(`Failed to update RAG prompt: ${response.statusText}`);
+  }
+  return response.data;
+};
+
+/** Creates a library copy of a prompt, switching defaults to their Custom* class. */
+export const forkRAGPrompt = async (
+  promptId: number,
+  payload: IRAGPromptFork,
+): Promise<IRAGPrompt> => {
+  const response = await api.post<IRAGPrompt>(
+    `/v1/prompt/${promptId}/fork`,
+    payload,
+  );
+  if (response.status !== 201) {
+    throw new Error(`Failed to fork RAG prompt: ${response.statusText}`);
+  }
+  return response.data;
+};
+
+/** Deletes a library prompt, optionally detaching or deleting its sessions. */
 export const deleteRAGPrompt = async (
   promptId: number,
   cascadeSessions = false,
+  detach = false,
 ): Promise<void> => {
   const response = await api.delete(`/v1/prompt/${promptId}`, {
-    params: { cascade_sessions: cascadeSessions },
+    params: { cascade_sessions: cascadeSessions, detach },
   });
   if (response.status !== 204) {
     throw new Error(`Failed to delete RAG prompt: ${response.statusText}`);

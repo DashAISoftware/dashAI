@@ -10,7 +10,6 @@ import {
   Divider,
   IconButton,
   MenuItem,
-  Paper,
   Stack,
   TextField,
   Tooltip,
@@ -19,9 +18,15 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import FileCopyIcon from "@mui/icons-material/FileCopy";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useTheme } from "@mui/material/styles";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
 import ModuleContainer from "../../../components/layout/ModuleContainer";
 import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../../components/threeSectionLayout/panels/CenterPanel";
@@ -30,6 +35,7 @@ import SessionBar from "../../../components/generative/SessionBar";
 import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
 import DeleteConfirmationModal from "../../../components/threeSectionLayout/DeleteConfirmationModal";
 import PromptLibraryCreateModal from "../../../components/generative/RAG/PromptLibraryCreateModal";
+import PromptLibraryEditModal from "../../../components/generative/RAG/PromptLibraryEditModal";
 import { useGenerative } from "../../../components/generative/GenerativeContext";
 import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { FormSchemaProvider } from "../../../contexts/schema";
@@ -38,9 +44,11 @@ import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
 import {
   RAG_TASK_NAME,
   deleteRAGPrompt,
+  forkRAGPrompt,
   getLibraryPrompts,
 } from "../../../api/rag";
 import { getApiErrorMessage } from "../../../utils/apiError";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 import { renderTemplateWithHighlights } from "../RAGSession/components/sectionUtils";
 
 /**
@@ -56,28 +64,6 @@ function templateOf(prompt) {
 }
 
 /**
- * The language a prompt declares, if any.
- *
- * @param {object} prompt - A library prompt.
- * @returns {string|null} The language code.
- */
-function languageOf(prompt) {
-  const parameters = prompt?.parameters ?? {};
-  if (parameters.language) return parameters.language;
-  return Object.keys(parameters.templates ?? {})[0] ?? null;
-}
-
-/**
- * One-line preview of a prompt template.
- *
- * @param {object} prompt - A library prompt.
- * @returns {string} The preview.
- */
-function previewOf(prompt) {
-  return templateOf(prompt).replace(/\s+/g, " ").slice(0, 160);
-}
-
-/**
  * The RAG prompt library: prompts the user saved, with create and delete.
  *
  * @returns {JSX.Element} The prompt library page.
@@ -87,6 +73,7 @@ export default function RAGPromptsPage() {
   const { t } = useTranslation(["generative", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
+  const localization = useTableLocalization();
   const threePanelLayout = useThreePanelLayout({ storageKey: "rag-prompts" });
   const { sessions, deleteSessionById, fetchSessions } = useGenerative();
   const ragTitle = useTaskDisplayName(RAG_TASK_NAME);
@@ -99,7 +86,10 @@ export default function RAGPromptsPage() {
   const [createTemplate, setCreateTemplate] = useState("");
   const [createType, setCreateType] = useState("");
   const [createSubtype, setCreateSubtype] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editPromptId, setEditPromptId] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [typeFilter, setTypeFilter] = useState("");
   const [subtypeFilter, setSubtypeFilter] = useState("");
 
@@ -203,14 +193,81 @@ export default function RAGPromptsPage() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleEdit = useCallback((prompt) => {
+    setEditPromptId(prompt.id);
+    setEditOpen(true);
+  }, []);
+
+  const handleDuplicate = useCallback(
+    async (prompt) => {
+      // Only a built-in can be duplicated: forking it creates a `Custom*` library
+      // row. Forking a library row returns its own content (the API keys rows by
+      // content hash), so the action would either fail with a 409 or report a
+      // copy that was never created. Library rows use "Use as base" instead.
+      if (!prompt?.is_default) return;
+      const sourceName = prompt.name || `Prompt ${prompt.id}`;
+      // Ids already on screen tell us whether the fork created a row or the API
+      // handed back an existing one; the two must not be reported the same way.
+      const knownIds = new Set(prompts.map((item) => item.id));
+      try {
+        const created = await forkRAGPrompt(prompt.id, {
+          name: `${sourceName}${t("generative:rag.prompt.library.copySuffix")}`,
+        });
+        await load();
+        setTypeFilter("");
+        setSubtypeFilter("");
+        setSelectedId(created.id);
+        setEditPromptId(created.id);
+        setEditOpen(true);
+        fetchSessions?.();
+        const createdNow = !knownIds.has(created.id);
+        enqueueSnackbar(
+          createdNow
+            ? t("generative:rag.prompt.library.duplicated")
+            : t("generative:rag.prompt.library.duplicateExisting", {
+                name: created.name || sourceName,
+              }),
+          { variant: createdNow ? "success" : "info" },
+        );
+      } catch (error) {
+        console.error("Failed to duplicate prompt:", error);
+        enqueueSnackbar(
+          getApiErrorMessage(
+            error,
+            t("generative:rag.prompt.library.createError"),
+          ),
+          { variant: "error" },
+        );
+      }
+    },
+    [prompts, load, t, enqueueSnackbar, fetchSessions],
+  );
+
+  const handleEditSaved = useCallback(
+    async (promptId) => {
+      await load();
+      setSelectedId(promptId);
+      fetchSessions?.();
+    },
+    [load, fetchSessions],
+  );
+
+  /**
+   * Delete the pending prompt.
+   *
+   * `mode` mirrors the API's two ways out of an in-use prompt: "detach" keeps
+   * the sessions and repoints them, "cascade" deletes them. Without a mode the
+   * prompt is deleted only when nothing uses it; a 409 then reopens the dialog
+   * with the server's authoritative session list so the user can pick.
+   *
+   * @param {"detach"|"cascade"} [mode] - How to handle sessions using it.
+   */
+  const handleDelete = async (mode) => {
     const prompt = pendingDelete;
     if (!prompt) return;
+    setDeleting(true);
     try {
-      // Ask the server first. If it reports sessions the dialog did not
-      // name, keep it open with the fresh list instead of silently deleting
-      // them based on a stale page.
-      await deleteRAGPrompt(prompt.id, Boolean(prompt.cascadeConfirmed));
+      await deleteRAGPrompt(prompt.id, mode === "cascade", mode === "detach");
       setPendingDelete(null);
       setPrompts((previous) =>
         previous.filter((item) => item.id !== prompt.id),
@@ -223,38 +280,14 @@ export default function RAGPromptsPage() {
     } catch (error) {
       const sessionsUsing = error.response?.data?.detail?.sessions;
       if (
-        !prompt.cascadeConfirmed &&
         error.response?.status === 409 &&
-        Array.isArray(sessionsUsing)
+        Array.isArray(sessionsUsing) &&
+        sessionsUsing.length > 0
       ) {
-        const shownIds = new Set(
-          (prompt.sessions ?? []).map((session) => session.id),
-        );
-        if (sessionsUsing.every((session) => shownIds.has(session.id))) {
-          // The user already saw exactly these sessions: cascade now.
-          try {
-            await deleteRAGPrompt(prompt.id, true);
-            setPendingDelete(null);
-            setPrompts((previous) =>
-              previous.filter((item) => item.id !== prompt.id),
-            );
-            if (selectedId === prompt.id) setSelectedId(null);
-            fetchSessions?.();
-            enqueueSnackbar(t("generative:rag.prompt.library.deleted"), {
-              variant: "success",
-            });
-            return;
-          } catch (cascadeError) {
-            error = cascadeError;
-          }
-        } else {
-          setPendingDelete({
-            ...prompt,
-            sessions: sessionsUsing,
-            cascadeConfirmed: true,
-          });
-          return;
-        }
+        // The server is the source of truth for who uses this prompt: show
+        // exactly those sessions instead of acting on a stale page.
+        setPendingDelete({ ...prompt, sessions: sessionsUsing });
+        return;
       }
       console.error("Failed to delete prompt:", error);
       enqueueSnackbar(
@@ -264,25 +297,259 @@ export default function RAGPromptsPage() {
         ),
         { variant: "error" },
       );
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const deleteWarning =
-    pendingDelete?.sessions?.length > 0
-      ? t("generative:rag.prompt.library.deleteCascadeWarning", {
-          sessions: pendingDelete.sessions
-            .map((session) => session.name)
-            .join(", "),
-        })
-      : t("generative:rag.prompt.library.deleteWarning");
+  const pendingDeleteSessions = pendingDelete?.sessions ?? [];
+  const hasSessions = pendingDeleteSessions.length > 0;
+
+  const deleteWarning = hasSessions
+    ? t("generative:rag.prompt.library.deleteOptionsHelp", {
+        sessions: pendingDeleteSessions
+          .map((session) => session.name)
+          .join(", "),
+      })
+    : t("generative:rag.prompt.library.deleteWarning");
 
   const placeholderColors = useMemo(
     () => ({
-      bg: theme.palette.secondary.light,
-      text: theme.palette.secondary.dark,
+      bg: theme.palette.placeholder.bg,
+      text: theme.palette.placeholder.text,
     }),
     [theme],
   );
+
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: t("common:name"),
+        minSize: 150,
+        accessorFn: (prompt) => prompt.name || `Prompt ${prompt.id}`,
+      },
+      {
+        accessorKey: "prompt_type",
+        header: t("generative:rag.prompt.library.filterType"),
+        minSize: 110,
+        accessorFn: (prompt) => {
+          if (!prompt.prompt_type) return "";
+          const type = t(
+            `generative:rag.prompt.library.types.${prompt.prompt_type}`,
+            { defaultValue: prompt.prompt_type },
+          );
+          if (!prompt.prompt_subtype) return type;
+          const subtype = t(
+            `generative:rag.prompt.library.subtypes.${prompt.prompt_subtype}`,
+            { defaultValue: prompt.prompt_subtype },
+          );
+          return `${type} · ${subtype}`;
+        },
+      },
+      {
+        id: "origin",
+        header: t("generative:rag.prompt.library.origin"),
+        enableSorting: false,
+        minSize: 90,
+        Cell: ({ row }) => {
+          if (row.original.is_default) {
+            return (
+              <Chip
+                size="small"
+                variant="outlined"
+                label={t("generative:rag.prompt.library.builtin")}
+              />
+            );
+          }
+          if (row.original.is_library) {
+            return (
+              <Chip
+                size="small"
+                variant="outlined"
+                label={t("generative:rag.prompt.library.library")}
+              />
+            );
+          }
+          return null;
+        },
+      },
+      {
+        id: "sessions",
+        header: t("generative:rag.prompt.library.sessions"),
+        accessorFn: (prompt) => (prompt.sessions ?? []).length,
+        minSize: 70,
+        Cell: ({ row }) => {
+          const count = (row.original.sessions ?? []).length;
+          return (
+            <Chip
+              size="small"
+              color={count > 0 ? "secondary" : "default"}
+              label={String(count)}
+              aria-label={t("generative:rag.prompt.library.sessionCount", {
+                count,
+              })}
+            />
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: t("common:actions"),
+        enableSorting: false,
+        minSize: 140,
+        Cell: ({ row }) => {
+          const prompt = row.original;
+          const displayName = prompt.name || `Prompt ${prompt.id}`;
+          return (
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <Tooltip title={t("generative:rag.prompt.library.view")}>
+                <IconButton
+                  size="small"
+                  aria-label={`${t(
+                    "generative:rag.prompt.library.view",
+                  )}: ${displayName}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setSelectedId(prompt.id);
+                  }}
+                >
+                  <VisibilityIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              {prompt.is_library && !prompt.is_default && (
+                <Tooltip title={t("generative:rag.prompt.library.edit")}>
+                  <IconButton
+                    size="small"
+                    aria-label={`${t(
+                      "generative:rag.prompt.library.edit",
+                    )}: ${displayName}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleEdit(prompt);
+                    }}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {prompt.is_default && (
+                <Tooltip title={t("generative:rag.prompt.library.duplicate")}>
+                  <IconButton
+                    size="small"
+                    aria-label={`${t(
+                      "generative:rag.prompt.library.duplicate",
+                    )}: ${displayName}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleDuplicate(prompt);
+                    }}
+                  >
+                    <FileCopyIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {prompt.is_library && (
+                <Tooltip title={t("generative:rag.prompt.library.delete")}>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    aria-label={`${t(
+                      "generative:rag.prompt.library.delete",
+                    )}: ${displayName}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setPendingDelete(prompt);
+                    }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Stack>
+          );
+        },
+      },
+    ],
+    [t, handleEdit, handleDuplicate],
+  );
+
+  const table = useMaterialReactTable({
+    columns,
+    data: filteredPrompts,
+    getRowId: (prompt) => String(prompt.id),
+    localization,
+    mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
+    layoutMode: "grid",
+    muiTableBodyCellProps: {
+      sx: { whiteSpace: "pre", overflow: "hidden", textOverflow: "ellipsis" },
+    },
+    muiTableHeadCellProps: { sx: { whiteSpace: "nowrap" } },
+    defaultColumn: { minSize: 60, maxSize: 260 },
+    muiTableProps: { sx: { tableLayout: "fixed", width: "100%" } },
+    muiTablePaperProps: {
+      elevation: 0,
+      sx: {
+        height: "100%",
+        width: "100%",
+        maxWidth: "100%",
+        display: "flex",
+        flexDirection: "column",
+      },
+    },
+    muiTableContainerProps: {
+      sx: { flex: 1, minHeight: 0, overflowX: "auto", overflowY: "auto" },
+    },
+    muiTableBodyRowProps: ({ row }) => ({
+      onClick: () => setSelectedId(row.original.id),
+      sx: {
+        cursor: "pointer",
+        backgroundColor:
+          selectedId === row.original.id ? "action.selected" : undefined,
+        "&:hover": {
+          backgroundColor:
+            selectedId === row.original.id ? "action.selected" : "action.hover",
+        },
+      },
+    }),
+    initialState: {
+      density: "compact",
+      pagination: { pageSize: 5, pageIndex: 0 },
+    },
+    enablePagination: true,
+    enableBottomToolbar: true,
+    enableTopToolbar: false,
+    enableColumnFilters: false,
+    enableColumnActions: false,
+    enableColumnResizing: false,
+    enableGlobalFilter: false,
+    enableRowSelection: false,
+    enableDensityToggle: false,
+    enableFullScreenToggle: false,
+    enableHiding: false,
+    pageSizeOptions: [5, 10, 25],
+    renderEmptyRowsFallback: () => (
+      <Box sx={{ px: 2, py: 6, textAlign: "center" }}>
+        <Typography
+          color="text.secondary"
+          sx={{ mb: prompts.length === 0 ? 2 : 0 }}
+        >
+          {prompts.length === 0
+            ? t("generative:rag.prompt.library.empty")
+            : t("generative:rag.prompt.library.noMatches")}
+        </Typography>
+        {prompts.length === 0 && (
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={handleNewPrompt}
+          >
+            {t("generative:rag.prompt.library.new")}
+          </Button>
+        )}
+      </Box>
+    ),
+  });
 
   return (
     <FormSchemaProvider>
@@ -392,7 +659,14 @@ export default function RAGPromptsPage() {
                 </Stack>
               </Stack>
 
-              <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", pr: 1 }}>
+              <Box
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
                 {loading ? (
                   <Box
                     sx={{ display: "flex", justifyContent: "center", py: 6 }}
@@ -400,165 +674,20 @@ export default function RAGPromptsPage() {
                     <CircularProgress />
                   </Box>
                 ) : loadFailed ? (
-                  <Typography color="text.secondary">
-                    {t("generative:rag.prompt.library.loadError")}
-                  </Typography>
-                ) : prompts.length === 0 ? (
-                  <Box sx={{ textAlign: "center", py: 8 }}>
-                    <Typography color="text.secondary" sx={{ mb: 2 }}>
-                      {t("generative:rag.prompt.library.empty")}
-                    </Typography>
-                    <Button
-                      variant="outlined"
-                      startIcon={<AddIcon />}
-                      onClick={handleNewPrompt}
-                    >
-                      {t("generative:rag.prompt.library.new")}
-                    </Button>
-                  </Box>
-                ) : filteredPrompts.length === 0 ? (
-                  <Typography
-                    color="text.secondary"
-                    sx={{ textAlign: "center", py: 8 }}
+                  <Stack
+                    spacing={2}
+                    alignItems="center"
+                    sx={{ textAlign: "center", py: 6 }}
                   >
-                    {t("generative:rag.prompt.library.noMatches")}
-                  </Typography>
-                ) : (
-                  <Stack spacing={1.5}>
-                    {filteredPrompts.map((prompt) => {
-                      const language = languageOf(prompt);
-                      return (
-                        <Paper
-                          key={prompt.id}
-                          variant="outlined"
-                          onClick={() => setSelectedId(prompt.id)}
-                          sx={{
-                            p: 2,
-                            cursor: "pointer",
-                            bgcolor:
-                              selectedId === prompt.id
-                                ? "action.selected"
-                                : "background.paper",
-                            borderColor:
-                              selectedId === prompt.id
-                                ? "secondary.main"
-                                : "divider",
-                            transition:
-                              "border-color 150ms ease-out, background-color 150ms ease-out",
-                            "@media (hover: hover)": {
-                              "&:hover": {
-                                borderColor: "secondary.main",
-                              },
-                            },
-                          }}
-                        >
-                          <Stack
-                            direction="row"
-                            spacing={2}
-                            alignItems="center"
-                          >
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
-                              <Typography variant="subtitle1" noWrap>
-                                {prompt.name || `Prompt ${prompt.id}`}
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                noWrap
-                                sx={{ mt: 0.5 }}
-                              >
-                                {previewOf(prompt)}
-                              </Typography>
-                              <Stack
-                                direction="row"
-                                spacing={1}
-                                sx={{ mt: 1, flexWrap: "wrap" }}
-                              >
-                                {prompt.prompt_type && (
-                                  <Chip
-                                    size="small"
-                                    color="info"
-                                    variant="outlined"
-                                    label={t(
-                                      `generative:rag.prompt.library.types.${prompt.prompt_type}`,
-                                      { defaultValue: prompt.prompt_type },
-                                    )}
-                                  />
-                                )}
-                                {language && (
-                                  <Chip
-                                    size="small"
-                                    variant="outlined"
-                                    label={
-                                      t(
-                                        `generative:rag.prompt.languages.${language}`,
-                                      ) || language
-                                    }
-                                  />
-                                )}
-                                {!prompt.is_library && (
-                                  <Chip
-                                    size="small"
-                                    variant="outlined"
-                                    label={t(
-                                      "generative:rag.prompt.library.builtin",
-                                    )}
-                                  />
-                                )}
-                                <Chip
-                                  size="small"
-                                  color={
-                                    (prompt.sessions ?? []).length > 0
-                                      ? "secondary"
-                                      : "default"
-                                  }
-                                  label={t(
-                                    "generative:rag.prompt.library.sessionCount",
-                                    { count: (prompt.sessions ?? []).length },
-                                  )}
-                                />
-                              </Stack>
-                            </Box>
-                            <Tooltip
-                              title={t("generative:rag.prompt.library.view")}
-                            >
-                              <IconButton
-                                aria-label={t(
-                                  "generative:rag.prompt.library.view",
-                                )}
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  setSelectedId(prompt.id);
-                                }}
-                              >
-                                <VisibilityIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            {prompt.is_library && (
-                              <Tooltip
-                                title={t(
-                                  "generative:rag.prompt.library.delete",
-                                )}
-                              >
-                                <IconButton
-                                  aria-label={t(
-                                    "generative:rag.prompt.library.delete",
-                                  )}
-                                  color="error"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    setPendingDelete(prompt);
-                                  }}
-                                >
-                                  <DeleteIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            )}
-                          </Stack>
-                        </Paper>
-                      );
-                    })}
+                    <Typography color="text.secondary">
+                      {t("generative:rag.prompt.library.loadError")}
+                    </Typography>
+                    <Button variant="outlined" onClick={load}>
+                      {t("generative:rag.prompt.library.retry")}
+                    </Button>
                   </Stack>
+                ) : (
+                  <MaterialReactTable table={table} />
                 )}
               </Box>
             </Box>
@@ -677,14 +806,38 @@ export default function RAGPromptsPage() {
           initialSubtype={createSubtype}
         />
 
+        <PromptLibraryEditModal
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          promptId={editPromptId}
+          onSaved={handleEditSaved}
+        />
+
         <DeleteConfirmationModal
           open={pendingDelete !== null}
           onClose={() => setPendingDelete(null)}
-          onConfirm={handleDelete}
+          onConfirm={() => handleDelete(hasSessions ? "cascade" : undefined)}
+          confirmLabel={
+            hasSessions
+              ? t("generative:rag.prompt.library.deleteCascadeSessions")
+              : undefined
+          }
+          // Deleting the sessions is the irreversible choice, so it is never
+          // the emphasised one: "Keep sessions" is the safe default.
+          confirmVariant={hasSessions ? "outlined" : "text"}
+          onSecondary={hasSessions ? () => handleDelete("detach") : undefined}
+          secondaryLabel={
+            hasSessions
+              ? t("generative:rag.prompt.library.deleteKeepSessions")
+              : undefined
+          }
+          secondaryVariant={hasSessions ? "contained" : "outlined"}
+          deleting={deleting}
           content={t("generative:rag.prompt.library.deleteConfirm", {
             name: pendingDelete?.name ?? "",
           })}
           warning={deleteWarning}
+          warningSeverity={hasSessions ? "warning" : "error"}
         />
       </ThreePanelLayoutContext.Provider>
     </FormSchemaProvider>
