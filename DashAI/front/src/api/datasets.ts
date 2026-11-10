@@ -1,15 +1,31 @@
 import api from "./api";
+import { getCurrentProjectId } from "./projects";
 import type { IDataset } from "../types/dataset";
 
 const datasetEndpoint = "/v1/dataset";
 
+// New datasets always go to the current project
+const requireProjectParams = (): { project_id: number } => {
+  const projectId = getCurrentProjectId();
+  if (projectId === null) {
+    throw new Error("Selecciona un proyecto para crear datasets.");
+  }
+  return { project_id: projectId };
+};
+
 export const copyDataset = async (formData: object): Promise<object> => {
-  const response = await api.post<object>(`${datasetEndpoint}/copy`, formData);
+  const response = await api.post<object>(`${datasetEndpoint}/copy`, formData, {
+    params: requireProjectParams(),
+  });
   return response.data;
 };
 
+// The current project's datasets plus the universal ones (without a project)
 export const getDatasets = async (): Promise<IDataset[]> => {
-  const response = await api.get<IDataset[]>(`${datasetEndpoint}/`);
+  const projectId = getCurrentProjectId();
+  const response = await api.get<IDataset[]>(`${datasetEndpoint}/`, {
+    params: projectId === null ? {} : { project_id: projectId },
+  });
   return response.data;
 };
 
@@ -68,9 +84,11 @@ export const getModelSessionsExist = async (id: number): Promise<object> => {
 };
 
 export const createDataset = async (name: string): Promise<IDataset> => {
-  const response = await api.post<IDataset>(`${datasetEndpoint}/`, {
-    name: name,
-  });
+  const response = await api.post<IDataset>(
+    `${datasetEndpoint}/`,
+    { name: name },
+    { params: requireProjectParams() },
+  );
   return response.data;
 };
 

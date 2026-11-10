@@ -8,6 +8,8 @@ export interface IDataset {
   total_rows?: number | null;
   total_columns?: number | null;
   folder_id?: number | null;
+  // Null for universal datasets, created before projects existed
+  project_id?: number | null;
 }
 
 export interface DatasetPage {

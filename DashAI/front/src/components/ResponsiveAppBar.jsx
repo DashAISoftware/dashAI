@@ -22,6 +22,7 @@ import CredentialsButton from "./credentials/CredentialsButton";
 import UpdatesButton from "./updates/UpdatesButton";
 
 import UserMenu from "../pages/profile/mem-utils/UserMenu";
+import ProjectSelector from "../pages/profile/mem-utils/ProjectSelector";
 
 function ResponsiveAppBar() {
   const theme = useTheme();
@@ -221,6 +222,7 @@ function ResponsiveAppBar() {
             flexShrink: 0,
           }}
         >
+          <ProjectSelector />
           <LanguageSelector />
           <HardwareMonitorButton />
           <NavbarTourButton />
