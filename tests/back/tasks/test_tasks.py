@@ -136,14 +136,15 @@ def test_get_tabular_class_task_metadata():
     metadata = tabular_class_task.get_metadata()
 
     # column_roles, io_roles, prediction_mode, requires_target,
-    # takes_preprocessing and icon: the flat view of the x/y short form is no
-    # longer emitted.
+    # takes_preprocessing, requires_input_columns and icon: the flat view of
+    # the x/y short form is no longer emitted.
     assert set(metadata) == {
         "column_roles",
         "io_roles",
         "prediction_mode",
         "requires_target",
         "takes_preprocessing",
+        "requires_input_columns",
         "icon",
     }
     assert metadata["prediction_mode"] == "rows"
@@ -213,14 +214,15 @@ def test_get_text_class_task_metadata():
     metadata = text_class_task.get_metadata()
 
     # column_roles, io_roles, prediction_mode, requires_target,
-    # takes_preprocessing and icon: the flat view of the x/y short form is no
-    # longer emitted.
+    # takes_preprocessing, requires_input_columns and icon: the flat view of
+    # the x/y short form is no longer emitted.
     assert set(metadata) == {
         "column_roles",
         "io_roles",
         "prediction_mode",
         "requires_target",
         "takes_preprocessing",
+        "requires_input_columns",
         "icon",
     }
     assert metadata["prediction_mode"] == "rows"
@@ -287,14 +289,15 @@ def test_get_translation_task_metadata():
     metadata = translation_task.get_metadata()
 
     # column_roles, io_roles, prediction_mode, requires_target,
-    # takes_preprocessing and icon: the flat view of the x/y short form is no
-    # longer emitted.
+    # takes_preprocessing, requires_input_columns and icon: the flat view of
+    # the x/y short form is no longer emitted.
     assert set(metadata) == {
         "column_roles",
         "io_roles",
         "prediction_mode",
         "requires_target",
         "takes_preprocessing",
+        "requires_input_columns",
         "icon",
     }
     assert metadata["prediction_mode"] == "rows"

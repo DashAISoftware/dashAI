@@ -223,8 +223,10 @@ class BaseTask:
         ``"column_roles"`` lists the roles, ``"io_roles"`` which of them feed
         a model's inputs and outputs, ``"prediction_mode"`` how a trained
         model is asked for predictions, ``"takes_preprocessing"`` whether a
-        session may preprocess its columns (:meth:`takes_preprocessing`) and
-        ``"icon"`` how the task list shows it. The flat view of the x/y short form
+        session may preprocess its columns (:meth:`takes_preprocessing`),
+        ``"requires_input_columns"`` whether the input roles need a column
+        between them (:attr:`REQUIRES_INPUT_COLUMNS`) and ``"icon"`` how the
+        task list shows it. The flat view of the x/y short form
         (``inputs_types`` and the three keys beside it) is no longer emitted:
         its last reader moved to the roles. A task still declares it, as the
         short form of its roles (``XYRoles``).
@@ -239,7 +241,8 @@ class BaseTask:
         Dict[str, Any]
             Dictionary with keys ``"column_roles"``, ``"io_roles"``,
             ``"prediction_mode"``, ``"requires_target"``,
-            ``"takes_preprocessing"`` and ``"icon"``.
+            ``"takes_preprocessing"``, ``"requires_input_columns"`` and
+            ``"icon"``.
         """
         return {
             "column_roles": [role.to_metadata() for role in cls.column_roles()],
@@ -247,6 +250,7 @@ class BaseTask:
             "prediction_mode": cls.PREDICTION_MODE,
             "requires_target": cls.REQUIRES_TARGET,
             "takes_preprocessing": cls.takes_preprocessing(),
+            "requires_input_columns": cls.REQUIRES_INPUT_COLUMNS,
             "icon": cls.ICON,
         }
 
