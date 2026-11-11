@@ -8,43 +8,62 @@ import DetailPanel, {
   DetailSection,
 } from "../mem-utils/DetailPanel";
 import ActionButton from "../mem-utils/ActionButton";
+import ProjectMembers from "../mem-utils/ProjectMembers";
+import { useProjects } from "../mem-utils/ProjectContext";
 import ProjectsContent from "../utils/ProjectsContent";
 
 function ProjectDetails({ project, onClose }) {
   const theme = useTheme();
+  const { currentProject, selectProject } = useProjects();
 
   return (
     <DetailPanel
       title={project?.name}
-      subtitle={project?.id}
+      subtitle={project?.description}
       onClose={onClose}
       emptyMessage="Selecciona un proyecto para visualizar información adicional."
     >
       {project && (
         <>
           <DetailSection label="Información">
-            <DetailField label="Creador">{project.owner}</DetailField>
-            <DetailField label="Integrantes">
-              {project.members} miembros
+            <DetailField label="Creado">
+              {new Date(project.created).toLocaleDateString("es-CL")}
             </DetailField>
-          </DetailSection>
-
-          <DetailSection label="Equipo">
-            <Typography
-              variant="body2"
-              sx={{ color: theme.palette.text.secondary, lineHeight: 1.6 }}
-            >
-              {project.teamSummary}
-            </Typography>
-            <ActionButton sx={{ mt: 2 }}>Ver integrantes</ActionButton>
+            <DetailField label="Integrantes">
+              {project.member_count}
+            </DetailField>
+            {project.id === currentProject?.id ? (
+              <Typography
+                variant="caption"
+                sx={{
+                  display: "block",
+                  mt: 2,
+                  color: theme.palette.text.disabled,
+                }}
+              >
+                Es el proyecto en el que estás trabajando.
+              </Typography>
+            ) : (
+              <ActionButton
+                sx={{ mt: 2 }}
+                onClick={() => selectProject(project.id)}
+              >
+                Trabajar en este proyecto
+              </ActionButton>
+            )}
           </DetailSection>
 
           <DetailSection label="Mi acceso">
-            <DetailField label="Rol">{project.role}</DetailField>
-            <DetailField label="Permisos">
-              {project.permissions} permisos asignados
+            <DetailField label="Rol">
+              {project.my_role?.name ?? "Administrador"}
             </DetailField>
-            <ActionButton sx={{ mt: 2 }}>Ver permisos</ActionButton>
+            <DetailField label="Permisos">
+              {project.my_permissions.length} permisos en este proyecto
+            </DetailField>
+          </DetailSection>
+
+          <DetailSection label="Integrantes">
+            <ProjectMembers project={project} />
           </DetailSection>
         </>
       )}
@@ -53,22 +72,27 @@ function ProjectDetails({ project, onClose }) {
 }
 
 export default function Projects() {
-  const [selectedProject, setSelectedProject] = useState(null);
+  const { projects } = useProjects();
+  const [selectedId, setSelectedId] = useState(null);
+
+  // Read from the list, so the panel follows refreshes (a new member count)
+  // and closes if the user leaves the project
+  const selectedProject = projects.find((p) => p.id === selectedId) ?? null;
 
   return (
     <ProfileLayout
       title="Mis proyectos"
-      subtitle="Visualiza los proyectos a los que perteneces y tu nivel de acceso."
+      subtitle="Visualiza los proyectos a los que perteneces, tu nivel de acceso y sus integrantes."
       rightPanel={
         <ProjectDetails
           project={selectedProject}
-          onClose={() => setSelectedProject(null)}
+          onClose={() => setSelectedId(null)}
         />
       }
     >
       <ProjectsContent
         selectedProject={selectedProject}
-        onSelectProject={setSelectedProject}
+        onSelectProject={(project) => setSelectedId(project.id)}
       />
     </ProfileLayout>
   );

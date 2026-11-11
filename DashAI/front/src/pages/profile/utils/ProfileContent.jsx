@@ -6,7 +6,8 @@ import { useTheme } from "@mui/material/styles";
 import { Link as RouterLink } from "react-router-dom";
 
 import EditButton from "../mem-utils/EditButton";
-import { getUserProjects, getUserRequests } from "../mem-utils/mockInstance";
+import { getUserRequests } from "../mem-utils/mockInstance";
+import { useProjects } from "../mem-utils/ProjectContext";
 
 // Number of projects and requests previewed in the profile
 const PREVIEW_COUNT = 2;
@@ -71,7 +72,7 @@ function PreviewList({ items, emptyMessage }) {
 
 export default function ProfileContent({ user, onEdit }) {
   const theme = useTheme();
-  const projects = getUserProjects(user.id).slice(0, PREVIEW_COUNT);
+  const projects = useProjects().projects.slice(0, PREVIEW_COUNT);
   const requests = getUserRequests(user.id).slice(0, PREVIEW_COUNT);
 
   return (
@@ -435,7 +436,7 @@ export default function ProfileContent({ user, onEdit }) {
               items={projects.map((project) => ({
                 id: project.id,
                 title: project.name,
-                detail: project.role,
+                detail: project.my_role?.name ?? "Administrador",
               }))}
               emptyMessage="Aún no perteneces a ningún proyecto."
             />
