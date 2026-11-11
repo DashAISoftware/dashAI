@@ -168,6 +168,7 @@ class TorchvisionImageClassifierSchema(BaseSchema):
     weight_decay: schema_field(
         float_field(ge=0.0),
         placeholder=0.0,
+        step=0.0001,
         description=MultilingualString(
             en=(
                 "L2 regularization coefficient for the Adam optimizer. "

@@ -187,6 +187,7 @@ class SAM3SegmentConverterSchema(AddColumnsConverterSchema):
     min_area_fraction: schema_field(
         float_field(ge=0.0, le=1.0),
         0.0,
+        step=0.01,
         description=MultilingualString(
             en="Minimum fraction of the image area an instance's mask "
             "must cover to be kept.",
