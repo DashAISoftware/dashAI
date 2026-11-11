@@ -16,7 +16,8 @@ import { useTranslation } from "react-i18next";
  *
  * When `externalSwitchState` is provided the optimize toggle is controlled by the
  * parent (e.g. FormSchemaFieldWithOptimizers renders it in the card header) and the
- * internal switch UI is hidden.
+ * internal switch UI is hidden. `inputAttributes` carries the native step, min
+ * and max shared by the fixed value and both search bounds.
  */
 function OptimizeNumberInput({
   name,
@@ -27,6 +28,7 @@ function OptimizeNumberInput({
   error = undefined,
   placeholder = {},
   externalSwitchState,
+  inputAttributes = undefined,
 }) {
   const { t } = useTranslation("configurableObject");
 
@@ -98,6 +100,8 @@ function OptimizeNumberInput({
   };
 
   const canOptimize = placeholder?.optimize !== undefined;
+  const slotProps =
+    inputAttributes !== undefined ? { htmlInput: inputAttributes } : undefined;
 
   return (
     <FormInputWrapper name={name} description={description}>
@@ -134,6 +138,7 @@ function OptimizeNumberInput({
               error={lowerError !== null}
               helperText={lowerError}
               type="number"
+              slotProps={slotProps}
               sx={{ width: "100%" }}
             />
           </Box>
@@ -154,6 +159,7 @@ function OptimizeNumberInput({
               error={upperError !== null}
               helperText={upperError}
               type="number"
+              slotProps={slotProps}
               sx={{ width: "100%" }}
             />
           </Box>
@@ -169,6 +175,7 @@ function OptimizeNumberInput({
           error={fixedError !== null}
           helperText={fixedError}
           type="number"
+          slotProps={slotProps}
         />
       )}
     </FormInputWrapper>
@@ -203,6 +210,11 @@ OptimizeNumberInput.propTypes = {
   }),
   error: PropTypes.string,
   externalSwitchState: PropTypes.bool,
+  inputAttributes: PropTypes.shape({
+    step: PropTypes.number,
+    min: PropTypes.number,
+    max: PropTypes.number,
+  }),
 };
 
 export default OptimizeNumberInput;

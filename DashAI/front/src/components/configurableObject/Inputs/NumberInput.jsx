@@ -12,6 +12,7 @@ import InputWithDebounce from "../../shared/InputWithDebounce";
  * @param {function} onChange function to manage changes in the input
  * @param {string} error text to indicate the reason the validation failed, undefined if there are no errors in validation
  * @param {string} description text to put in a tooltip that helps the user to understand the parameter
+ * @param {object} inputAttributes native step, min and max of the input, see numberInputAttributes
  *
  */
 function NumberInput({
@@ -22,6 +23,7 @@ function NumberInput({
   description,
   error = undefined,
   disabled = false,
+  inputAttributes = undefined,
 }) {
   const handleChange = (inputValue) => {
     const newValue = inputValue === "" ? null : Number(inputValue);
@@ -41,6 +43,11 @@ function NumberInput({
         error={error !== undefined}
         helperText={error}
         disabled={disabled}
+        slotProps={
+          inputAttributes !== undefined
+            ? { htmlInput: inputAttributes }
+            : undefined
+        }
       />
     </FormInputWrapper>
   );
@@ -53,6 +60,11 @@ NumberInput.propTypes = {
   description: PropTypes.string.isRequired,
   error: PropTypes.string,
   disabled: PropTypes.bool,
+  inputAttributes: PropTypes.shape({
+    step: PropTypes.number,
+    min: PropTypes.number,
+    max: PropTypes.number,
+  }),
 };
 
 export default NumberInput;

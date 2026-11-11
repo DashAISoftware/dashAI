@@ -6,6 +6,7 @@ import OptimizeIntegerInput from "../configurableObject/Inputs/IntegerInputOptim
 import OptimizeNumberInput from "../configurableObject/Inputs/NumberInputOptimize";
 import OptimizeSelectInput from "../configurableObject/Inputs/SelectInputOptimize";
 import FormSchemaFieldCard from "./FormSchemaFieldCard";
+import { numberInputAttributes } from "../../utils/numberStep";
 
 /**
  * Renders an optimizable field inside a FormSchemaFieldCard.
@@ -142,7 +143,10 @@ function FormSchemaFieldWithOptimizers({ objName, paramJsonSchema, field }) {
       ) : searchDtype === "integer" ? (
         <OptimizeIntegerInput {...commonProps} />
       ) : (
-        <OptimizeNumberInput {...commonProps} />
+        <OptimizeNumberInput
+          {...commonProps}
+          inputAttributes={numberInputAttributes(paramJsonSchema)}
+        />
       )}
     </FormSchemaFieldCard>
   );
