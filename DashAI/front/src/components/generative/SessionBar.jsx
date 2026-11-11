@@ -12,6 +12,7 @@ import GenerativeHubHeader from "./GenerativeHubHeader";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
 import { sessionRouteFor } from "./workflowEntryPoints";
+import { INFERENCE_WORKFLOW_NAME } from "../../constants/generativeWorkflows";
 
 /**
  * The generative module's session list.
@@ -90,9 +91,9 @@ export default function SessionBar({
 
   const groupLabelFor = useCallback(
     (session) => {
-      const workflow = workflowsByName[session.workflow_name];
-      if (workflow?.metadata?.task) {
-        return workflow.display_name || t("common:other");
+      if (session.workflow_name !== INFERENCE_WORKFLOW_NAME) {
+        const workflow = workflowsByName[session.workflow_name];
+        return workflow?.display_name || t("common:other");
       }
       return taskDisplayNameMap[session.task_name] || t("common:other");
     },

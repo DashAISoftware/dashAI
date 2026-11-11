@@ -48,9 +48,26 @@ def session_service_for(
     return service_class(db, component_registry, job_queue)
 
 
+def job_name_for(workflow_name: str) -> str:
+    """Return the name of the job that runs a turn of a workflow's sessions.
+
+    Parameters
+    ----------
+    workflow_name : str
+        Name of the session's workflow.
+
+    Returns
+    -------
+    str
+        The registered job name.
+    """
+    return _SERVICES.get(workflow_name, WorkflowSessionService).JOB
+
+
 __all__ = [
     "RAGWorkflowSessionService",
     "WorkflowSessionError",
     "WorkflowSessionService",
+    "job_name_for",
     "session_service_for",
 ]

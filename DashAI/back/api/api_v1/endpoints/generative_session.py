@@ -137,8 +137,8 @@ def _display_name(
 ) -> str:
     """Return the name a session is shown under.
 
-    A workflow built on one task names its sessions; a task agnostic workflow
-    leaves that to the session's task.
+    Inference sessions are shown under their task; every other workflow names
+    its own sessions.
 
     Parameters
     ----------
@@ -156,9 +156,32 @@ def _display_name(
     str
         The localized display name.
     """
-    workflow_class = component_registry[workflow_name]["class"]
-    owner = workflow_name if workflow_class.TASK is not None else task_name
+    owner = task_name if workflow_name == INFERENCE_WORKFLOW_NAME else workflow_name
     return localize(component_registry[owner]["display_name"], accept_language)
+
+
+def _workflow_tasks(
+    workflow_name: str, component_registry: "ComponentRegistry"
+) -> list:
+    """Return the generative tasks a workflow runs.
+
+    Parameters
+    ----------
+    workflow_name : str
+        The workflow.
+    component_registry : ComponentRegistry
+        Registry holding the workflow's compatible components.
+
+    Returns
+    -------
+    list
+        Names of the related components of type ``GenerativeTask``.
+    """
+    return [
+        component["name"]
+        for component in component_registry.get_related_components(workflow_name)
+        if component["type"] == BaseGenerativeTask.TYPE
+    ]
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -171,10 +194,10 @@ async def upload_generative_session(
 ):
     """Create a generative session and log its initial parameters.
 
-    The session's workflow decides its task (the workflow's own, or the one
-    sent), its model (named by the workflow's model parameter, or the one
-    sent) and the schema its parameters follow. Without ``workflow_name`` the
-    session runs ``InferenceWorkflow``.
+    The task must be one the workflow runs (it may be left out when the
+    workflow runs only one). The workflow's session service completes the
+    parameters, may name the model from them, and validates them. Without
+    ``workflow_name`` the session runs ``InferenceWorkflow``.
     """
 
     with session_factory() as db:
@@ -184,19 +207,14 @@ async def upload_generative_session(
             )
             workflow_name = workflow_class.__name__
 
-            task_name = workflow_class.TASK or params.task_name
+            workflow_tasks = _workflow_tasks(workflow_name, component_registry)
+            task_name = params.task_name
+            if task_name is None and len(workflow_tasks) == 1:
+                task_name = workflow_tasks[0]
             if task_name is None:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Workflow {workflow_name} needs a task_name.",
-                )
-            if params.task_name is not None and params.task_name != task_name:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=(
-                        f"Workflow {workflow_name} runs task {task_name}, "
-                        f"not {params.task_name}."
-                    ),
                 )
 
             service = session_service_for(
@@ -212,31 +230,20 @@ async def upload_generative_session(
                     detail=str(e),
                 ) from e
 
-            if workflow_class.MODEL_PARAMETER is None:
-                model_name = params.model_name
-                if model_name is None:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Workflow {workflow_name} needs a model_name.",
-                    )
-            else:
-                model_name = workflow_class.model_name_from(parameters)
-                if model_name is None:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=(
-                            f"Workflow {workflow_name} needs a model in its "
-                            f"{workflow_class.MODEL_PARAMETER} parameter."
-                        ),
-                    )
-                if params.model_name is not None and params.model_name != model_name:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=(
-                            f"Model {params.model_name} is not the "
-                            f"{workflow_class.MODEL_PARAMETER} model {model_name}."
-                        ),
-                    )
+            model_name = service.model_name_from(parameters) or params.model_name
+            if model_name is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Workflow {workflow_name} needs a model_name.",
+                )
+            if params.model_name is not None and params.model_name != model_name:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Model {params.model_name} is not the model the "
+                        f"session parameters name, {model_name}."
+                    ),
+                )
 
             # Check if the model is registered
             if model_name not in component_registry:
@@ -272,6 +279,15 @@ async def upload_generative_session(
                 )
             task_class = component_registry[task_name]["class"]
 
+            if task_name not in workflow_tasks:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Workflow {workflow_name} does not run task {task_name}; "
+                        f"it runs {', '.join(workflow_tasks)}."
+                    ),
+                )
+
             _check_model_fits_task(model_name, task_name, component_registry)
 
             # A parameter may select another component that itself needs
@@ -289,16 +305,12 @@ async def upload_generative_session(
                 )
 
             # Validate schema
-            if workflow_class.SCHEMA is not None:
-                schema, owner = workflow_class.SCHEMA, f"workflow {workflow_name}"
-            else:
-                schema, owner = model_class.SCHEMA, f"model {model_name}"
             try:
-                schema.model_validate(parameters)
+                service.check_parameters(model_class, parameters)
             except ValueError as e:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Invalid parameters for {owner}: {e}",
+                    detail=f"Invalid parameters for model {model_name}: {e}",
                 ) from e
 
             # Check if the task is a subclass of BaseGenerativeTask
@@ -730,14 +742,16 @@ async def update_generative_session(
                 )
 
             if model_name is not None and model_name != session.model_name:
-                workflow_class = _session_workflow(session, component_registry)
-                if workflow_class.MODEL_PARAMETER is not None:
+                _session_workflow(session, component_registry)
+                service = session_service_for(
+                    session.workflow_name, db, component_registry
+                )
+                if service.model_name_from(session.parameters) is not None:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=(
                             f"The model of a {session.workflow_name} session is "
-                            f"its {workflow_class.MODEL_PARAMETER} parameter; "
-                            "change that parameter instead."
+                            "named in its parameters; change them instead."
                         ),
                     )
 
@@ -900,7 +914,7 @@ async def update_generative_session_params(
                         " in the component registry."
                     ),
                 )
-            workflow_class = _session_workflow(session, component_registry)
+            _session_workflow(session, component_registry)
             service = session_service_for(
                 session.workflow_name, db, component_registry, job_queue
             )
@@ -925,7 +939,7 @@ async def update_generative_session_params(
             updated_parameters = {**old_parameters, **normalized}
 
             model_name = session.model_name
-            derived_model = workflow_class.model_name_from(updated_parameters)
+            derived_model = service.model_name_from(updated_parameters)
             if derived_model is not None and derived_model != model_name:
                 _check_model_fits_task(
                     derived_model, session.task_name, component_registry
@@ -1077,8 +1091,9 @@ async def get_parameter_history_entry(
                 return []
 
             model_is_a_parameter = (
-                session.workflow_name in component_registry
-                and component_registry[session.workflow_name]["class"].MODEL_PARAMETER
+                session_service_for(
+                    session.workflow_name, db, component_registry
+                ).model_name_from(session.parameters)
                 is not None
             )
 

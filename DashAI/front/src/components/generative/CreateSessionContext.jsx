@@ -24,6 +24,7 @@ import {
   preprocessSchema,
 } from "./utils";
 import { useGenerative } from "./GenerativeContext";
+import { getComponents } from "../../api/component";
 import { INFERENCE_WORKFLOW_NAME } from "../../constants/generativeWorkflows";
 import { useTourContext } from "../tour/TourProvider";
 
@@ -52,17 +53,23 @@ export function CreateSessionProvider({ children }) {
   const loadModels = useCallback(() => {
     if (!tasks || tasks.length === 0) return Promise.resolve();
     setLoadingModels(true);
-    return Promise.all(
-      tasks.map((task) =>
-        getRelatedComponents(task.name).then((components) =>
-          components.map((c) => ({
-            ...c,
-            task_name: task.name,
-            task_display_name: task.display_name || task.name,
-          })),
+    return getComponents({
+      selectTypes: ["GenerativeTask"],
+      relatedComponent: INFERENCE_WORKFLOW_NAME,
+    })
+      .then((galleryTasks) =>
+        Promise.all(
+          galleryTasks.map((task) =>
+            getRelatedComponents(task.name).then((components) =>
+              components.map((c) => ({
+                ...c,
+                task_name: task.name,
+                task_display_name: task.display_name || task.name,
+              })),
+            ),
+          ),
         ),
-      ),
-    )
+      )
       .then((perTaskLists) => {
         // Deduplicate by model name (a model may appear under several tasks).
         const seen = new Set();

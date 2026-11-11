@@ -16,14 +16,3 @@ export interface IGenerativeTask {
   display_name: string;
   color: string | null;
 }
-
-export interface IGenerativeWorkflow {
-  name: string;
-  type: string;
-  metadata: {
-    task: string | null;
-    outputs?: CardinalityMap;
-  };
-  description: string;
-  display_name: string;
-}

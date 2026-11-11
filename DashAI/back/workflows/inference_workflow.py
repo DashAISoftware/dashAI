@@ -1,3 +1,5 @@
+from typing import List
+
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.workflows.base_generative_workflow import BaseGenerativeWorkflow
 
@@ -7,9 +9,15 @@ INFERENCE_WORKFLOW_NAME = "InferenceWorkflow"
 class InferenceWorkflow(BaseGenerativeWorkflow):
     """Run the session model directly on the task input.
 
-    Task agnostic: the session picks the task and the model, the model's own
-    schema validates the parameters and ``GenerativeJob`` runs each turn.
+    The session picks one of the related tasks and one of its models, and
+    each turn sends the task input straight to that model.
     """
+
+    COMPATIBLE_COMPONENTS: List[str] = [
+        "TextToTextGenerationTask",
+        "TextToImageGenerationTask",
+        "ControlNetTask",
+    ]
 
     DISPLAY_NAME: MultilingualString = MultilingualString(
         en="Model inference",

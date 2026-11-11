@@ -134,16 +134,73 @@ def test_generative_tasks_no_longer_include_rag(client: TestClient):
     assert all("entry_point" not in task["metadata"] for task in tasks)
 
 
-def test_workflows_are_listed_with_their_task(client: TestClient):
-    """Each workflow says which task it builds on, if any."""
-    response = client.get(
-        "/api/v1/component/", params={"select_types": "GenerativeWorkflow"}
+def _names(client: TestClient, **params) -> set:
+    """List component names through the components API.
+
+    Parameters
+    ----------
+    client : TestClient
+        API client.
+    **params
+        Query parameters.
+
+    Returns
+    -------
+    set
+        Names of the returned components.
+    """
+    response = client.get("/api/v1/component/", params=params)
+    assert response.status_code == 200, response.text
+    return {component["name"] for component in response.json()}
+
+
+def test_both_workflows_are_listed(client: TestClient):
+    """The landing lists the workflows the backend registers."""
+    assert _names(client, select_types="GenerativeWorkflow") == {
+        "InferenceWorkflow",
+        "RAGWorkflow",
+    }
+
+
+def test_each_workflow_relates_the_tasks_it_runs(client: TestClient):
+    """The task relation comes from the workflows' compatible components."""
+    assert _names(
+        client, related_component="RAGWorkflow", select_types="GenerativeTask"
+    ) == {"TextToTextGenerationTask"}
+    assert _names(
+        client, related_component="InferenceWorkflow", select_types="GenerativeTask"
+    ) == {
+        "TextToTextGenerationTask",
+        "TextToImageGenerationTask",
+        "ControlNetTask",
+    }
+
+
+def test_the_rag_workflow_relates_its_components(client: TestClient):
+    """Retrievers and chunkers are related to the RAG workflow."""
+    related = _names(client, related_component="RAGWorkflow")
+
+    assert {"BM25Retriever", "CharacterChunkModel"} <= related
+
+
+def test_task_models_are_scoped_by_type(client: TestClient):
+    """Asking a task for its generative models leaves the workflows out."""
+    models = _names(
+        client,
+        related_component="TextToTextGenerationTask",
+        select_types="GenerativeModel",
     )
 
-    assert response.status_code == 200
-    assert {
-        workflow["name"]: workflow["metadata"]["task"] for workflow in response.json()
-    } == {
-        "InferenceWorkflow": None,
-        "RAGWorkflow": "TextToTextGenerationTask",
-    }
+    assert models
+    assert not models & {"InferenceWorkflow", "RAGWorkflow"}
+
+
+def test_an_inference_session_needs_a_task_its_workflow_runs(client: TestClient):
+    """A registered task outside the workflow's tasks is refused."""
+    response = client.post(
+        SESSIONS,
+        json=_image_payload("inference_other_task", task_name="TextClassificationTask"),
+    )
+
+    assert response.status_code == 400, response.text
+    assert "does not run task TextClassificationTask" in response.json()["detail"]

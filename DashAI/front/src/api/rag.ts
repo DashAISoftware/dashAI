@@ -191,7 +191,7 @@ export const startSessionIndexing = async (
 /** Fetches generator components related to TextToTextGenerationTask. @returns List of generator components. */
 export const getGeneratorComponents = async (): Promise<IGenerativeTask[]> => {
   const response = await api.get(
-    `/v1/component/?related_component=TextToTextGenerationTask`,
+    `/v1/component/?related_component=TextToTextGenerationTask&select_types=GenerativeModel`,
   );
 
   if (response.status !== 200) {

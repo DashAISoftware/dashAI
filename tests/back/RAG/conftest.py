@@ -32,7 +32,6 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.dependencies.job_queues.huey_job_queue import HueyJobQueue
 from DashAI.back.types.value_types import Text
-from DashAI.back.workflows import RAGWorkflow
 
 BOW_PARAMS = {
     "max_features": None,
@@ -75,7 +74,8 @@ def rag_session_columns(parameters: dict) -> dict:
     return {
         "task_name": "TextToTextGenerationTask",
         "workflow_name": "RAGWorkflow",
-        "model_name": RAGWorkflow.model_name_from(parameters) or RAG_TEST_GENERATOR,
+        "model_name": (parameters.get("generation_model") or {}).get("component")
+        or RAG_TEST_GENERATOR,
         "parameters": parameters,
     }
 

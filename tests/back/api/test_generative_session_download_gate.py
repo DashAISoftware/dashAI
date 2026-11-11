@@ -36,6 +36,9 @@ class _FakeGenerativeRegistry:
     def get_components_by_types(self, select=None, ignore=None):
         return self._real.get_components_by_types(select=select, ignore=ignore)
 
+    def get_related_components(self, name):
+        return self._real.get_related_components(name)
+
     def refresh_download_status(self, name):
         if name == "FakeDownloadableGenerativeModel":
             return _FakeDownloadableGenerativeModel.is_downloaded()

@@ -12,6 +12,7 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.job.base_job import BaseJob, JobError, _release_frames
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
+from DashAI.back.services.workflows import job_name_for
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 if TYPE_CHECKING:
@@ -131,9 +132,13 @@ class GenerativeJob(BaseJob):
                         raise JobError(
                             f"Workflow '{session.workflow_name}' is not registered."
                         )
-                    workflow_class = component_registry[session.workflow_name]["class"]
-                    if type(self).__name__ != workflow_class.JOB:
-                        job_class = component_registry[workflow_class.JOB]["class"]
+                    job_name = job_name_for(session.workflow_name)
+                    if job_name != type(self).__name__:
+                        if job_name not in component_registry:
+                            process.set_status_as_error()
+                            db.commit()
+                            raise JobError(f"Job '{job_name}' is not registered.")
+                        job_class = component_registry[job_name]["class"]
                         workflow_job = job_class(**self.kwargs)
         if workflow_job is not None:
             workflow_job.run()

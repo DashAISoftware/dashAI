@@ -2,7 +2,10 @@ from typing import Any, Dict, Optional
 
 from DashAI.back.dependencies.database.models import GenerativeSession
 from DashAI.back.models.RAG.exceptions.base import RAGWorkflowError
-from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_DOCUMENTS
+from DashAI.back.models.RAG.RAG_constants import (
+    RAG_PARAM_DOCUMENTS,
+    RAG_PARAM_GENERATION_MODEL,
+)
 from DashAI.back.services.RAG.cleanup_service import CleanupService
 from DashAI.back.services.RAG.index_job_service import cancel_live_index_job
 from DashAI.back.services.RAG.session_validation_service import (
@@ -21,10 +24,52 @@ NO_DOCUMENTS_MESSAGE = (
 class RAGWorkflowSessionService(WorkflowSessionService):
     """Session lifecycle of the RAG workflow.
 
-    Creation fills the RAG defaults, updates are validated strictly and clean
-    up the indexes they invalidate, a turn needs at least one document, and
-    deletion stops the index and sweeps the RAG rows the session owned.
+    The session model is the generation LLM its ``generation_model``
+    parameter names, and ``RAGJob`` runs each turn. Creation fills the RAG
+    defaults and updates are validated strictly, component by component,
+    cleaning up the indexes they invalidate; a turn needs at least one
+    document, and deletion stops the index and sweeps the RAG rows the
+    session owned.
     """
+
+    JOB = "RAGJob"
+
+    def model_name_from(self, parameters: Optional[Dict[str, Any]]) -> Optional[str]:
+        """Return the generation LLM the parameters name.
+
+        Parameters
+        ----------
+        parameters : Optional[Dict[str, Any]]
+            Session parameters.
+
+        Returns
+        -------
+        Optional[str]
+            The component of ``generation_model``, or ``None`` when it is
+            missing or malformed.
+        """
+        if not isinstance(parameters, dict):
+            return None
+        reference = parameters.get(RAG_PARAM_GENERATION_MODEL)
+        if not isinstance(reference, dict):
+            return None
+        component = reference.get("component")
+        return component if isinstance(component, str) and component else None
+
+    def check_parameters(self, model_class: type, parameters: Dict[str, Any]) -> None:
+        """Accept parameters already validated component by component.
+
+        ``prepare_parameters`` and ``validate_update`` check every component
+        reference against its own schema, so the LLM's schema, which covers
+        only ``generation_model``, has nothing to add.
+
+        Parameters
+        ----------
+        model_class : type
+            Class of the generation LLM.
+        parameters : Dict[str, Any]
+            The parameters to store.
+        """
 
     def _validator(self) -> SessionValidationService:
         """Build the RAG validation service for this request.

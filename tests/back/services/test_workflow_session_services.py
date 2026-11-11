@@ -15,6 +15,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from DashAI.back.core.schema_fields import BaseSchema, int_field, schema_field
 from DashAI.back.dependencies.database.models import Base, GenerativeSession
 from DashAI.back.models.RAG.exceptions.base import RAGWorkflowError
 from DashAI.back.services.workflows import RAG_workflow_session_service as rag_module
@@ -22,6 +23,7 @@ from DashAI.back.services.workflows import (
     RAGWorkflowSessionService,
     WorkflowSessionError,
     WorkflowSessionService,
+    job_name_for,
     session_service_for,
 )
 
@@ -363,3 +365,67 @@ def test_rag_after_delete_sweeps_orphaned_resources(db):
     _rag_service(db).after_delete(7, old)
 
     assert [("cleanup", 7, old, None)] == EVENTS
+
+
+class StepsSchema(BaseSchema):
+    """Schema of a fake model with one required integer."""
+
+    steps: schema_field(int_field(ge=1), placeholder=1, description="Steps.")  # type: ignore
+
+
+class StepsModel:
+    """Fake model class exposing only a schema."""
+
+    SCHEMA = StepsSchema
+
+
+def test_each_workflow_names_the_job_that_runs_its_turns():
+    """Inference turns run in GenerativeJob, RAG turns in RAGJob."""
+    assert job_name_for("InferenceWorkflow") == "GenerativeJob"
+    assert job_name_for("RAGWorkflow") == "RAGJob"
+    assert job_name_for("PluginWorkflow") == "GenerativeJob"
+
+
+def test_default_service_takes_the_model_from_the_client(db):
+    """Inference parameters never name the session model."""
+    service = WorkflowSessionService(db, "registry", "queue")
+
+    assert service.model_name_from({"generation_model": {"component": "X"}}) is None
+
+
+def test_default_service_validates_with_the_model_schema(db):
+    """Inference parameters must satisfy the model's own schema."""
+    service = WorkflowSessionService(db, "registry", "queue")
+
+    service.check_parameters(StepsModel, {"steps": 3})
+    with pytest.raises(ValueError, match="steps"):
+        service.check_parameters(StepsModel, {"steps": 0})
+
+
+def test_rag_service_leaves_validation_to_its_component_checks(db):
+    """RAG parameters were checked component by component already."""
+    _rag_service(db).check_parameters(StepsModel, {"generation_model": {}})
+
+
+def test_rag_model_comes_from_the_generation_model_reference(db):
+    """The session model is the component the generation model names."""
+    parameters = {"generation_model": {"component": "Qwen25_05BInstruct", "params": {}}}
+
+    assert _rag_service(db).model_name_from(parameters) == "Qwen25_05BInstruct"
+
+
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        {},
+        None,
+        {"generation_model": None},
+        {"generation_model": "Qwen25_05BInstruct"},
+        {"generation_model": {"params": {}}},
+        {"generation_model": {"component": "", "params": {}}},
+        {"generation_model": {"component": 3, "params": {}}},
+    ],
+)
+def test_rag_model_is_none_without_a_usable_reference(db, parameters):
+    """Missing or malformed references yield no model name."""
+    assert _rag_service(db).model_name_from(parameters) is None

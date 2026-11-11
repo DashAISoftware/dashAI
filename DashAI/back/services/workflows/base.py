@@ -15,9 +15,10 @@ class WorkflowSessionError(ValueError):
 class WorkflowSessionService:
     """Session lifecycle steps a workflow adds to the generic session endpoints.
 
-    The defaults are the inference behaviour: parameters pass through as sent
-    and nothing happens around updates, turns or deletion. A workflow that
-    needs more subclasses this and registers the subclass with
+    The defaults are the inference behaviour: the session model is the one the
+    client picks, its own schema validates the parameters, ``GenerativeJob``
+    runs each turn and nothing happens around updates, turns or deletion. A
+    workflow that needs more subclasses this and registers the subclass with
     ``session_service_for``.
 
     Parameters
@@ -28,7 +29,14 @@ class WorkflowSessionService:
         Registry used to resolve components.
     job_queue : Any, optional
         Job queue, for workflows that run background jobs.
+
+    Attributes
+    ----------
+    JOB : str
+        Name of the registered job that runs a turn.
     """
+
+    JOB: str = "GenerativeJob"
 
     def __init__(
         self,
@@ -60,6 +68,38 @@ class WorkflowSessionService:
             The parameters to store.
         """
         return parameters
+
+    def model_name_from(self, parameters: Optional[Dict[str, Any]]) -> Optional[str]:
+        """Return the model the session parameters name, if any.
+
+        Parameters
+        ----------
+        parameters : Optional[Dict[str, Any]]
+            Session parameters.
+
+        Returns
+        -------
+        Optional[str]
+            ``None``: the session model is the one the client picks.
+        """
+        return None
+
+    def check_parameters(self, model_class: type, parameters: Dict[str, Any]) -> None:
+        """Validate complete session parameters before they are stored.
+
+        Parameters
+        ----------
+        model_class : type
+            Class of the session model.
+        parameters : Dict[str, Any]
+            The parameters to store.
+
+        Raises
+        ------
+        ValueError
+            When the model's schema rejects them.
+        """
+        model_class.SCHEMA.model_validate(parameters)
 
     def validate_update(
         self,
