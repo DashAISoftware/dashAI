@@ -107,8 +107,8 @@ export default function SessionBar({
       const newKeys = uniqueDisplayNames.slice().sort().join(",");
       if (prevKeys === newKeys) return prev;
       // Preserve existing open/close state; initialize new keys as open, so
-      // every group's sessions -- the shared ones and a workflow's own, such
-      // as RAG -- are visible on arrival rather than behind a closed header.
+      // every group's sessions, the shared ones and a workflow's own such as
+      // RAG, are visible on arrival rather than behind a closed header.
       const merged = {};
       uniqueDisplayNames.forEach((displayName) => {
         merged[displayName] = displayName in prev ? prev[displayName] : true;

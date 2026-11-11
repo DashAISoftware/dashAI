@@ -11,7 +11,7 @@ export const useGenerative = () => useContext(GenerativeContext);
  * @param {object} props
  * @param {JSX.Element} props.children
  * @param {object} [props.sessionFilter] - Which sessions this subtree owns.
- *   Unset lists every session — so a workflow with its own entry point is
+ *   Unset lists every session, so a workflow with its own entry point is
  *   still reachable from the module. A dedicated entry point passes its own
  *   workflow to scope its views to it.
  */
