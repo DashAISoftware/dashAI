@@ -123,6 +123,7 @@
     "pipelineNoConverters": "No document converters are available."
   },
   "error": {
+    "exportSession": "Could not export the session",
     "failedToCreateSession": "Failed to create session",
     "failedToDeleteSession": "Failed to delete session",
     "failedToDeleteSessions": "Failed to delete the selected sessions",
@@ -154,6 +155,7 @@
     "deleteSessionConfirmation": "Are you sure you want to delete this session? This action cannot be undone.",
     "downloadRequired": "download required",
     "generativeModule": "Generative Module",
+    "importedNeedsDownload": "These models must be downloaded before using the session: {{names}}",
     "modelChangeEvent": "Model changed: <1></1>",
     "modelHasNoParameters": "This model has no configurable parameters.",
     "modelNotDownloaded": "This session's model is not downloaded yet. Download it to continue.",
@@ -177,6 +179,7 @@
     "selectSessionToViewParameters": "Select a session to view and edit its parameters.",
     "selectSessionsToDelete": "Select sessions to delete",
     "sessionDescription": "Session Description",
+    "sessionImported": "Session imported as \"{{session}}\"",
     "sessionInformation": "Session Information",
     "sessionModel": "Model",
     "sessionName": "Session Name",
@@ -436,5 +439,8 @@
     "addSelected_other": "Add {{count}} documents",
     "selectDocuments": "Select documents",
     "clearSearchToSelectFolder": "Clear the search to select the whole folder"
+  },
+  "importError": {
+    "wrongKind": "This file is not a generative session. Model sessions are imported from the Models module."
   }
 }

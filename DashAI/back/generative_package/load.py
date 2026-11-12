@@ -195,7 +195,7 @@ def import_generative_package(
     Returns
     -------
     dict
-        ``session_id``, the final ``session_name``, whether it was
+        ``session_id``, its ``task_name``, the final ``session_name``, whether it was
         ``renamed``, version ``warnings`` and ``needs_download``: the model
         and nested components (``name`` and ``display_name`` in ``language``)
         that must be downloaded before the session can be used.
@@ -257,6 +257,7 @@ def import_generative_package(
 
     return {
         "session_id": session_id,
+        "task_name": recipe_session["task_name"],
         "session_name": session_name,
         "renamed": session_name != recipe_session["name"],
         "warnings": notes,

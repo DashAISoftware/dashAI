@@ -16,3 +16,12 @@ export interface ISessionParameterHistory {
   parameters: Record<string, any>;
   modified_at: string;
 }
+
+export interface IGenerativeSessionImportResult {
+  session_id: number;
+  task_name: string;
+  session_name: string;
+  renamed: boolean;
+  warnings: string[];
+  needs_download: { name: string; display_name: string }[];
+}

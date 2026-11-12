@@ -1,5 +1,8 @@
 import api from "./api";
-import type { ISession } from "../types/session";
+import type {
+  IGenerativeSessionImportResult,
+  ISession,
+} from "../types/session";
 
 /**
  * Fetches generative sessions, optionally narrowed by the backend.
@@ -59,5 +62,39 @@ export const updateGenerativeSession = async ({
   const response = await api.patch(`/v1/generative-session/${id}`, null, {
     params: formData,
   });
+  return response.data;
+};
+
+/**
+ * Downloads the configuration of a generative session as a .dashai file.
+ * @param sessionId - The session to export.
+ * @returns The file contents.
+ */
+export const exportGenerativeSession = async (
+  sessionId: number,
+): Promise<Blob> => {
+  const response = await api.post(
+    `/v1/generative-session/${sessionId}/export`,
+    null,
+    { responseType: "blob" },
+  );
+  return response.data;
+};
+
+/**
+ * Creates a new generative session from a .dashai file.
+ * @param file - The file the user chose.
+ * @returns The new session and what it still needs before use.
+ */
+export const importGenerativeSession = async (
+  file: File,
+): Promise<IGenerativeSessionImportResult> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await api.post<IGenerativeSessionImportResult>(
+    "/v1/generative-session/import",
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
   return response.data;
 };

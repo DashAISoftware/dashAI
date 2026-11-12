@@ -123,6 +123,7 @@
     "pipelineNoConverters": "没有可用的文档转换器。"
   },
   "error": {
+    "exportSession": "无法导出会话",
     "failedToCreateSession": "创建会话失败",
     "failedToDeleteSession": "删除会话失败",
     "failedToDeleteSessions": "删除所选会话失败",
@@ -154,6 +155,7 @@
     "deleteSessionConfirmation": "确定要删除此会话吗？此操作无法撤销。",
     "downloadRequired": "需下载",
     "generativeModule": "生成式模块",
+    "importedNeedsDownload": "使用此会话前必须下载以下模型：{{names}}",
     "modelChangeEvent": "模型已更改：<1></1>",
     "modelHasNoParameters": "此模型没有可配置的参数。",
     "modelNotDownloaded": "该会话的模型尚未下载。请先下载后再继续。",
@@ -177,6 +179,7 @@
     "selectSessionToViewParameters": "选择会话以查看和编辑其参数。",
     "selectSessionsToDelete": "选择要删除的会话",
     "sessionDescription": "会话描述",
+    "sessionImported": "会话已导入为“{{session}}”",
     "sessionInformation": "会话信息",
     "sessionModel": "模型",
     "sessionName": "会话名称",
@@ -434,5 +437,8 @@
     "addSelected_other": "添加 {{count}} 个文档",
     "selectDocuments": "选择文档",
     "clearSearchToSelectFolder": "清除搜索以选择整个文件夹"
+  },
+  "importError": {
+    "wrongKind": "此文件不是生成式会话。模型会话请在“模型”模块中导入。"
   }
 }

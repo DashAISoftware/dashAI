@@ -44,6 +44,7 @@ def test_rag_session_round_trip(client: TestClient):
     result = response.json()
     assert result["session_name"] == "Package Round Trip (2)"
     assert result["renamed"] is True
+    assert result["task_name"] == "RAGTask"
 
     imported = client.get(f"/api/v1/generative-session/{result['session_id']}").json()
     assert imported["task_name"] == original["task_name"]

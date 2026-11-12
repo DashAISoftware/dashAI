@@ -123,6 +123,7 @@
     "pipelineNoConverters": "Es sind keine Dokumentkonverter verfügbar."
   },
   "error": {
+    "exportSession": "Die Sitzung konnte nicht exportiert werden",
     "failedToCreateSession": "Sitzung konnte nicht erstellt werden",
     "failedToDeleteSession": "Sitzung konnte nicht gelöscht werden",
     "failedToDeleteSessions": "Die ausgewählten Sitzungen konnten nicht gelöscht werden",
@@ -154,6 +155,7 @@
     "deleteSessionConfirmation": "Sind Sie sicher, dass Sie diese Sitzung löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "downloadRequired": "Download erforderlich",
     "generativeModule": "Generativ-Modul",
+    "importedNeedsDownload": "Diese Modelle müssen heruntergeladen werden, bevor die Sitzung verwendet werden kann: {{names}}",
     "modelChangeEvent": "Modell geändert: <1></1>",
     "modelHasNoParameters": "Dieses Modell hat keine konfigurierbaren Parameter.",
     "modelNotDownloaded": "Das Modell dieser Sitzung ist noch nicht heruntergeladen. Laden Sie es herunter, um fortzufahren.",
@@ -177,6 +179,7 @@
     "selectSessionToViewParameters": "Sitzung auswählen, um Parameter anzuzeigen und zu bearbeiten.",
     "selectSessionsToDelete": "Sitzungen zum Löschen auswählen",
     "sessionDescription": "Sitzungsbeschreibung",
+    "sessionImported": "Sitzung als \"{{session}}\" importiert",
     "sessionInformation": "Sitzungsinformationen",
     "sessionModel": "Modell",
     "sessionName": "Sitzungsname",
@@ -436,5 +439,8 @@
     "addSelected_other": "{{count}} Dokumente hinzufügen",
     "selectDocuments": "Dokumente auswählen",
     "clearSearchToSelectFolder": "Löschen Sie die Suche, um den ganzen Ordner auszuwählen"
+  },
+  "importError": {
+    "wrongKind": "Diese Datei ist keine generative Sitzung. Modellsitzungen werden im Modul Modelle importiert."
   }
 }

@@ -12,6 +12,16 @@ import GenerativeHubHeader from "./GenerativeHubHeader";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
 import { standaloneRouteFor } from "./standaloneEntryPoints";
+import { useSnackbar } from "notistack";
+import ImportGenerativeSessionButton from "./ImportGenerativeSessionButton";
+import { exportGenerativeSession } from "../../api/session";
+import { triggerDownload } from "../../utils/downloadArtifact";
+
+// Mirrors session_filename in the backend so the download keeps its name.
+function sessionFilename(name) {
+  const base = (name || "").replace(/[^A-Za-z0-9_-]+/g, "_");
+  return `${base.replace(/^_+|_+$/g, "") || "session"}.dashai`;
+}
 
 /**
  * The generative module's session list.
@@ -51,6 +61,7 @@ export default function SessionBar({
     deleteSessionById,
     deleteSessionsByIds,
     editSession,
+    fetchSessions,
     openSections,
     setOpenSections,
   } = useGenerative();
@@ -61,6 +72,7 @@ export default function SessionBar({
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
   const { t } = useTranslation(["generative", "common"]);
+  const { enqueueSnackbar } = useSnackbar();
 
   const SEARCH_THRESHOLD = 10;
 
@@ -123,6 +135,20 @@ export default function SessionBar({
     const session = sessions.find((session) => session.id === id);
     if (session) {
       setSelectedInfoSession(session);
+    }
+  };
+
+  const handleSessionExport = async (id) => {
+    const session = sessions.find((s) => s.id === id);
+    if (!session) return;
+    try {
+      const blob = await exportGenerativeSession(id);
+      triggerDownload(blob, sessionFilename(session.name));
+    } catch (error) {
+      console.error("Error exporting session:", error);
+      enqueueSnackbar(t("generative:error.exportSession"), {
+        variant: "error",
+      });
     }
   };
 
@@ -253,6 +279,10 @@ export default function SessionBar({
           onItemDelete={handleSessionDelete}
           onItemEdit={editSession}
           onItemInfo={handleSessionInfo}
+          onItemExport={handleSessionExport}
+          headerActions={
+            <ImportGenerativeSessionButton onImported={fetchSessions} />
+          }
           title={title ?? t("common:generative")}
           Icon={FolderIcon}
           openGroups={openSections}

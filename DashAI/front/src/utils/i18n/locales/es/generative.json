@@ -124,6 +124,7 @@
     "pipelineNoConverters": "No hay convertidores de documentos disponibles."
   },
   "error": {
+    "exportSession": "No se pudo exportar la sesión",
     "failedToCreateSession": "Error al crear la sesión",
     "failedToDeleteSession": "Error al eliminar sesión",
     "failedToDeleteSessions": "Error al eliminar las sesiones seleccionadas",
@@ -156,6 +157,7 @@
     "deleteSessionConfirmation": "¿Seguro que quieres eliminar esta sesión? Esta acción no se puede deshacer.",
     "downloadRequired": "descarga requerida",
     "generativeModule": "Módulo Generativo",
+    "importedNeedsDownload": "Estos modelos deben descargarse antes de usar la sesión: {{names}}",
     "modelChangeEvent": "Modelo cambiado: <1></1>",
     "modelHasNoParameters": "Este modelo no tiene parámetros configurables.",
     "modelNotDownloaded": "El modelo de esta sesión aún no está descargado. Descárgalo para continuar.",
@@ -179,6 +181,7 @@
     "selectSessionToViewParameters": "Seleccione una sesión para ver y editar sus parámetros.",
     "selectSessionsToDelete": "Seleccionar sesiones para eliminar",
     "sessionDescription": "Descripción de la sesión",
+    "sessionImported": "Sesión importada como \"{{session}}\"",
     "sessionInformation": "Información de la sesión",
     "sessionModel": "Modelo",
     "sessionName": "Nombre de la sesión",
@@ -443,5 +446,8 @@
     "addSelected_other": "Agregar {{count}} documentos",
     "selectDocuments": "Seleccionar documentos",
     "clearSearchToSelectFolder": "Borra la búsqueda para seleccionar la carpeta completa"
+  },
+  "importError": {
+    "wrongKind": "Este archivo no es una sesión generativa. Las sesiones de modelos se importan desde el módulo de Modelos."
   }
 }
