@@ -38,7 +38,8 @@ jest.mock("../../api/generativeTask", () => ({
 jest.mock("./GenerativeContext", () => ({
   useGenerative: () => ({
     selectedSessionId: 7,
-    selectedTaskName: "RAGTask",
+    selectedTaskName: "TextToTextGenerationTask",
+    selectedWorkflowName: "RAGWorkflow",
     tasks: [],
     paramsVersion: 0,
     setParamsVersion: jest.fn(),
@@ -118,7 +119,8 @@ beforeEach(() => {
   getSessionById.mockResolvedValue({
     id: 7,
     name: "S",
-    task_name: "RAGTask",
+    task_name: "TextToTextGenerationTask",
+    workflow_name: "RAGWorkflow",
   });
   getHistoryBySessionId.mockResolvedValue([]);
   getRelatedComponents.mockResolvedValue([]);

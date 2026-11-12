@@ -15,7 +15,6 @@ jest.mock("react-router-dom", () => ({
 }));
 
 jest.mock("../../../api/rag", () => ({
-  RAG_TASK_NAME: "RAGTask",
   getSessionIndexStatus: jest.fn(),
   startSessionIndexing: jest.fn(),
 }));

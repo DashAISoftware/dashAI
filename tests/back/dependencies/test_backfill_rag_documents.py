@@ -26,6 +26,7 @@ from DashAI.back.dependencies.database.models import (
     RAGSessionDocument,
 )
 from DashAI.back.types.value_types import Text
+from tests.back.RAG.conftest import rag_session_columns
 
 
 class _TextSchema(BaseModel):
@@ -140,9 +141,7 @@ def _session(db, name, documents) -> int:
     """
     session = GenerativeSession(
         name=name,
-        task_name="RAGTask",
-        model_name="RAGPipeline",
-        parameters={"documents": documents},
+        **rag_session_columns({"documents": documents}),
     )
     db.add(session)
     db.commit()

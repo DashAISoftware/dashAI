@@ -698,6 +698,9 @@ class GenerativeSession(Base):
     # model and parameters
     model_name: Mapped[str] = mapped_column(String)
     parameters: Mapped[JSON] = mapped_column(JSON)
+    workflow_name: Mapped[str] = mapped_column(
+        String, nullable=False, server_default="InferenceWorkflow"
+    )
     # metadata
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=True)

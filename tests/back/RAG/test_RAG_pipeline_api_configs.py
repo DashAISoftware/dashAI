@@ -4,7 +4,7 @@ Each test creates a RAG session through the API with the exact parameter set
 specified in the referenced publications and verifies:
 
 - Session creation returns 201 Created
-- Model name ("RAGPipeline") and task name ("RAGTask") are correct
+- The session is a text to text session run by RAGWorkflow, its model the generator
 - All parameters can be retrieved via GET and match the expected configuration
 
 Note: Session creation validates only the top-level RAGPipeline schema
@@ -15,7 +15,11 @@ session creation.
 
 from fastapi.testclient import TestClient
 
-from tests.back.RAG.conftest import BOW_PARAMS
+from tests.back.RAG.conftest import (
+    BOW_PARAMS,
+    RAG_WORKFLOW_PAYLOAD,
+    assert_rag_identity,
+)
 
 
 def test_publication_1_medical_fitness(client: TestClient):
@@ -30,8 +34,7 @@ def test_publication_1_medical_fitness(client: TestClient):
     - Generator: Llama 3.2-3B (1024 tokens, temp 0.1)
     """
     params = {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "parameters": {
             "chunking_model": {
                 "component": "RecursiveCharacterChunkModel",
@@ -80,8 +83,7 @@ def test_publication_1_medical_fitness(client: TestClient):
     assert response.status_code == 201, f"Session creation failed: {response.text}"
     data = response.json()
     assert data["id"] is not None
-    assert data["model_name"] == "RAGPipeline"
-    assert data["task_name"] == "RAGTask"
+    assert_rag_identity(data, data["parameters"]["generation_model"]["component"])
     assert data["name"] == "Pub 1 - Medical Fitness"
 
     session_id = data["id"]
@@ -112,8 +114,7 @@ def test_publication_2_ehr_summarization(client: TestClient):
     - Generator: Llama 3.2-3B
     """
     params = {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "parameters": {
             "chunking_model": {
                 "component": "CharacterChunkModel",
@@ -167,8 +168,7 @@ def test_publication_2_ehr_summarization(client: TestClient):
     assert response.status_code == 201, f"Session creation failed: {response.text}"
     data = response.json()
     assert data["id"] is not None
-    assert data["model_name"] == "RAGPipeline"
-    assert data["task_name"] == "RAGTask"
+    assert_rag_identity(data, data["parameters"]["generation_model"]["component"])
     assert data["name"] == "Pub 2 - EHR Summarization"
 
     session_id = data["id"]
@@ -208,8 +208,7 @@ def test_publication_3_case_study(client: TestClient):
     - Generator: Llama 3.2-1B
     """
     params = {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "parameters": {
             "chunking_model": {
                 "component": "RecursiveCharacterChunkModel",
@@ -258,8 +257,7 @@ def test_publication_3_case_study(client: TestClient):
     assert response.status_code == 201, f"Session creation failed: {response.text}"
     data = response.json()
     assert data["id"] is not None
-    assert data["model_name"] == "RAGPipeline"
-    assert data["task_name"] == "RAGTask"
+    assert_rag_identity(data, data["parameters"]["generation_model"]["component"])
     assert data["name"] == "Pub 3 - Case Study"
 
     session_id = data["id"]
@@ -289,8 +287,7 @@ def test_publication_4a_ragchecker_dense(client: TestClient):
     - Generator: Llama 3.2-3B
     """
     params = {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "parameters": {
             "chunking_model": {
                 "component": "TokenChunkModel",
@@ -339,8 +336,7 @@ def test_publication_4a_ragchecker_dense(client: TestClient):
     assert response.status_code == 201, f"Session creation failed: {response.text}"
     data = response.json()
     assert data["id"] is not None
-    assert data["model_name"] == "RAGPipeline"
-    assert data["task_name"] == "RAGTask"
+    assert_rag_identity(data, data["parameters"]["generation_model"]["component"])
     assert data["name"] == "Pub 4a - RAGChecker Dense"
 
     session_id = data["id"]
@@ -369,8 +365,7 @@ def test_publication_4b_ragchecker_sparse(client: TestClient):
     - Generator: Llama 3.2-3B
     """
     params = {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "parameters": {
             "chunking_model": {
                 "component": "TokenChunkModel",
@@ -417,8 +412,7 @@ def test_publication_4b_ragchecker_sparse(client: TestClient):
     assert response.status_code == 201, f"Session creation failed: {response.text}"
     data = response.json()
     assert data["id"] is not None
-    assert data["model_name"] == "RAGPipeline"
-    assert data["task_name"] == "RAGTask"
+    assert_rag_identity(data, data["parameters"]["generation_model"]["component"])
     assert data["name"] == "Pub 4b - RAGChecker Sparse"
 
     session_id = data["id"]
