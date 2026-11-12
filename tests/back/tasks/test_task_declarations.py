@@ -55,3 +55,13 @@ def test_every_registered_task_takes_preprocessing():
     }
 
     assert takes == dict.fromkeys(TASKS, True)
+
+
+def test_every_registered_task_requires_input_columns():
+    """The wizard reads the rule from here instead of writing its own (#994)."""
+    requires = {
+        name: task.get_metadata()["requires_input_columns"]
+        for name, task in TASKS.items()
+    }
+
+    assert requires == dict.fromkeys(TASKS, True)

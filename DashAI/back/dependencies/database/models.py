@@ -153,6 +153,9 @@ class DataDocument(Base):
     dataloader_params: Mapped[Optional[Dict[str, Any]]] = mapped_column(
         JSON, nullable=True
     )
+    converter_pipeline: Mapped[Optional[List[Dict[str, Any]]]] = mapped_column(
+        JSON, nullable=True
+    )
     content_counts: Mapped[Optional[Dict[str, int]]] = mapped_column(
         JSON, nullable=True
     )
@@ -271,10 +274,6 @@ class Run(Base):
     optimizer_name: Mapped[str] = mapped_column(String)
     optimizer_parameters: Mapped[JSON] = mapped_column(JSON)
     nested: Mapped[JSON] = mapped_column(JSON, nullable=True)
-    plot_history_path: Mapped[str] = mapped_column(String, nullable=True)
-    plot_slice_path: Mapped[str] = mapped_column(String, nullable=True)
-    plot_contour_path: Mapped[str] = mapped_column(String, nullable=True)
-    plot_importance_path: Mapped[str] = mapped_column(String, nullable=True)
     # goal metrics
     goal_metric: Mapped[str] = mapped_column(String)
     # artifacts
@@ -294,6 +293,7 @@ class Run(Base):
         "Prediction", cascade="all, delete-orphan", back_populates="run"
     )
     metrics = relationship("Metric", cascade="all, delete-orphan", back_populates="run")
+    plots = relationship("RunPlot", cascade="all, delete-orphan")
 
     def set_status_as_delivered(self) -> None:
         """Update the status of the run to delivered and set delivery_time to now."""
@@ -313,6 +313,26 @@ class Run(Base):
     def set_status_as_error(self) -> None:
         """Update the status of the run to error."""
         self.status = RunStatus.ERROR
+
+
+class RunPlot(Base):
+    __tablename__ = "run_plot"
+    """
+    The saved plots of one view of a run (``"hyperparameter"`` or
+    ``"forecasts"``): a pickled artifact list and the user's edits to it.
+    """
+    __table_args__ = (UniqueConstraint("run_id", "view", name="uq_run_plot_view"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int] = mapped_column(
+        ForeignKey("run.id", ondelete="CASCADE"), nullable=False
+    )
+    view: Mapped[str] = mapped_column(String, nullable=False)
+    artifacts_path: Mapped[str] = mapped_column(String, nullable=False)
+    plot_overrides: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    created: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now, nullable=True
+    )
 
 
 class Prediction(Base):

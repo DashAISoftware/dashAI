@@ -14,6 +14,7 @@ from DashAI.back.api.utils import (
     remove_run_files,
     run_file_paths,
 )
+from DashAI.back.core.artifacts import PlotOverrideBody
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import (
     GlobalExplainer,
@@ -23,6 +24,7 @@ from DashAI.back.dependencies.database.models import (
     Prediction,
     Report,
     Run,
+    RunPlot,
     RunStatus,
 )
 from DashAI.back.dependencies.downloads.nested import missing_downloads
@@ -286,49 +288,39 @@ async def export_run_model(
     )
 
 
-@router.get("/plot/{run_id}/{plot_type}")
-@inject
-async def get_hyperparameter_optimization_plot(
-    run_id: int,
-    plot_type: int,
-    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
-):
-    import pickle
+def _load_forecasts(run_id: int, session_factory: "sessionmaker") -> dict:
+    """Read the forecasts file of a finished run.
 
+    Parameters
+    ----------
+    run_id : int
+        The run whose forecasts to read.
+    session_factory : sessionmaker
+        The database session factory.
+
+    Returns
+    -------
+    dict
+        The file ``SaveForecastsUnit`` wrote beside the run's model.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run does not exist, has not finished, or has no forecasts:
+        a run of a task that is not backtested, or one whose file is gone.
+    """
     with session_factory() as db:
         try:
-            run_model = db.scalars(select(Run).where(Run.id == run_id)).all()
-
-            if not run_model:
+            run = db.get(Run, run_id)
+            if not run:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
+                )
+            if run.status != RunStatus.FINISHED:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Run not found",
+                    detail="The run has not finished, so it has no forecasts yet.",
                 )
-
-            if run_model[0].status != RunStatus.FINISHED:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Run hyperaparameter plot not found",
-                )
-
-            if plot_type == 1:
-                plot_path = run_model[0].plot_history_path
-            elif plot_type == 2:
-                plot_path = run_model[0].plot_slice_path
-            elif plot_type == 3:
-                plot_path = run_model[0].plot_contour_path
-            else:
-                plot_path = run_model[0].plot_importance_path
-
-            if not plot_path:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Run hyperaparameter plot not found",
-                )
-
-            with open(plot_path, "rb") as file:
-                plot = pickle.load(file)
-
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
@@ -336,12 +328,27 @@ async def get_hyperparameter_optimization_plot(
                 detail="Internal database error",
             ) from e
 
-    from DashAI.back.core.artifacts import normalize_artifacts
+    return _read_forecasts_file(run_id)
 
-    # Re-normalized on every read (not just on save) so plots pickled before
-    # this endpoint returned typed artifacts (plain plotly JSON strings)
-    # still come back in the same {type, payload, title} shape.
-    return normalize_artifacts(plot)[0]
+
+def _read_forecasts_file(run_id: int) -> dict:
+    """Read the forecasts file of a run, without asking about the run.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run has no forecasts file.
+    """
+    from DashAI.back.units.forecast_scope import forecasts_file
+
+    path = forecasts_file(di["config"]["RUNS_PATH"], str(run_id))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except OSError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The run has no forecasts.",
+        ) from e
 
 
 @router.get("/{run_id}/forecasts")
@@ -362,37 +369,225 @@ async def get_run_forecasts(
         404 if the run does not exist, has not finished, or has no forecasts:
         a run of a task that is not backtested, or one whose file is gone.
     """
-    import json
+    return _load_forecasts(run_id, session_factory)
 
-    from DashAI.back.units.forecast_scope import forecasts_file
 
-    with session_factory() as db:
-        try:
-            run = db.get(Run, run_id)
-            if not run:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
-                )
-            if run.status != RunStatus.FINISHED:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="The run has not finished, so it has no forecasts yet.",
-                )
-        except exc.SQLAlchemyError as e:
-            log.exception(e)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal database error",
-            ) from e
+RunPlotView = Literal["hyperparameter", "forecasts"]
 
-    path = forecasts_file(di["config"]["RUNS_PATH"], str(run_id))
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except OSError as e:
+
+def _plotly_leaf_indexes(items: list) -> set:
+    """The ``index`` of every plotly leaf, top level or inside a group."""
+    leaves = []
+    for item in items:
+        if item.get("type") == "grouped":
+            leaves += [a for g in item.get("groups", []) for a in g["artifacts"]]
+        else:
+            leaves.append(item)
+    return {leaf["index"] for leaf in leaves if leaf.get("type") == "plotly"}
+
+
+def _finished_run_plot(db, run_id: int, view: str):
+    """The plot row of one view of a finished run, or ``None``.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run does not exist or has not finished.
+    """
+    run = db.get(Run, run_id)
+    if not run:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
+        )
+    if run.status != RunStatus.FINISHED:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="The run has no forecasts.",
-        ) from e
+            detail="The run has not finished, so it has no plots yet.",
+        )
+    return db.query(RunPlot).filter_by(run_id=run_id, view=view).one_or_none()
+
+
+def _no_plots(view: str) -> HTTPException:
+    """The 404 of a run without plots of a view."""
+    return HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"The run has no {view} plots.",
+    )
+
+
+def _backfill_forecasts_plot(db, run_id: int):
+    """Draw and save the Forecasts view of a run trained before it was saved.
+
+    Two first reads may race: the unique ``(run_id, view)`` constraint lets
+    one insert, and the other reads that row.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run has no forecasts file to draw from.
+    """
+    from sqlalchemy.exc import IntegrityError
+
+    from DashAI.back.core.run_plots import run_plot_file, write_run_plot_file
+    from DashAI.back.evaluation.forecasts_plot import forecasts_artifacts
+
+    forecasts = _read_forecasts_file(run_id)
+    path = run_plot_file(di["config"]["RUNS_PATH"], "forecasts", str(run_id))
+    write_run_plot_file(path, forecasts_artifacts(forecasts))
+    row = RunPlot(run_id=run_id, view="forecasts", artifacts_path=str(path))
+    db.add(row)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        row = db.query(RunPlot).filter_by(run_id=run_id, view="forecasts").one()
+    return row
+
+
+@router.get("/{run_id}/plots/{view}")
+@inject
+async def get_run_plots(
+    run_id: int,
+    view: RunPlotView,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Return the saved plots of one view of a run, with the user's edits.
+
+    Parameters
+    ----------
+    run_id : int
+        The run whose plots to return.
+    view : {"hyperparameter", "forecasts"}
+        Which of the run's plot views.
+    session_factory : sessionmaker
+        The database session factory.
+
+    Returns
+    -------
+    list of dict
+        The normalized artifacts, every leaf with its ``index`` and the
+        edited ones marked ``overridden``.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run does not exist, has not finished, or has no such
+        plots. A forecasting run trained before its Forecasts view was saved
+        gets it drawn and saved here from its forecasts file.
+    """
+    from DashAI.back.core.artifacts import apply_plot_overrides
+    from DashAI.back.core.run_plots import read_run_plot_file
+
+    with session_factory() as db:
+        row = _finished_run_plot(db, run_id, view)
+        if row is None and view == "forecasts":
+            row = _backfill_forecasts_plot(db, run_id)
+        if row is None:
+            raise _no_plots(view)
+        try:
+            items = read_run_plot_file(row.artifacts_path)
+        except OSError as e:
+            raise _no_plots(view) from e
+        return apply_plot_overrides(items, row.plot_overrides)
+
+
+@router.put("/{run_id}/plots/{view}/override")
+@inject
+async def save_run_plot_override(
+    run_id: int,
+    view: RunPlotView,
+    body: PlotOverrideBody,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Save an edited figure for one plot of a run's view.
+
+    Parameters
+    ----------
+    run_id : int
+        The run whose plot is edited.
+    view : {"hyperparameter", "forecasts"}
+        Which of the run's plot views.
+    body : PlotOverrideBody
+        The plot's ``index`` and the edited figure.
+    session_factory : sessionmaker
+        The database session factory.
+
+    Returns
+    -------
+    dict
+        ``{"status": "ok"}``.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run or its plots are missing; 422 if ``index`` is not a
+        plot of that view.
+    """
+    from DashAI.back.core.run_plots import read_run_plot_file
+
+    with session_factory() as db:
+        row = _finished_run_plot(db, run_id, view)
+        if row is None:
+            raise _no_plots(view)
+        try:
+            items = read_run_plot_file(row.artifacts_path)
+        except OSError as e:
+            raise _no_plots(view) from e
+        if body.index not in _plotly_leaf_indexes(items):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"The {view} plots have no plot {body.index}.",
+            )
+        figure = body.figure
+        overrides = dict(row.plot_overrides or {})
+        overrides[str(body.index)] = (
+            figure if isinstance(figure, str) else json.dumps(figure)
+        )
+        row.plot_overrides = overrides
+        db.commit()
+    return {"status": "ok"}
+
+
+@router.delete("/{run_id}/plots/{view}/override/{index}")
+@inject
+async def delete_run_plot_override(
+    run_id: int,
+    view: RunPlotView,
+    index: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Drop the edit of one plot, back to the figure the training saved.
+
+    Parameters
+    ----------
+    run_id : int
+        The run whose plot edit is dropped.
+    view : {"hyperparameter", "forecasts"}
+        Which of the run's plot views.
+    index : int
+        The plot whose edit is dropped.
+    session_factory : sessionmaker
+        The database session factory.
+
+    Returns
+    -------
+    dict
+        ``{"status": "ok"}``.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run or its plots are missing.
+    """
+    with session_factory() as db:
+        row = _finished_run_plot(db, run_id, view)
+        if row is None:
+            raise _no_plots(view)
+        overrides = dict(row.plot_overrides or {})
+        overrides.pop(str(index), None)
+        row.plot_overrides = overrides or None
+        db.commit()
+    return {"status": "ok"}
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -518,10 +713,6 @@ async def upload_run(
                 parameters=params.parameters,
                 optimizer_name=params.optimizer_name,
                 optimizer_parameters=params.optimizer_parameters,
-                plot_history_path=params.plot_history_path,
-                plot_slice_path=params.plot_slice_path,
-                plot_contour_path=params.plot_contour_path,
-                plot_importance_path=params.plot_importance_path,
                 goal_metric=params.goal_metric,
                 name=params.name,
                 description=params.description,
@@ -1021,15 +1212,9 @@ def reset_run(run) -> list:
         db.query(Metric).filter(Metric.run_id == run.id).delete()
         db.commit()
 
-    for field in (
-        "run_path",
-        "plot_history_path",
-        "plot_slice_path",
-        "plot_contour_path",
-        "plot_importance_path",
-    ):
-        if getattr(run, field):
-            setattr(run, field, None)
+    run.plots.clear()
+
+    run.run_path = None
     return paths
 
 

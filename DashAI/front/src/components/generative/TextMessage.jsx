@@ -1,5 +1,16 @@
-import { Box, Typography } from "@mui/material";
+import {
+  Box,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { CodeBlock } from "./textMessage/CodeBlock";
 import { InlineCode } from "./textMessage/InlineCode";
 
@@ -31,7 +42,25 @@ const guessLanguage = (text) => {
   }
 };
 
+const remarkPlugins = [remarkGfm];
+
 const markdownComponents = {
+  table: ({ children }) => (
+    <TableContainer component={Paper} variant="outlined" sx={{ my: 1.5 }}>
+      <Table size="small">{children}</Table>
+    </TableContainer>
+  ),
+  thead: ({ children }) => <TableHead>{children}</TableHead>,
+  tbody: ({ children }) => <TableBody>{children}</TableBody>,
+  tr: ({ children }) => <TableRow>{children}</TableRow>,
+  th: ({ children, style }) => (
+    <TableCell sx={{ fontWeight: 600 }} align={style?.textAlign}>
+      {children}
+    </TableCell>
+  ),
+  td: ({ children, style }) => (
+    <TableCell align={style?.textAlign}>{children}</TableCell>
+  ),
   // A fenced or indented block is a <code> inside a <pre>; inline code has no
   // <pre>. react-markdown v9 no longer says which is which, and a block may
   // have no language, so the block is decided here, from the <pre> (#964).
@@ -57,7 +86,9 @@ export function TextMessage({ message, isError = false }) {
         component="div"
         color={isError ? "red" : "text.primary"}
       >
-        <Markdown components={markdownComponents}>{message}</Markdown>
+        <Markdown remarkPlugins={remarkPlugins} components={markdownComponents}>
+          {message}
+        </Markdown>
       </Typography>
     </Box>
   );

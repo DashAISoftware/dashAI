@@ -134,10 +134,6 @@ def _create_run(client, session_id, model, params=None, goal_metric="", optimize
                 if optimizer
                 else {}
             ),
-            "plot_history_path": "",
-            "plot_slice_path": "",
-            "plot_contour_path": "",
-            "plot_importance_path": "",
             "goal_metric": goal_metric,
             "description": "",
             "nested": None,

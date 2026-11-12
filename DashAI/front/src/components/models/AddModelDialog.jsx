@@ -288,10 +288,6 @@ function AddModelDialog({
         supportsOptimization
           ? { ...defaultOptimizerParams, ...optimizerParameters }
           : {},
-        "",
-        "",
-        "",
-        "",
         supportsOptimization ? goalMetric || "" : "",
         "",
         nestedConfig,

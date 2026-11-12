@@ -66,10 +66,6 @@ def _create_run(client, session_id, model_name, name):
                 "pruner": "None",
             },
             "goal_metric": "Accuracy",
-            "plot_history_path": "",
-            "plot_slice_path": "",
-            "plot_contour_path": "",
-            "plot_importance_path": "",
         },
     )
 

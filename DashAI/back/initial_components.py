@@ -610,6 +610,9 @@ from DashAI.back.tasks.translation_task import TranslationTask
 from DashAI.back.units.apply_converter_unit import ApplyConverterUnit
 from DashAI.back.units.apply_cut_preprocessing_unit import ApplyCutPreprocessingUnit
 from DashAI.back.units.apply_dataset_schema_unit import ApplyDatasetSchemaUnit
+from DashAI.back.units.apply_document_pipeline_unit import (
+    ApplyDocumentPipelineUnit,
+)
 from DashAI.back.units.apply_session_preprocessing_unit import (
     ApplySessionPreprocessingUnit,
 )
@@ -660,6 +663,7 @@ from DashAI.back.units.save_dataset_to_path_unit import SaveDatasetToPathUnit
 from DashAI.back.units.save_dataset_unit import SaveDatasetUnit
 from DashAI.back.units.save_document_to_path_unit import SaveDocumentToPathUnit
 from DashAI.back.units.save_exploration_unit import SaveExplorationUnit
+from DashAI.back.units.save_forecasts_plot_unit import SaveForecastsPlotUnit
 from DashAI.back.units.save_forecasts_unit import SaveForecastsUnit
 from DashAI.back.units.save_model_unit import SaveModelUnit
 from DashAI.back.units.save_prediction_unit import SavePredictionUnit
@@ -894,6 +898,7 @@ def get_initial_components():
         ScoreForecastsUnit,
         FitFinalForecasterUnit,
         SaveForecastsUnit,
+        SaveForecastsPlotUnit,
         ForecastHorizonUnit,
         FitModelOverFoldsUnit,
         FitModelOverNestedFoldsUnit,
@@ -928,6 +933,7 @@ def get_initial_components():
         StoreDatafileDocumentSourceUnit,
         ParseDocumentUnit,
         SaveDocumentToPathUnit,
+        ApplyDocumentPipelineUnit,
         RAGJob,
         # Reports
         ConfusionMatrix,

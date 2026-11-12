@@ -1,0 +1,600 @@
+{
+  "_generated_by": "tests/back/tasks/task_column_cases.py; run `uv run python -m tests.back.tasks.task_column_cases`",
+  "tasks": [
+    {
+      "task": "ClusteringTask",
+      "metadata": {
+        "column_roles": [
+          {
+            "name": "features",
+            "label": "Features",
+            "types": [
+              "Float",
+              "Integer"
+            ],
+            "min": 0,
+            "max": "n",
+            "required": false,
+            "transformable": true
+          }
+        ],
+        "io_roles": {
+          "inputs": [
+            "features"
+          ],
+          "outputs": []
+        },
+        "requires_input_columns": true
+      },
+      "cases": [
+        {
+          "name": "the required roles at their minimum, the others empty",
+          "selection": {
+            "features": []
+          },
+          "valid": false,
+          "error": "ClusteringTask needs at least one input column: give one to features."
+        },
+        {
+          "name": "one column in every role",
+          "selection": {
+            "features": [
+              "features_0"
+            ]
+          },
+          "valid": true
+        },
+        {
+          "name": "no input column",
+          "selection": {
+            "features": []
+          },
+          "valid": false,
+          "error": "ClusteringTask needs at least one input column: give one to features."
+        }
+      ]
+    },
+    {
+      "task": "ImageClassificationTask",
+      "metadata": {
+        "column_roles": [
+          {
+            "name": "features",
+            "label": "Features",
+            "types": [
+              "Image"
+            ],
+            "min": 1,
+            "max": 1,
+            "required": true,
+            "transformable": true
+          },
+          {
+            "name": "target",
+            "label": "Target",
+            "types": [
+              "Categorical"
+            ],
+            "min": 1,
+            "max": 1,
+            "required": true,
+            "transformable": false
+          }
+        ],
+        "io_roles": {
+          "inputs": [
+            "features"
+          ],
+          "outputs": [
+            "target"
+          ]
+        },
+        "requires_input_columns": true
+      },
+      "cases": [
+        {
+          "name": "the required roles at their minimum, the others empty",
+          "selection": {
+            "features": [
+              "features_0"
+            ],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": true
+        },
+        {
+          "name": "one column in every role",
+          "selection": {
+            "features": [
+              "features_0"
+            ],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": true
+        },
+        {
+          "name": "no input column",
+          "selection": {
+            "features": [],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": false,
+          "error": "Input cardinality (0) does not match task cardinality (1)"
+        },
+        {
+          "name": "the required role 'features' left empty",
+          "selection": {
+            "features": [],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": false,
+          "error": "Input cardinality (0) does not match task cardinality (1)"
+        }
+      ]
+    },
+    {
+      "task": "RegressionTask",
+      "metadata": {
+        "column_roles": [
+          {
+            "name": "features",
+            "label": "Features",
+            "types": [
+              "Float",
+              "Integer",
+              "Categorical"
+            ],
+            "min": 0,
+            "max": "n",
+            "required": false,
+            "transformable": true
+          },
+          {
+            "name": "target",
+            "label": "Target",
+            "types": [
+              "Float",
+              "Integer"
+            ],
+            "min": 1,
+            "max": 1,
+            "required": true,
+            "transformable": false
+          }
+        ],
+        "io_roles": {
+          "inputs": [
+            "features"
+          ],
+          "outputs": [
+            "target"
+          ]
+        },
+        "requires_input_columns": true
+      },
+      "cases": [
+        {
+          "name": "the required roles at their minimum, the others empty",
+          "selection": {
+            "features": [],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": false,
+          "error": "RegressionTask needs at least one input column: give one to features."
+        },
+        {
+          "name": "one column in every role",
+          "selection": {
+            "features": [
+              "features_0"
+            ],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": true
+        },
+        {
+          "name": "no input column",
+          "selection": {
+            "features": [],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": false,
+          "error": "RegressionTask needs at least one input column: give one to features."
+        },
+        {
+          "name": "the required role 'target' left empty",
+          "selection": {
+            "features": [
+              "features_0"
+            ],
+            "target": []
+          },
+          "valid": false,
+          "error": "Output cardinality (0) does not match task cardinality (1)"
+        }
+      ]
+    },
+    {
+      "task": "SingleSeriesForecastingTask",
+      "metadata": {
+        "column_roles": [
+          {
+            "name": "time_index",
+            "label": "Time index",
+            "types": [
+              "Date"
+            ],
+            "min": 1,
+            "max": 1,
+            "required": true,
+            "transformable": false
+          },
+          {
+            "name": "series",
+            "label": "Series",
+            "types": [
+              "Float",
+              "Integer"
+            ],
+            "min": 1,
+            "max": 1,
+            "required": true,
+            "transformable": false
+          },
+          {
+            "name": "exogenous",
+            "label": "Exogenous variables",
+            "types": [
+              "Float",
+              "Integer"
+            ],
+            "min": 0,
+            "max": "n",
+            "required": false,
+            "transformable": true,
+            "description": "Only variables known ahead of time, whose future values you will have when you predict: the calendar, holidays, planned promotions, prices already set."
+          }
+        ],
+        "io_roles": {
+          "inputs": [
+            "time_index",
+            "exogenous"
+          ],
+          "outputs": [
+            "series"
+          ]
+        },
+        "requires_input_columns": true
+      },
+      "cases": [
+        {
+          "name": "the required roles at their minimum, the others empty",
+          "selection": {
+            "time_index": [
+              "time_index_0"
+            ],
+            "series": [
+              "series_0"
+            ],
+            "exogenous": []
+          },
+          "valid": true
+        },
+        {
+          "name": "one column in every role",
+          "selection": {
+            "time_index": [
+              "time_index_0"
+            ],
+            "series": [
+              "series_0"
+            ],
+            "exogenous": [
+              "exogenous_0"
+            ]
+          },
+          "valid": true
+        },
+        {
+          "name": "no input column",
+          "selection": {
+            "time_index": [],
+            "series": [
+              "series_0"
+            ],
+            "exogenous": []
+          },
+          "valid": false,
+          "error": "Input cardinality (0) does not match task cardinality (1)"
+        },
+        {
+          "name": "the required role 'time_index' left empty",
+          "selection": {
+            "time_index": [],
+            "series": [
+              "series_0"
+            ],
+            "exogenous": [
+              "exogenous_0"
+            ]
+          },
+          "valid": false,
+          "error": "Input cardinality (0) does not match task cardinality (1)"
+        }
+      ]
+    },
+    {
+      "task": "TabularClassificationTask",
+      "metadata": {
+        "column_roles": [
+          {
+            "name": "features",
+            "label": "Features",
+            "types": [
+              "Float",
+              "Integer",
+              "Categorical"
+            ],
+            "min": 0,
+            "max": "n",
+            "required": false,
+            "transformable": true
+          },
+          {
+            "name": "target",
+            "label": "Target",
+            "types": [
+              "Categorical"
+            ],
+            "min": 1,
+            "max": 1,
+            "required": true,
+            "transformable": false
+          }
+        ],
+        "io_roles": {
+          "inputs": [
+            "features"
+          ],
+          "outputs": [
+            "target"
+          ]
+        },
+        "requires_input_columns": true
+      },
+      "cases": [
+        {
+          "name": "the required roles at their minimum, the others empty",
+          "selection": {
+            "features": [],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": false,
+          "error": "TabularClassificationTask needs at least one input column: give one to features."
+        },
+        {
+          "name": "one column in every role",
+          "selection": {
+            "features": [
+              "features_0"
+            ],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": true
+        },
+        {
+          "name": "no input column",
+          "selection": {
+            "features": [],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": false,
+          "error": "TabularClassificationTask needs at least one input column: give one to features."
+        },
+        {
+          "name": "the required role 'target' left empty",
+          "selection": {
+            "features": [
+              "features_0"
+            ],
+            "target": []
+          },
+          "valid": false,
+          "error": "Output cardinality (0) does not match task cardinality (1)"
+        }
+      ]
+    },
+    {
+      "task": "TextClassificationTask",
+      "metadata": {
+        "column_roles": [
+          {
+            "name": "features",
+            "label": "Features",
+            "types": [
+              "Text"
+            ],
+            "min": 1,
+            "max": 1,
+            "required": true,
+            "transformable": true
+          },
+          {
+            "name": "target",
+            "label": "Target",
+            "types": [
+              "Categorical"
+            ],
+            "min": 1,
+            "max": 1,
+            "required": true,
+            "transformable": false
+          }
+        ],
+        "io_roles": {
+          "inputs": [
+            "features"
+          ],
+          "outputs": [
+            "target"
+          ]
+        },
+        "requires_input_columns": true
+      },
+      "cases": [
+        {
+          "name": "the required roles at their minimum, the others empty",
+          "selection": {
+            "features": [
+              "features_0"
+            ],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": true
+        },
+        {
+          "name": "one column in every role",
+          "selection": {
+            "features": [
+              "features_0"
+            ],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": true
+        },
+        {
+          "name": "no input column",
+          "selection": {
+            "features": [],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": false,
+          "error": "Input cardinality (0) does not match task cardinality (1)"
+        },
+        {
+          "name": "the required role 'features' left empty",
+          "selection": {
+            "features": [],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": false,
+          "error": "Input cardinality (0) does not match task cardinality (1)"
+        }
+      ]
+    },
+    {
+      "task": "TranslationTask",
+      "metadata": {
+        "column_roles": [
+          {
+            "name": "features",
+            "label": "Features",
+            "types": [
+              "Text"
+            ],
+            "min": 1,
+            "max": 1,
+            "required": true,
+            "transformable": true
+          },
+          {
+            "name": "target",
+            "label": "Target",
+            "types": [
+              "Text"
+            ],
+            "min": 1,
+            "max": 1,
+            "required": true,
+            "transformable": false
+          }
+        ],
+        "io_roles": {
+          "inputs": [
+            "features"
+          ],
+          "outputs": [
+            "target"
+          ]
+        },
+        "requires_input_columns": true
+      },
+      "cases": [
+        {
+          "name": "the required roles at their minimum, the others empty",
+          "selection": {
+            "features": [
+              "features_0"
+            ],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": true
+        },
+        {
+          "name": "one column in every role",
+          "selection": {
+            "features": [
+              "features_0"
+            ],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": true
+        },
+        {
+          "name": "no input column",
+          "selection": {
+            "features": [],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": false,
+          "error": "Input cardinality (0) does not match task cardinality (1)"
+        },
+        {
+          "name": "the required role 'features' left empty",
+          "selection": {
+            "features": [],
+            "target": [
+              "target_0"
+            ]
+          },
+          "valid": false,
+          "error": "Input cardinality (0) does not match task cardinality (1)"
+        }
+      ]
+    }
+  ]
+}
