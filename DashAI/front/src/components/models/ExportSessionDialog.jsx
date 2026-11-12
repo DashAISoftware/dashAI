@@ -20,23 +20,7 @@ import {
 } from "../../api/modelSession";
 import { getApiErrorMessageAsync } from "../../utils/apiError";
 import { triggerDownload } from "../../utils/downloadArtifact";
-
-function formatBytes(bytes) {
-  if (!bytes) return "0 B";
-  const units = ["B", "KB", "MB", "GB"];
-  const exponent = Math.min(
-    Math.floor(Math.log(bytes) / Math.log(1024)),
-    units.length - 1,
-  );
-  const value = bytes / 1024 ** exponent;
-  return `${value.toFixed(exponent === 0 ? 0 : 1)} ${units[exponent]}`;
-}
-
-// Mirrors session_filename in the backend so the download keeps its name.
-function sessionFilename(name) {
-  const base = (name || "").replace(/[^A-Za-z0-9_-]+/g, "_");
-  return `${base.replace(/^_+|_+$/g, "") || "session"}.dashai`;
-}
+import { formatBytes, sessionFilename } from "../../utils/sessionFile";
 
 /**
  * Choose the runs of a session and download them as a .dashai file.

@@ -1,5 +1,6 @@
 import api from "./api";
 import type {
+  IGenerativeSessionExportPreview,
   IGenerativeSessionImportResult,
   ISession,
 } from "../types/session";
@@ -66,16 +67,33 @@ export const updateGenerativeSession = async ({
 };
 
 /**
- * Downloads the configuration of a generative session as a .dashai file.
+ * What exporting a generative session would carry.
  * @param sessionId - The session to export.
+ * @returns Its conversation size and how many messages would be left out.
+ */
+export const getGenerativeSessionExportPreview = async (
+  sessionId: number,
+): Promise<IGenerativeSessionExportPreview> => {
+  const response = await api.get<IGenerativeSessionExportPreview>(
+    `/v1/generative-session/${sessionId}/export/preview`,
+  );
+  return response.data;
+};
+
+/**
+ * Downloads a generative session as a .dashai file.
+ * @param sessionId - The session to export.
+ * @param options.includeConversation - Also carry the finished messages and
+ *   their media files.
  * @returns The file contents.
  */
 export const exportGenerativeSession = async (
   sessionId: number,
+  options: { includeConversation?: boolean } = {},
 ): Promise<Blob> => {
   const response = await api.post(
     `/v1/generative-session/${sessionId}/export`,
-    null,
+    { include_conversation: Boolean(options.includeConversation) },
     { responseType: "blob" },
   );
   return response.data;

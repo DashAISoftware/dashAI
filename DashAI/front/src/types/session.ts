@@ -23,5 +23,13 @@ export interface IGenerativeSessionImportResult {
   session_name: string;
   renamed: boolean;
   warnings: string[];
+  message_count: number;
   needs_download: { name: string; display_name: string }[];
+}
+
+export interface IGenerativeSessionExportPreview {
+  session_name: string;
+  message_count: number;
+  unfinished_count: number;
+  media_size_bytes: number;
 }

@@ -16,6 +16,7 @@ from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.generative_session_params import (
     GenerativeSessionBulkDeleteParams,
+    GenerativeSessionExportParams,
     GenerativeSessionParams,
 )
 from DashAI.back.core.utils import localize
@@ -884,6 +885,7 @@ async def import_generative_session(
     accept_language: str | None = Header(default=None),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    config=Depends(lambda: di["config"]),
 ):
     """Create a new generative session from an uploaded ``.dashai`` file.
 
@@ -918,6 +920,7 @@ async def import_generative_session(
             session_factory,
             component_registry,
             (accept_language or "en").split("-")[0].lower(),
+            config["IMAGES_PATH"],
         )
     except (UnsupportedPackageFormatError, MissingPluginError) as e:
         raise HTTPException(
@@ -939,13 +942,48 @@ async def import_generative_session(
         shutil.rmtree(workdir, ignore_errors=True)
 
 
+@router.get("/{session_id}/export/preview")
+async def get_generative_session_export_preview(
+    session_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    config=Depends(lambda: di["config"]),
+):
+    """What exporting the session would carry: its conversation and size.
+
+    Raises
+    ------
+    HTTPException
+        404 if the session does not exist.
+    """
+    from fastapi.concurrency import run_in_threadpool
+
+    from DashAI.back.generative_package.export import (
+        GenerativeSessionNotFoundError,
+        export_preview,
+    )
+
+    try:
+        return await run_in_threadpool(
+            export_preview, session_id, session_factory, config["IMAGES_PATH"]
+        )
+    except GenerativeSessionNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
+        ) from e
+
+
 @router.post("/{session_id}/export")
 async def export_generative_session(
     session_id: int,
+    params: GenerativeSessionExportParams | None = None,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    config=Depends(lambda: di["config"]),
 ):
-    """Download the configuration of a generative session as a ``.dashai`` file.
+    """Download a generative session as a ``.dashai`` file.
+
+    Without a body, or with ``include_conversation`` false, the file holds
+    only the configuration.
 
     Raises
     ------
@@ -975,6 +1013,8 @@ async def export_generative_session(
             destination,
             session_factory,
             component_registry,
+            bool(params and params.include_conversation),
+            config["IMAGES_PATH"],
         )
     except GenerativeSessionNotFoundError as e:
         shutil.rmtree(workdir, ignore_errors=True)

@@ -5,11 +5,16 @@ creating a session does, then adds one new session row and its first
 parameter history entry. Nothing that already exists is changed: a name that
 clashes gets a number. A model that still has to be downloaded does not stop
 the import; it is reported so the app can ask for the download.
+
+A file with a conversation adds its processes too. Their media files are
+copied into IMAGES_PATH under new names; a failure halfway removes every row
+and file the import created.
 """
 
 import json
 import shutil
 import tempfile
+import uuid
 import warnings
 import zipfile
 from datetime import datetime
@@ -22,6 +27,8 @@ from DashAI.back.generative_package.export import (
     CONTENTS,
     GENERATIVE_FORMAT_VERSION,
     KIND_GENERATIVE_SESSION,
+    MEDIA_ENTRY,
+    MEDIA_TYPES,
     SESSION_ENTRY,
     SESSION_FIELDS,
     component_names,
@@ -32,7 +39,7 @@ from DashAI.back.model_package.manifest import (
     ModelPackageError,
     check_manifest,
 )
-from DashAI.back.session_package.load import safe_extract, unique_name
+from DashAI.back.session_package.load import _date, safe_extract, unique_name
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -86,9 +93,35 @@ def _read_package(path: Union[str, Path], workdir: Path):
         missing = [field for field in SESSION_FIELDS if field not in session]
         if missing or not isinstance(session["parameters"], dict):
             raise KeyError(missing)
+        for process in recipe.get("processes") or []:
+            for row in [*process["input"], *process["output"]]:
+                _check_row(row, workdir)
     except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError) as e:
         raise ModelPackageError(NOT_A_GENERATIVE_SESSION.format(path=path)) from e
     return recipe, notes
+
+
+def _check_row(row: Dict[str, Any], workdir: Path) -> None:
+    """Refuse a conversation row the importer could not store safely.
+
+    A media row must name a file inside the ``media`` folder of the package;
+    any other row must hold its content as text.
+
+    Raises
+    ------
+    KeyError
+        If the row is malformed or its media file is missing or elsewhere.
+    """
+    if not isinstance(row["data_type"], str):
+        raise KeyError("data_type")
+    if row["data_type"] not in MEDIA_TYPES:
+        if not isinstance(row["data"], str):
+            raise KeyError("data")
+        return
+    media_root = (workdir / MEDIA_ENTRY).resolve()
+    source = (workdir / row["media_entry"]).resolve()
+    if not source.is_relative_to(media_root) or not source.is_file():
+        raise KeyError("media_entry")
 
 
 def _check_components(recipe_session: Dict[str, Any], component_registry: Any) -> None:
@@ -189,14 +222,19 @@ def import_generative_package(
     session_factory: "sessionmaker",
     component_registry: Any,
     language: Optional[str] = "en",
+    images_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """Create a new generative session from a ``.dashai`` file.
+
+    ``images_path`` is where the media files of a conversation are copied;
+    it is required for a file that carries one.
 
     Returns
     -------
     dict
-        ``session_id``, its ``task_name``, the final ``session_name``, whether it was
-        ``renamed``, version ``warnings`` and ``needs_download``: the model
+        ``session_id``, its ``task_name``, the final ``session_name``, whether
+        it was ``renamed``, version ``warnings``, the ``message_count`` it
+        brought and ``needs_download``: the model
         and nested components (``name`` and ``display_name`` in ``language``)
         that must be downloaded before the session can be used.
 
@@ -207,53 +245,107 @@ def import_generative_package(
         than this DashAI reads, needs a missing plugin or component, or holds
         a configuration this DashAI rejects.
     """
+    from DashAI.back.core.enums.status import RunStatus
     from DashAI.back.dependencies.database.models import (
+        GenerativeProcess,
         GenerativeSession,
         GenerativeSessionParameterHistory,
+        ProcessData,
     )
 
     language = language or "en"
     workdir = Path(tempfile.mkdtemp(prefix="dashai-import-"))
+    # Every file below gets a fresh uuid name, so removing them on failure
+    # never touches anything that existed before the import.
+    created: List[Path] = []
     try:
         recipe, notes = _read_package(path, workdir)
+        recipe_session = recipe["session"]
+        _check_components(recipe_session, component_registry)
+        processes = recipe.get("processes") or []
+
+        try:
+            # Files are copied before the transaction opens, as the session
+            # importer does, so a long copy never holds the SQLite write lock.
+            media_names: Dict[str, str] = {}
+            for process in processes:
+                for row in [*process["input"], *process["output"]]:
+                    if row["data_type"] not in MEDIA_TYPES:
+                        continue
+                    source = workdir / row["media_entry"]
+                    name = f"{uuid.uuid4()}{source.suffix}"
+                    target = Path(images_path) / name
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    created.append(target)
+                    shutil.copy2(source, target)
+                    media_names[row["media_entry"]] = name
+
+            with session_factory() as db:
+                try:
+                    parameters = _validated_parameters(
+                        recipe_session, db, component_registry, language
+                    )
+                    taken = {name for (name,) in db.query(GenerativeSession.name)}
+                    session_name = unique_name(recipe_session["name"], taken)
+                    now = datetime.now()
+                    session = GenerativeSession(
+                        name=session_name,
+                        description=recipe_session["description"],
+                        task_name=recipe_session["task_name"],
+                        model_name=recipe_session["model_name"],
+                        parameters=parameters,
+                        created=now,
+                        last_modified=now,
+                    )
+                    db.add(session)
+                    db.flush()
+                    db.add(
+                        GenerativeSessionParameterHistory(
+                            session_id=session.id,
+                            parameters=parameters,
+                            model_name=session.model_name,
+                            modified_at=now,
+                        )
+                    )
+                    for entry in processes:
+                        process = GenerativeProcess(
+                            session_id=session.id,
+                            status=RunStatus.FINISHED,
+                            start_time=_date(entry.get("start_time")),
+                            end_time=_date(entry.get("end_time")),
+                        )
+                        if entry.get("created"):
+                            process.created = _date(entry["created"])
+                        db.add(process)
+                        db.flush()
+                        for is_input, rows in (
+                            (True, entry["input"]),
+                            (False, entry["output"]),
+                        ):
+                            db.add_all(
+                                ProcessData(
+                                    process_id=process.id,
+                                    is_input=is_input,
+                                    data_type=row["data_type"],
+                                    data=(
+                                        media_names[row["media_entry"]]
+                                        if row["data_type"] in MEDIA_TYPES
+                                        else row["data"]
+                                    ),
+                                )
+                                for row in rows
+                            )
+                    db.commit()
+                    session_id = session.id
+                except BaseException:
+                    db.rollback()
+                    raise
+        except BaseException:
+            for created_path in reversed(created):
+                created_path.unlink(missing_ok=True)
+            raise
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
-
-    recipe_session = recipe["session"]
-    _check_components(recipe_session, component_registry)
-
-    with session_factory() as db:
-        try:
-            parameters = _validated_parameters(
-                recipe_session, db, component_registry, language
-            )
-            taken = {name for (name,) in db.query(GenerativeSession.name)}
-            session_name = unique_name(recipe_session["name"], taken)
-            now = datetime.now()
-            session = GenerativeSession(
-                name=session_name,
-                description=recipe_session["description"],
-                task_name=recipe_session["task_name"],
-                model_name=recipe_session["model_name"],
-                parameters=parameters,
-                created=now,
-                last_modified=now,
-            )
-            db.add(session)
-            db.flush()
-            db.add(
-                GenerativeSessionParameterHistory(
-                    session_id=session.id,
-                    parameters=parameters,
-                    model_name=session.model_name,
-                    modified_at=now,
-                )
-            )
-            db.commit()
-            session_id = session.id
-        except BaseException:
-            db.rollback()
-            raise
 
     return {
         "session_id": session_id,
@@ -261,6 +353,7 @@ def import_generative_package(
         "session_name": session_name,
         "renamed": session_name != recipe_session["name"],
         "warnings": notes,
+        "message_count": len(processes),
         "needs_download": _missing_downloads(
             recipe_session["model_name"], parameters, component_registry, language
         ),
