@@ -233,8 +233,22 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
     setIsLoadingMessage(true);
     setShouldAutoScroll(true); // Enable auto-scroll when sending new message
 
-    postProcess(sessionId, input)
-      .then((response) => {
+    // Without the error handling the composer stays disabled forever and says
+    // nothing. A RAG session starts with no documents, so the backend refusing
+    // the first message is a routine outcome, not an exceptional one.
+    const reportFailure = (error) => {
+      console.error("Failed to send message:", error);
+      setIsLoadingMessage(false);
+      enqueueSnackbar(
+        getApiErrorMessage(error, t("generative:error.failedToSendMessage")),
+        { variant: "error" },
+      );
+    };
+
+    // Rejects only when the message never became a turn, so the composer can
+    // give it back (#969). Once the turn exists it is on screen.
+    return postProcess(sessionId, input).then(
+      (response) => {
         // Add the new message to the chat
         setMessages((prevMessages) => [...prevMessages, response]);
 
@@ -243,19 +257,14 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
           .then(() => startJobQueue(true))
           .then(() => {
             setIsLoadingMessage(false);
-          });
-      })
-      .catch((error) => {
-        // Without this the composer stays disabled forever and says nothing.
-        // A RAG session starts with no documents, so the backend refusing the
-        // first message is a routine outcome, not an exceptional one.
-        console.error("Failed to send message:", error);
-        setIsLoadingMessage(false);
-        enqueueSnackbar(
-          getApiErrorMessage(error, t("generative:error.failedToSendMessage")),
-          { variant: "error" },
-        );
-      });
+          })
+          .catch(reportFailure);
+      },
+      (error) => {
+        reportFailure(error);
+        throw error;
+      },
+    );
   };
 
   // A failed turn is removed, or reset and queued again with the same input
@@ -815,9 +824,7 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
         <>
           <MediaInput
             key={sessionId}
-            onSendMessage={(input) => {
-              handleSendMessage(input);
-            }}
+            onSendMessage={handleSendMessage}
             isLoading={isLoadingMessage || isIndexing}
             inputsCardinality={inputsCardinality}
           />

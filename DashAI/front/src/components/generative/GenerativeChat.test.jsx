@@ -85,8 +85,13 @@ jest.mock("./ChatBubble", () => {
   return { ChatBubble: MockChatBubble };
 });
 
+// Keeps the composer's onSendMessage, to send as the composer would.
+let mockSendMessage;
 jest.mock("./MediaInput", () => ({
-  MediaInput: () => <div data-testid="media-input" />,
+  MediaInput: ({ onSendMessage }) => {
+    mockSendMessage = onSendMessage;
+    return <div data-testid="media-input" />;
+  },
 }));
 
 jest.mock("../jobs/JobQueueWidget", () => () => null);
@@ -108,6 +113,7 @@ const {
   getProcessById,
   deleteProcessById,
   retryProcessById,
+  postProcess,
 } = require("../../api/process");
 const { enqueueGenerativeProcessJob } = require("../../api/job");
 
@@ -256,4 +262,30 @@ test("retrying a failed reply runs the same turn again", async () => {
   expect(retryProcessById).toHaveBeenCalledWith("11");
   expect(enqueueGenerativeProcessJob).toHaveBeenCalledWith("11");
   expect(deleteProcessById).not.toHaveBeenCalled();
+});
+
+const renderTextChat = async () => {
+  getSessionById.mockResolvedValue({
+    id: 7,
+    name: "S",
+    task_name: "TextToTextGenerationTask",
+  });
+  getProcessesBySessionId.mockResolvedValue([]);
+  renderWithProviders(<GenerativeChat indexStatus={{ status: "ready" }} />);
+  await screen.findByTestId("media-input");
+};
+
+test("a message the backend refuses is handed back to the composer", async () => {
+  postProcess.mockRejectedValue(new Error("refused"));
+  await renderTextChat();
+
+  await expect(mockSendMessage(["hi"])).rejects.toThrow("refused");
+});
+
+test("a message that became a turn is not handed back", async () => {
+  postProcess.mockResolvedValue(inFlightProcess(null));
+  enqueueGenerativeProcessJob.mockRejectedValue(new Error("queue down"));
+  await renderTextChat();
+
+  await expect(mockSendMessage(["hi"])).resolves.toBeUndefined();
 });
