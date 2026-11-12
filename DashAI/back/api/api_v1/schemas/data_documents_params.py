@@ -40,6 +40,27 @@ class BatchDocumentFile(BaseModel):
     dataloader_params: Dict[str, Any] = Field(default_factory=dict)
 
 
+class DocumentPipelineStep(BaseModel):
+    """One converter of a document pipeline.
+
+    The pipeline is batch-level: every document of the request runs the same
+    steps. Each step runs on the content types its converter declares and is
+    skipped when the document has none of them.
+
+    Attributes
+    ----------
+    converter : str
+        Registry name of a document converter component.
+    params : Dict[str, Any]
+        Converter parameters. Missing keys take the converter defaults.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    converter: str
+    params: Dict[str, Any] = Field(default_factory=dict)
+
+
 class DataDocumentCreateParams(BatchDocumentFile):
     """Body of ``POST /api/v1/documents/``.
 
@@ -57,9 +78,12 @@ class DataDocumentCreateParams(BatchDocumentFile):
     folder_id : Optional[int]
         Folder receiving the document, or None to leave it loose. Only an
         integer is accepted: ``true`` and ``"1"`` are rejected.
+    converter_pipeline : Optional[List[DocumentPipelineStep]]
+        Converters the parse applies after loading the file, in order.
     """
 
     folder_id: Optional[int] = Field(default=None, strict=True)
+    converter_pipeline: Optional[List[DocumentPipelineStep]] = None
 
 
 class DataDocumentBatchCreateParams(BaseModel):
@@ -74,12 +98,16 @@ class DataDocumentBatchCreateParams(BaseModel):
         omitted the documents are left loose.
     files : List[BatchDocumentFile]
         Documents to create, at least one. There is no upper bound.
+    converter_pipeline : Optional[List[DocumentPipelineStep]]
+        Converters every document of the batch runs after loading its file,
+        in order.
     """
 
     model_config = ConfigDict(extra="forbid")
 
     folder_name: Optional[str] = Field(default=None, max_length=MAX_NAME_LENGTH)
     files: List[BatchDocumentFile] = Field(min_length=1)
+    converter_pipeline: Optional[List[DocumentPipelineStep]] = None
 
 
 class DataDocumentFromNotebookParams(BaseModel):
@@ -134,6 +162,8 @@ class DataDocumentSchema(BaseModel):
         Resolved loader parameters.
     content_counts : Optional[Dict[str, int]]
         Items per DashAI type name, for example ``{"Text": 12, "Image": 3}``.
+    converter_pipeline : Optional[List[Dict[str, Any]]]
+        Converters applied while parsing, or None when none were requested.
     total_pages : Optional[int]
         Number of pages, None for formats without pages.
     folder_id : Optional[int]
@@ -156,6 +186,7 @@ class DataDocumentSchema(BaseModel):
     dataloader: Optional[str] = None
     dataloader_params: Optional[Dict[str, Any]] = None
     content_counts: Optional[Dict[str, int]] = None
+    converter_pipeline: Optional[List[Dict[str, Any]]] = None
     total_pages: Optional[int] = None
     folder_id: Optional[int] = None
     status: DocumentStatus

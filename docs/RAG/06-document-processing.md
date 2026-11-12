@@ -88,10 +88,10 @@ blanked by `redact_params` before they are stored or returned.
 
 - **`data_document`** — the document: `id`, `name` (unique), `file_name`,
   `file_type`, `file_hash`, `file_path`, `dataloader`, `dataloader_params`
-  (JSON), `content_counts` (JSON), `total_pages`, `folder_id`, `huey_id`,
-  `status`, plus timestamps. `name` is unique across the Data module;
-  `file_path` is filled when parsing starts and `file_hash` when it finishes, so
-  both are empty while the row is `NOT_STARTED`.
+  (JSON), `converter_pipeline` (JSON), `content_counts` (JSON), `total_pages`,
+  `folder_id`, `huey_id`, `status`, plus timestamps. `name` is unique across
+  the Data module; `file_path` is filled when parsing starts and `file_hash`
+  when it finishes, so both are empty while the row is `NOT_STARTED`.
 - **`rag_session_document`** — one row per (session, document) link: `session_id`
   FK → `generative_session.id` (`ondelete=CASCADE`), `data_document_id` FK →
   `data_document.id` (`ondelete=RESTRICT`), unique on the pair.
@@ -161,6 +161,43 @@ since the app does not enable `PRAGMA foreign_keys` and the model's
 Subfolders inside an uploaded folder are flattened: the files keep their
 relative path in the upload dialog for readability, but they all become direct
 members of the one folder requested in the batch.
+
+### Converter pipelines
+
+Both create endpoints accept an optional `converter_pipeline`: an ordered list
+of `{"converter": "<component name>", "params": {...}}` steps, with unknown
+step keys rejected. The pipeline is **batch-level**: the same steps run on every
+document of the request, and each `data_document` row stores the list in its
+`converter_pipeline` JSON column (returned by the document schemas).
+
+Order matters. The steps run one after the other, and each step sees the
+document the previous steps produced. Scope is **automatic**: a step runs on
+every content type its converter declares (`document_allowed_types` when
+present, otherwise `allowed_types`; a converter declaring neither runs on every
+content type the document has). There is no manual scope to send. When the
+document has none of a step's content types, the step is **skipped**, not
+failed: for example, an `OCRConverter` step on a parse that extracted no
+images does nothing to a text-only document. The per-step result is recorded in
+the saved document's `metadata["converter_pipeline"]` as
+`{converter, status: "applied" | "skipped", content_types, reason?}`; skipped
+steps carry the reason. `drop_source_columns` is accepted for compatibility with
+notebook converter payloads and ignored: a document pipeline rewrites items, not
+columns.
+
+Converter parameters are stored and returned like notebook converter
+parameters. A component must not declare secrets in its schema; the document
+response only redacts the loader parameters it already knows as sensitive.
+
+Validation happens before any row is written. A converter that is unknown,
+runs on datasets, is supervised, changes the row count without being a
+`DocumentConverter`, or has invalid parameters answers `422` and creates
+nothing. A converter whose weights are not downloaded answers `409`, like a
+document loader that still has to be downloaded. `DocumentJob` applies the
+pipeline after parsing and before saving, so `content_counts`, the saved
+`document/` folder and the row all reflect the converted items; a failing step
+marks the row `ERROR` and removes the partial folder. OCR needs a loader that
+actually extracts images (for example a PDF loader with image extraction on):
+scanning a text-only parse finds no `Image` items and the step is skipped.
 
 The status moves `NOT_STARTED → DELIVERED → STARTED → FINISHED` (or `ERROR`);
 `DELIVERED` and `STARTED` are the "busy" states that block deletion. A failed
@@ -279,6 +316,12 @@ Under `components/generative/RAG/`:
   compatible parser, hidden/system files, empty files and files over 4 GiB are
   reported as skipped. The run can be aborted: pending job polling is stopped
   and the documents that already finished are attached before the dialog closes.
+  The same dialog carries the optional **processing pipeline** editor
+  (`DocumentPipelineEditor` / `PipelineStepCard`): an ordered list of document
+  converters (OCR, text splitting, filters) configured once and applied to every
+  uploaded file. Each step shows the content types its converter declares, its
+  download control and its parameter form; the upload stays disabled while a
+  step's form is invalid or one of its required downloads is missing.
 - `DocumentGroupList` — orders the session's documents as loose rows first and
   one collapsible section per Data folder.
 - `DocumentList` / `DocumentListItem` — presentational list and row; the row

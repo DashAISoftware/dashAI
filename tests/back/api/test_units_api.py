@@ -56,6 +56,7 @@ EXPECTED_UNITS = {
     "StoreDatafileDocumentSourceUnit",
     "ParseDocumentUnit",
     "SaveDocumentToPathUnit",
+    "ApplyDocumentPipelineUnit",
 }
 
 
@@ -213,6 +214,9 @@ def test_unit_schemas_describe_their_configuration(units):
     }
     assert set(units["ParseDocumentUnit"]["schema"]["properties"]) == {"dataloader"}
     assert set(units["SaveDocumentToPathUnit"]["schema"]["properties"]) == {"path"}
+    # The pipeline arrives from the document row, so it is a runtime param and
+    # never a field of the form the front renders.
+    assert units["ApplyDocumentPipelineUnit"]["schema"]["properties"] == {}
 
 
 def test_component_fields_tell_the_front_which_components_to_offer(units):
@@ -309,6 +313,7 @@ EXPECTED_RUNTIME_PARAMS = {
     ("SaveForecastsUnit", "artifact_prefix"),
     ("SaveForecastsPlotUnit", "artifact_prefix"),
     ("ApplyCutPreprocessingUnit", "preprocessing_artifacts_path"),
+    ("ApplyDocumentPipelineUnit", "pipeline"),
 }
 
 

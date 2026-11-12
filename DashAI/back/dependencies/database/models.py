@@ -153,6 +153,9 @@ class DataDocument(Base):
     dataloader_params: Mapped[Optional[Dict[str, Any]]] = mapped_column(
         JSON, nullable=True
     )
+    converter_pipeline: Mapped[Optional[List[Dict[str, Any]]]] = mapped_column(
+        JSON, nullable=True
+    )
     content_counts: Mapped[Optional[Dict[str, int]]] = mapped_column(
         JSON, nullable=True
     )
