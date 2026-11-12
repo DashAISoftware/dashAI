@@ -2,7 +2,15 @@ import logging
 from datetime import datetime
 from typing import TYPE_CHECKING, Union
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Header,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from kink import di
 from sqlalchemy import exc, select
 
@@ -868,3 +876,122 @@ async def get_parameter_history_entry(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+
+@router.post("/import", status_code=status.HTTP_201_CREATED)
+async def import_generative_session(
+    file: UploadFile = File(...),
+    accept_language: str | None = Header(default=None),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+):
+    """Create a new generative session from an uploaded ``.dashai`` file.
+
+    Raises
+    ------
+    HTTPException
+        400 if the file is not a usable generative session, 409 if it needs a
+        newer DashAI or a missing plugin, 500 on any other failure.
+    """
+    import shutil
+    import tempfile
+    from pathlib import Path
+
+    from fastapi.concurrency import run_in_threadpool
+
+    from DashAI.back.api.api_v1.endpoints.model_sessions import _import_error_detail
+    from DashAI.back.generative_package.load import import_generative_package
+    from DashAI.back.model_package.manifest import (
+        MissingPluginError,
+        ModelPackageError,
+        UnsupportedPackageFormatError,
+    )
+
+    workdir = Path(tempfile.mkdtemp(prefix="dashai-upload-"))
+    try:
+        upload = workdir / "session.dashai"
+        with open(upload, "wb") as handle:
+            shutil.copyfileobj(file.file, handle)
+        return await run_in_threadpool(
+            import_generative_package,
+            upload,
+            session_factory,
+            component_registry,
+            (accept_language or "en").split("-")[0].lower(),
+        )
+    except (UnsupportedPackageFormatError, MissingPluginError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=await run_in_threadpool(_import_error_detail, e, session_factory),
+        ) from e
+    except ModelPackageError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=await run_in_threadpool(_import_error_detail, e, session_factory),
+        ) from e
+    except Exception as e:
+        log.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error importing the session",
+        ) from e
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+
+
+@router.post("/{session_id}/export")
+async def export_generative_session(
+    session_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+):
+    """Download the configuration of a generative session as a ``.dashai`` file.
+
+    Raises
+    ------
+    HTTPException
+        404 if the session does not exist, 500 on any other failure.
+    """
+    import shutil
+    import tempfile
+    from pathlib import Path
+
+    from fastapi.concurrency import run_in_threadpool
+    from fastapi.responses import FileResponse
+    from starlette.background import BackgroundTask
+
+    from DashAI.back.generative_package.export import (
+        GenerativeSessionNotFoundError,
+        build_generative_package,
+        generative_session_filename,
+    )
+
+    workdir = Path(tempfile.mkdtemp(prefix="dashai-export-"))
+    destination = workdir / "session.dashai"
+    try:
+        manifest = await run_in_threadpool(
+            build_generative_package,
+            session_id,
+            destination,
+            session_factory,
+            component_registry,
+        )
+    except GenerativeSessionNotFoundError as e:
+        shutil.rmtree(workdir, ignore_errors=True)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
+        ) from e
+    except Exception as e:
+        shutil.rmtree(workdir, ignore_errors=True)
+        log.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error exporting the session",
+        ) from e
+
+    return FileResponse(
+        destination,
+        media_type="application/zip",
+        filename=generative_session_filename(manifest["info"]["session_name"]),
+        background=BackgroundTask(shutil.rmtree, workdir, ignore_errors=True),
+    )
