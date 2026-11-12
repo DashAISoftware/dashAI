@@ -69,10 +69,6 @@ def test_model_job_trains_using_a_converter_produced_group_column(
             },
             "goal_metric": "",
             "description": "Training with a group column from a converter",
-            "plot_history_path": "path/to/history.png",
-            "plot_slice_path": "path/to/slice.png",
-            "plot_contour_path": "path/to/contour.png",
-            "plot_importance_path": "path/to/importance.png",
         },
     )
     assert run_response.status_code == 201, run_response.text
@@ -154,10 +150,6 @@ def test_model_job_trains_with_cross_validation_and_per_fold_preprocessing(
             },
             "goal_metric": "",
             "description": "CV training with per-fold preprocessing",
-            "plot_history_path": "path/to/history.png",
-            "plot_slice_path": "path/to/slice.png",
-            "plot_contour_path": "path/to/contour.png",
-            "plot_importance_path": "path/to/importance.png",
         },
     )
     assert run_response.status_code == 201, run_response.text

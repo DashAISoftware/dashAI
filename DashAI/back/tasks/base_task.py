@@ -43,6 +43,14 @@ class BaseTask:
     #: The estimated structure refuses such a step (``changes_rows``).
     PREPROCESSING_KEEPS_ROWS: bool = False
 
+    #: Whether the roles that feed a model's inputs (``io_roles()["inputs"]``)
+    #: need at least one column between them. Each role's own cardinality may
+    #: allow none (a ``"n"`` cardinality starts at 0, and forecasting's
+    #: exogenous variables are optional), but a model with no inputs at all
+    #: has nothing to read. A task that really takes no input columns sets
+    #: this to False.
+    REQUIRES_INPUT_COLUMNS: bool = True
+
     #: The task's icon in the task list: the name of a Material UI icon, as a
     #: model declares its own.
     ICON: str = "Science"
@@ -215,8 +223,10 @@ class BaseTask:
         ``"column_roles"`` lists the roles, ``"io_roles"`` which of them feed
         a model's inputs and outputs, ``"prediction_mode"`` how a trained
         model is asked for predictions, ``"takes_preprocessing"`` whether a
-        session may preprocess its columns (:meth:`takes_preprocessing`) and
-        ``"icon"`` how the task list shows it. The flat view of the x/y short form
+        session may preprocess its columns (:meth:`takes_preprocessing`),
+        ``"requires_input_columns"`` whether the input roles need a column
+        between them (:attr:`REQUIRES_INPUT_COLUMNS`) and ``"icon"`` how the
+        task list shows it. The flat view of the x/y short form
         (``inputs_types`` and the three keys beside it) is no longer emitted:
         its last reader moved to the roles. A task still declares it, as the
         short form of its roles (``XYRoles``).
@@ -231,7 +241,8 @@ class BaseTask:
         Dict[str, Any]
             Dictionary with keys ``"column_roles"``, ``"io_roles"``,
             ``"prediction_mode"``, ``"requires_target"``,
-            ``"takes_preprocessing"`` and ``"icon"``.
+            ``"takes_preprocessing"``, ``"requires_input_columns"`` and
+            ``"icon"``.
         """
         return {
             "column_roles": [role.to_metadata() for role in cls.column_roles()],
@@ -239,6 +250,7 @@ class BaseTask:
             "prediction_mode": cls.PREDICTION_MODE,
             "requires_target": cls.REQUIRES_TARGET,
             "takes_preprocessing": cls.takes_preprocessing(),
+            "requires_input_columns": cls.REQUIRES_INPUT_COLUMNS,
             "icon": cls.ICON,
         }
 
@@ -413,6 +425,37 @@ class BaseTask:
         self.check_role_names(roles)
         for role in self.column_roles():
             self.validate_role(role.name, list(roles.get(role.name) or []), types)
+
+    def validate_inputs_given(self, roles: Mapping[str, Sequence]) -> None:
+        """Check that the input roles, together, get at least one column.
+
+        It needs a session's whole selection, converter outputs included, so
+        it is not part of :meth:`validate_roles`: jobs call that one with the
+        original columns only, before the converters that produce the rest
+        have run, and a session fed only by converter outputs would look
+        empty there.
+
+        Parameters
+        ----------
+        roles : mapping
+            Role name to the role's columns, as names or as column refs. A
+            role the mapping leaves out counts as given no columns.
+
+        Raises
+        ------
+        ValueError
+            If the task requires input columns and none of its input roles
+            gets one.
+        """
+        if not self.REQUIRES_INPUT_COLUMNS:
+            return
+        inputs = self.io_roles()["inputs"]
+        if not inputs or any(roles.get(name) for name in inputs):
+            return
+        raise ValueError(
+            f"{type(self).__name__} needs at least one input column: give one "
+            f"to {' or '.join(inputs)}."
+        )
 
     def validate_dataset_for_task(
         self,

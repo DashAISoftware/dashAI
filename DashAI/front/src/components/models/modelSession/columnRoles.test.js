@@ -110,6 +110,19 @@ describe("selectionReady", () => {
     const roles = [FEATURES, TARGET];
     expect(selectionReady(roles, { features: [], target: ["b"] })).toBe(false);
   });
+
+  test("a task that declares it takes no input columns may leave them empty", () => {
+    // The rule comes from the task's metadata (requires_input_columns), so
+    // the wizard never blocks what the backend accepts.
+    const roles = [FEATURES, TARGET];
+    const inputs = SUPERVISED.io_roles.inputs;
+    expect(
+      selectionReady(roles, { features: [], target: ["b"] }, inputs, false),
+    ).toBe(true);
+    expect(
+      selectionReady(roles, { features: [], target: [] }, inputs, false),
+    ).toBe(false);
+  });
 });
 
 describe("optionsForRole and resolveSelection", () => {

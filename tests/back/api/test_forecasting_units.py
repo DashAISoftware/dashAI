@@ -334,7 +334,7 @@ def test_without_a_search_the_best_parameters_are_the_ones_given():
     ctx = _backtested("SeasonalNaiveForecaster", {"season_length": 3})
 
     assert ctx.require("best_parameters") == {"season_length": 3}
-    assert ctx.require("plot_paths") == []
+    assert ctx.require("hyperparameter_plots_path") is None
     assert ctx.require("forecasts")["season_length"] == 3
 
 
@@ -490,6 +490,23 @@ def test_the_forecasts_are_written_where_the_endpoint_reads_them(client):
     assert ctx.require("forecasts_path") == str(path)
     assert json.loads(path.read_text(encoding="utf-8")) == ctx.require("forecasts")
     assert not path.with_suffix(".json.partial").exists()
+    path.unlink()
+
+
+def test_the_forecasts_plot_is_written_where_the_row_points(client):
+    from DashAI.back.core.run_plots import read_run_plot_file, run_plot_file
+    from DashAI.back.units.save_forecasts_plot_unit import SaveForecastsPlotUnit
+
+    ctx = _backtested()
+
+    SaveForecastsPlotUnit(artifact_prefix="unit-test")(ctx)
+
+    path = run_plot_file(
+        client.app.container["config"]["RUNS_PATH"], "forecasts", "unit-test"
+    )
+    assert ctx.require("forecasts_plot_path") == str(path)
+    [grouped] = read_run_plot_file(path)
+    assert grouped["type"] == "grouped"
     path.unlink()
 
 

@@ -140,7 +140,12 @@ function SelectColumnsStep({
   const awaitingStructure = structureMissing && !structureError;
   const columnsReady =
     roles.length > 0 &&
-    selectionReady(roles, selection, taskMetadata?.io_roles?.inputs) &&
+    selectionReady(
+      roles,
+      selection,
+      taskMetadata?.io_roles?.inputs,
+      taskMetadata?.requires_input_columns,
+    ) &&
     !structureMissing;
   // The backend's answer, with the selection it was about. An answer only
   // counts for the selection on screen, so a selection changed since, or an

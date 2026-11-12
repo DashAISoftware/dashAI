@@ -150,12 +150,15 @@ def create_data_document(
     """Create a NOT_STARTED document row before its upload job runs.
 
     The folder is checked before the loader and the extension, so an unknown
-    ``folder_id`` answers 404 even when the rest of the body is invalid.
+    ``folder_id`` answers 404 even when the rest of the body is invalid. The
+    optional ``converter_pipeline`` is validated here, before the row is
+    written, and stored on it for ``DocumentJob`` to apply after parsing.
 
     Parameters
     ----------
     params : DataDocumentCreateParams
-        Name, file name, loader, loader parameters and optional folder.
+        Name, file name, loader, loader parameters, optional folder and
+        converter pipeline.
     session_factory : sessionmaker
         Session factory from the DI container.
     component_registry : ComponentRegistry
@@ -164,14 +167,16 @@ def create_data_document(
     Returns
     -------
     DataDocumentSchema
-        The placeholder row, with the loader parameters resolved.
+        The placeholder row, with the loader parameters resolved and the
+        pipeline normalized.
 
     Raises
     ------
     HTTPException
-        404 for an unknown folder; 409 for a taken name or a loader still to
-        be downloaded; 422 for an empty name, a wrong loader, an unsupported
-        extension or invalid parameters; 500 on database errors.
+        404 for an unknown folder; 409 for a taken name, a loader still to be
+        downloaded, or a converter of the pipeline that must be downloaded;
+        422 for an empty name, a wrong loader, an unsupported extension,
+        invalid parameters or an invalid pipeline; 500 on database errors.
     """
     service = DocumentBatchService(session_factory, component_registry)
     try:
@@ -198,13 +203,15 @@ def create_data_documents_batch(
 ) -> DataDocumentBatchSchema:
     """Create an optional folder and its NOT_STARTED documents atomically.
 
-    Every file and the folder name are validated before anything is written,
-    and the folder and its documents are committed in one transaction.
+    Every file, the folder name and the optional ``converter_pipeline`` are
+    validated before anything is written, and the folder and its documents are
+    committed in one transaction. The pipeline is stored on every row so
+    ``DocumentJob`` applies it to each document after parsing.
 
     Parameters
     ----------
     params : DataDocumentBatchCreateParams
-        Folder name, if any, and the files to create.
+        Folder name, if any, the files to create and the converter pipeline.
     session_factory : sessionmaker
         Session factory from the DI container.
     component_registry : ComponentRegistry
@@ -219,13 +226,17 @@ def create_data_documents_batch(
     Raises
     ------
     HTTPException
-        409 for a taken folder or document name; 422 for an empty folder
-        name or file name, a wrong loader, a loader still to be downloaded or
-        an unsupported extension; 500 on database errors.
+        409 for a taken folder or document name, a loader still to be
+        downloaded, or a converter of the pipeline that must be downloaded;
+        422 for an empty folder name or file name, a wrong loader, an
+        unsupported extension, invalid loader parameters or an invalid
+        pipeline; 500 on database errors.
     """
     service = DocumentBatchService(session_factory, component_registry)
     try:
-        result = service.create(params.files, params.folder_name)
+        result = service.create(
+            params.files, params.folder_name, params.converter_pipeline
+        )
     except (
         FolderNotFoundError,
         DocumentUploadConflictError,

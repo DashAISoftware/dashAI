@@ -52,7 +52,12 @@ function BaseColumnsStep({
 
   const ready =
     roles.length > 0 &&
-    selectionReady(roles, selection, taskMetadata?.io_roles?.inputs);
+    selectionReady(
+      roles,
+      selection,
+      taskMetadata?.io_roles?.inputs,
+      taskMetadata?.requires_input_columns,
+    );
   const selectionKey = JSON.stringify(selection);
 
   useEffect(() => {

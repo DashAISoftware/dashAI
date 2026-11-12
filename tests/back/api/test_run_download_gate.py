@@ -9,10 +9,6 @@ _RUN_PAYLOAD_BASE = {
     "optimizer_name": "OptunaOptimizer",
     "optimizer_parameters": {},
     "goal_metric": "Accuracy",
-    "plot_history_path": "",
-    "plot_slice_path": "",
-    "plot_contour_path": "",
-    "plot_importance_path": "",
     "name": "gate-test-run",
     "description": "",
 }
