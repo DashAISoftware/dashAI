@@ -5,9 +5,38 @@ from abc import ABCMeta, abstractmethod
 from typing import Final
 
 from DashAI.back.config_object import ConfigObject
-from DashAI.back.core.artifacts import PlotlyArtifact
+from DashAI.back.core.artifacts import (
+    ArtifactGroup,
+    GroupedArtifacts,
+    PlotlyArtifact,
+)
 
 log = logging.getLogger(__name__)
+
+
+def _grouped_or_single(title, figures):
+    """One figure as it is, several as a group the frontend selects between.
+
+    Parameters
+    ----------
+    title : str
+        The title of the group.
+    figures : list of (str, PlotlyArtifact)
+        Each option's label and its figure, in display order.
+
+    Returns
+    -------
+    PlotlyArtifact or GroupedArtifacts
+        The only figure, or a group with one entry per figure.
+    """
+    if len(figures) == 1:
+        return figures[0][1]
+    return GroupedArtifacts(
+        title=title,
+        groups=[
+            ArtifactGroup(title=label, artifacts=[figure]) for label, figure in figures
+        ],
+    )
 
 
 class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
@@ -148,7 +177,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
     def slice_plot(self, trials, goal_metric):
         """
         Plot that compares the performance in the
-        search space of one hyperparameter.
+        search space of each hyperparameter.
 
         Args:
             trial_values (list): List with the hyperparameters
@@ -156,66 +185,46 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
 
         Returns
         -------
-            artifact (PlotlyArtifact): typed artifact wrapping the plot data
+            artifact (PlotlyArtifact or GroupedArtifacts): one figure when a
+                single hyperparameter was searched, otherwise a group of
+                figures, one per hyperparameter, that the frontend selects
+                between.
         """
-        # Lazy imports
         import plotly.graph_objects as go
 
         param_names = list(trials[0]["params"].keys())
+        y_values = [trial["value"] for trial in trials]
+        trial_numbers = list(range(1, len(trials) + 1))
 
-        traces = []
+        figures = []
         for param_name in param_names:
-            x_values = [trial["params"][param_name] for trial in trials]
-            y_values = [trial["value"] for trial in trials]
-            trial_numbers = list(range(1, len(trials) + 1))
-
-            trace = go.Scatter(
-                x=x_values,
-                y=y_values,
-                mode="markers",
-                marker={
-                    "size": 8,
-                    "color": trial_numbers,
-                    "colorscale": "Blues",
-                    "colorbar": {"title": "Trial Number"},
-                    "showscale": True,
-                    "line": {"width": 0.2, "color": "black"},
-                },
-                name=param_name,
-                visible=False,
-            )
-            traces.append(trace)
-
-        traces[0]["visible"] = True
-
-        buttons = []
-        for i, param_name in enumerate(param_names):
-            buttons.append(
-                {
-                    "method": "update",
-                    "label": param_name,
-                    "args": [
-                        {"visible": [j == i for j in range(len(param_names))]},
-                        {
-                            "title": f"Slice plot for {param_name}",
-                            "xaxis": {"title": param_name},
+            title = f"Slice plot for {param_name}"
+            fig = go.Figure(
+                data=[
+                    go.Scatter(
+                        x=[trial["params"][param_name] for trial in trials],
+                        y=y_values,
+                        mode="markers",
+                        marker={
+                            "size": 8,
+                            "color": trial_numbers,
+                            "colorscale": "Blues",
+                            "colorbar": {"title": "Trial Number"},
+                            "showscale": True,
+                            "line": {"width": 0.2, "color": "black"},
                         },
-                    ],
-                }
+                        name=param_name,
+                    )
+                ]
             )
+            fig.update_layout(
+                title=title,
+                xaxis_title=param_name,
+                yaxis_title=goal_metric["name"],
+            )
+            figures.append((param_name, PlotlyArtifact(payload=fig, title=title)))
 
-        updatemenus = [{"buttons": buttons, "direction": "down", "showactive": True}]
-
-        title = f"Slice plot for {param_names[0]}"
-        fig = go.Figure(data=traces)
-        fig.update_layout(
-            updatemenus=updatemenus,
-            title=title,
-            xaxis_title=param_names[0],
-            yaxis_title=goal_metric["name"],
-        )
-
-        return PlotlyArtifact(payload=fig, title=title)
+        return _grouped_or_single("Slice plot", figures)
 
     def contour_plot(self, trials, goal_metric):
         """
@@ -224,11 +233,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
 
         Only the hyperparameters measured on a scale are paired. A contour
         reads the space between two coordinates and there is nothing between
-        two options, and one pair of axes is shared by every pair in the
-        dropdown while an axis type is decided once, so a categorical
-        parameter also broke the figure: the pair that put its options on the
-        axis already typed ``linear`` read them all as missing and left an
-        empty grid for plotly to crash on.
+        two options, so a categorical parameter has no place on its axes.
 
         Args:
             trial_values (list): List with the hyperparameters values
@@ -236,11 +241,10 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
 
         Returns
         -------
-            artifact (PlotlyArtifact or None): typed artifact wrapping the plot
-                data, or ``None`` when fewer than two of the searched
-                parameters are measured on a scale.
+            artifact (GroupedArtifacts or None): a group of figures, one per
+                ordered pair of hyperparameters, or ``None`` when fewer than
+                two of the searched parameters are measured on a scale.
         """
-        # Lazy imports
         import plotly.graph_objects as go
 
         numeric = {
@@ -252,86 +256,51 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
         if len(param_names) < 2:
             return None
 
-        traces = []
-        scatter_traces = []
+        figures = []
         for param_x in param_names:
             for param_y in param_names:
-                if param_x != param_y:
-                    x_values = [
-                        trial["params"][param_x]
-                        for trial in trials
-                        if param_x in trial["params"]
+                if param_x == param_y:
+                    continue
+                pair = [
+                    trial
+                    for trial in trials
+                    if param_x in trial["params"] and param_y in trial["params"]
+                ]
+                x_values = [trial["params"][param_x] for trial in pair]
+                y_values = [trial["params"][param_y] for trial in pair]
+                z_values = [trial["value"] for trial in pair]
+                name = f"{param_x} vs {param_y}"
+                title = f"Contour plot for {name}"
+                fig = go.Figure(
+                    data=[
+                        go.Contour(
+                            x=x_values,
+                            y=y_values,
+                            z=z_values,
+                            colorscale="Blues",
+                            colorbar={"title": goal_metric["name"]},
+                            showscale=True,
+                            name=name,
+                        ),
+                        go.Scatter(
+                            x=x_values,
+                            y=y_values,
+                            mode="markers",
+                            marker={
+                                "size": 8,
+                                "color": z_values,
+                                "colorscale": "Blues",
+                                "showscale": False,
+                                "line": {"width": 0.2, "color": "black"},
+                            },
+                            name=f"{name} points",
+                        ),
                     ]
-                    y_values = [
-                        trial["params"][param_y]
-                        for trial in trials
-                        if param_y in trial["params"]
-                    ]
-                    z_values = [
-                        trial["value"]
-                        for trial in trials
-                        if param_x in trial["params"] and param_y in trial["params"]
-                    ]
+                )
+                fig.update_layout(title=title, xaxis_title=param_x, yaxis_title=param_y)
+                figures.append((name, PlotlyArtifact(payload=fig, title=title)))
 
-                    contour_trace = go.Contour(
-                        x=x_values,
-                        y=y_values,
-                        z=z_values,
-                        colorscale="Blues",
-                        colorbar={"title": goal_metric["name"]},
-                        showscale=True,
-                        name=f"{param_x} vs {param_y}",
-                        visible=False,
-                    )
-                    traces.append(contour_trace)
-
-                    scatter_trace = go.Scatter(
-                        x=x_values,
-                        y=y_values,
-                        mode="markers",
-                        marker={
-                            "size": 8,
-                            "color": z_values,
-                            "colorscale": "Blues",
-                            "colorbar": {"title": goal_metric["name"]},
-                            "showscale": False,
-                            "line": {"width": 0.2, "color": "black"},
-                        },
-                        name=f"{param_x} vs {param_y} points",
-                        visible=False,
-                    )
-                    scatter_traces.append(scatter_trace)
-
-        traces[0]["visible"] = True
-        scatter_traces[0]["visible"] = True
-
-        buttons = []
-        for i in range(len(traces)):
-            buttons.append(
-                {
-                    "method": "update",
-                    "label": traces[i]["name"],
-                    "args": [
-                        {
-                            "visible": [j == i for j in range(len(traces))]
-                            + [j == i for j in range(len(scatter_traces))]
-                        },
-                        {"title": f"Contour plot for {traces[i]['name']}"},
-                    ],
-                }
-            )
-
-        updatemenus = [{"buttons": buttons, "direction": "down", "showactive": True}]
-
-        title = f"Contour plot for {traces[0]['name']}"
-        fig = go.Figure(data=traces + scatter_traces)
-        fig.update_layout(
-            updatemenus=updatemenus,
-            title=title,
-            xaxis_title=param_names[0],
-            yaxis_title=param_names[1],
-        )
-        return PlotlyArtifact(payload=fig, title=title)
+        return _grouped_or_single("Contour plot", figures)
 
     def importance_plot(self, trials, goal_metric):
         """
@@ -439,10 +408,10 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
         Returns
         -------
             plots_filenames (list): Filenames to persist each plot under.
-            plots_list (list): The matching list of PlotlyArtifact instances.
-                An entry is ``None`` where the plot does not apply to this
-                search; the slot is kept so the remaining plots stay in the
-                position their filename and database column expect.
+            plots_list (list): The matching list of plots, each a
+                PlotlyArtifact or, for a plot with one figure per option, a
+                GroupedArtifacts. An entry is ``None`` where the plot does not
+                apply to this search.
 
         Notes
         -----

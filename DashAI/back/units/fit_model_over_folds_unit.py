@@ -75,7 +75,7 @@ class FitModelOverFoldsUnit(BaseUnit, ModelFitScopeMixin):
         "x_folds",
         "y_folds",
     )
-    PROVIDES = ("model", "plot_paths", "fold_metrics")
+    PROVIDES = ("model", "hyperparameter_plots_path", "fold_metrics")
     RUNTIME_PARAMS = ("run_id", "artifact_prefix")
 
     def __init__(self, **config) -> None:
@@ -95,13 +95,13 @@ class FitModelOverFoldsUnit(BaseUnit, ModelFitScopeMixin):
         y_folds = ctx.require("y_folds")
         optimizable_parameters = ctx.require("optimizable_parameters")
 
-        plot_paths = []
+        plots_path = None
         try:
             if self._will_search(optimizable_parameters):
                 # Every read of the context happens in this file rather than in
                 # the shared helper: the contract audit parses it, so a require
                 # moved out makes a declared key look unread.
-                model, best_parameters, plot_paths = self._search(
+                model, best_parameters, plots_path = self._search(
                     model,
                     x_folds,
                     y_folds,
@@ -129,7 +129,7 @@ class FitModelOverFoldsUnit(BaseUnit, ModelFitScopeMixin):
             ) from e
 
         ctx.put("model", model)
-        ctx.put_ref("plot_paths", plot_paths)
+        ctx.put_ref("hyperparameter_plots_path", plots_path)
         ctx.put_ref("fold_metrics", fold_metrics)
 
     # ----------------------------------------------------------------- #

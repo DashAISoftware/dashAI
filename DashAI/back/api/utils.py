@@ -132,6 +132,22 @@ def remove_path(path):
         raise ValueError("file {} is not a file or dir.".format(path))
 
 
+def _run_plot_files(run) -> list:
+    """The files of a run's ``run_plot`` rows, read without flushing.
+
+    Loading the rows must not flush what the caller has pending on the run:
+    a reset still has a metrics delete to commit from another session, which
+    a flush here would lock out.
+    """
+    from sqlalchemy.orm import object_session
+
+    session = object_session(run)
+    if session is None:
+        return [plot.artifacts_path for plot in run.plots]
+    with session.no_autoflush:
+        return [plot.artifacts_path for plot in run.plots]
+
+
 def run_file_paths(runs) -> list:
     """Every file a run leaves in ``RUNS_PATH``: its model, plots and forecasts.
 
@@ -161,11 +177,8 @@ def run_file_paths(runs) -> list:
         for run in runs
         for path in (
             run.run_path,
-            run.plot_history_path,
-            run.plot_slice_path,
-            run.plot_contour_path,
-            run.plot_importance_path,
             str(forecasts_file(runs_path, str(run.id))),
+            *_run_plot_files(run),
         )
     ]
 

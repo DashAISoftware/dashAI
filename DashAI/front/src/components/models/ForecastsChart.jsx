@@ -1,39 +1,43 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import Plot from "react-plotly.js";
-import { Alert, Box, CircularProgress, ToggleButton } from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
+import { Alert, Box, CircularProgress } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { getRunForecasts } from "../../api/run";
+import {
+  deleteRunPlotOverride,
+  getRunPlots,
+  saveRunPlotOverride,
+} from "../../api/run";
 import { getApiErrorMessage } from "../../utils/apiError";
-import { getTraceColors } from "../../utils/chartColors";
-import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
+import { patchArtifactPayload } from "../../utils/artifactOverrides";
+import ArtifactList from "../shared/ArtifactList";
+
+const VIEW = "forecasts";
 
 /**
- * The forecasts a finished backtest run saved (GET /run/{id}/forecasts),
- * origin by origin: the actual values of the window each origin forecast,
- * the forecast, and its intervals by level, against the date.
+ * The forecasts a finished backtest run saved, drawn at training time and
+ * shown in the shared artifact cards (GET /run/{id}/plots/forecasts): one
+ * figure per origin with the actual values, the forecast and its intervals
+ * by level. Edits to a figure are saved with the run.
  *
- * Shown for a strategy whose `result_views` declares "forecasts". Everything
- * drawn comes in the file as it is; nothing is computed on the values.
+ * Shown for a strategy whose `result_views` declares "forecasts".
  */
 export default function ForecastsChart({ run }) {
-  const theme = useTheme();
   const { t } = useTranslation(["models", "common"]);
-  const [forecasts, setForecasts] = useState(null);
+  const [items, setItems] = useState(null);
   const [error, setError] = useState(null);
-  const [selected, setSelected] = useState(0);
+
+  const fetchPlots = useCallback(
+    () => getRunPlots(run.id, VIEW).then(setItems),
+    [run.id],
+  );
 
   useEffect(() => {
     let cancelled = false;
-    setForecasts(null);
+    setItems(null);
     setError(null);
-    getRunForecasts(run.id)
+    getRunPlots(run.id, VIEW)
       .then((data) => {
-        if (!cancelled) {
-          setForecasts(data);
-          setSelected(0);
-        }
+        if (!cancelled) setItems(data);
       })
       .catch((err) => {
         if (!cancelled) {
@@ -45,80 +49,30 @@ export default function ForecastsChart({ run }) {
     };
   }, [run.id]);
 
-  // An origin is named by its partition, numbered when the partition has
-  // more than one.
-  const originLabels = useMemo(() => {
-    const origins = forecasts?.origins ?? [];
-    const count = (partition) =>
-      origins.filter((origin) => origin.partition === partition).length;
-    return origins.map((origin) => {
-      const partition = t(`common:${origin.partition}`);
-      return count(origin.partition) > 1
-        ? `${partition} ${origin.index + 1}`
-        : partition;
-    });
-  }, [forecasts, t]);
+  const handleSaveOverride = async (index, figure) => {
+    try {
+      await saveRunPlotOverride(run.id, VIEW, index, figure);
+      setItems((prev) =>
+        patchArtifactPayload(prev, index, JSON.stringify(figure)),
+      );
+    } catch (err) {
+      console.error("Error saving forecasts plot override:", err);
+    }
+  };
 
-  const data = useMemo(() => {
-    const origin = forecasts?.origins?.[selected];
-    if (!origin) return [];
-    const [actualColor, forecastColor] = getTraceColors(theme);
-    // Widest band first, so a narrower one is drawn over it.
-    const levels = [...(forecasts.levels ?? [])].sort((a, b) => b - a);
-    const bands = levels.flatMap((level, position) => {
-      const name = t("models:label.predictionInterval", { level });
-      const fill = alpha(forecastColor, 0.15 + 0.1 * position);
-      const lower = origin.lower?.[String(level)];
-      const upper = origin.upper?.[String(level)];
-      if (!lower || !upper) return [];
-      return [
-        {
-          type: "scatter",
-          mode: "lines",
-          name,
-          x: origin.dates,
-          y: upper,
-          line: { width: 0 },
-          showlegend: false,
-          hoverinfo: "skip",
-        },
-        {
-          type: "scatter",
-          mode: "lines",
-          name,
-          x: origin.dates,
-          y: lower,
-          line: { width: 0 },
-          fill: "tonexty",
-          fillcolor: fill,
-        },
-      ];
-    });
-    return [
-      ...bands,
-      {
-        type: "scatter",
-        mode: "lines+markers",
-        name: t("models:label.actual"),
-        x: origin.dates,
-        y: origin.actual,
-        line: { color: actualColor },
-      },
-      {
-        type: "scatter",
-        mode: "lines+markers",
-        name: t("models:label.forecast"),
-        x: origin.dates,
-        y: origin.forecast,
-        line: { color: forecastColor, dash: "dash" },
-      },
-    ];
-  }, [forecasts, selected, theme, t]);
+  const handleResetOverride = async (index) => {
+    try {
+      await deleteRunPlotOverride(run.id, VIEW, index);
+      await fetchPlots();
+    } catch (err) {
+      console.error("Error resetting forecasts plot override:", err);
+    }
+  };
 
   if (error) {
     return <Alert severity="info">{error}</Alert>;
   }
-  if (!forecasts) {
+  if (!items) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
         <CircularProgress />
@@ -127,36 +81,13 @@ export default function ForecastsChart({ run }) {
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      {originLabels.length > 1 && (
-        <PillToggleButtonGroup
-          value={selected}
-          onChange={(_, value) => value !== null && setSelected(value)}
-        >
-          {originLabels.map((label, position) => (
-            <ToggleButton key={label} value={position} sx={{ px: 1.5 }}>
-              {label}
-            </ToggleButton>
-          ))}
-        </PillToggleButtonGroup>
-      )}
-      <Plot
-        data={data}
-        layout={{
-          autosize: true,
-          height: 380,
-          margin: { l: 50, r: 20, t: 20, b: 40 },
-          paper_bgcolor: "transparent",
-          plot_bgcolor: "transparent",
-          font: { color: theme.palette.text.primary },
-          xaxis: { type: "date" },
-          legend: { orientation: "h" },
-        }}
-        config={{ displaylogo: false, responsive: true }}
-        useResizeHandler
-        style={{ width: "100%" }}
-      />
-    </Box>
+    <ArtifactList
+      items={items}
+      ctx={{
+        onSaveOverride: handleSaveOverride,
+        onResetOverride: handleResetOverride,
+      }}
+    />
   );
 }
 

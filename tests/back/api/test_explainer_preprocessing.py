@@ -63,10 +63,6 @@ def _create_and_train_session_with_binarizer(client: TestClient, dataset_id: int
             },
             "goal_metric": "",
             "description": "Training for explainer preprocessing test",
-            "plot_history_path": "path/to/history.png",
-            "plot_slice_path": "path/to/slice.png",
-            "plot_contour_path": "path/to/contour.png",
-            "plot_importance_path": "path/to/importance.png",
         },
     )
     assert run_response.status_code == 201, run_response.text

@@ -447,7 +447,7 @@ def test_every_serializable_output_is_recorded(finished_pipeline_run):
     assert ("prep", "split_indexes") in artifacts
     assert ("prep", "task_name") in artifacts
     assert ("build", "model_parameters") in artifacts
-    assert ("fit", "plot_paths") in artifacts
+    assert ("fit", "hyperparameter_plots_path") in artifacts
     assert ("eval", "metrics") in artifacts
     assert ("save", "model_path") in artifacts
 
