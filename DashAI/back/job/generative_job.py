@@ -11,6 +11,7 @@ from DashAI.back.dependencies.database.models import (
     ProcessData,
 )
 from DashAI.back.job.base_job import BaseJob, JobError, _release_frames
+from DashAI.back.job.generative_failure import fail_process
 from DashAI.back.job.RAG_job import RAGJob
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
@@ -20,50 +21,6 @@ if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
 log = logging.getLogger(__name__)
-
-#: The longest error detail a failed turn stores. The chat shows it in the
-#: turn's error bubble; the full error and its traceback stay in the log.
-ERROR_DETAIL_MAX_LENGTH = 500
-
-
-def _fail_process(
-    db, process: "GenerativeProcess | None", message: str, cause=None
-) -> None:
-    """Mark a turn as failed and store why, as its output.
-
-    The chat shows the stored detail in the failed turn's error bubble, so it
-    is the error's message, cut to ``ERROR_DETAIL_MAX_LENGTH``, never a
-    traceback (that stays in the log).
-
-    Parameters
-    ----------
-    db : Session
-        The open database session.
-    process : GenerativeProcess or None
-        The failed turn; nothing is stored when it could not be loaded.
-    message : str
-        What failed, for the user.
-    cause : BaseException, optional
-        The error behind it, whose message is added to the detail.
-    """
-    if process is None:
-        return
-    # A failed database call leaves the session unusable until rolled back,
-    # and nothing pending at a failure point is worth keeping.
-    db.rollback()
-    detail = f"{message} {cause}" if cause is not None else message
-    if len(detail) > ERROR_DETAIL_MAX_LENGTH:
-        detail = detail[: ERROR_DETAIL_MAX_LENGTH - 3] + "..."
-    process.set_status_as_error()
-    db.add(
-        ProcessData(
-            data=detail,
-            data_type="str",
-            process_id=process.id,
-            is_input=False,
-        )
-    )
-    db.commit()
 
 
 class GenerativeJob(BaseJob):
@@ -197,7 +154,7 @@ class GenerativeJob(BaseJob):
                 except Exception as e:
                     log.exception(e)
                     message = "Error retrieving generative process."
-                    _fail_process(db, generative_process, message, e)
+                    fail_process(db, generative_process, message, e)
                     raise JobError(message) from e
 
                 try:
@@ -211,7 +168,7 @@ class GenerativeJob(BaseJob):
                 except Exception as e:
                     log.exception(e)
                     message = "Error retrieving generative session."
-                    _fail_process(db, generative_process, message, e)
+                    fail_process(db, generative_process, message, e)
                     raise JobError(message) from e
 
                 try:
@@ -229,12 +186,12 @@ class GenerativeJob(BaseJob):
                     params = generative_session.parameters
                     model: BaseGenerativeModel = model_class(**params)
                 except JobError as e:
-                    _fail_process(db, generative_process, str(e))
+                    fail_process(db, generative_process, str(e))
                     raise
                 except Exception as e:
                     log.exception(e)
                     message = "Error instantiating model with given parameters."
-                    _fail_process(db, generative_process, message, e)
+                    fail_process(db, generative_process, message, e)
                     raise JobError(message) from e
 
                 input_data = generative_process.input
@@ -249,12 +206,12 @@ class GenerativeJob(BaseJob):
                     message = (
                         f"Task '{generative_session.task_name}' not found in registry."
                     )
-                    _fail_process(db, generative_process, message)
+                    fail_process(db, generative_process, message)
                     raise JobError(message) from e
                 except Exception as e:
                     log.exception(e)
                     message = "Error instantiating task."
-                    _fail_process(db, generative_process, message, e)
+                    fail_process(db, generative_process, message, e)
                     raise JobError(message) from e
 
                 try:
@@ -278,7 +235,7 @@ class GenerativeJob(BaseJob):
                 except Exception as e:
                     log.exception(e)
                     message = "Error preparing task with history."
-                    _fail_process(db, generative_process, message, e)
+                    fail_process(db, generative_process, message, e)
                     raise JobError(message) from e
 
                 try:
@@ -287,7 +244,7 @@ class GenerativeJob(BaseJob):
                 except exc.SQLAlchemyError as e:
                     log.exception(e)
                     message = "Failed to update process status in database."
-                    _fail_process(db, generative_process, message, e)
+                    fail_process(db, generative_process, message, e)
                     raise JobError(message) from e
 
                 try:
@@ -295,7 +252,7 @@ class GenerativeJob(BaseJob):
                 except Exception as e:
                     log.exception(e)
                     message = "Error during model generation."
-                    _fail_process(db, generative_process, message, e)
+                    fail_process(db, generative_process, message, e)
                     raise JobError(message) from e
 
                 try:
@@ -330,7 +287,7 @@ class GenerativeJob(BaseJob):
                 except Exception as e:
                     log.exception(e)
                     message = "Error processing and saving generation output."
-                    _fail_process(db, generative_process, message, e)
+                    fail_process(db, generative_process, message, e)
                     raise JobError(message) from e
 
             except BaseException as error:

@@ -22,7 +22,8 @@ from DashAI.back.dependencies.database.models import (
     ProcessData,
 )
 from DashAI.back.job.base_job import JobError
-from DashAI.back.job.generative_job import ERROR_DETAIL_MAX_LENGTH, GenerativeJob
+from DashAI.back.job.generative_failure import ERROR_DETAIL_MAX_LENGTH
+from DashAI.back.job.generative_job import GenerativeJob
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
