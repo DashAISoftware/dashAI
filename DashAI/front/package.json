@@ -65,7 +65,7 @@
   },
   "jest": {
     "transformIgnorePatterns": [
-      "node_modules/(?!(react-markdown|remark-[^/]+|unified|bail|ccount|character-[^/]+|comma-separated-tokens|decode-named-character-reference|devlop|estree-util-[^/]+|hast-util-[^/]+|html-url-attributes|is-alphabetical|is-alphanumerical|is-decimal|is-hexadecimal|is-plain-obj|longest-streak|mdast-util-[^/]+|micromark[^/]*|parse-entities|property-information|space-separated-tokens|stringify-entities|trim-lines|trough|unist-util-[^/]+|vfile[^/]*|zwitch|@ungap/structured-clone)/)"
+      "node_modules/(?!(react-markdown|remark-[^/]+|unified|bail|ccount|character-[^/]+|escape-string-regexp|markdown-table|comma-separated-tokens|decode-named-character-reference|devlop|estree-util-[^/]+|hast-util-[^/]+|html-url-attributes|is-alphabetical|is-alphanumerical|is-decimal|is-hexadecimal|is-plain-obj|longest-streak|mdast-util-[^/]+|micromark[^/]*|parse-entities|property-information|space-separated-tokens|stringify-entities|trim-lines|trough|unist-util-[^/]+|vfile[^/]*|zwitch|@ungap/structured-clone)/)"
     ],
     "moduleNameMapper": {
       "^unist-util-visit-parents/do-not-use-color$": "<rootDir>/node_modules/unist-util-visit-parents/lib/color.js",
