@@ -34,6 +34,32 @@ export const LOADERS_STATUS = Object.freeze({
   ERROR: "error",
 });
 
+/** Whether the document converters have been fetched yet. */
+export const CONVERTERS_STATUS = Object.freeze({
+  LOADING: "loading",
+  READY: "ready",
+  ERROR: "error",
+});
+
+/** Content types a document can actually hold. */
+export const DOCUMENT_CONTENT_TYPES = Object.freeze(["Text", "Image"]);
+
+/**
+ * @param {object} converter - A document converter component.
+ * @returns {Array<string>} The document content types it declares, empty when
+ *   it is unrestricted.
+ */
+export function documentConverterTypes(converter) {
+  const types =
+    converter?.metadata?.document_allowed_types ??
+    converter?.metadata?.allowed_types;
+  if (!Array.isArray(types)) return [];
+  return types.filter((type) => DOCUMENT_CONTENT_TYPES.includes(type));
+}
+
+/** 409 detail fragment that identifies a name clash the batch can retry. */
+export const NAME_CONFLICT_DETAIL = "already exists";
+
 /** Lifecycle of a single upload run. */
 export const UPLOAD_PHASE = Object.freeze({
   SELECTING: "selecting",

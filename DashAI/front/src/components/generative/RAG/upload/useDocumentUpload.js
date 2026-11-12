@@ -20,6 +20,7 @@ import {
   FAILURE_CODE,
   FILE_STATUS,
   JOB_TIMEOUT_MS,
+  NAME_CONFLICT_DETAIL,
   UPLOAD_MODE,
   UPLOAD_PHASE,
 } from "./uploadConstants";
@@ -280,11 +281,13 @@ export default function useDocumentUpload({ onReady } = {}) {
    * Creates the batch, retrying once against fresh data after a name conflict.
    *
    * @param {object} params - Batch inputs.
+   * @param {Array<{converter: string, params: object}>} params.pipeline -
+   *   Converters applied to every file, in order.
    * @returns {Promise<{payload: object, result: object}>} The sent payload and
    *   the created folder/documents.
    */
   const createBatchWithRetry = useCallback(
-    async ({ mode, folderName, entries, parsers }) => {
+    async ({ mode, folderName, entries, parsers, pipeline = [] }) => {
       const send = async () => {
         const [documents, folders] = await Promise.all([
           getDocuments(),
@@ -301,6 +304,7 @@ export default function useDocumentUpload({ onReady } = {}) {
         const result = await createDocumentsBatch({
           folder_name: payload.folderName,
           files: payload.files,
+          converter_pipeline: pipeline.length ? pipeline : null,
         });
         if (!Array.isArray(result.documents)) {
           throw new Error("The documents batch response has no documents.");
@@ -311,7 +315,13 @@ export default function useDocumentUpload({ onReady } = {}) {
       try {
         return await send();
       } catch (error) {
-        if (error?.response?.status !== 409) throw error;
+        // A 409 can be a name clash (retry against fresh data fixes it) or a
+        // converter/loader that still has to be downloaded (retrying cannot).
+        const detail = String(error?.response?.data?.detail ?? "");
+        const nameConflict =
+          error?.response?.status === 409 &&
+          detail.includes(NAME_CONFLICT_DETAIL);
+        if (!nameConflict) throw error;
         return send();
       }
     },
@@ -571,7 +581,14 @@ export default function useDocumentUpload({ onReady } = {}) {
   }, [attach.status, attachFinished]);
 
   const start = useCallback(
-    async ({ mode, folderName, entries, skipped: skippedEntries, parsers }) => {
+    async ({
+      mode,
+      folderName,
+      entries,
+      skipped: skippedEntries,
+      parsers,
+      pipeline = [],
+    }) => {
       if (entries.length === 0 || runningRef.current) return;
 
       const runId = runIdRef.current + 1;
@@ -640,6 +657,7 @@ export default function useDocumentUpload({ onReady } = {}) {
           folderName,
           entries,
           parsers,
+          pipeline,
         });
         if (!isCurrent()) {
           await discardBatch(result);

@@ -610,6 +610,9 @@ from DashAI.back.tasks.translation_task import TranslationTask
 from DashAI.back.units.apply_converter_unit import ApplyConverterUnit
 from DashAI.back.units.apply_cut_preprocessing_unit import ApplyCutPreprocessingUnit
 from DashAI.back.units.apply_dataset_schema_unit import ApplyDatasetSchemaUnit
+from DashAI.back.units.apply_document_pipeline_unit import (
+    ApplyDocumentPipelineUnit,
+)
 from DashAI.back.units.apply_session_preprocessing_unit import (
     ApplySessionPreprocessingUnit,
 )
@@ -928,6 +931,7 @@ def get_initial_components():
         StoreDatafileDocumentSourceUnit,
         ParseDocumentUnit,
         SaveDocumentToPathUnit,
+        ApplyDocumentPipelineUnit,
         RAGJob,
         # Reports
         ConfusionMatrix,
