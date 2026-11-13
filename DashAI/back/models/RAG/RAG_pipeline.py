@@ -217,7 +217,7 @@ class PipelineStageTimings:
 
     Every value is a non-negative number of milliseconds measured with
     ``time.perf_counter()`` inside ``RAGPipeline.generate()``. Progress events
-    emitted by nested LLM components (the transformer and LLM-evaluated
+    emitted by nested LLM components (the transformer and agentic
     retrievers) run inside their stage timer, so the transformation/retrieval
     durations include any reporter overhead they incur.
 
@@ -633,7 +633,7 @@ class RAGPipeline(BaseGenerativeModel):
             chunks: Mapping of document IDs to their chunk dicts.
             prompt_model: The prompt template model.
             chunking_model: The chunking model instance.
-            retriever: The retriever model instance. An LLM-evaluated retriever
+            retriever: The retriever model instance. An agentic retriever
                 holds its own lazy proxy, which the retrieval stage releases.
             llm_model: The text generation model, normally a lazy proxy whose
                 real backend is constructed on first generation.

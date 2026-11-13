@@ -1,6 +1,6 @@
 """Strict parser for the retrieval-evaluation verdict contract.
 
-The LLM-evaluated retrievers ask their language model for a single JSON verdict
+The agentic retrievers ask their language model for a single JSON verdict
 that judges whether the retrieved pool is sufficient and, when it is not, how to
 proceed. The parser tolerates surrounding prose and markdown fences, but the
 verdict itself is strict: any invalid retriever index, chunk position, duplicate

@@ -115,7 +115,7 @@ delegates to `RAGJob`, which:
    (`RAGModelsFactory.create_query_transformation`). The indexing half
    (`build_index`) stops before the generation LLM, and every LLM is a lazy
    proxy — the generation model, the transformation model and an
-   LLM-evaluated retriever's evaluation model are configured but not loaded, so
+   agentic retriever's evaluation model are configured but not loaded, so
    assembly never loads LLM weights (retriever embedding models may still be built or loaded during indexing). Their parameters are still schema-validated
    during assembly, so a bad nested configuration fails there. Chunk sets and
    fitted retrievers are reused when their signature already exists, so only a
@@ -135,7 +135,7 @@ delegates to `RAGJob`, which:
    LLM-backed stages may decorate these payloads with an LLM-authored
    `message` and `justification`. The transformer can emit a `transforming`
    update, the pipeline forwards that narrative in the initial `retrieving`
-   payload, and LLM-evaluated retrievers emit further `retrieving` updates
+   payload, and agentic retrievers emit further `retrieving` updates
    after each valid verdict. Those retriever updates omit `queries`; they are
    status updates, not a new query list. When the model supplies no narrative,
    the stage-only payloads are unchanged. BOTH the function-calling and the text
@@ -151,7 +151,7 @@ delegates to `RAGJob`, which:
      soon as the transformation timing is taken;
    - the retriever's evaluation LLM loads on the first query of the retrieval
      stage and is closed when retrieval ends (composite retrievers close every
-     child, including nested LLM-evaluated ones);
+     child, including nested agentic ones);
    - the generation LLM loads after the prompt is built and is closed right
      after generation.
 
@@ -161,7 +161,7 @@ delegates to `RAGJob`, which:
    sum of the stages — the generation model, the retriever LLM and the
    transformer are never resident at the same time. Stage timings include the
    first-use model construction inside that stage and exclude that stage's
-   teardown; `total_ms` includes all teardowns. A nested LLM-evaluated retriever
+   teardown; `total_ms` includes all teardowns. A nested agentic retriever
    can still keep its parent and child evaluation models live together; see
    [known limitations](./05-known-limitations.md). The proxies survive the turn,
    so the next turn reloads whichever models it needs.

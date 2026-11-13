@@ -123,6 +123,8 @@ class DefaultQueryRewritingPrompt(QueryRewritingPrompt):
     """Default prompt template for rewriting a query into a single search query."""
 
     SCHEMA = DefaultQueryRewritingPromptSchema
+    #: Registered component used when a user forks this default.
+    CUSTOM_CLASS: str = "CustomQueryRewritingPrompt"
     DESCRIPTION: str = MultilingualString(
         en="Default prompt template for rewriting a query into a single search query.",
         es="Plantilla de prompt predeterminada para reescribir una consulta en"

@@ -110,7 +110,7 @@ def transformation_llm_overrides() -> Dict[str, Any]:
     Applied under anything the caller sends explicitly, so a user who sets
     their own ``context_window``, ``max_tokens`` or ``temperature`` keeps it.
     The values come from :func:`rag_llm_param_overrides` so the stage shares
-    one source of truth with the LLM-evaluated retrievers: a 10000-token
+    one source of truth with the agentic retrievers: a 10000-token
     context window, a 300-token budget and a 0.1 temperature, instead of the
     shared schema placeholders (512/100/0.7) that cannot hold the technique
     prompt plus the stage's history nor keep the function call deterministic.

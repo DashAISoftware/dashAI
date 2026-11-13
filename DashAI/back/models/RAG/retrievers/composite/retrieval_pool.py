@@ -1,4 +1,4 @@
-"""In-memory iterative retrieval pool for the LLM-evaluated retrievers.
+"""In-memory iterative retrieval pool for the agentic retrievers.
 
 The pool accumulates the chunks returned by successive retrieval rounds and lets
 the language model steer it explicitly: chunks can be *requested* (included even

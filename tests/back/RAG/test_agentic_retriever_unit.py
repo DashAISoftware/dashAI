@@ -1,4 +1,4 @@
-"""Unit tests for the LLM-evaluated composite retrievers.
+"""Unit tests for the agentic composite retrievers.
 
 Instances are constructed directly (no factory) with a scripted fake LLM, fake
 children and a recording prompt. These tests pin the round semantics, the
@@ -32,6 +32,12 @@ from DashAI.back.models.RAG.RAG_defaults import (
     MAX_FUNCTION_CALL_TRIALS,
 )
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
+from DashAI.back.models.RAG.retrievers.composite.agentic_ensemble_retriever import (  # noqa: E501
+    AgenticEnsembleRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.agentic_single_retriever import (
+    AgenticSingleRetriever,
+)
 from DashAI.back.models.RAG.retrievers.composite.evaluation_output import (
     CALL_RETRIEVERS_KEY,
     DISCARD_KEY,
@@ -42,12 +48,6 @@ from DashAI.back.models.RAG.retrievers.composite.evaluation_output import (
     cap_dropped_operations,
     parse_evaluation_arguments,
     parse_evaluation_output,
-)
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_depth_retriever import (
-    LLMEvaluatedDepthRetriever,
-)
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_ensemble_retriever import (  # noqa: E501
-    LLMEvaluatedEnsembleRetriever,
 )
 from DashAI.back.models.RAG.retrievers.exceptions import CompositeValidationError
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
@@ -133,7 +133,7 @@ class _ScriptedLLM(TextToTextGenerationTaskModel):
     """Fake function-calling LLM returning queued verdict arguments.
 
     Each queued entry becomes the ``arguments`` payload of a valid
-    ``evaluate_retrieval_sufficiency`` call, so malformed-output cases can be
+    ``evaluate_agentic_retrieval`` call, so malformed-output cases can be
     scripted directly. ``calls`` records the FC messages so existing call-count
     assertions keep working.
     """
@@ -161,7 +161,7 @@ class _ScriptedLLM(TextToTextGenerationTaskModel):
         if not self._outputs:
             raise AssertionError("No scripted LLM output left.")
         entry = self._outputs.pop(0)
-        return FunctionCallResult("evaluate_retrieval_sufficiency", entry)
+        return FunctionCallResult("evaluate_agentic_retrieval", entry)
 
 
 class _NonFunctionCallingLLM(TextToTextGenerationTaskModel):
@@ -262,9 +262,9 @@ def _depth(
     max_iters: int,
     max_chunks: int,
     function_call_max_trials: int = 1,
-) -> LLMEvaluatedDepthRetriever:
-    """Construct a depth retriever directly."""
-    return LLMEvaluatedDepthRetriever(
+) -> AgenticSingleRetriever:
+    """Construct a single retriever directly."""
+    return AgenticSingleRetriever(
         children=[child],
         max_iters=max_iters,
         max_chunks=max_chunks,
@@ -281,9 +281,9 @@ def _ensemble(
     max_iters: int,
     max_chunks: int,
     function_call_max_trials: int = 1,
-) -> LLMEvaluatedEnsembleRetriever:
+) -> AgenticEnsembleRetriever:
     """Construct an ensemble retriever directly."""
-    return LLMEvaluatedEnsembleRetriever(
+    return AgenticEnsembleRetriever(
         children=children,
         max_iters=max_iters,
         max_chunks=max_chunks,
@@ -311,7 +311,7 @@ def test_depth_sufficient_after_first_round():
     assert child.retrieve_calls == [None]
     assert len(llm.calls) == 1
     assert retriever.retrieval_top_k == 10
-    assert trace["name"] == "LLMEvaluatedDepthRetriever"
+    assert trace["name"] == "AgenticSingleRetriever"
     assert len(trace["children"]) == 1
     assert len(trace["rounds"]) == 1
     assert trace["rounds"][0]["verdict"] is True
@@ -637,7 +637,7 @@ def test_depth_requires_exactly_one_child():
     llm = _ScriptedLLM([])
     prompt = _RecordingPrompt()
     with pytest.raises(CompositeValidationError, match="exactly one"):
-        LLMEvaluatedDepthRetriever(
+        AgenticSingleRetriever(
             children=[_FakeChild(_chunks(3), top_k=3), _FakeChild(_chunks(3), top_k=3)],
             max_iters=2,
             max_chunks=5,
@@ -647,7 +647,7 @@ def test_depth_requires_exactly_one_child():
 
 
 def test_depth_rejects_non_function_calling_llm():
-    """The depth retriever requires a function-calling model."""
+    """The single retriever requires a function-calling model."""
     with pytest.raises(CompositeValidationError, match="function calling"):
         _depth(
             _FakeChild(_chunks(3), top_k=3),
@@ -670,7 +670,7 @@ def test_ensemble_rejects_non_function_calling_llm():
         )
 
 
-def test_depth_prompt_receives_structured_catalog_and_documents():
+def test_retriever_prompt_receives_structured_catalog_and_documents():
     """The recording prompt receives Python lists/dicts, not rendered strings."""
     child = _FakeChild(_chunks(5), top_k=5, default_size=2)
     llm = _ScriptedLLM(['{"sufficient": true}'])
@@ -698,7 +698,7 @@ def test_depth_prompt_receives_structured_catalog_and_documents():
 
 
 def test_depth_forwards_round_budget_and_remaining_to_prompt():
-    """The depth retriever forwards round numbers and free slots to the prompt."""
+    """The single retriever forwards round numbers and free slots to the prompt."""
     child = _FakeChild(_chunks(10), top_k=10, default_size=3)
     llm = _ScriptedLLM(['{"sufficient": true}'])
     prompt = _RecordingPrompt()
@@ -784,7 +784,7 @@ def test_depth_schema_summary_is_recursive():
 
     summary = retriever.get_schema_summary()
 
-    assert summary["class"] == "LLMEvaluatedDepthRetriever"
+    assert summary["class"] == "AgenticSingleRetriever"
     assert summary["params"] == {"max_iters": 2, "max_chunks": 5}
     assert len(summary["children"]) == 1
     child_summary = summary["children"][0]
@@ -862,7 +862,7 @@ def test_unknown_chunk_position_without_corpus_is_rejected_and_retried(caplog):
         ),
         caplog.at_level(
             logging.WARNING,
-            logger="DashAI.back.models.RAG.retrievers.composite.llm_evaluated_retriever",
+            logger="DashAI.back.models.RAG.retrievers.composite.agentic_retriever",
         ),
     ):
         pool, trace = retriever.retrieve("q")
@@ -1029,7 +1029,7 @@ def test_depth_trace_includes_schema_summary():
 
     _, trace = retriever.retrieve("q")
 
-    assert trace["schema_summary"]["class"] == "LLMEvaluatedDepthRetriever"
+    assert trace["schema_summary"]["class"] == "AgenticSingleRetriever"
     assert trace["children"][0]["schema_summary"]["class"] == "_FakeChild"
 
 
@@ -1042,7 +1042,7 @@ def test_depth_function_calling_sufficient_stops_after_one_delegation():
     """A sufficient FC verdict stops after one delegation using the schema."""
     child = _FakeChild(_chunks(10), top_k=10, default_size=3)
     llm = _FunctionCallingScriptedLLM(
-        [FunctionCallResult("evaluate_retrieval_sufficiency", {"sufficient": True})]
+        [FunctionCallResult("evaluate_agentic_retrieval", {"sufficient": True})]
     )
     prompt = _RecordingPrompt()
     retriever = _depth(child, llm, prompt, max_iters=3, max_chunks=10)
@@ -1055,9 +1055,9 @@ def test_depth_function_calling_sufficient_stops_after_one_delegation():
     assert len(llm.fc_calls) == 1
     assert llm.fc_calls[0]["functions"] == [
         {
-            "name": "evaluate_retrieval_sufficiency",
-            "description": LLMEvaluatedDepthRetriever.FUNCTION_DESCRIPTION,
-            "parameters": LLMEvaluatedDepthRetriever.FUNCTION_PARAMETERS,
+            "name": "evaluate_agentic_retrieval",
+            "description": AgenticSingleRetriever.FUNCTION_DESCRIPTION,
+            "parameters": AgenticSingleRetriever.FUNCTION_PARAMETERS,
         }
     ]
     parameters = llm.fc_calls[0]["functions"][0]["parameters"]
@@ -1084,11 +1084,11 @@ def test_depth_function_calling_insufficient_drives_next_top_k():
     llm = _FunctionCallingScriptedLLM(
         [
             FunctionCallResult(
-                "evaluate_retrieval_sufficiency",
+                "evaluate_agentic_retrieval",
                 {"sufficient": False, "call_retrievers": {1: 4}},
             ),
             FunctionCallResult(
-                "evaluate_retrieval_sufficiency",
+                "evaluate_agentic_retrieval",
                 {"sufficient": False, "call_retrievers": {1: 6}},
             ),
         ]
@@ -1109,7 +1109,7 @@ def test_depth_function_calling_resolves_json_string_arguments():
     """FC arguments emitted as a JSON-encoded string are resolved."""
     child = _FakeChild(_chunks(5), top_k=5, default_size=2)
     llm = _FunctionCallingScriptedLLM(
-        [FunctionCallResult("evaluate_retrieval_sufficiency", '{"sufficient": true}')]
+        [FunctionCallResult("evaluate_agentic_retrieval", '{"sufficient": true}')]
     )
     prompt = _RecordingPrompt()
     retriever = _depth(child, llm, prompt, max_iters=2, max_chunks=5)
@@ -1529,10 +1529,10 @@ def test_ensemble_function_calling_planning_selects_child():
     llm = _FunctionCallingScriptedLLM(
         [
             FunctionCallResult(
-                "evaluate_retrieval_sufficiency",
+                "evaluate_agentic_retrieval",
                 {"sufficient": False, "call_retrievers": {2: 3}},
             ),
-            FunctionCallResult("evaluate_retrieval_sufficiency", {"sufficient": True}),
+            FunctionCallResult("evaluate_agentic_retrieval", {"sufficient": True}),
         ]
     )
     prompt = _RecordingPrompt()
@@ -1546,9 +1546,9 @@ def test_ensemble_function_calling_planning_selects_child():
     assert llm.generate_calls == []
     assert len(llm.fc_calls) == 2
     planning_spec = llm.fc_calls[0]["functions"][0]
-    assert planning_spec["name"] == "evaluate_retrieval_sufficiency"
+    assert planning_spec["name"] == "evaluate_agentic_retrieval"
     assert planning_spec["description"] == (
-        LLMEvaluatedEnsembleRetriever.FUNCTION_DESCRIPTION
+        AgenticEnsembleRetriever.FUNCTION_DESCRIPTION
     )
     parameters = planning_spec["parameters"]
     assert set(parameters["properties"]) == {
@@ -1573,14 +1573,14 @@ def test_ensemble_function_calling_post_round_insufficient_selects_new_children(
     llm = _FunctionCallingScriptedLLM(
         [
             FunctionCallResult(
-                "evaluate_retrieval_sufficiency",
+                "evaluate_agentic_retrieval",
                 {"sufficient": False, "call_retrievers": {1: 2}},
             ),
             FunctionCallResult(
-                "evaluate_retrieval_sufficiency",
+                "evaluate_agentic_retrieval",
                 {"sufficient": False, "call_retrievers": {2: 3}},
             ),
-            FunctionCallResult("evaluate_retrieval_sufficiency", {"sufficient": True}),
+            FunctionCallResult("evaluate_agentic_retrieval", {"sufficient": True}),
         ]
     )
     prompt = _RecordingPrompt()
@@ -1624,7 +1624,7 @@ def test_both_retrievers_trace_has_children_and_rounds():
     _, ensemble_trace = ensemble.retrieve("q")
     assert "children" in ensemble_trace
     assert "rounds" in ensemble_trace
-    assert ensemble_trace["name"] == "LLMEvaluatedEnsembleRetriever"
+    assert ensemble_trace["name"] == "AgenticEnsembleRetriever"
 
 
 @pytest.mark.parametrize("bad", ["not json at all", '{"sufficient": "yes"}'])
@@ -1658,8 +1658,8 @@ def test_non_string_or_empty_model_output_raises(bad_output: List[Any]):
 
 def _fc_depth(
     llm: _FunctionCallingScriptedLLM,
-) -> LLMEvaluatedDepthRetriever:
-    """Construct a depth retriever wired to a function-calling fake."""
+) -> AgenticSingleRetriever:
+    """Construct a single retriever wired to a function-calling fake."""
     child = _FakeChild(_chunks(5), top_k=5, default_size=2)
     return _depth(child, llm, _RecordingPrompt(), max_iters=2, max_chunks=10)
 
@@ -1674,7 +1674,7 @@ def test_function_calling_wrong_name_raises():
         _fc_depth(llm).retrieve("q")
     message = str(excinfo.value)
     assert "some_other_function" in message
-    assert "evaluate_retrieval_sufficiency" in message
+    assert "evaluate_agentic_retrieval" in message
 
 
 def test_function_calling_empty_name_raises():
@@ -1697,7 +1697,7 @@ def test_function_calling_unexpected_result_type_raises(result: Any):
 def test_function_calling_invalid_arguments_type_raises():
     """A list arguments payload (neither dict nor JSON string) fails loudly."""
     llm = _FunctionCallingScriptedLLM(
-        [FunctionCallResult("evaluate_retrieval_sufficiency", [1, 2])]
+        [FunctionCallResult("evaluate_agentic_retrieval", [1, 2])]
     )
 
     with pytest.raises(RAGRetrieverEvaluationError):
@@ -1722,7 +1722,7 @@ def test_function_calling_invalid_arguments_type_raises():
 def test_function_calling_invalid_dict_payload_raises(arguments: Any):
     """Invalid decoded arguments payloads fail loudly."""
     llm = _FunctionCallingScriptedLLM(
-        [FunctionCallResult("evaluate_retrieval_sufficiency", arguments)]
+        [FunctionCallResult("evaluate_agentic_retrieval", arguments)]
     )
 
     with pytest.raises(RAGRetrieverEvaluationError):
@@ -1752,14 +1752,14 @@ def test_function_calling_type_error_propagates():
 def test_function_calling_missing_spec_is_actionable():
     """A subclass without a declared function spec fails with guidance."""
 
-    class _NoSpecDepthRetriever(LLMEvaluatedDepthRetriever):
+    class _NoSpecDepthRetriever(AgenticSingleRetriever):
         EXPECTED_FUNCTION = ""
         FUNCTION_DESCRIPTION = ""
         FUNCTION_PARAMETERS: Dict[str, Any] = {}
 
     child = _FakeChild(_chunks(5), top_k=5, default_size=2)
     llm = _FunctionCallingScriptedLLM(
-        [FunctionCallResult("evaluate_retrieval_sufficiency", {"sufficient": True})]
+        [FunctionCallResult("evaluate_agentic_retrieval", {"sufficient": True})]
     )
     retriever = _NoSpecDepthRetriever(
         children=[child],
@@ -1827,7 +1827,7 @@ def test_depth_retries_function_call_after_backend_error():
     llm = _FunctionCallingScriptedLLM(
         [
             RuntimeError("backend exploded"),
-            FunctionCallResult("evaluate_retrieval_sufficiency", {"sufficient": True}),
+            FunctionCallResult("evaluate_agentic_retrieval", {"sufficient": True}),
         ]
     )
     retriever = _depth(
@@ -1849,14 +1849,14 @@ def test_depth_retries_function_call_after_backend_error():
 def test_retriever_function_call_max_trials_defaults_to_three():
     """Direct construction defaults to three and both schemas expose it."""
     child = _FakeChild(_chunks(3), top_k=3)
-    depth = LLMEvaluatedDepthRetriever(
+    depth = AgenticSingleRetriever(
         children=[child],
         max_iters=2,
         max_chunks=5,
         prompt=_RecordingPrompt(),
         llm_model=_ScriptedLLM([]),
     )
-    ensemble = LLMEvaluatedEnsembleRetriever(
+    ensemble = AgenticEnsembleRetriever(
         children=[child, _FakeChild(_chunks(3), top_k=3)],
         max_iters=2,
         max_chunks=5,
@@ -1866,7 +1866,7 @@ def test_retriever_function_call_max_trials_defaults_to_three():
 
     assert depth.function_call_max_trials == DEFAULT_FUNCTION_CALL_MAX_TRIALS == 3
     assert ensemble.function_call_max_trials == 3
-    for retriever in (LLMEvaluatedDepthRetriever, LLMEvaluatedEnsembleRetriever):
+    for retriever in (AgenticSingleRetriever, AgenticEnsembleRetriever):
         prop = retriever.get_schema()["properties"]["function_call_max_trials"]
         assert prop["placeholder"] == 3
 
@@ -1874,14 +1874,14 @@ def test_retriever_function_call_max_trials_defaults_to_three():
 def _retriever_schema_params(retriever: type) -> Dict[str, Any]:
     """Return a complete schema payload for a retriever, minus the trials field."""
     children = [{"component": "_FakeChild", "params": {"top_k": 3}}]
-    if retriever is LLMEvaluatedEnsembleRetriever:
+    if retriever is AgenticEnsembleRetriever:
         children.append({"component": "_FakeChild", "params": {"top_k": 3}})
     return {
         "children": children,
         "max_chunks": 5,
         "max_iters": 2,
         "prompt": {
-            "component": "DefaultRetrievalSufficiencyPrompt",
+            "component": "DefaultAgenticRetrieverPrompt",
             "params": {"language": "en"},
         },
         "llm_model": {"component": "Qwen25_15BInstruct", "params": {}},
@@ -1889,7 +1889,7 @@ def _retriever_schema_params(retriever: type) -> Dict[str, Any]:
 
 
 @pytest.mark.parametrize(
-    "retriever", [LLMEvaluatedDepthRetriever, LLMEvaluatedEnsembleRetriever]
+    "retriever", [AgenticSingleRetriever, AgenticEnsembleRetriever]
 )
 def test_retriever_schema_defaults_trials_when_omitted(retriever: type):
     """A persisted config from before the parameter existed validates."""
@@ -1899,7 +1899,7 @@ def test_retriever_schema_defaults_trials_when_omitted(retriever: type):
 
 
 @pytest.mark.parametrize(
-    "retriever", [LLMEvaluatedDepthRetriever, LLMEvaluatedEnsembleRetriever]
+    "retriever", [AgenticSingleRetriever, AgenticEnsembleRetriever]
 )
 @pytest.mark.parametrize(
     "value", [0, -1, None, True, "3", 3.0, MAX_FUNCTION_CALL_TRIALS + 1]
@@ -1918,8 +1918,8 @@ def test_depth_retries_function_call_after_malformed_arguments():
     child = _FakeChild(_chunks(5), top_k=5, default_size=2)
     llm = _FunctionCallingScriptedLLM(
         [
-            FunctionCallResult("evaluate_retrieval_sufficiency", "not json"),
-            FunctionCallResult("evaluate_retrieval_sufficiency", {"sufficient": True}),
+            FunctionCallResult("evaluate_agentic_retrieval", "not json"),
+            FunctionCallResult("evaluate_agentic_retrieval", {"sufficient": True}),
         ]
     )
     retriever = _depth(
@@ -1944,10 +1944,10 @@ def test_depth_retries_function_call_when_all_operations_are_invalid():
     llm = _FunctionCallingScriptedLLM(
         [
             FunctionCallResult(
-                "evaluate_retrieval_sufficiency",
+                "evaluate_agentic_retrieval",
                 {"sufficient": False, "call_retrievers": {9: 3}},
             ),
-            FunctionCallResult("evaluate_retrieval_sufficiency", {"sufficient": True}),
+            FunctionCallResult("evaluate_agentic_retrieval", {"sufficient": True}),
         ]
     )
     retriever = _depth(
@@ -1971,8 +1971,8 @@ def test_depth_exhausts_function_call_trials_and_raises():
     child = _FakeChild(_chunks(5), top_k=5, default_size=2)
     llm = _FunctionCallingScriptedLLM(
         [
-            FunctionCallResult("evaluate_retrieval_sufficiency", "not json"),
-            FunctionCallResult("evaluate_retrieval_sufficiency", "still not json"),
+            FunctionCallResult("evaluate_agentic_retrieval", "not json"),
+            FunctionCallResult("evaluate_agentic_retrieval", "still not json"),
         ]
     )
     retriever = _depth(
@@ -1996,9 +1996,9 @@ def test_ensemble_retries_planning_function_call():
     child1 = _FakeChild(_chunks(5, document_id=2), top_k=2)
     llm = _FunctionCallingScriptedLLM(
         [
-            FunctionCallResult("evaluate_retrieval_sufficiency", "not json"),
+            FunctionCallResult("evaluate_agentic_retrieval", "not json"),
             FunctionCallResult(
-                "evaluate_retrieval_sufficiency",
+                "evaluate_agentic_retrieval",
                 {"sufficient": False, "call_retrievers": {1: 2}},
             ),
         ]
@@ -2025,10 +2025,10 @@ def test_function_calling_retry_includes_rejection_feedback():
     llm = _FunctionCallingScriptedLLM(
         [
             FunctionCallResult(
-                "evaluate_retrieval_sufficiency",
+                "evaluate_agentic_retrieval",
                 {"sufficient": "yes"},
             ),
-            FunctionCallResult("evaluate_retrieval_sufficiency", {"sufficient": True}),
+            FunctionCallResult("evaluate_agentic_retrieval", {"sufficient": True}),
         ]
     )
     retriever = _depth(
@@ -2088,7 +2088,7 @@ def test_invalid_function_call_max_trials_rejected(value: Any):
     with pytest.raises(
         RAGRetrieverCompositeValidationError, match="function_call_max_trials"
     ):
-        LLMEvaluatedDepthRetriever(
+        AgenticSingleRetriever(
             children=[child],
             max_iters=2,
             max_chunks=5,
@@ -2120,7 +2120,7 @@ def test_required_parameters_raise_when_missing():
     child = _FakeChild(_chunks(3), top_k=3)
     base = {"children": [child], "max_iters": 2, "max_chunks": 5}
     with pytest.raises(Exception, match="max_iters"):
-        LLMEvaluatedDepthRetriever(
+        AgenticSingleRetriever(
             **{
                 **base,
                 "prompt": _RecordingPrompt(),
@@ -2129,11 +2129,11 @@ def test_required_parameters_raise_when_missing():
             }
         )
     with pytest.raises(Exception, match="prompt"):
-        LLMEvaluatedDepthRetriever(
+        AgenticSingleRetriever(
             children=[child], max_iters=2, max_chunks=5, llm_model=_ScriptedLLM([])
         )
     with pytest.raises(Exception, match="llm_model"):
-        LLMEvaluatedDepthRetriever(
+        AgenticSingleRetriever(
             children=[child], max_iters=2, max_chunks=5, prompt=_RecordingPrompt()
         )
 
@@ -2619,7 +2619,7 @@ def test_ensemble_planning_and_post_round_narratives_are_both_recorded():
 
 def test_function_descriptions_reject_invalid_decisions():
     """Both retrievers document strict decisions, hints and requested priority."""
-    for retriever in (LLMEvaluatedDepthRetriever, LLMEvaluatedEnsembleRetriever):
+    for retriever in (AgenticSingleRetriever, AgenticEnsembleRetriever):
         description = retriever.FUNCTION_DESCRIPTION.lower()
         assert "rejected" in description
         assert "valid" in description
@@ -2630,7 +2630,7 @@ def test_function_descriptions_reject_invalid_decisions():
 
 def test_function_schemas_expose_optional_narrative():
     """Both retrievers declare message/justification as optional properties."""
-    for retriever in (LLMEvaluatedDepthRetriever, LLMEvaluatedEnsembleRetriever):
+    for retriever in (AgenticSingleRetriever, AgenticEnsembleRetriever):
         parameters = retriever.FUNCTION_PARAMETERS
         properties = parameters["properties"]
         assert properties[RAG_PROGRESS_MESSAGE_KEY]["type"] == "string"

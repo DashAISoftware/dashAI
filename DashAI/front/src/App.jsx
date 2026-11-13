@@ -25,6 +25,7 @@ import HubContent from "./pages/hub/HubContent";
 import HubImportPage from "./pages/hub/HubImportPage";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
 import RAGCreatePage from "./pages/generative/RAG/RAGCreatePage";
+import RAGPromptsPage from "./pages/generative/RAG/RAGPromptsPage";
 import RAGSessionPage from "./pages/generative/RAGSession/RAGSessionPage";
 import SessionRouter from "./pages/generative/SessionRouter";
 import { DatasetsAndNotebooksProvider } from "./components/custom/contexts/DatasetsAndNotebooksContext";
@@ -145,17 +146,20 @@ function App() {
                     </RAGScope>
                   }
                 />
-                {/* Documents and prompts belong to a session now, so these
-                    two pages are gone. There is no catch-all route, so keep the
-                    paths redirecting for a release rather than serving a blank
-                    page to anyone who bookmarked them. */}
+                {/* Documents belong to a session now, so that page is gone.
+                    Prompts are shared templates again, with their own library
+                    where create/delete and dependent sessions are explicit. */}
                 <Route
                   path="/app/generative/rag/documents"
                   element={<Navigate to="/app/generative/rag" replace />}
                 />
                 <Route
                   path="/app/generative/rag/prompts"
-                  element={<Navigate to="/app/generative/rag" replace />}
+                  element={
+                    <RAGScope>
+                      <RAGPromptsPage />
+                    </RAGScope>
+                  }
                 />
                 <Route
                   path="/app/generative/sessions/new"

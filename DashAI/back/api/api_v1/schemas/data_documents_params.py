@@ -141,6 +141,21 @@ class DataDocumentUpdateParams(BaseModel):
     folder_id: Optional[int] = None
 
 
+class DocumentSessionRef(BaseModel):
+    """A RAG session that uses a Data document.
+
+    Attributes
+    ----------
+    id : int
+        Session primary key.
+    name : str
+        Session name, shown in deletion confirmations.
+    """
+
+    id: int
+    name: str
+
+
 class DataDocumentSchema(BaseModel):
     """A ``DataDocument`` row as the API serves it.
 
@@ -174,6 +189,9 @@ class DataDocumentSchema(BaseModel):
         Creation time.
     last_modified : datetime
         Last change time.
+    sessions : List[DocumentSessionRef]
+        RAG sessions that use the document. Deleting the document deletes
+        them unless the caller explicitly asks for a non-cascading delete.
     """
 
     model_config = ConfigDict(from_attributes=True)
@@ -192,6 +210,7 @@ class DataDocumentSchema(BaseModel):
     status: DocumentStatus
     created: datetime
     last_modified: datetime
+    sessions: List[DocumentSessionRef] = Field(default_factory=list)
 
     @field_validator("dataloader_params")
     @classmethod

@@ -392,23 +392,22 @@ class TestCreateRAGSession:
         )
 
     def test_create_rag_session_unknown_parameter_key(self, client: TestClient):
-        """Extra unknown keys inside ``parameters``.
+        """An unknown key inside ``parameters`` is rejected.
 
-        Pydantic v2 BaseModel with default config ignores extra fields during
-        ``model_validate``, so the unknown key is silently accepted (201).
-        The key is also stored in the session parameters.
+        The session configuration is a closed contract: a key no component
+        reads would be stored verbatim and silently ignored by the pipeline, so
+        the request fails instead of pretending the value was applied.
         """
         params = _base_session_params()
         params["name"] = "test_unknown_param_key"
         params["parameters"]["unexpected_extra_key"] = "should_be_ignored"
 
         response = client.post("/api/v1/generative-session/", json=params)
-        assert response.status_code == 201, (
-            f"Extra parameter key should be tolerated, "
+        assert response.status_code == 400, (
+            f"Unknown parameter key should be rejected, "
             f"got {response.status_code}: {response.text}"
         )
-        # The extra key may or may not be stored depending on model_validate
-        # with extra='ignore'.  Just assert no crash.
+        assert "unexpected_extra_key" in response.json()["detail"]
 
 
 # ===================================================================
@@ -732,10 +731,11 @@ class TestUpdateRAGSessionParams:
     # ------------------------------------------------------------------
 
     def test_update_rag_session_unknown_key(self, client: TestClient):
-        """Unknown key in PUT body is merged into parameters.
+        """An unknown key in the PUT body is rejected.
 
-        Pydantic ``model_validate`` with default ``extra='ignore'`` tolerates
-        extra keys, so the unknown key is persisted in the session.
+        The configuration is a closed contract: the key would be persisted and
+        never read by the pipeline, so the update would silently lose the
+        setting the user thought they were saving.
         """
         session = self._create_session(client, "test_update_unknown_key")
         session_id = session["id"]
@@ -744,11 +744,10 @@ class TestUpdateRAGSessionParams:
             f"/api/v1/generative-session/{session_id}/parameters",
             json={"unknown_key": "some_value"},
         )
-        assert resp.status_code == 200, (
-            f"Unknown key should be tolerated, got {resp.status_code}: {resp.text}"
+        assert resp.status_code == 400, (
+            f"Unknown key should be rejected, got {resp.status_code}: {resp.text}"
         )
-        # The unknown key is stored in parameters
-        assert "unknown_key" in resp.json()["parameters"]
+        assert "unknown_key" in resp.json()["detail"]
 
     # ------------------------------------------------------------------
     # Non-existent session
@@ -821,15 +820,17 @@ class TestPromptValidation:
                 {"template": "Context: {chunks}\nQuestion: {input}"},
                 201,
             ),
-            # valid: default prompt class with language and templates
+            # valid: custom prompt class with language and templates. Built-in
+            # default classes are seeded from the registry and cannot be
+            # created from the library.
             (
-                "DefaultRAGGenerationPrompt",
+                "CustomRAGGenerationPrompt",
                 {"language": "en", "templates": {"en": "Q: {input}\nC: {chunks}"}},
                 201,
             ),
-            # valid: QA prompt with language and templates
+            # valid: a second custom prompt body with a different template
             (
-                "DefaultQARAGGenerationPrompt",
+                "CustomRAGGenerationPrompt",
                 {"language": "en", "templates": {"en": "QA: {input}\nC: {chunks}"}},
                 201,
             ),

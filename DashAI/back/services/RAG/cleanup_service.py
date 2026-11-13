@@ -23,7 +23,7 @@ from DashAI.back.models.RAG.RAG_constants import (
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     strip_expansion_options,
 )
-from DashAI.back.services.RAG.deferred_fs import remove_after_commit, remove_now
+from DashAI.back.services.RAG.deferred_fs import remove_after_commit
 from DashAI.back.services.RAG.retriever_db_service import RetrieverDBService
 
 log = logging.getLogger(__name__)
@@ -76,6 +76,8 @@ class CleanupService:
         session_id: int,
         old_parameters: dict,
         new_parameters: dict | None = None,
+        *,
+        commit: bool = True,
     ) -> None:
         """Main entry point. Called on session DELETE or parameter UPDATE.
 
@@ -88,6 +90,9 @@ class CleanupService:
             old_parameters: The session's parameters before the change.
             new_parameters: The session's parameters after the change, or
                 ``None`` on full session deletion.
+            commit: Whether to commit the current transaction. The bulk
+                cascade paths pass ``False`` so several sessions and their
+                document are deleted atomically by the caller.
         """
         try:
             if not old_parameters:
@@ -143,26 +148,13 @@ class CleanupService:
                 # comparison silently misses the very row it means to match.
                 self._drop_chunking_model_if_unused(session_id)
 
-            self.db.commit()
+            if commit:
+                self.db.commit()
         except Exception:
             self.db.rollback()
             raise
 
     # ── Private helpers ──
-
-    @staticmethod
-    def _delete_path(path_value: str | None) -> None:
-        """Delete a filesystem path immediately, if it exists.
-
-        Prefer queueing the path with
-        :func:`~DashAI.back.services.RAG.deferred_fs.remove_after_commit` when
-        it is tied to rows being deleted in a transaction.
-
-        Args:
-            path_value: Absolute path to delete. Silently skipped if
-                ``None`` or the path does not exist.
-        """
-        remove_now(path_value)
 
     def _drop_chunking_model_if_unused(self, session_id: int) -> None:
         """Release the chunking model a session's pipeline points at.
@@ -427,7 +419,7 @@ class CleanupService:
             if not self._embedding_folder_in_use(
                 matrix.storage_folder, exclude_ids=matrix_ids
             ):
-                self._delete_path(matrix.storage_folder)
+                remove_after_commit(self.db, matrix.storage_folder)
 
         if matrix_ids:
             self.db.query(RAGEmbeddingMatrix).filter(
@@ -461,7 +453,7 @@ class CleanupService:
         if not self._sparse_folder_in_use(
             sparse_retriever.storage_folder, exclude_ids=[sparse_retriever.id]
         ):
-            self._delete_path(sparse_retriever.storage_folder)
+            remove_after_commit(self.db, sparse_retriever.storage_folder)
         self.db.delete(sparse_retriever)
 
     def invalidate_session_artifacts(

@@ -1,8 +1,8 @@
-"""Unit tests for the LLM filter prompt family.
+"""Unit tests for the agentic reranker prompt family.
 
 Verifies the anchor's placeholder contract, the language-driven default
 templates, custom-template validation, the optional-line semantics and the
-numbered-chunk rendering the filter retriever relies on.
+numbered-chunk rendering the reranker retriever relies on.
 """
 
 from __future__ import annotations
@@ -13,12 +13,12 @@ import pytest
 
 from DashAI.back.models.RAG.exceptions import RAGPromptTemplateError
 from DashAI.back.models.RAG.prompts.evaluation import (
-    CustomLLMFilterPrompt,
-    DefaultLLMFilterPrompt,
-    LLMFilterPrompt,
+    AgenticRerankerPrompt,
+    CustomAgenticRerankerPrompt,
+    DefaultAgenticRerankerPrompt,
 )
 from DashAI.back.models.RAG.prompts.evaluation import (
-    default_llm_filter_prompt as filter_mod,
+    default_agentic_reranker_prompt as filter_mod,
 )
 
 OPTIONAL_PLACEHOLDERS = [
@@ -51,16 +51,26 @@ class TestPlaceholderDeclarations:
     """Class-level placeholder attributes match the fixed contract."""
 
     def test_anchor_contract(self):
-        assert LLMFilterPrompt.required_placeholders == ["{input}", "{chunks}"]
-        assert LLMFilterPrompt.optional_placeholders == OPTIONAL_PLACEHOLDERS
+        assert AgenticRerankerPrompt.required_placeholders == ["{input}", "{chunks}"]
+        assert AgenticRerankerPrompt.optional_placeholders == OPTIONAL_PLACEHOLDERS
 
     def test_default_prompt_inherits_contract(self):
-        assert DefaultLLMFilterPrompt.required_placeholders == ["{input}", "{chunks}"]
-        assert DefaultLLMFilterPrompt.optional_placeholders == OPTIONAL_PLACEHOLDERS
+        assert DefaultAgenticRerankerPrompt.required_placeholders == [
+            "{input}",
+            "{chunks}",
+        ]
+        assert (
+            DefaultAgenticRerankerPrompt.optional_placeholders == OPTIONAL_PLACEHOLDERS
+        )
 
     def test_custom_prompt_inherits_contract(self):
-        assert CustomLLMFilterPrompt.required_placeholders == ["{input}", "{chunks}"]
-        assert CustomLLMFilterPrompt.optional_placeholders == OPTIONAL_PLACEHOLDERS
+        assert CustomAgenticRerankerPrompt.required_placeholders == [
+            "{input}",
+            "{chunks}",
+        ]
+        assert (
+            CustomAgenticRerankerPrompt.optional_placeholders == OPTIONAL_PLACEHOLDERS
+        )
 
 
 # ===================================================================
@@ -73,7 +83,9 @@ class TestDefaultTemplates:
 
     @pytest.mark.parametrize("lang", ["en", "es", "pt"])
     def test_templates_validate(self, lang):
-        assert DefaultLLMFilterPrompt.validate_template(filter_mod.TEMPLATES[lang])
+        assert DefaultAgenticRerankerPrompt.validate_template(
+            filter_mod.TEMPLATES[lang]
+        )
 
     def test_templates_expose_function_call_contract(self):
         for template in filter_mod.TEMPLATES.values():
@@ -168,7 +180,7 @@ class TestFormatRendering:
     """``format`` substitutes placeholders and drops optional lines."""
 
     def test_replaces_required_and_optional(self):
-        prompt = DefaultLLMFilterPrompt(language="en")
+        prompt = DefaultAgenticRerankerPrompt(language="en")
         rendered = prompt.format(
             input="What is DashAI?",
             chunks=CHUNKS,
@@ -186,7 +198,7 @@ class TestFormatRendering:
             assert token not in rendered
 
     def test_rendered_numbering_is_one_based(self):
-        prompt = DefaultLLMFilterPrompt(language="en")
+        prompt = DefaultAgenticRerankerPrompt(language="en")
         rendered = prompt.format(input="Q?", chunks=CHUNKS, top_k=2)
 
         assert "[1]" in rendered
@@ -194,7 +206,7 @@ class TestFormatRendering:
         assert "[0]" not in rendered
 
     def test_optional_lines_dropped_when_none(self):
-        prompt = DefaultLLMFilterPrompt(language="en")
+        prompt = DefaultAgenticRerankerPrompt(language="en")
         rendered = prompt.format(input="Q?", chunks="only chunk")
 
         for token in OPTIONAL_PLACEHOLDERS:
@@ -204,7 +216,7 @@ class TestFormatRendering:
         assert "at most" not in rendered
 
     def test_dict_values_render_as_indented_json(self):
-        prompt = DefaultLLMFilterPrompt(language="en")
+        prompt = DefaultAgenticRerankerPrompt(language="en")
         rendered = prompt.format(
             input="Q?",
             chunks="chunk",
@@ -223,7 +235,7 @@ class TestFormatRendering:
         assert "beta.pdf" in rendered
 
     def test_missing_document_name_falls_back(self):
-        prompt = DefaultLLMFilterPrompt(language="en")
+        prompt = DefaultAgenticRerankerPrompt(language="en")
         rendered = prompt.format(
             input="Q?",
             chunks="chunk",
@@ -233,19 +245,19 @@ class TestFormatRendering:
         assert "document 7" in rendered
 
     def test_malformed_chunk_payload_raises(self):
-        prompt = CustomLLMFilterPrompt(template="{input}|{chunks}")
+        prompt = CustomAgenticRerankerPrompt(template="{input}|{chunks}")
 
         with pytest.raises(RAGPromptTemplateError, match="missing required keys"):
             prompt.format(input="q", chunks=[{"document_id": 1, "position": 0}])
 
     def test_non_mapping_chunk_payload_raises(self):
-        prompt = CustomLLMFilterPrompt(template="{input}|{chunks}")
+        prompt = CustomAgenticRerankerPrompt(template="{input}|{chunks}")
 
         with pytest.raises(RAGPromptTemplateError, match="must be a mapping"):
             prompt.format(input="q", chunks=["not a mapping"])
 
     def test_truncated_chunk_text_gets_an_ellipsis(self):
-        prompt = CustomLLMFilterPrompt(template="{input}|{chunks}")
+        prompt = CustomAgenticRerankerPrompt(template="{input}|{chunks}")
 
         rendered = prompt.format(
             input="q",
@@ -255,18 +267,18 @@ class TestFormatRendering:
         assert "x" * 400 + "..." in rendered
 
     def test_preformatted_chunks_are_kept_verbatim(self):
-        prompt = CustomLLMFilterPrompt(template="{input}||{chunks}")
+        prompt = CustomAgenticRerankerPrompt(template="{input}||{chunks}")
         rendered = prompt.format(input="q", chunks="[9] already rendered")
         assert rendered == "q||[9] already rendered"
 
     def test_default_prompt_picks_template_by_language(self):
         for lang in ("en", "es", "pt"):
-            prompt = DefaultLLMFilterPrompt(language=lang)
+            prompt = DefaultAgenticRerankerPrompt(language=lang)
             assert prompt.template == filter_mod.TEMPLATES[lang]
 
     def test_unknown_language_raises(self):
         with pytest.raises(RAGPromptTemplateError):
-            DefaultLLMFilterPrompt(language="klingon")
+            DefaultAgenticRerankerPrompt(language="klingon")
 
 
 # ===================================================================
@@ -279,23 +291,23 @@ class TestCustomTemplates:
 
     def test_custom_missing_required_placeholder_raises(self):
         with pytest.raises(RAGPromptTemplateError):
-            CustomLLMFilterPrompt(template="no placeholders here")
+            CustomAgenticRerankerPrompt(template="no placeholders here")
 
     def test_custom_missing_chunks_raises(self):
         with pytest.raises(RAGPromptTemplateError):
-            CustomLLMFilterPrompt(template="only {input} present")
+            CustomAgenticRerankerPrompt(template="only {input} present")
 
     def test_custom_valid_renders(self):
-        prompt = CustomLLMFilterPrompt(template="{input} || {chunks}")
+        prompt = CustomAgenticRerankerPrompt(template="{input} || {chunks}")
         assert prompt.format(input="a", chunks="b") == "a || b"
 
     def test_custom_allows_absent_optional(self):
-        prompt = CustomLLMFilterPrompt(template="{input} || {chunks}")
+        prompt = CustomAgenticRerankerPrompt(template="{input} || {chunks}")
         rendered = prompt.format(input="a", chunks="b", top_k=None)
         assert rendered == "a || b"
 
     def test_custom_renders_document_names_and_topk(self):
-        prompt = CustomLLMFilterPrompt(
+        prompt = CustomAgenticRerankerPrompt(
             template="{input}|{chunks}|{documents.names}|{topk}"
         )
         rendered = prompt.format(
@@ -311,8 +323,8 @@ class TestCustomTemplates:
 
     def test_custom_prompt_has_multilingual_ui_metadata(self):
         """The prompt selector must not fall back to the base display name."""
-        assert CustomLLMFilterPrompt.DISPLAY_NAME != "Base RAG Prompt"
-        assert CustomLLMFilterPrompt.DESCRIPTION != "Base class for RAG prompts."
+        assert CustomAgenticRerankerPrompt.DISPLAY_NAME != "Base RAG Prompt"
+        assert CustomAgenticRerankerPrompt.DESCRIPTION != "Base class for RAG prompts."
         for language in ("en", "es", "pt", "de", "zh"):
-            assert getattr(CustomLLMFilterPrompt.DISPLAY_NAME, language)
-            assert getattr(CustomLLMFilterPrompt.DESCRIPTION, language)
+            assert getattr(CustomAgenticRerankerPrompt.DISPLAY_NAME, language)
+            assert getattr(CustomAgenticRerankerPrompt.DESCRIPTION, language)

@@ -8,8 +8,8 @@ from fastapi.testclient import TestClient
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_depth_retriever import (
-    LLMEvaluatedDepthRetriever,
+from DashAI.back.models.RAG.retrievers.composite.agentic_single_retriever import (
+    AgenticSingleRetriever,
 )
 
 #: Matches a representation placeholder such as ``{top_k}`` or
@@ -28,9 +28,9 @@ REPRESENTATION_PLACEHOLDERS: Dict[str, Tuple[str, ...]] = {
     "SentenceTransformerCrossEncoderRetriever": ("{model_name}", "{top_k}"),
     "MMRRerankerRetriever": ("{mmr_lambda}", "{top_k}"),
     "ParallelRetriever": ("{merge_strategy}",),
-    "LLMEvaluatedDepthRetriever": ("{max_iters}", "{max_chunks}", "{prompt}"),
-    "LLMEvaluatedEnsembleRetriever": ("{max_iters}", "{max_chunks}", "{prompt}"),
-    "LLMFilterRetriever": ("{k1}", "{top_k}", "{prompt}"),
+    "AgenticSingleRetriever": ("{max_iters}", "{max_chunks}", "{prompt}"),
+    "AgenticEnsembleRetriever": ("{max_iters}", "{max_chunks}", "{prompt}"),
+    "AgenticRerankerRetriever": ("{k1}", "{top_k}", "{prompt}"),
 }
 
 LANGUAGES = ("en", "es", "pt", "de", "zh")
@@ -110,7 +110,7 @@ def test_registered_retriever_declares_representation(
 
 def test_llm_representation_labels_are_translated(client: TestClient):
     """The LLM templates carry translated labels, not just placeholders."""
-    representation = _representation(client, "LLMEvaluatedDepthRetriever")
+    representation = _representation(client, "AgenticSingleRetriever")
 
     expected_labels = {
         "en": ("max_iters", "max_chunks"),
@@ -138,9 +138,9 @@ def test_children_endpoint_serializes_the_representation(client: TestClient):
     assert response.status_code == 200
 
     entries = {entry["name"]: entry for entry in response.json()}
-    metadata = entries["LLMEvaluatedDepthRetriever"]["metadata"]
+    metadata = entries["AgenticSingleRetriever"]["metadata"]
     representation = metadata["representation"]
-    declared = LLMEvaluatedDepthRetriever.get_representation()
+    declared = AgenticSingleRetriever.get_representation()
 
     assert isinstance(declared, MultilingualString)
     assert representation == declared.en

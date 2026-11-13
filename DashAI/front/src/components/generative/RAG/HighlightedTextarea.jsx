@@ -23,9 +23,10 @@ const HighlightedTextarea = forwardRef(function HighlightedTextarea(
 
   useImperativeHandle(ref, () => inputRef.current, []);
 
-  const bgColor = theme.palette.placeholder?.bg || theme.palette.warning.light;
-  const textColor =
-    theme.palette.placeholder?.text || theme.palette.warning.dark;
+  // The theme's dedicated placeholder palette is what every prompt template
+  // highlight uses, so the editor matches the read-only previews.
+  const bgColor = theme.palette.placeholder.bg;
+  const textColor = theme.palette.placeholder.text;
 
   const handleScroll = useCallback(() => {
     const input = inputRef.current;

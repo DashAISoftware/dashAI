@@ -139,7 +139,6 @@ class TestPromptCRUD:
         assert resp1.status_code == 201, f"First creation should succeed: {resp1.text}"
 
         # Second creation with same class_name + parameters but different name.
-        # The service catches the IntegrityError and returns 409.
         payload2 = {
             "class_name": "CustomRAGGenerationPrompt",
             "name": "Dup Prompt 2",

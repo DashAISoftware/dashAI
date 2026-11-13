@@ -1,4 +1,4 @@
-"""Factory and setup-service integration tests for the LLM-evaluated retrievers.
+"""Factory and setup-service integration tests for the agentic retrievers.
 
 Covers both construction paths: the pure :class:`RetrieverFactory` (nested
 ``{component, params}`` resolution for ``llm_model`` and ``prompt``) and the
@@ -33,29 +33,29 @@ from DashAI.back.models.lazy_llm import LazyLLM
 from DashAI.back.models.RAG.documents import Chunk, SourceDocument
 from DashAI.back.models.RAG.exceptions import RAGRetrieverEvaluationError
 from DashAI.back.models.RAG.prompts.evaluation import (
-    CustomRetrievalSufficiencyPrompt,
-    DefaultLLMFilterPrompt,
-    DefaultRetrievalSufficiencyPrompt,
-    LLMFilterPrompt,
-    RetrievalSufficiencyPrompt,
+    AgenticRerankerPrompt,
+    AgenticRetrieverPrompt,
+    CustomAgenticRetrieverPrompt,
+    DefaultAgenticRerankerPrompt,
+    DefaultAgenticRetrieverPrompt,
 )
-from DashAI.back.models.RAG.prompts.evaluation.default_llm_filter_prompt import (
+from DashAI.back.models.RAG.prompts.evaluation.default_agentic_reranker_prompt import (
     TEMPLATES as FILTER_TEMPLATES,
 )
-from DashAI.back.models.RAG.prompts.evaluation.default_retrieval_sufficiency_prompt import (  # noqa: E501
+from DashAI.back.models.RAG.prompts.evaluation.default_agentic_retriever_prompt import (  # noqa: E501
     TEMPLATES as SUFFICIENCY_TEMPLATES,
+)
+from DashAI.back.models.RAG.retrievers.composite.agentic_ensemble_retriever import (  # noqa: E501
+    AgenticEnsembleRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.agentic_reranker_retriever import (
+    AgenticRerankerRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.agentic_single_retriever import (  # noqa: E501
+    AgenticSingleRetriever,
 )
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
-)
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_depth_retriever import (  # noqa: E501
-    LLMEvaluatedDepthRetriever,
-)
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_ensemble_retriever import (  # noqa: E501
-    LLMEvaluatedEnsembleRetriever,
-)
-from DashAI.back.models.RAG.retrievers.composite.llm_filter_retriever import (
-    LLMFilterRetriever,
 )
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
@@ -111,7 +111,7 @@ class StubFactoryLLM(TextToTextGenerationTaskModel):
     ) -> FunctionCallResult:
         """Return a fixed sufficient verdict."""
         return FunctionCallResult(
-            "evaluate_retrieval_sufficiency",
+            "evaluate_agentic_retrieval",
             {"sufficient": True},
         )
 
@@ -156,7 +156,7 @@ class _DocumentedLeafRetriever(_LeafRetriever):
         }
 
 
-class _FactoryRecordingPrompt(RetrievalSufficiencyPrompt):
+class _FactoryRecordingPrompt(AgenticRetrieverPrompt):
     """Sufficiency prompt stub recording the structured format arguments."""
 
     SCHEMA = BaseSchema
@@ -222,16 +222,16 @@ def _pure_registry() -> ComponentRegistry:
     registry = ComponentRegistry()
     for component in (
         StubFactoryLLM,
-        DefaultRetrievalSufficiencyPrompt,
-        CustomRetrievalSufficiencyPrompt,
-        DefaultLLMFilterPrompt,
+        DefaultAgenticRetrieverPrompt,
+        CustomAgenticRetrieverPrompt,
+        DefaultAgenticRerankerPrompt,
         _LeafRetriever,
         _DocumentedLeafRetriever,
         _FactoryRecordingPrompt,
         ParallelRetriever,
-        LLMEvaluatedDepthRetriever,
-        LLMEvaluatedEnsembleRetriever,
-        LLMFilterRetriever,
+        AgenticSingleRetriever,
+        AgenticEnsembleRetriever,
+        AgenticRerankerRetriever,
     ):
         registry.register_component(component)
     return registry
@@ -245,7 +245,7 @@ def _llm_ref() -> Dict[str, Any]:
 def _prompt_ref() -> Dict[str, Any]:
     """Return a nested ``prompt`` reference with a concrete template."""
     return {
-        "component": "DefaultRetrievalSufficiencyPrompt",
+        "component": "DefaultAgenticRetrieverPrompt",
         "params": {"language": "en", "template": SUFFICIENCY_TEMPLATES["en"]},
     }
 
@@ -260,7 +260,7 @@ def _leaf_ref(pure: bool) -> Dict[str, Any]:
 def _filter_prompt_ref() -> Dict[str, Any]:
     """Return a nested filter ``prompt`` reference with a concrete template."""
     return {
-        "component": "DefaultLLMFilterPrompt",
+        "component": "DefaultAgenticRerankerPrompt",
         "params": {"language": "en", "template": FILTER_TEMPLATES["en"]},
     }
 
@@ -270,8 +270,8 @@ def _filter_prompt_ref() -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def test_pure_factory_builds_depth_retriever_with_resolved_refs():
-    """The depth retriever resolves llm_model/prompt refs and nests children."""
+def test_pure_factory_builds_single_retriever_with_resolved_refs():
+    """The single retriever resolves llm_model/prompt refs and nests children."""
     registry = _pure_registry()
     factory = RetrieverFactory(registry, "C:/tmp/rag", {})
     params = {
@@ -282,11 +282,11 @@ def test_pure_factory_builds_depth_retriever_with_resolved_refs():
         "prompt": _prompt_ref(),
     }
 
-    model = factory.create("LLMEvaluatedDepthRetriever", copy.deepcopy(params)).model
+    model = factory.create("AgenticSingleRetriever", copy.deepcopy(params)).model
 
-    assert isinstance(model, LLMEvaluatedDepthRetriever)
+    assert isinstance(model, AgenticSingleRetriever)
     assert isinstance(model.llm_model, StubFactoryLLM)
-    assert isinstance(model.prompt, RetrievalSufficiencyPrompt)
+    assert isinstance(model.prompt, AgenticRetrieverPrompt)
     assert len(model.get_children()) == 1
     assert isinstance(model.get_children()[0], _LeafRetriever)
     summary = model.get_schema_summary()
@@ -311,7 +311,7 @@ def test_pure_factory_collects_child_documents_for_the_prompt():
         "prompt": {"component": "_FactoryRecordingPrompt", "params": {}},
     }
 
-    model = factory.create("LLMEvaluatedDepthRetriever", copy.deepcopy(params)).model
+    model = factory.create("AgenticSingleRetriever", copy.deepcopy(params)).model
     model.retrieve("q")
 
     assert isinstance(model.prompt, _FactoryRecordingPrompt)
@@ -340,7 +340,7 @@ def test_context_merges_partial_parent_documents_with_children():
         "llm_model": _llm_ref(),
         "prompt": {"component": "_FactoryRecordingPrompt", "params": {}},
     }
-    model = factory.create("LLMEvaluatedDepthRetriever", copy.deepcopy(params)).model
+    model = factory.create("AgenticSingleRetriever", copy.deepcopy(params)).model
     model.documents = {
         1: _source_document(1, "parent-doc"),
         3: _source_document(3, "parent-doc-3"),
@@ -366,16 +366,16 @@ def test_pure_factory_builds_ensemble_retriever_with_resolved_refs():
         "prompt": _prompt_ref(),
     }
 
-    model = factory.create("LLMEvaluatedEnsembleRetriever", copy.deepcopy(params)).model
+    model = factory.create("AgenticEnsembleRetriever", copy.deepcopy(params)).model
 
-    assert isinstance(model, LLMEvaluatedEnsembleRetriever)
+    assert isinstance(model, AgenticEnsembleRetriever)
     assert isinstance(model.llm_model, StubFactoryLLM)
-    assert isinstance(model.prompt, RetrievalSufficiencyPrompt)
+    assert isinstance(model.prompt, AgenticRetrieverPrompt)
     assert len(model.get_children()) == 2
 
 
-def test_pure_factory_builds_filter_retriever_with_resolved_refs():
-    """The filter retriever resolves llm_model/prompt refs and nests its child."""
+def test_pure_factory_builds_reranker_retriever_with_resolved_refs():
+    """The reranker retriever resolves llm_model/prompt refs and nests its child."""
     registry = _pure_registry()
     factory = RetrieverFactory(registry, "C:/tmp/rag", {})
     params = {
@@ -386,19 +386,19 @@ def test_pure_factory_builds_filter_retriever_with_resolved_refs():
         "prompt": _filter_prompt_ref(),
     }
 
-    model = factory.create("LLMFilterRetriever", copy.deepcopy(params)).model
+    model = factory.create("AgenticRerankerRetriever", copy.deepcopy(params)).model
 
-    assert isinstance(model, LLMFilterRetriever)
+    assert isinstance(model, AgenticRerankerRetriever)
     assert isinstance(model.llm_model, StubFactoryLLM)
-    assert isinstance(model.prompt, LLMFilterPrompt)
+    assert isinstance(model.prompt, AgenticRerankerPrompt)
     assert len(model.get_children()) == 1
     assert isinstance(model.get_children()[0], _LeafRetriever)
     summary = model.get_schema_summary()
     assert summary["params"] == {"k1": 6, "top_k": 2}
 
 
-def test_pure_factory_rejects_sufficiency_prompt_for_filter_retriever():
-    """The filter retriever only accepts its own prompt family."""
+def test_pure_factory_rejects_retriever_prompt_for_reranker_retriever():
+    """The reranker retriever only accepts its own prompt family."""
     registry = _pure_registry()
     factory = RetrieverFactory(registry, "C:/tmp/rag", {})
     params = {
@@ -409,8 +409,8 @@ def test_pure_factory_rejects_sufficiency_prompt_for_filter_retriever():
         "prompt": _prompt_ref(),
     }
 
-    with pytest.raises(RAGRetrieverEvaluationError, match="LLMFilterPrompt"):
-        factory.create("LLMFilterRetriever", copy.deepcopy(params))
+    with pytest.raises(RAGRetrieverEvaluationError, match="AgenticRerankerPrompt"):
+        factory.create("AgenticRerankerRetriever", copy.deepcopy(params))
 
 
 def test_pure_factory_stores_raw_trace_params():
@@ -425,13 +425,10 @@ def test_pure_factory_stores_raw_trace_params():
         "prompt": _prompt_ref(),
     }
 
-    model = factory.create("LLMEvaluatedDepthRetriever", copy.deepcopy(params)).model
+    model = factory.create("AgenticSingleRetriever", copy.deepcopy(params)).model
 
     assert model._trace_params["max_iters"] == 2
-    assert (
-        model._trace_params["prompt"]["component"]
-        == "DefaultRetrievalSufficiencyPrompt"
-    )
+    assert model._trace_params["prompt"]["component"] == "DefaultAgenticRetrieverPrompt"
     child = model.get_children()[0]
     assert isinstance(child, _LeafRetriever)
     assert child._trace_params["children"] == []
@@ -485,7 +482,7 @@ def _create_pipeline(db) -> RAGPipeline:
     return pipeline
 
 
-def test_setup_service_builds_depth_retriever_and_persists_bridge(client: TestClient):
+def test_setup_service_builds_single_retriever_and_persists_bridge(client: TestClient):
     """The setup service resolves refs and persists the composite bridge."""
     registry = client.app.container["component_registry"]
     registry.register_component(StubFactoryLLM)
@@ -513,16 +510,16 @@ def test_setup_service_builds_depth_retriever_and_persists_bridge(client: TestCl
         }
 
         before = StubFactoryLLM.construction_count
-        result = service.setup("LLMEvaluatedDepthRetriever", params)
+        result = service.setup("AgenticSingleRetriever", params)
 
-        assert isinstance(result.model, LLMEvaluatedDepthRetriever)
+        assert isinstance(result.model, AgenticSingleRetriever)
         assert isinstance(result.model.llm_model, LazyLLM)
         assert result.model.llm_model.is_loaded is False
         assert StubFactoryLLM.construction_count == before
-        assert isinstance(result.model.prompt, RetrievalSufficiencyPrompt)
+        assert isinstance(result.model.prompt, AgenticRetrieverPrompt)
         bridge = db.query(RAGRetriever).get(result.db_record_id)
         assert bridge is not None
-        assert bridge.class_name == "LLMEvaluatedDepthRetriever"
+        assert bridge.class_name == "AgenticSingleRetriever"
 
         # The DB-backed configuration still exists; the model loads on use.
         assert result.db_record_id > 0

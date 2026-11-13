@@ -79,7 +79,7 @@ class RAGModelsFactory:
             Persistence object required by unit retrievers.
         documents : dict[int, SourceDocument] | None
             Optional document mapping injected into unit retrievers so the
-            LLM-evaluated retrievers can describe the corpus in their prompts.
+            agentic retrievers can describe the corpus in their prompts.
 
         Returns
         -------

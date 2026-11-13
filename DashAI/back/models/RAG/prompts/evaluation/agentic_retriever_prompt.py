@@ -1,10 +1,10 @@
-"""Abstract contract for retrieval sufficiency evaluation prompts.
+"""Abstract contract for agentic retriever prompts.
 
-An evaluation prompt renders the current user message plus the chunks already
-retrieved into a single chat instruction that asks the model to decide whether
-those chunks are enough to answer the message, and — when they are not — which
-retrievers to consult next. It never declares a ``TYPE`` of its own: every
-concrete prompt registers under the generic ``"Prompt"`` type via
+An agentic retriever prompt renders the current user message plus the chunks
+already retrieved into a single chat instruction that asks the model to decide
+whether those chunks are enough to answer the message, and — when they are not
+— which retrievers to consult next. It never declares a ``TYPE`` of its own:
+every concrete prompt registers under the generic ``"Prompt"`` type via
 :class:`~DashAI.back.models.RAG.prompts.base_prompt.BasePrompt`.
 """
 
@@ -27,8 +27,8 @@ from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
 )
 
 
-class RetrievalSufficiencyPrompt(BasePrompt):
-    """Base contract for prompts used by the LLM-evaluated retrievers.
+class AgenticRetrieverPrompt(BasePrompt):
+    """Base contract for prompts used by the agentic retrievers.
 
     Templates are rendered with plain literal ``.replace`` calls rather than
     ``str.format`` because the strict JSON output contract embedded in the
@@ -54,7 +54,7 @@ class RetrievalSufficiencyPrompt(BasePrompt):
 
     metadata = {
         "type": "evaluation",
-        "technique": "sufficiency",
+        "technique": "retriever",
         "required_placeholders": required_placeholders,
         "optional_placeholders": optional_placeholders,
         "placeholder_descriptions": {

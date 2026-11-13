@@ -1,4 +1,4 @@
-"""Unit tests for the LLM filter composite retriever.
+"""Unit tests for the agentic reranker composite retriever.
 
 Instances are constructed directly (no factory) with a scripted fake LLM, a fake
 single child and a recording prompt. These tests pin the delegation contract, the
@@ -25,19 +25,19 @@ from DashAI.back.models.RAG.RAG_constants import (
     RAG_PROGRESS_MESSAGE_KEY,
 )
 from DashAI.back.models.RAG.RAG_defaults import (
-    DEFAULT_FILTER_K1,
-    DEFAULT_FILTER_TOP_K,
     DEFAULT_FUNCTION_CALL_MAX_TRIALS,
+    DEFAULT_RERANKER_K1,
+    DEFAULT_RERANKER_TOP_K,
     MAX_FUNCTION_CALL_TRIALS,
 )
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
+from DashAI.back.models.RAG.retrievers.composite.agentic_reranker_retriever import (
+    AgenticRerankerRetriever,
+)
 from DashAI.back.models.RAG.retrievers.composite.filter_selection import (
     ChunkSelection,
     parse_filter_arguments,
     parse_filter_output,
-)
-from DashAI.back.models.RAG.retrievers.composite.llm_filter_retriever import (
-    LLMFilterRetriever,
 )
 from DashAI.back.models.RAG.retrievers.exceptions import CompositeValidationError
 from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
@@ -212,9 +212,9 @@ def _filter(
     k1: int = 10,
     top_k: int = 5,
     function_call_max_trials: int = 1,
-) -> LLMFilterRetriever:
-    """Construct a filter retriever directly."""
-    return LLMFilterRetriever(
+) -> AgenticRerankerRetriever:
+    """Construct a reranker retriever directly."""
+    return AgenticRerankerRetriever(
         children=[child],
         k1=k1,
         top_k=top_k,
@@ -244,7 +244,7 @@ def test_delegates_with_k1_and_returns_selected_in_model_order():
     assert len(llm.fc_calls) == 1
     spec = llm.fc_calls[0]["functions"][0]
     assert spec["name"] == "select_best_chunks"
-    assert trace["name"] == "LLMFilterRetriever"
+    assert trace["name"] == "AgenticRerankerRetriever"
     assert trace["chunks"] == ["1_3", "1_0", "1_2"]
 
 
@@ -602,7 +602,7 @@ def test_non_positive_budgets_are_rejected(field: str, value: Any):
     kwargs[field] = value
 
     with pytest.raises(CompositeValidationError, match=field):
-        LLMFilterRetriever(
+        AgenticRerankerRetriever(
             children=[_FakeChild(_chunks(3))],
             prompt=_RecordingPrompt(),
             llm_model=_FunctionCallingLLM([]),
@@ -615,9 +615,11 @@ def test_exactly_one_child_is_required():
     prompt = _RecordingPrompt()
     llm = _FunctionCallingLLM([])
     with pytest.raises(CompositeValidationError, match="exactly one"):
-        LLMFilterRetriever(children=[], k1=5, top_k=2, prompt=prompt, llm_model=llm)
+        AgenticRerankerRetriever(
+            children=[], k1=5, top_k=2, prompt=prompt, llm_model=llm
+        )
     with pytest.raises(CompositeValidationError, match="exactly one"):
-        LLMFilterRetriever(
+        AgenticRerankerRetriever(
             children=[_FakeChild(_chunks(3)), _FakeChild(_chunks(3))],
             k1=5,
             top_k=2,
@@ -655,15 +657,17 @@ def test_required_prompt_and_llm_are_enforced():
     child = _FakeChild(_chunks(3))
 
     with pytest.raises(RAGRetrieverMissingParameterError, match="prompt"):
-        LLMFilterRetriever(
+        AgenticRerankerRetriever(
             children=[child], k1=5, top_k=2, llm_model=_FunctionCallingLLM([])
         )
     with pytest.raises(RAGRetrieverMissingParameterError, match="llm_model"):
-        LLMFilterRetriever(children=[child], k1=5, top_k=2, prompt=_RecordingPrompt())
+        AgenticRerankerRetriever(
+            children=[child], k1=5, top_k=2, prompt=_RecordingPrompt()
+        )
 
 
 def test_non_function_calling_llm_is_rejected():
-    """The filter retriever requires a function-calling model."""
+    """The reranker retriever requires a function-calling model."""
     with pytest.raises(CompositeValidationError, match="function calling"):
         _filter(_FakeChild(_chunks(3)), _NonFunctionCallingLLM())
 
@@ -671,7 +675,7 @@ def test_non_function_calling_llm_is_rejected():
 def test_function_call_max_trials_defaults_and_rejects_invalid_values():
     """Trials default to the shared default and reject non-positive values."""
     child = _FakeChild(_chunks(3))
-    retriever = LLMFilterRetriever(
+    retriever = AgenticRerankerRetriever(
         children=[child],
         k1=5,
         top_k=2,
@@ -682,7 +686,7 @@ def test_function_call_max_trials_defaults_and_rejects_invalid_values():
 
     for value in (0, -1, True, MAX_FUNCTION_CALL_TRIALS + 1):
         with pytest.raises(CompositeValidationError, match="function_call_max_trials"):
-            LLMFilterRetriever(
+            AgenticRerankerRetriever(
                 children=[child],
                 k1=5,
                 top_k=2,
@@ -701,11 +705,11 @@ def test_retrieval_top_k_score_chunks_schema_summary_and_representation():
     assert retriever.score_chunks([1, 2], "q") == [(1, 0.5), (2, 0.5)]
 
     summary = retriever.get_schema_summary()
-    assert summary["class"] == "LLMFilterRetriever"
+    assert summary["class"] == "AgenticRerankerRetriever"
     assert summary["params"] == {"k1": 6, "top_k": 2}
     assert len(summary["children"]) == 1
 
-    representation = LLMFilterRetriever.get_representation()
+    representation = AgenticRerankerRetriever.get_representation()
     for language in ("en", "es", "pt", "de", "zh"):
         template = getattr(representation, language)
         assert "{k1}" in template
@@ -715,14 +719,14 @@ def test_retrieval_top_k_score_chunks_schema_summary_and_representation():
 
 def test_defaults_placeholders_are_exposed():
     """The schema seeds the shared filter budgets."""
-    properties = LLMFilterRetriever.get_schema()["properties"]
-    assert properties["k1"]["placeholder"] == DEFAULT_FILTER_K1
-    assert properties["top_k"]["placeholder"] == DEFAULT_FILTER_TOP_K
+    properties = AgenticRerankerRetriever.get_schema()["properties"]
+    assert properties["k1"]["placeholder"] == DEFAULT_RERANKER_K1
+    assert properties["top_k"]["placeholder"] == DEFAULT_RERANKER_TOP_K
 
 
 def test_function_call_max_trials_description_names_the_configured_route():
     """The schema documents route retries and propagating backend exceptions."""
-    description = LLMFilterRetriever.get_schema()["properties"][
+    description = AgenticRerankerRetriever.get_schema()["properties"][
         "function_call_max_trials"
     ]["description"]
     lowered = description.en.lower()
@@ -736,7 +740,7 @@ def test_function_call_max_trials_description_names_the_configured_route():
 
 def test_function_description_rejects_invalid_selections():
     """The function description tells the model invalid selections are retried."""
-    description = LLMFilterRetriever.FUNCTION_DESCRIPTION.lower()
+    description = AgenticRerankerRetriever.FUNCTION_DESCRIPTION.lower()
 
     assert "rejected" in description
     assert "unique" in description
@@ -768,7 +772,7 @@ def test_close_logs_a_failing_llm_close_instead_of_raising(caplog):
 
     with caplog.at_level(
         logging.WARNING,
-        logger="DashAI.back.models.RAG.retrievers.composite.llm_filter_retriever",
+        logger="DashAI.back.models.RAG.retrievers.composite.agentic_reranker_retriever",
     ):
         retriever.close()
 

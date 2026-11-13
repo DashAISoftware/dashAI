@@ -25,6 +25,8 @@ placeholders) are rejected with HTTP 400.
 
 from fastapi.testclient import TestClient
 
+from DashAI.back.dependencies.database.models import RAGPrompt
+from DashAI.back.services.RAG.utils import build_prompt_hash
 from tests.back.RAG.conftest import BOW_PARAMS
 
 COMPLETE_BM25_VECTORIZER_PARAMS = dict(BOW_PARAMS)
@@ -436,25 +438,31 @@ class TestUpdateStrictValidation:
     ) -> None:
         """A ``prompt_id`` whose resolved prompt is schema-invalid → 400.
 
-        The ``POST /api/v1/prompt/`` endpoint stores parameters without
-        validating them against the component schema, so a default prompt
-        with ``language="de"`` (outside the ``[en, es, pt]`` enum) is
-        created with 201.  Resolving it during a session PUT must fail the
-        recursive schema validation.
+        The library endpoint validates placeholders, not the component schema,
+        so a default prompt with ``language="de"`` (outside the ``[en, es, pt]``
+        enum) can exist in a legacy database.  Resolving it during a session
+        PUT must fail the recursive schema validation.
         """
-        prompt_payload = {
-            "class_name": "DefaultRAGGenerationPrompt",
-            "name": "strict_schema_invalid_prompt",
-            "parameters": {
-                "templates": {"de": "Q: {input}\nContext: {chunks}"},
-                "language": "de",
-            },
+        parameters = {
+            "templates": {"de": "Q: {input}\nContext: {chunks}"},
+            "language": "de",
         }
-        prompt_resp = client.post("/api/v1/prompt/", json=prompt_payload)
-        assert prompt_resp.status_code == 201, (
-            f"Prompt prereq failed: {prompt_resp.status_code}: {prompt_resp.text}"
-        )
-        prompt_id = prompt_resp.json()["id"]
+        with client.app.container["session_factory"]() as db:
+            # Insert directly: ``POST /api/v1/prompt/`` now refuses to create
+            # rows with a built-in default class.
+            prompt = RAGPrompt(
+                class_name="DefaultRAGGenerationPrompt",
+                name="strict_schema_invalid_prompt",
+                parameters=parameters,
+                parameters_hash=build_prompt_hash(
+                    "DefaultRAGGenerationPrompt", parameters
+                ),
+                is_library=False,
+                is_default=True,
+            )
+            db.add(prompt)
+            db.commit()
+            prompt_id = prompt.id
 
         session = self._create_session(client, "strict_update_schema_invalid_prompt_id")
 

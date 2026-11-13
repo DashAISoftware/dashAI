@@ -130,6 +130,8 @@ class DefaultQueryDecompositionPrompt(QueryDecompositionPrompt):
     """Default prompt template for decomposing a query into sub-queries."""
 
     SCHEMA = DefaultQueryDecompositionPromptSchema
+    #: Registered component used when a user forks this default.
+    CUSTOM_CLASS: str = "CustomQueryDecompositionPrompt"
     DESCRIPTION: str = MultilingualString(
         en="Default prompt template for decomposing a complex question into"
         " independently retrievable sub-queries.",

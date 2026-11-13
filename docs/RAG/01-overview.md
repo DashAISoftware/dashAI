@@ -88,7 +88,7 @@ User query
 | Exceptions                      | `DashAI/back/models/RAG/exceptions/`                                                                                                                                                             |
 | Retrievers                      | `DashAI/back/models/RAG/retrievers/` (subdirs: `dense/`, `sparse/`, `composite/`, `cross_encoder/`)                                                                                              |
 | Chunking                        | `DashAI/back/models/RAG/chunking_models/`                                                                                                                                                        |
-| Prompts                         | `DashAI/back/models/RAG/prompts/` (subdirs: `generation/`, `augmentation/`, `transformation/`)                                                                                                   |
+| Prompts                         | `DashAI/back/models/RAG/prompts/` (subdirs: `generation/`, `transformation/`, `evaluation/`)                                                                                                      |
 | Documents                       | `DashAI/back/models/RAG/documents/`                                                                                                                                                              |
 | Embeddings                      | `DashAI/back/converters/hugging_face/text_embedding/` (dense vectors) and `DashAI/back/converters/scikit_learn/` (`bag_of_words.py`, `tf_idf.py`)                                                |
 | Jobs                            | `DashAI/back/job/RAG_job.py`                                                                                                                                                                     |
@@ -125,15 +125,15 @@ Browser / PyWebView
   `BaseChunkingModel`)
 - **Retrievers** — `BaseRetriever` base; Sparse (TF-IDF, BM25), Dense (via
   `TextEmbeddingConverter` subclasses), Cross-Encoder (SentenceTransformer
-  re-rankers), Composite (Sequential, Parallel, MMR Reranker, LLM-evaluated
-  depth and ensemble)
+  re-rankers), Composite (Sequential, Parallel, MMR Reranker, agentic
+  single and ensemble)
 - **Query transformations** — `BaseQueryTransformation` base; LLM-backed
   transformers (`LLMQueryRewriter`, `LLMQueryExpander`, `LLMQueryDecomposer`)
   that turn the user message into one or more search queries before retrieval
 - **Prompts** — Generation prompts (Default, Custom, QA) in en/es/pt;
   query transformation prompts (Rewriting, Expansion, Decomposition, each
-  Default + Custom); augmentation prompts (Default, Custom) are registered but
-  not wired into the pipeline
+  Default + Custom); agentic retriever and agentic reranker prompts (Default +
+  Custom)
 - **LLMs** — GGUF chat checkpoints (Llama, Mistral, Mixtral, Qwen, SmolLM,
   Phi-4) plus any other `TextToTextGenerationTaskModel` registered in the
   component registry
@@ -200,16 +200,17 @@ The two sparse vectorizers the sparse retrievers nest are converters as well:
 | `MMRRerankerRetriever`                     | — (MMR reranker over nested retrievers)                          | `DashAI/back/models/RAG/retrievers/composite/mmr_reranker_retriever.py`                 |
 | `SequentialRetriever`                      | — (executes retrievers sequentially)                             | `DashAI/back/models/RAG/retrievers/composite/sequential_retriever.py`                   |
 | `ParallelRetriever`                        | — (executes retrievers in parallel and merges)                   | `DashAI/back/models/RAG/retrievers/composite/parallel_retriever.py`                     |
-| `LLMEvaluatedDepthRetriever`               | — (LLM-judged adaptive depth over one child)                     | `DashAI/back/models/RAG/retrievers/composite/llm_evaluated_depth_retriever.py`          |
-| `LLMEvaluatedEnsembleRetriever`            | — (LLM-chosen children across rounds)                            | `DashAI/back/models/RAG/retrievers/composite/llm_evaluated_ensemble_retriever.py`       |
+| `AgenticSingleRetriever`                   | — (LLM-judged adaptive depth over one child)                     | `DashAI/back/models/RAG/retrievers/composite/agentic_single_retriever.py`              |
+| `AgenticEnsembleRetriever`                 | — (LLM-chosen children across rounds)                            | `DashAI/back/models/RAG/retrievers/composite/agentic_ensemble_retriever.py`            |
+| `AgenticRerankerRetriever`                 | — (LLM-selected chunks over one child)                           | `DashAI/back/models/RAG/retrievers/composite/agentic_reranker_retriever.py`            |
 | `SentenceTransformerCrossEncoderRetriever` | 17 cross-encoder models from `cross-encoder/*` (see table below) | `DashAI/back/models/RAG/retrievers/cross_encoder/sentence_transformer_cross_encoder.py` |
 
 Both sparse retrievers take a nested `vectorizer` component selected in their
 params: `BM25Retriever` requires a `BagOfWordsConverter` and `TFIDFRetriever` a
 `TFIDFConverter` (`component_field` restricts each to its own parent).
 
-The two `LLMEvaluated*` retrievers ask their configured model for a structured
-sufficiency verdict: the depth retriever evaluates after every round except the
+The two `Agentic*` retrievers ask their configured model for a structured
+sufficiency verdict: the single retriever evaluates after every round except the
 final one, while the ensemble retriever also makes a planning call before the
 first round. When the model supports function calling, the verdict is obtained
 through `generate_function_call` using the retriever's function schema
@@ -363,8 +364,9 @@ they have no `retrieval_factor`.
 | `MMRRerankerRetriever`                                        | Re-ranker (composite)          | https://en.wikipedia.org/wiki/Maximal_marginal_relevance                             |
 | `SequentialRetriever`                                         | Pipeline (composite)           | —                                                                                    |
 | `ParallelRetriever`                                           | Ensemble (composite)           | —                                                                                    |
-| `LLMEvaluatedDepthRetriever`                                  | Adaptive depth (composite)     | Uses any `TextToTextGenerationTaskModel` from above                                  |
-| `LLMEvaluatedEnsembleRetriever`                               | Adaptive ensemble (composite)  | Uses any `TextToTextGenerationTaskModel` from above                                  |
+| `AgenticSingleRetriever`                                      | Adaptive depth (composite)     | Uses any `TextToTextGenerationTaskModel` from above                                  |
+| `AgenticEnsembleRetriever`                                    | Adaptive ensemble (composite)  | Uses any `TextToTextGenerationTaskModel` from above                                  |
+| `AgenticRerankerRetriever`                                    | Adaptive reranker (composite)  | Uses any `TextToTextGenerationTaskModel` from above                                  |
 | **Dense Retriever**                                           |                                |                                                                                      |
 | `DenseEmbeddingRetriever`                                     | Bi-encoder + search index      | Uses any text embedding converter from above                                         |
 

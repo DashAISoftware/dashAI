@@ -1,4 +1,4 @@
-"""Abstract base for LLM-evaluated composite retrievers.
+"""Abstract base for agentic composite retrievers.
 
 Both concrete retrievers share the same idea: retrieve a pool of chunks, ask a
 language model whether that pool is sufficient to answer the query, and — when
@@ -42,16 +42,16 @@ from DashAI.back.models.RAG.RAG_defaults import (
     DEFAULT_FUNCTION_CALL_MAX_TRIALS,
     MAX_FUNCTION_CALL_TRIALS,
 )
+from DashAI.back.models.RAG.retrievers.composite.agentic_retriever_support import (
+    close_llm,
+    pop_positive_int,
+    pop_required,
+)
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
 from DashAI.back.models.RAG.retrievers.composite.evaluation_output import (
     RetrievalVerdict,
-)
-from DashAI.back.models.RAG.retrievers.composite.llm_retriever_support import (
-    close_llm,
-    pop_positive_int,
-    pop_required,
 )
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
@@ -86,8 +86,8 @@ _ENTRY_VERDICT_KEY = "verdict"
 _ENTRY_APPLIED_KEY = "applied"
 
 
-class LLMEvaluatedRetriever(CompositeRetriever, ABC):
-    """Shared behaviour of the LLM-evaluated composite retrievers.
+class AgenticRetriever(CompositeRetriever, ABC):
+    """Shared behaviour of the agentic composite retrievers.
 
     Handles construction/validation of the common parameters, the delegation
     contract, the pool merge/cap rules and the prompt rendering + LLM call +
@@ -97,7 +97,7 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
     Attributes:
         max_iters: Maximum number of retrieval rounds (``>= 1``).
         max_chunks: Maximum number of chunks the pool may hold (``>= 1``).
-        prompt: The :class:`RetrievalSufficiencyPrompt` instance used to judge
+        prompt: The :class:`AgenticRetrieverPrompt` instance used to judge
             the pool. Required — no artificial default is assumed.
         llm_model: The :class:`TextToTextGenerationTaskModel` used to judge the
             pool. It must support function calling. Required — no artificial
@@ -145,29 +145,29 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
         self.max_iters = pop_positive_int(
             self.params,
             _PARAM_MAX_ITERS,
-            component_label="LLM-evaluated retriever",
+            component_label="agentic retriever",
         )
         self.max_chunks = pop_positive_int(
             self.params,
             _PARAM_MAX_CHUNKS,
-            component_label="LLM-evaluated retriever",
+            component_label="agentic retriever",
         )
         self.function_call_max_trials = pop_positive_int(
             self.params,
             _PARAM_FUNCTION_CALL_MAX_TRIALS,
-            component_label="LLM-evaluated retriever",
+            component_label="agentic retriever",
             default=DEFAULT_FUNCTION_CALL_MAX_TRIALS,
             maximum=MAX_FUNCTION_CALL_TRIALS,
         )
         self.prompt = pop_required(
             self.params,
             _PARAM_PROMPT,
-            component_label="LLM-evaluated retriever",
+            component_label="agentic retriever",
         )
         self.llm_model = pop_required(
             self.params,
             _PARAM_LLM_MODEL,
-            component_label="LLM-evaluated retriever",
+            component_label="agentic retriever",
         )
         if not self.llm_model.supports_function_calling():
             raise RAGRetrieverCompositeValidationError(
@@ -198,12 +198,12 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
         return {"max_iters": "max_iters", "max_chunks": "max_chunks"}
 
     def close(self) -> None:
-        """Release the evaluation LLM and nested LLM-evaluated children.
+        """Release the evaluation LLM and nested agentic children.
 
         The LLM is closed when it exposes a ``close`` hook; a failure while
         closing it is suppressed so cleanup never masks the retrieval failure
         that ended the stage. Nested composites are released through the
-        composite base, which also covers deeper LLM-evaluated descendants.
+        composite base, which also covers deeper agentic descendants.
 
         Returns
         -------
