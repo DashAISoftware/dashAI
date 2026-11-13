@@ -22,6 +22,33 @@ import { getApiErrorMessageAsync } from "../../utils/apiError";
 import { triggerDownload } from "../../utils/downloadArtifact";
 import { formatBytes, sessionFilename } from "../../utils/sessionFile";
 
+/** One row of what the file always carries, marked with a bullet. */
+function IncludedItem({ children }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      {/* As wide as the conversation checkbox, so the labels line up. */}
+      <Box
+        sx={{ width: 20, display: "flex", justifyContent: "center" }}
+        aria-hidden
+      >
+        <Box
+          sx={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            bgcolor: "text.primary",
+          }}
+        />
+      </Box>
+      <Typography variant="body2">{children}</Typography>
+    </Box>
+  );
+}
+
+IncludedItem.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
 /**
  * Download a generative session as a .dashai file, with or without its
  * conversation.
@@ -140,46 +167,57 @@ export default function ExportGenerativeSessionDialog({
               gap: 2,
             }}
           >
-            <Typography variant="body2" color="text.secondary">
-              {[
-                t("generative:label.exportConfigurationAlways"),
-                preview.document_count > 0 &&
-                  t("generative:label.exportIncludesDocuments", {
-                    count: preview.document_count,
-                  }),
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            </Typography>
-
-            <Box>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={includeConversation}
-                    disabled={!hasMessages}
-                    onChange={(e) => setIncludeConversation(e.target.checked)}
-                  />
-                }
-                label={t("generative:label.includeConversation", {
-                  count: preview.message_count,
-                })}
-              />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-              >
-                {hasMessages
-                  ? [
-                      preview.media_size_bytes > 0 &&
-                        t("generative:label.includeConversationImages"),
-                      t("generative:label.includeConversationHelp"),
-                    ]
-                      .filter(Boolean)
-                      .join(" ")
-                  : t("generative:label.noConversation")}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                {t("generative:label.exportIncludes")}
               </Typography>
+              <IncludedItem>
+                {t("generative:label.exportItemConfiguration")}
+              </IncludedItem>
+              {preview.document_count > 0 && (
+                <IncludedItem>
+                  {t("generative:label.exportItemDocuments", {
+                    count: preview.document_count,
+                  })}
+                </IncludedItem>
+              )}
+              <Box>
+                <FormControlLabel
+                  sx={{ m: 0, gap: 1 }}
+                  control={
+                    <Checkbox
+                      size="small"
+                      sx={{ p: 0 }}
+                      checked={includeConversation}
+                      disabled={!hasMessages}
+                      onChange={(e) => setIncludeConversation(e.target.checked)}
+                    />
+                  }
+                  label={
+                    <Typography variant="body2">
+                      {t("generative:label.includeConversation", {
+                        count: preview.message_count,
+                      })}
+                    </Typography>
+                  }
+                />
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  display="block"
+                  sx={{ pl: 3.5 }}
+                >
+                  {hasMessages
+                    ? [
+                        preview.media_size_bytes > 0 &&
+                          t("generative:label.includeConversationImages"),
+                        t("generative:label.includeConversationHelp"),
+                      ]
+                        .filter(Boolean)
+                        .join(" ")
+                    : t("generative:label.noConversation")}
+                </Typography>
+              </Box>
             </Box>
 
             {includeConversation && preview.unfinished_count > 0 && (
@@ -190,13 +228,15 @@ export default function ExportGenerativeSessionDialog({
               </Alert>
             )}
 
-            {size > 0 && (
-              <Alert severity="info">
-                {t("models:label.approxSize", { size: formatBytes(size) })}
-              </Alert>
-            )}
-
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ flexGrow: 1 }}
+              >
+                {size > 0 &&
+                  t("models:label.approxSize", { size: formatBytes(size) })}
+              </Typography>
               <Button onClick={onClose} sx={{ color: "text.secondary" }}>
                 {t("common:cancel")}
               </Button>
