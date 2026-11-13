@@ -27,7 +27,7 @@ import { formatBytes, sessionFilename } from "../../utils/sessionFile";
  * conversation.
  *
  * The configuration always travels. The conversation is opt-in: it may hold
- * content the user does not mean to share, and its images or videos can make
+ * content the user does not mean to share, and its images can make
  * the file large. Messages still running or that failed are never exported.
  */
 export default function ExportGenerativeSessionDialog({
@@ -171,7 +171,13 @@ export default function ExportGenerativeSessionDialog({
                 display="block"
               >
                 {hasMessages
-                  ? t("generative:label.includeConversationHelp")
+                  ? [
+                      preview.media_size_bytes > 0 &&
+                        t("generative:label.includeConversationImages"),
+                      t("generative:label.includeConversationHelp"),
+                    ]
+                      .filter(Boolean)
+                      .join(" ")
                   : t("generative:label.noConversation")}
               </Typography>
             </Box>
