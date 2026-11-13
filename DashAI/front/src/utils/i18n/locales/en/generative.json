@@ -399,6 +399,8 @@
         "deleted": "Prompt deleted",
         "deleteError": "Could not delete the prompt",
         "template": "Template",
+        "templateLanguage": "Template language",
+        "templatePreviewHelp": "Preview only: switching the language does not change the saved prompt.",
         "noTemplate": "This prompt has no template.",
         "usedBy": "Used by",
         "notUsed": "No RAG session uses this prompt.",

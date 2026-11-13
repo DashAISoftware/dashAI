@@ -20,64 +20,29 @@ import { useSnackbar } from "notistack";
 import PromptEditor from "./PromptEditor";
 import { getRAGPrompt, updateRAGPrompt } from "../../../api/rag";
 import { getApiErrorMessage } from "../../../utils/apiError";
-
-/**
- * The template of a prompt whichever shape it has.
- *
- * @param {object} prompt - A library prompt.
- * @returns {string} The template text, or an empty string.
- */
-function templateOf(prompt) {
-  const parameters = prompt?.parameters ?? {};
-  if (typeof parameters.template === "string") return parameters.template;
-  return Object.values(parameters.templates ?? {})[0] ?? "";
-}
-
-/**
- * Read which shape a prompt stores its templates in.
- *
- * A row either holds one explicit `template` or a `templates` map keyed by
- * language, plus the language it resolves to. The editor shows a single text
- * body, so it edits the active language of a map and leaves the other
- * languages untouched.
- *
- * @param {object} prompt - A library prompt.
- * @returns {{usesTemplates: boolean, language: string|null}} The stored shape
- *   and the language the editor writes to.
- */
-function templateShape(prompt) {
-  const parameters = prompt?.parameters ?? {};
-  const explicitTemplate =
-    typeof parameters.template === "string" && parameters.template.trim()
-      ? parameters.template
-      : null;
-  const templates = parameters.templates;
-  const hasTemplates = Boolean(
-    templates &&
-    typeof templates === "object" &&
-    Object.keys(templates).length > 0,
-  );
-  if (explicitTemplate || !hasTemplates) {
-    return { usesTemplates: false, language: null };
-  }
-  const languages = Object.keys(templates);
-  const stored = parameters.language;
-  return {
-    usesTemplates: true,
-    language: stored && languages.includes(stored) ? stored : languages[0],
-  };
-}
+import {
+  PROMPT_TEMPLATE_PARAM,
+  PROMPT_TEMPLATES_PARAM,
+  resolveStoredPromptTemplate,
+  storedPromptShape,
+  storedPromptTemplates,
+} from "./promptSchema";
 
 /**
  * The template the editor starts from.
  *
- * @param {object} prompt - A library prompt.
+ * The editor writes one language of a map, so it must show exactly that
+ * variant, including when it is still empty: resolving with the display
+ * precedence would put another language's text into the field and save it over
+ * the variant being edited.
+ *
+ * @param {object} parameters - The prompt's stored parameters.
  * @param {{usesTemplates: boolean, language: string|null}} shape - Its shape.
  * @returns {string} The template text to edit, or an empty string.
  */
-function editableTemplate(prompt, shape) {
-  if (!shape.usesTemplates) return templateOf(prompt);
-  return prompt?.parameters?.templates?.[shape.language] ?? "";
+function editableTemplate(parameters, shape) {
+  if (!shape.usesTemplates) return resolveStoredPromptTemplate(parameters);
+  return storedPromptTemplates(parameters)[shape.language] ?? "";
 }
 
 /**
@@ -129,13 +94,18 @@ export default function PromptLibraryEditModal({
     getRAGPrompt(promptId)
       .then((loaded) => {
         if (cancelled) return;
-        const loadedShape = templateShape(loaded);
+        const loadedShape = storedPromptShape(loaded.parameters);
         setPrompt(loaded);
         setName(loaded.name ?? "");
         setShape(loadedShape);
         setPromptModel({
           component: loaded.class_name,
-          params: { template: editableTemplate(loaded, loadedShape) },
+          params: {
+            [PROMPT_TEMPLATE_PARAM]: editableTemplate(
+              loaded.parameters,
+              loadedShape,
+            ),
+          },
         });
       })
       .catch((error) => {
@@ -190,15 +160,18 @@ export default function PromptLibraryEditModal({
    * @returns {object} The parameters for the PATCH request.
    */
   const parametersToSave = () => {
-    if (!shape.usesTemplates) return { template };
+    if (!shape.usesTemplates) return { [PROMPT_TEMPLATE_PARAM]: template };
     const stored = prompt?.parameters ?? {};
-    const storedTemplates = stored.templates ?? {};
+    const storedTemplates = storedPromptTemplates(stored);
     const rest = { ...stored };
-    delete rest.template;
-    delete rest.templates;
+    delete rest[PROMPT_TEMPLATE_PARAM];
+    delete rest[PROMPT_TEMPLATES_PARAM];
     return {
       ...rest,
-      templates: { ...storedTemplates, [shape.language]: template },
+      [PROMPT_TEMPLATES_PARAM]: {
+        ...storedTemplates,
+        [shape.language]: template,
+      },
     };
   };
 
