@@ -155,6 +155,29 @@ def test_routes_need_a_session(client, team):
     assert client.get(f"/api/v1/dataset/{team['dataset']['id']}").status_code == 401
 
 
+@pytest.mark.parametrize(
+    "route",
+    ["/filter/", "/sample/file", "/file/info", "/types/file", "/file/", "/export/csv"],
+)
+def test_file_path_routes_need_a_session(client, route):
+    client.cookies.clear()
+
+    response = client.get(f"/api/v1/dataset{route}", params={"path": "any/file"})
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize("route", ["/preview_with_types", "/validate_type_changes"])
+def test_upload_previews_need_a_session(client, route):
+    client.cookies.clear()
+
+    response = client.post(
+        f"/api/v1/dataset{route}",
+        files={"file": ("data.csv", b"a,b\n1,2\n", "text/csv")},
+        data={"type_changes": "{}"},
+    )
+    assert response.status_code == 401
+
+
 # Project roles
 
 

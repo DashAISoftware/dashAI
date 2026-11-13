@@ -463,7 +463,7 @@ def _load_and_filter_table(
 
 
 # Server-side filtering and pagination
-@router.get("/filter/")
+@router.get("/filter/", dependencies=[Depends(get_current_user)])
 async def filter_dataset_file(
     path: str,
     page: int = 0,
@@ -778,7 +778,7 @@ async def get_sample(
     return sample
 
 
-@router.get("/sample/file")
+@router.get("/sample/file", dependencies=[Depends(get_current_user)])
 @inject
 async def get_sample_by_file(
     path: str,
@@ -837,7 +837,7 @@ async def get_sample_by_file(
     return sample
 
 
-@router.get("/file/info")
+@router.get("/file/info", dependencies=[Depends(get_current_user)])
 @inject
 async def get_info_by_file(
     path: str,
@@ -1027,7 +1027,7 @@ async def get_types(
     return columns_spec
 
 
-@router.get("/types/file")
+@router.get("/types/file", dependencies=[Depends(get_current_user)])
 @inject
 async def get_types_by_file_path(
     path: str,
@@ -1705,7 +1705,7 @@ async def update_column_encoder(
     return get_columns_spec(os.path.join(dataset_file_path, "dataset"))
 
 
-@router.get("/file/")
+@router.get("/file/", dependencies=[Depends(get_current_user)])
 async def get_dataset_file(
     path: str,
     page: int = 0,
@@ -1937,7 +1937,7 @@ async def _build_export_response(
         )
 
 
-@router.get("/export/csv")
+@router.get("/export/csv", dependencies=[Depends(get_current_user)])
 async def export_dataset_as_csv(
     path: str,
     filter_model: Optional[str] = None,
@@ -2057,7 +2057,7 @@ async def export_dataset_csv_by_id(
             ) from e
 
 
-@router.post("/preview_with_types")
+@router.post("/preview_with_types", dependencies=[Depends(get_current_user)])
 @inject
 async def preview_with_types(
     file: UploadFile = File(...),
@@ -2280,7 +2280,7 @@ async def preview_with_types(
         ) from e
 
 
-@router.post("/validate_type_changes")
+@router.post("/validate_type_changes", dependencies=[Depends(get_current_user)])
 @inject
 async def validate_type_changes(
     file: UploadFile = File(...),

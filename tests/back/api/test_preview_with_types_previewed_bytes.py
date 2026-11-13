@@ -3,7 +3,11 @@
 import json
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
+
+# The preview routes need a session
+pytestmark = pytest.mark.usefixtures("admin_project")
 
 
 def test_preview_with_types_includes_previewed_bytes(client: TestClient):

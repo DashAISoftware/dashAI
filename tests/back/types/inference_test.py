@@ -11,6 +11,23 @@ from DashAI.back.types.inf.type_inference import infer_types
 DATA_DIR = Path(__file__).parent
 
 
+def _log_in(client):
+    """Register a user, which leaves the client with a session.
+
+    The preview routes need one, like every dataset route.
+    """
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": "previewuser",
+            "email": "previewuser@example.com",
+            "password": "secret-pass-123",
+            "social_name": "Preview User",
+        },
+    )
+    assert response.status_code == 201, response.text
+
+
 def _infer(client, file_path: Path, mime: str, params: dict):
     with file_path.open("rb") as f:
         files = {"file": (file_path.name, f, mime)}
@@ -29,6 +46,7 @@ def _infer(client, file_path: Path, mime: str, params: dict):
 def client(tmp_path: Path):
     app = create_app(local_path=tmp_path, logging_level="ERROR", enable_seeding=False)
     with TestClient(app) as c:
+        _log_in(c)
         yield c
 
 

@@ -10,6 +10,23 @@ from DashAI.back.app import create_app
 DATA_DIR = Path(__file__).parent
 
 
+def _log_in(client):
+    """Register a user, which leaves the client with a session.
+
+    The preview routes need one, like every dataset route.
+    """
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": "previewuser",
+            "email": "previewuser@example.com",
+            "password": "secret-pass-123",
+            "social_name": "Preview User",
+        },
+    )
+    assert response.status_code == 201, response.text
+
+
 @pytest.fixture
 def client(tmp_path: Path):
     app = create_app(local_path=tmp_path, logging_level="ERROR", enable_seeding=False)
@@ -21,6 +38,7 @@ def client(tmp_path: Path):
     app.router.lifespan_context = nolifespan
 
     with TestClient(app) as c:
+        _log_in(c)
         yield c
 
 
@@ -148,17 +166,7 @@ def test_schema_change(client: TestClient):
     modified_schema = payload["schema"].copy()
     modified_schema["Species"] = {"type": "Categorical", "dtype": "string"}
 
-    # Datasets are created inside a project, which needs a session
-    register_resp = client.post(
-        "/api/v1/auth/register",
-        json={
-            "username": "schemauser",
-            "email": "schemauser@example.com",
-            "password": "secret-pass-123",
-            "social_name": "Schema User",
-        },
-    )
-    assert register_resp.status_code == 201, register_resp.text
+    # Datasets are created inside a project
     project_resp = client.post("/api/v1/project/", json={"name": "Schema"})
     assert project_resp.status_code == 201, project_resp.text
 

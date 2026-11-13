@@ -1,7 +1,11 @@
 import io
 import json
 
+import pytest
 from fastapi.testclient import TestClient
+
+# The preview routes need a session
+pytestmark = pytest.mark.usefixtures("admin_project")
 
 # The module scoped ``client`` fixture comes from tests/back/api/conftest.py.
 # Defining a local one here would shadow it and break the autouse fixtures
