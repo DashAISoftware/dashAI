@@ -4,6 +4,10 @@ The file is a zip with the session configuration as readable JSON: its task,
 its model and the model parameters. IDs stay out, since importing assigns new
 ones, so a RAG session's document list is written empty.
 
+A RAG session's prompts live in the prompt catalog, apart from its
+parameters; they are written back into the parameters, as the session API
+returns them, so the file holds their content and not catalog ids.
+
 A RAG session always carries its documents: each one's Data module row as
 JSON and its folder (the source file and the parsed content) under
 ``documents/``, so importing needs no parsing. Its former id travels as
@@ -185,6 +189,27 @@ def export_preview(
         }
 
 
+def _parameters_with_prompts(db, session, component_registry: Any) -> Dict[str, Any]:
+    """The session parameters with every RAG prompt written in.
+
+    A RAG session stores its prompts in the prompt catalog and keeps only
+    prompt-free parameters. The file carries each prompt as its component
+    reference instead of a catalog id, which means nothing in another DashAI.
+    """
+    from DashAI.back.services.RAG.prompt_service import PromptService
+    from DashAI.back.tasks.RAG_task import RAGTask
+
+    is_rag = (
+        session.task_name in component_registry
+        and component_registry[session.task_name]["class"] == RAGTask
+    )
+    if not is_rag:
+        return dict(session.parameters or {})
+    return PromptService(db, component_registry).materialize_session_parameters(
+        session.id, session.parameters
+    )
+
+
 def _documents(session, staging: Path) -> List[Dict[str, Any]]:
     """The session's documents as recipe entries, copying their folders."""
     entries = []
@@ -280,6 +305,9 @@ def build_generative_package(
             recipe_session = {
                 field: getattr(session, field) for field in SESSION_FIELDS
             }
+            recipe_session["parameters"] = _parameters_with_prompts(
+                db, session, component_registry
+            )
             processes = (
                 _conversation(db, session_id, Path(images_path), staging)
                 if include_conversation

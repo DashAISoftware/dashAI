@@ -1,8 +1,8 @@
 """Round trip of a generative session through a ``.dashai`` file.
 
 Exporting writes the configuration and, when asked, the conversation;
-importing creates a new session with the same task, model and parameters,
-under a free name, and without documents.
+importing creates a new session with the same task, model, parameters and
+RAG prompts, under a free name, with the documents the file carries.
 """
 
 import io
@@ -334,3 +334,32 @@ def test_rag_citations_point_at_the_imported_documents(client: TestClient):
             },
         }
     ]
+
+
+def test_custom_prompt_travels_with_the_session(client: TestClient):
+    payload = {**_base_session_params(), "name": "Package Prompt"}
+    session_id, _ = _create_session_with_document(client, payload)
+    template = "Context: {chunks}\nUser: {input}\nAnswer like a pirate."
+    prompt = {
+        "component": "CustomRAGGenerationPrompt",
+        "params": {"template": template},
+    }
+    response = client.put(
+        f"/api/v1/generative-session/{session_id}/parameters",
+        json={"prompt": prompt},
+    )
+    assert response.status_code == 200, response.text
+
+    content = _export(client, session_id)
+    with zipfile.ZipFile(io.BytesIO(content)) as archive:
+        recipe = json.loads(archive.read("generative_session.json"))
+    assert recipe["session"]["parameters"]["prompt"] == prompt
+
+    response = _import(client, content)
+    assert response.status_code == 201, response.text
+    imported_id = response.json()["session_id"]
+    imported = client.get(f"/api/v1/generative-session/{imported_id}").json()
+    assert imported["parameters"]["prompt"] == prompt
+    # Bound through the prompt catalog, as a session created by hand.
+    with client.app.container["session_factory"]() as db:
+        assert "prompt" not in db.get(GenerativeSession, imported_id).parameters

@@ -301,6 +301,41 @@ def _check_components(recipe_session: Dict[str, Any], component_registry: Any) -
             )
 
 
+def _bind_prompts(
+    prompt_service: Any,
+    session_id: int,
+    parameters: Dict[str, Any],
+    prompt_inputs: Dict[str, Any],
+    generation_default: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Bind a RAG session's prompts in the catalog and return the snapshot.
+
+    Every prompt is also rendered once, so a prompt this DashAI cannot use
+    fails the import instead of the session's first read.
+
+    Raises
+    ------
+    InvalidSessionParametersError
+        If a prompt is not valid here.
+    """
+    from DashAI.back.models.RAG.exceptions.prompt import RAGPromptValidationError
+
+    try:
+        snapshot = prompt_service.sync_session_bindings(
+            session_id,
+            parameters,
+            prompt_inputs,
+            generation_default=generation_default,
+        )
+        prompt_service.inject_prompt_slots(session_id, parameters)
+    except RAGPromptValidationError as e:
+        raise InvalidSessionParametersError(
+            f"The session prompts are not valid in this DashAI: {e}",
+            reason=str(e),
+        ) from e
+    return snapshot
+
+
 def _validated_parameters(
     recipe_session: Dict[str, Any],
     db: Any,
@@ -428,6 +463,7 @@ def import_generative_package(
         RAGSessionDocument,
     )
     from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_DOCUMENTS
+    from DashAI.back.services.RAG.prompt_service import PromptService
     from DashAI.back.tasks.RAG_task import RAGTask
 
     language = language or "en"
@@ -507,12 +543,22 @@ def import_generative_package(
                     citation_map = {
                         str(ref): new_id for ref, new_id in document_ids.items()
                     }
+                    # As creating a session does, a RAG session stores
+                    # prompt-free parameters and binds its prompts in the
+                    # catalog, reusing a prompt with the same content.
+                    stored_parameters = parameters
+                    prompt_inputs: Dict[str, Any] = {}
+                    if is_rag:
+                        prompt_service = PromptService(db, component_registry)
+                        stored_parameters, prompt_inputs = prompt_service.split_prompts(
+                            parameters
+                        )
                     session = GenerativeSession(
                         name=session_name,
                         description=recipe_session["description"],
                         task_name=recipe_session["task_name"],
                         model_name=recipe_session["model_name"],
-                        parameters=parameters,
+                        parameters=stored_parameters,
                         created=now,
                         last_modified=now,
                         # The documents arrive parsed but never indexed here:
@@ -527,10 +573,22 @@ def import_generative_package(
                         )
                         for document_id in sorted(set(document_ids.values()))
                     )
+                    prompt_snapshot = (
+                        _bind_prompts(
+                            prompt_service,
+                            session.id,
+                            stored_parameters,
+                            prompt_inputs,
+                            parameters.get("prompt"),
+                        )
+                        if is_rag
+                        else None
+                    )
                     db.add(
                         GenerativeSessionParameterHistory(
                             session_id=session.id,
-                            parameters=parameters,
+                            parameters=stored_parameters,
+                            prompt_bindings=prompt_snapshot,
                             model_name=session.model_name,
                             modified_at=now,
                         )
