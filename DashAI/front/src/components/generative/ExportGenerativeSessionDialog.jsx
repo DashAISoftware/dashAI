@@ -141,16 +141,16 @@ export default function ExportGenerativeSessionDialog({
             }}
           >
             <Typography variant="body2" color="text.secondary">
-              {t("generative:label.exportConfigurationAlways")}
+              {[
+                t("generative:label.exportConfigurationAlways"),
+                preview.document_count > 0 &&
+                  t("generative:label.exportIncludesDocuments", {
+                    count: preview.document_count,
+                  }),
+              ]
+                .filter(Boolean)
+                .join(" ")}
             </Typography>
-
-            {preview.document_count > 0 && (
-              <Alert severity="info">
-                {t("generative:label.exportIncludesDocuments", {
-                  count: preview.document_count,
-                })}
-              </Alert>
-            )}
 
             <Box>
               <FormControlLabel
