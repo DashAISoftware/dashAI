@@ -10,11 +10,13 @@ A file with a conversation adds its processes too. Their media files are
 copied into IMAGES_PATH under new names. A RAG file adds its documents to the
 Data module and links them to the new session, which then waits to be
 indexed. A document that this DashAI already has, from the same file parsed
-the same way, is reused instead of copied. A failure halfway removes every
-row and file the import created.
+the same way, is reused instead of copied. The conversation's citations are
+pointed at the documents' new ids. A failure halfway removes every row and
+file the import created.
 """
 
 import json
+import re
 import shutil
 import tempfile
 import uuid
@@ -50,6 +52,10 @@ if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
 NOT_A_GENERATIVE_SESSION = "{path} is not a DashAI generative session file"
+# A chunk reference, "<document_id>_<position>", as RAG answers store them.
+CHUNK_REF = re.compile(r"^(\d+)_(\d+)$")
+# RAG output rows whose chunk references name documents.
+CITATION_TYPES = ("Dict", "Trace")
 
 
 class InvalidSessionParametersError(ModelPackageError):
@@ -195,6 +201,94 @@ def _reusable_documents(
             if match is not None:
                 reusable[document["ref"]] = match
         return reusable
+
+
+def _remap_ref(ref: str, id_map: Dict[str, int]) -> str:
+    """Point a chunk reference at its document's new id.
+
+    A document the file did not carry, because it had been deleted where the
+    session was exported, keeps a reference that no new document can take,
+    so its citation never names an unrelated document here.
+    """
+    match = CHUNK_REF.match(ref)
+    if match is None:
+        return ref
+    old_id, position = match.groups()
+    if old_id in id_map:
+        return f"{id_map[old_id]}_{position}"
+    return f"missing-{old_id}_{position}"
+
+
+def _remap_document_id(value: Any, id_map: Dict[str, int]) -> Any:
+    """The new id of a cited document, or None if the file did not carry it.
+
+    None is how a citation of a deleted document is stored, so the chat shows
+    it without offering to open it.
+    """
+    if value is None or isinstance(value, bool):
+        return value
+    return id_map.get(str(value))
+
+
+def _remap_trace(node: Any, id_map: Dict[str, int]) -> Any:
+    """A copy of a retrieval trace with its chunk references remapped.
+
+    Retrievers, plugins included, put references wherever their technique
+    needs (``chunks`` lists, ``scores`` keys), so every string shaped like a
+    reference is remapped, except the text of a query.
+    """
+    if isinstance(node, dict):
+        return {
+            _remap_ref(key, id_map): (
+                value if key == "query" else _remap_trace(value, id_map)
+            )
+            for key, value in node.items()
+        }
+    if isinstance(node, list):
+        return [_remap_trace(item, id_map) for item in node]
+    if isinstance(node, str):
+        return _remap_ref(node, id_map)
+    return node
+
+
+def remap_citations(data_type: str, data: str, id_map: Dict[str, int]) -> str:
+    """Point the citations of a RAG output row at the new document ids.
+
+    Parameters
+    ----------
+    data_type : str
+        The row's type; only ``Dict`` and ``Trace`` rows cite documents.
+    data : str
+        The row's JSON content.
+    id_map : dict of str to int
+        The document ids of the exporting DashAI, as strings, to their ids
+        here.
+
+    Returns
+    -------
+    str
+        The content with every reference and document id remapped, or as it
+        was when it is not JSON of the expected shape.
+    """
+    if data_type not in CITATION_TYPES:
+        return data
+    try:
+        parsed = json.loads(data)
+    except (TypeError, ValueError):
+        return data
+    if data_type == "Dict":
+        if not isinstance(parsed, dict):
+            return data
+        remapped = {}
+        for ref, info in parsed.items():
+            if isinstance(info, dict) and "document_id" in info:
+                info = {
+                    **info,
+                    "document_id": _remap_document_id(info["document_id"], id_map),
+                }
+            remapped[_remap_ref(ref, id_map)] = info
+        return json.dumps(remapped, ensure_ascii=False)
+    return json.dumps(_remap_trace(parsed, id_map), ensure_ascii=False)
 
 
 def _check_components(recipe_session: Dict[str, Any], component_registry: Any) -> None:
@@ -410,6 +504,9 @@ def import_generative_package(
                         parameters[RAG_PARAM_DOCUMENTS] = sorted(
                             set(document_ids.values())
                         )
+                    citation_map = {
+                        str(ref): new_id for ref, new_id in document_ids.items()
+                    }
                     session = GenerativeSession(
                         name=session_name,
                         description=recipe_session["description"],
@@ -458,6 +555,12 @@ def import_generative_package(
                                     data=(
                                         media_names[row["media_entry"]]
                                         if row["data_type"] in MEDIA_TYPES
+                                        else remap_citations(
+                                            row["data_type"],
+                                            row["data"],
+                                            citation_map,
+                                        )
+                                        if is_rag
                                         else row["data"]
                                     ),
                                 )

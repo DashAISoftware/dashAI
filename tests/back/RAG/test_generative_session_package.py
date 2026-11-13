@@ -16,6 +16,7 @@ from DashAI.back.core.enums.status import RunStatus
 from DashAI.back.dependencies.database.models import (
     DataDocument,
     GenerativeProcess,
+    GenerativeSession,
     ProcessData,
 )
 from tests.back.RAG.conftest import _create_session_with_document
@@ -248,3 +249,87 @@ def test_media_outside_the_package_is_refused(client: TestClient):
     response = _import(client, buffer.getvalue())
     assert response.status_code == 400
     assert response.json()["detail"]["code"] == "invalid_file"
+
+
+def test_rag_citations_point_at_the_imported_documents(client: TestClient):
+    payload = {**_base_session_params(), "name": "Package Citations"}
+    session_id, document_id = _create_session_with_document(client, payload)
+    ref, gone = f"{document_id}_3", "999999_1"
+    with client.app.container["session_factory"]() as db:
+        process = GenerativeProcess(session_id=session_id, status=RunStatus.FINISHED)
+        db.add(process)
+        db.flush()
+        rows = [
+            (True, "str", "what is DashAI?"),
+            (
+                False,
+                "Dict",
+                json.dumps(
+                    {
+                        ref: {"document_id": document_id, "text": "a"},
+                        gone: {"document_id": 999999, "text": "b"},
+                    }
+                ),
+            ),
+            (
+                False,
+                "Trace",
+                json.dumps(
+                    [
+                        {
+                            "query": ref,
+                            "retriever": {
+                                "chunks": [ref, gone],
+                                "scores": {ref: 0.9},
+                            },
+                        }
+                    ]
+                ),
+            ),
+            (False, "str", "A toolbox."),
+        ]
+        db.add_all(
+            ProcessData(process_id=process.id, is_input=i, data_type=t, data=d)
+            for i, t, d in rows
+        )
+        db.commit()
+
+    content = client.post(
+        f"/api/v1/generative-session/{session_id}/export",
+        json={"include_conversation": True},
+    ).content
+    with client.app.container["session_factory"]() as db:
+        db.get(DataDocument, document_id).file_hash = "not the same file"
+        db.commit()
+    imported = _import(client, content)
+    assert imported.status_code == 201, imported.text
+
+    with client.app.container["session_factory"]() as db:
+        new_id = db.get(GenerativeSession, imported.json()["session_id"]).parameters[
+            "documents"
+        ][0]
+        (process,) = (
+            db.query(GenerativeProcess)
+            .filter_by(session_id=imported.json()["session_id"])
+            .all()
+        )
+        output = {
+            row.data_type: json.loads(row.data)
+            for row in process.output
+            if row.data_type in ("Dict", "Trace")
+        }
+    assert new_id != document_id
+    new_ref = f"{new_id}_3"
+    assert output["Dict"] == {
+        new_ref: {"document_id": new_id, "text": "a"},
+        "missing-999999_1": {"document_id": None, "text": "b"},
+    }
+    assert output["Trace"] == [
+        {
+            "query": ref,
+            "retriever": {
+                "chunks": [new_ref, "missing-999999_1"],
+                "scores": {new_ref: 0.9},
+            },
+        }
+    ]
