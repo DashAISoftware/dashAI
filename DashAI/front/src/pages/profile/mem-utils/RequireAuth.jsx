@@ -1,12 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
 import { useSession } from "./SessionContext";
 
 /**
- * Route guard: without a session, redirects to the login view and remembers
- * the requested path to come back after logging in. Works both wrapping an
+ * Route guard: without a session, redirects to the login view, telling it
+ * when the reason is a session that expired. Logging in always leads to the
+ * main portal, not back to the requested path. Works both wrapping an
  * element and as a layout route (renders the nested routes).
  *
  * Only hides the UI; the backend must also check the session on every
@@ -14,7 +15,6 @@ import { useSession } from "./SessionContext";
  */
 export default function RequireAuth({ children }) {
   const { isAuthenticated, loading, expired } = useSession();
-  const location = useLocation();
 
   if (loading) return null;
 
@@ -23,10 +23,7 @@ export default function RequireAuth({ children }) {
       <Navigate
         to="/app/login"
         replace
-        state={{
-          from: `${location.pathname}${location.search}`,
-          reason: expired ? "expired" : "auth",
-        }}
+        state={expired ? { reason: "expired" } : undefined}
       />
     );
   }

@@ -84,7 +84,8 @@ export default function UserMenu() {
   const handleLogout = async () => {
     handleClose();
     await logout();
-    navigate("/app");
+    // Closing the session always goes back to the login view
+    navigate("/app/login", { replace: true });
   };
 
   const menuGroups = MENU_GROUPS.map((group) =>

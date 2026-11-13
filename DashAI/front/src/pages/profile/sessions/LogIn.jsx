@@ -28,10 +28,8 @@ export default function LogIn() {
   const location = useLocation();
   const { login } = useSession();
 
-  // RequireAuth sends the path the user wanted to visit
-  const needsLogin = location.state?.reason === "auth";
+  // RequireAuth tells when the session expired
   const sessionExpired = location.state?.reason === "expired";
-  const redirectTo = location.state?.from ?? "/app";
 
   // Email or nickname; the backend tells them apart by the "@"
   const [identifier, setIdentifier] = useState("");
@@ -44,7 +42,8 @@ export default function LogIn() {
     event.preventDefault();
     try {
       await login(identifier, password);
-      navigate(redirectTo, { replace: true });
+      // Logging in always opens the main portal
+      navigate("/app", { replace: true });
     } catch (loginError) {
       setError(loginError.message);
     }
@@ -69,12 +68,6 @@ export default function LogIn() {
         </>
       }
     >
-      {needsLogin && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Para acceder a esta funcionalidad debes iniciar sesión.
-        </Alert>
-      )}
-
       {sessionExpired && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           Tu sesión expiró o fue cerrada. Inicia sesión nuevamente.

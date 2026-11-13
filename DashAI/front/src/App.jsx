@@ -63,7 +63,9 @@ import ManageProjects from "./pages/profile/admin/ManageProjects";
 import ManageRequests from "./pages/profile/admin/ManageRequests";
 import ManageRoles from "./pages/profile/admin/ManageRoles";
 import RequireAuth from "./pages/profile/mem-utils/RequireAuth";
+import RequireNoAuth from "./pages/profile/mem-utils/RequireNoAuth";
 import RequirePermission from "./pages/profile/mem-utils/RequirePermission";
+import SessionOnly from "./pages/profile/mem-utils/SessionOnly";
 import { SessionProvider } from "./pages/profile/mem-utils/SessionContext";
 import {
   ProjectProvider,
@@ -91,14 +93,19 @@ function App() {
               <DatasetsProvider>
                 <ModelsProvider>
                   <GenerativeProvider>
-                    <ResponsiveAppBar />
+                    {/* Without a session only the login and register cards show */}
+                    <SessionOnly>
+                      <ResponsiveAppBar />
+                    </SessionOnly>
                     <Routes>
-                      <Route path="/" element={<Home />} />
-                      <Route path="/app" element={<Home />} />
-                      <Route path="/app/login" element={<LogIn />} />
-                      <Route path="/app/register" element={<Register />} />
+                      <Route element={<RequireNoAuth />}>
+                        <Route path="/app/login" element={<LogIn />} />
+                        <Route path="/app/register" element={<Register />} />
+                      </Route>
                       {/* Every other view requires a session (see RequireAuth) */}
                       <Route element={<RequireAuth />}>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/app" element={<Home />} />
                         <Route path="/app/data" element={<DataSectionLayout />}>
                           <Route index element={<DatasetsPage />} />
                           <Route
@@ -295,7 +302,9 @@ function App() {
                         </Route>
                       </Route>
                     </Routes>
-                    <JobQueueWidget />
+                    <SessionOnly>
+                      <JobQueueWidget />
+                    </SessionOnly>
                   </GenerativeProvider>
                 </ModelsProvider>
               </DatasetsProvider>
