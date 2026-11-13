@@ -515,6 +515,9 @@ def import_generative_package(
                         parameters=parameters,
                         created=now,
                         last_modified=now,
+                        # The documents arrive parsed but never indexed here:
+                        # the mark has the session page start indexing on open.
+                        needs_reindex=is_rag and bool(document_ids),
                     )
                     db.add(session)
                     db.flush()

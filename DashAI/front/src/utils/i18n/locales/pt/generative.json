@@ -163,7 +163,7 @@
     "generativeModule": "Módulo Generativo",
     "importedDocuments_one": "{{count}} documento foi adicionado ao módulo Data.",
     "importedDocuments_other": "{{count}} documentos foram adicionados ao módulo Data.",
-    "importedIndexBeforeChat": "Indexe a sessão antes de conversar.",
+    "importedIndexOnOpen": "O índice será criado ao abrir a sessão.",
     "importedNeedsDownload": "Estes modelos devem ser baixados antes de usar a sessão: {{names}}",
     "importedReusedDocuments_one": "{{count}} documento já estava no módulo Data e foi reutilizado.",
     "importedReusedDocuments_other": "{{count}} documentos já estavam no módulo Data e foram reutilizados.",

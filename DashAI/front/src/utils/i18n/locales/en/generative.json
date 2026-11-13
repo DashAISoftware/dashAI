@@ -161,7 +161,7 @@
     "generativeModule": "Generative Module",
     "importedDocuments_one": "{{count}} document was added to the Data module.",
     "importedDocuments_other": "{{count}} documents were added to the Data module.",
-    "importedIndexBeforeChat": "Index the session before chatting.",
+    "importedIndexOnOpen": "The index will be built when the session opens.",
     "importedNeedsDownload": "These models must be downloaded before using the session: {{names}}",
     "importedReusedDocuments_one": "{{count}} document was already in the Data module and was reused.",
     "importedReusedDocuments_other": "{{count}} documents were already in the Data module and were reused.",

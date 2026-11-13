@@ -69,6 +69,7 @@ def test_rag_session_round_trip_reuses_the_same_document(client: TestClient):
     assert [d["id"] for d in linked.json()] == [document_id]
     status = client.get(f"/api/v1/rag/sessions/{result['session_id']}/index-status")
     assert status.json()["status"] == "not_indexed"
+    assert status.json()["needs_reindex"] is True
 
 
 def test_rag_document_is_copied_when_not_already_here(client: TestClient):

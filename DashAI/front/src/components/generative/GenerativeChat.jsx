@@ -78,9 +78,16 @@ const extractUserMessage = (input) => {
  * @param {string} [props.generatorName] - For RAG sessions, the generator
  *   selected in the configuration panel, saved or not. The composer is blocked
  *   while it is not downloaded, like a normal session's model.
+ * @param {Function} [props.onProcessSettled] - Called when a message finishes
+ *   or fails. A RAG session uses it to reread its index status, since the
+ *   chat job indexes on its own when the index is missing.
  * @returns {JSX.Element} The chat.
  */
-export default function GenerativeChat({ indexStatus, generatorName }) {
+export default function GenerativeChat({
+  indexStatus,
+  generatorName,
+  onProcessSettled,
+}) {
   const theme = useTheme();
 
   const {
@@ -302,6 +309,7 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
         getProcessById(msg.id)
           .then((process) => {
             const status = process.status;
+            if (status === 3 || status === 4) onProcessSettled?.();
 
             // Error
             if (status === 4) {

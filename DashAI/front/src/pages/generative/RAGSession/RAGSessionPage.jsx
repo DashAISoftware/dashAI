@@ -241,6 +241,7 @@ export default function RAGSessionPage() {
               key={sessionId}
               indexStatus={indexStatus}
               generatorName={generatorName}
+              onProcessSettled={refreshIndexStatus}
             />
           </CenterPanel>
 

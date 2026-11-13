@@ -161,7 +161,7 @@ export default function ImportGenerativeSessionButton({ onImported }) {
                   t("generative:label.importedReusedDocuments", {
                     count: result.reused_document_count,
                   }),
-                t("generative:label.importedIndexBeforeChat"),
+                t("generative:label.importedIndexOnOpen"),
               ]
                 .filter(Boolean)
                 .join(" ")}
