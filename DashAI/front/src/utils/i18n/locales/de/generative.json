@@ -399,6 +399,8 @@
         "deleted": "Prompt gelöscht",
         "deleteError": "Der Prompt konnte nicht gelöscht werden",
         "template": "Vorlage",
+        "templateLanguage": "Vorlagensprache",
+        "templatePreviewHelp": "Nur Vorschau: Ein Sprachwechsel ändert den gespeicherten Prompt nicht.",
         "noTemplate": "Dieser Prompt hat keine Vorlage.",
         "usedBy": "Verwendet von",
         "notUsed": "Keine RAG-Sitzung verwendet diesen Prompt.",

@@ -397,6 +397,8 @@
         "deleted": "提示词已删除",
         "deleteError": "无法删除提示词",
         "template": "模板",
+        "templateLanguage": "模板语言",
+        "templatePreviewHelp": "仅供预览：切换语言不会更改已保存的提示词。",
         "noTemplate": "此提示词没有模板。",
         "usedBy": "使用者",
         "notUsed": "没有 RAG 会话使用此提示词。",

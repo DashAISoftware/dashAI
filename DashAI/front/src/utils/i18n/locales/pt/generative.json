@@ -401,6 +401,8 @@
         "deleted": "Prompt excluído",
         "deleteError": "Não foi possível excluir o prompt",
         "template": "Modelo",
+        "templateLanguage": "Idioma do modelo",
+        "templatePreviewHelp": "Apenas pré-visualização: mudar o idioma não altera o prompt salvo.",
         "noTemplate": "Este prompt não tem modelo.",
         "usedBy": "Usado por",
         "notUsed": "Nenhuma sessão RAG usa este prompt.",

@@ -401,6 +401,8 @@
         "deleted": "Prompt eliminado",
         "deleteError": "No se pudo eliminar el prompt",
         "template": "Plantilla",
+        "templateLanguage": "Idioma de la plantilla",
+        "templatePreviewHelp": "Solo vista previa: cambiar el idioma no modifica el prompt guardado.",
         "noTemplate": "Este prompt no tiene plantilla.",
         "usedBy": "Usado por",
         "notUsed": "Ninguna sesión RAG usa este prompt.",
