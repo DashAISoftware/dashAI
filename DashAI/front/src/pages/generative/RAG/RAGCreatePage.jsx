@@ -4,12 +4,14 @@ import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import {
   Box,
+  Button,
   CircularProgress,
   Stack,
   TextField,
   Typography,
   useMediaQuery,
 } from "@mui/material";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import ModuleContainer from "../../../components/layout/ModuleContainer";
 import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../../components/threeSectionLayout/panels/CenterPanel";
@@ -298,6 +300,16 @@ export default function RAGCreatePage() {
                 nextLabel={t("generative:button.createSession")}
                 loading={submitting}
                 variant="save"
+                leftContent={
+                  <Button
+                    variant="text"
+                    startIcon={<MenuBookIcon />}
+                    onClick={() => navigate("/app/generative/rag/prompts")}
+                    disabled={submitting}
+                  >
+                    {t("generative:rag.prompt.library.title")}
+                  </Button>
+                }
               />
             </Box>
           </CenterPanel>

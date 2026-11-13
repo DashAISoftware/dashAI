@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Alert,
   Autocomplete,
   Box,
   Button,
+  Chip,
   Stack,
   TextField,
   Tooltip,
@@ -20,6 +21,7 @@ import PromptTemplateDialog, {
   PROMPT_DIALOG_MODES,
 } from "./PromptTemplateDialog";
 import usePromptOptions from "./usePromptOptions";
+import { getLibraryPrompts } from "../../../api/rag";
 import {
   DEFAULT_PROMPT_LANGUAGE,
   PROMPT_LANGUAGE_PARAM,
@@ -35,6 +37,54 @@ import {
 
 /** Width the selector keeps before it starts wrapping the action row. */
 const SELECTOR_MIN_WIDTH = 220;
+
+/**
+ * Template text stored in a prompt's parameters.
+ *
+ * Saved prompts may store a single `template` or a `templates` map; the
+ * explicit text wins, then the requested language, then any stored language.
+ *
+ * @param {object} parameters - The prompt's stored parameters.
+ * @param {string} language - The language to prefer.
+ * @returns {string} The template, or an empty string.
+ */
+function templateFromParameters(parameters, language) {
+  const stored = parameters ?? {};
+  if (typeof stored.template === "string" && stored.template.trim()) {
+    return stored.template;
+  }
+  const templates = stored.templates ?? {};
+  return (
+    templates[language] ??
+    templates[DEFAULT_PROMPT_LANGUAGE] ??
+    Object.values(templates).find(
+      (value) => typeof value === "string" && value.trim(),
+    ) ??
+    ""
+  );
+}
+
+/**
+ * Whether two prompt parameter objects carry the same values.
+ *
+ * @param {object} left - First parameters object.
+ * @param {object} right - Second parameters object.
+ * @returns {boolean} True when their serialized values match.
+ */
+function sameParameters(left, right) {
+  return JSON.stringify(left ?? {}) === JSON.stringify(right ?? {});
+}
+
+/**
+ * A short discriminator for two saved prompts that share a name.
+ *
+ * @param {object} prompt - A library prompt.
+ * @returns {string} The prompt's subtype, type or class, plus its id.
+ */
+function libraryPromptKind(prompt) {
+  const kind = prompt?.prompt_subtype || prompt?.prompt_type;
+  return kind ? `${kind} #${prompt.id}` : `#${prompt.id}`;
+}
 
 /**
  * Schema card for a prompt-typed field.
@@ -92,6 +142,76 @@ export default function PromptFieldCard({
     [stageOptions],
   );
 
+  // Saved library prompts are offered next to the registered components so a
+  // user can reuse a shared prompt without retyping its template. They are
+  // bound by content: the ref carries the saved prompt's own class and
+  // parameters, which the backend resolves back to the library row.
+  const [libraryPrompts, setLibraryPrompts] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    getLibraryPrompts()
+      .then((prompts) => {
+        if (!cancelled) setLibraryPrompts(prompts ?? []);
+      })
+      .catch((error) => {
+        console.error("Failed to load saved prompts:", error);
+        if (!cancelled) setLibraryPrompts([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // The stage's registered components are the only prompts this slot can run,
+  // and a saved prompt is bound by its own class: a row whose class is not
+  // offered here could never be resolved, so it is not offered either.
+  const libraryOptions = useMemo(() => {
+    if (libraryPrompts.length === 0 || stageOptions.length === 0) return [];
+
+    const compatible = libraryPrompts.filter(
+      (prompt) =>
+        prompt?.is_library &&
+        stageOptions.some((option) => option.name === prompt.class_name),
+    );
+
+    // Two rows can share a name; the selector has to tell them apart.
+    const nameCounts = compatible.reduce((counts, prompt) => {
+      counts.set(prompt.name, (counts.get(prompt.name) ?? 0) + 1);
+      return counts;
+    }, new Map());
+
+    const options = [];
+    compatible.forEach((prompt) => {
+      const base = stageOptions.find(
+        (option) => option.name === prompt.class_name,
+      );
+      if (!base) return;
+      const label = prompt.name || base.metadata?.name || base.name;
+      const repeated = (nameCounts.get(prompt.name) ?? 0) > 1;
+      const displayLabel = repeated
+        ? `${label} — ${libraryPromptKind(prompt)}`
+        : label;
+      options.push({
+        ...base,
+        // A synthetic name keeps two saved prompts of the same component
+        // distinct inside the Autocomplete; the real class is carried
+        // separately so the emitted ref stays canonical.
+        name: `${base.name}#library-${prompt.id}`,
+        // Custom components label themselves from metadata, so the saved
+        // name has to override it for the option to read as the user's row.
+        metadata: {
+          ...base.metadata,
+          name: displayLabel,
+        },
+        libraryPromptId: prompt.id,
+        libraryClassName: prompt.class_name,
+        libraryParameters: prompt.parameters ?? {},
+        display_name: displayLabel,
+      });
+    });
+    return options;
+  }, [libraryPrompts, stageOptions]);
+
   const selection = readPromptSelection(field.value);
   const selectedComponent = useMemo(() => {
     const registered = options.find(
@@ -109,24 +229,42 @@ export default function PromptFieldCard({
     };
   }, [options, selection.component]);
 
+  // A saved prompt is selected when the form already holds its exact class and
+  // parameters. Anything else (an edit, a default, a custom ref) falls back to
+  // the registered component as before.
+  const libraryMatch = useMemo(() => {
+    if (!selection.component) return null;
+    return (
+      libraryOptions.find(
+        (option) =>
+          option.libraryClassName === selection.component &&
+          sameParameters(option.libraryParameters, selection.params),
+      ) ?? null
+    );
+  }, [libraryOptions, selection.component, selection.params]);
+
+  const activeOption = libraryMatch ?? selectedComponent;
+
   // The current selection is always an option, even when the filter rejects it,
   // or the Autocomplete cannot render the value it is given.
-  const autocompleteOptions = useMemo(
-    () =>
-      selectedComponent && !selectableOptions.includes(selectedComponent)
-        ? [selectedComponent, ...selectableOptions]
-        : selectableOptions,
-    [selectableOptions, selectedComponent],
-  );
+  const autocompleteOptions = useMemo(() => {
+    const list = [...libraryOptions, ...selectableOptions];
+    if (
+      activeOption &&
+      !list.some((option) => option.name === activeOption.name)
+    ) {
+      list.unshift(activeOption);
+    }
+    return list;
+  }, [libraryOptions, selectableOptions, activeOption]);
 
   const language =
     selection.params?.[PROMPT_LANGUAGE_PARAM] || DEFAULT_PROMPT_LANGUAGE;
-  const template = resolvePromptTemplate(
-    selectedComponent,
-    selection.params,
-    language,
-  );
-  const missing = getMissingPromptPlaceholders(selectedComponent, template);
+  const template = libraryMatch
+    ? templateFromParameters(libraryMatch.libraryParameters, language) ||
+      resolvePromptTemplate(activeOption, {}, language)
+    : resolvePromptTemplate(selectedComponent, selection.params, language);
+  const missing = getMissingPromptPlaceholders(activeOption, template);
   // Only a technique's own prompts may be created: offering the custom prompt
   // here would let a user write a template this stage never runs.
   const customOption = useMemo(
@@ -162,6 +300,13 @@ export default function PromptFieldCard({
    */
   const handleSelect = (_event, option) => {
     if (!option) return;
+
+    // A saved library prompt is bound by content: the emitted ref carries the
+    // row's own class and parameters, and its template is already complete.
+    if (option.libraryPromptId) {
+      emit(option.libraryClassName, option.libraryParameters ?? {});
+      return;
+    }
 
     const languages = promptTemplateLanguages(option);
     if (languages.length > 0) {
@@ -209,10 +354,15 @@ export default function PromptFieldCard({
 
   /** Open the dialog to rewrite the current component's template. */
   const handleEdit = () => {
-    if (!selectedComponent) return;
+    // Editing a saved prompt here is a session-local edit: the ref keeps the
+    // saved class but its new parameters make the backend bind a draft copy.
+    const editOption = libraryMatch
+      ? { ...libraryMatch, name: libraryMatch.libraryClassName }
+      : selectedComponent;
+    if (!editOption) return;
     setDialog({
       mode: PROMPT_DIALOG_MODES.edit,
-      component: selectedComponent,
+      component: editOption,
       template,
       language,
     });
@@ -274,16 +424,17 @@ export default function PromptFieldCard({
               loading={loading}
               disabled={disabled}
               disableClearable
-              value={selectedComponent}
+              value={activeOption}
               getOptionLabel={getPromptDisplayName}
               isOptionEqualToValue={(option, value) =>
                 option?.name === value?.name
               }
               // The stored value is prepended even when the technique filter
               // rejects it, so it stays readable; it must not be re-selectable
-              // as a valid option for this stage.
+              // as a valid option for this stage. Saved prompts are always
+              // valid choices for their own type.
               getOptionDisabled={(option) =>
-                !selectableOptions.includes(option)
+                !option.libraryPromptId && !selectableOptions.includes(option)
               }
               onChange={handleSelect}
               renderInput={(params) => (
@@ -311,6 +462,26 @@ export default function PromptFieldCard({
             </Tooltip>
           </Stack>
 
+          {libraryOptions.length > 0 && (
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              useFlexGap
+              flexWrap="wrap"
+            >
+              <Chip
+                size="small"
+                color="info"
+                variant="outlined"
+                label={t("generative:rag.prompt.field.saved")}
+              />
+              <Typography variant="caption" color="text.secondary">
+                {t("generative:rag.prompt.field.savedHelp")}
+              </Typography>
+            </Stack>
+          )}
+
           {loadError && (
             <Alert severity="warning" sx={{ py: 0.5 }}>
               {t("generative:rag.prompt.field.loadError")}
@@ -336,7 +507,14 @@ export default function PromptFieldCard({
             }}
           >
             {template ? (
-              renderTemplateWithHighlights(template)
+              renderTemplateWithHighlights(
+                template,
+                {
+                  bg: theme.palette.placeholder.bg,
+                  text: theme.palette.placeholder.text,
+                },
+                theme.typography.code.fontFamily,
+              )
             ) : (
               <Typography variant="body2" color="text.secondary">
                 {t("generative:rag.prompt.field.empty")}
@@ -357,11 +535,19 @@ export default function PromptFieldCard({
               variant="text"
               size="small"
               startIcon={<EditIcon />}
-              disabled={disabled || !selectedComponent}
+              disabled={disabled || !activeOption}
               onClick={handleEdit}
             >
               {t("generative:rag.prompt.field.edit")}
             </Button>
+            <Typography
+              variant="caption"
+              display="block"
+              color="text.secondary"
+              sx={{ mt: 0.5 }}
+            >
+              {t("generative:rag.prompt.field.sessionOnlyHelp")}
+            </Typography>
           </Box>
         </Stack>
       </FormSchemaFieldCard>

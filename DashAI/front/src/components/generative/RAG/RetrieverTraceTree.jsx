@@ -61,7 +61,7 @@ function resolveChunkInfo(references, chunkRef) {
 /**
  * Pick the configured child that corresponds to a trace child node.
  *
- * Trace children may repeat a retriever (LLM-evaluated rounds) or contain
+ * Trace children may repeat a retriever (agentic rounds) or contain
  * siblings of the same class (parallel retrievers). Match by class name and
  * occurrence order, reusing the last configured entry when the trace repeats a
  * child more often than the configuration declares it.

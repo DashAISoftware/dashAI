@@ -1,4 +1,4 @@
-"""Default retrieval sufficiency evaluation prompt."""
+"""Default agentic retriever prompt."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.exceptions import RAGPromptTemplateError
-from DashAI.back.models.RAG.prompts.evaluation.retrieval_sufficiency_prompt import (
-    RetrievalSufficiencyPrompt,
+from DashAI.back.models.RAG.prompts.evaluation.agentic_retriever_prompt import (
+    AgenticRetrieverPrompt,
 )
 
 TEMPLATES = {
@@ -52,7 +52,7 @@ TEMPLATES = {
         "chunks take priority. Use the document chunk counts to choose valid "
         "positions in 0..C-1.\n"
         "\n"
-        "Respond by calling the function evaluate_retrieval_sufficiency with a "
+        "Respond by calling the function evaluate_agentic_retrieval with a "
         "single JSON object with this shape:\n"
         '{"sufficient": <true or false>, "call_retrievers": '
         '{"<retriever index>": <top_k>}, "request_specific_chunks": '
@@ -132,7 +132,7 @@ TEMPLATES = {
         "prioridad. Usa el número de fragmentos de cada documento para elegir "
         "posiciones válidas en 0..C-1.\n"
         "\n"
-        "Responde llamando a la función evaluate_retrieval_sufficiency con un "
+        "Responde llamando a la función evaluate_agentic_retrieval con un "
         "único objeto JSON con esta forma:\n"
         '{"sufficient": <true o false>, "call_retrievers": '
         '{"<índice del recuperador>": <top_k>}, "request_specific_chunks": '
@@ -216,7 +216,7 @@ TEMPLATES = {
         "solicitados; os trechos solicitados têm prioridade. Use o número de "
         "trechos de cada documento para escolher posições válidas em 0..C-1.\n"
         "\n"
-        "Responda chamando a função evaluate_retrieval_sufficiency com um "
+        "Responda chamando a função evaluate_agentic_retrieval com um "
         "único objeto JSON com esta forma:\n"
         '{"sufficient": <true ou false>, "call_retrievers": '
         '{"<índice do recuperador>": <top_k>}, "request_specific_chunks": '
@@ -267,8 +267,8 @@ TEMPLATES = {
 }
 
 
-class DefaultRetrievalSufficiencyPromptSchema(BaseSchema):
-    """Schema for the default retrieval sufficiency prompt.
+class DefaultAgenticRetrieverPromptSchema(BaseSchema):
+    """Schema for the default agentic retriever prompt.
 
     Attributes:
         language: Language code for the generated instructions (en, es, pt).
@@ -293,38 +293,43 @@ class DefaultRetrievalSufficiencyPromptSchema(BaseSchema):
     )
 
 
-class DefaultRetrievalSufficiencyPrompt(RetrievalSufficiencyPrompt):
+class DefaultAgenticRetrieverPrompt(AgenticRetrieverPrompt):
     """Default prompt template for judging retrieval sufficiency."""
 
-    SCHEMA = DefaultRetrievalSufficiencyPromptSchema
+    SCHEMA = DefaultAgenticRetrieverPromptSchema
+    #: Registered component used when a user forks this default.
+    CUSTOM_CLASS: str = "CustomAgenticRetrieverPrompt"
     DESCRIPTION: str = MultilingualString(
-        en="Default prompt template for deciding whether retrieved chunks are"
-        " sufficient and which retrievers to consult next.",
-        es="Plantilla de prompt predeterminada para decidir si los fragmentos"
-        " recuperados son suficientes y qué recuperadores consultar después.",
-        pt="Modelo de prompt padrão para decidir se os trechos recuperados são"
-        " suficientes e quais recuperadores consultar em seguida.",
-        de="Standard-Prompt-Vorlage, um zu entscheiden, ob abgerufene Fragmente"
-        " ausreichen und welche Retriever als Nächstes zu konsultieren sind.",
-        zh="用于判断已检索片段是否充分以及下一步咨询哪些检索器的默认提示词模板。",
+        en="Default agentic retriever prompt template for deciding whether"
+        " retrieved chunks are sufficient and which retrievers to consult next.",
+        es="Plantilla de prompt agéntico de recuperación predeterminada para"
+        " decidir si los fragmentos recuperados son suficientes y qué"
+        " recuperadores consultar después.",
+        pt="Modelo de prompt agêntico de recuperação padrão para decidir se os"
+        " trechos recuperados são suficientes e quais recuperadores consultar em"
+        " seguida.",
+        de="Standard-Prompt-Vorlage für den agentischen Retriever, um zu"
+        " entscheiden, ob abgerufene Fragmente ausreichen und welche Retriever"
+        " als Nächstes zu konsultieren sind.",
+        zh="用于判断已检索片段是否充分以及下一步咨询哪些检索器的默认智能体检索提示词模板。",
     )
     DISPLAY_NAME: str = MultilingualString(
-        en="Default Retrieval Sufficiency Prompt",
-        es="Prompt de Suficiencia de Recuperación Predeterminado",
-        pt="Prompt de Suficiência de Recuperação Padrão",
-        de="Standard-Retrieval-Suffizienz-Prompt",
-        zh="默认检索充分性提示词",
+        en="Default Agentic Retriever Prompt",
+        es="Prompt Agéntico de Recuperación Predeterminado",
+        pt="Prompt Agêntico de Recuperação Padrão",
+        de="Standard-Prompt für den agentischen Retriever",
+        zh="默认智能体检索提示词",
     )
 
-    required_placeholders = RetrievalSufficiencyPrompt.required_placeholders
-    optional_placeholders = RetrievalSufficiencyPrompt.optional_placeholders
+    required_placeholders = AgenticRetrieverPrompt.required_placeholders
+    optional_placeholders = AgenticRetrieverPrompt.optional_placeholders
 
     metadata = {
-        "name": "Default Retrieval Sufficiency Prompt",
+        "name": "Default Agentic Retriever Prompt",
         "description": "Default prompt template for deciding whether retrieved"
         " chunks are sufficient and which retrievers or chunks to fetch next.",
         "type": "evaluation",
-        "technique": "sufficiency",
+        "technique": "retriever",
         "required_placeholders": required_placeholders,
         "optional_placeholders": optional_placeholders,
         "placeholder_descriptions": {
@@ -371,7 +376,7 @@ class DefaultRetrievalSufficiencyPrompt(RetrievalSufficiencyPrompt):
     }
 
     def __init__(self, **kwargs: Any) -> None:
-        """Initialize the default sufficiency prompt.
+        """Initialize the default agentic retriever prompt.
 
         Parameters
         ----------

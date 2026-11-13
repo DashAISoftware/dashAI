@@ -395,17 +395,15 @@ from DashAI.back.models.RAG.chunking_models import (
     TokenChunkModel,
 )
 from DashAI.back.models.RAG.prompts import (
-    CustomAugmentationPrompt,
     CustomRAGGenerationPrompt,
-    DefaultAugmentationPrompt,
     DefaultQARAGGenerationPrompt,
     DefaultRAGGenerationPrompt,
 )
 from DashAI.back.models.RAG.prompts.evaluation import (
-    CustomLLMFilterPrompt,
-    CustomRetrievalSufficiencyPrompt,
-    DefaultLLMFilterPrompt,
-    DefaultRetrievalSufficiencyPrompt,
+    CustomAgenticRerankerPrompt,
+    CustomAgenticRetrieverPrompt,
+    DefaultAgenticRerankerPrompt,
+    DefaultAgenticRetrieverPrompt,
 )
 from DashAI.back.models.RAG.prompts.transformation import (
     CustomQueryDecompositionPrompt,
@@ -415,14 +413,14 @@ from DashAI.back.models.RAG.prompts.transformation import (
     DefaultQueryExpansionPrompt,
     DefaultQueryRewritingPrompt,
 )
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_depth_retriever import (
-    LLMEvaluatedDepthRetriever,
+from DashAI.back.models.RAG.retrievers.composite.agentic_ensemble_retriever import (  # noqa: E501
+    AgenticEnsembleRetriever,
 )
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_ensemble_retriever import (  # noqa: E501
-    LLMEvaluatedEnsembleRetriever,
+from DashAI.back.models.RAG.retrievers.composite.agentic_reranker_retriever import (
+    AgenticRerankerRetriever,
 )
-from DashAI.back.models.RAG.retrievers.composite.llm_filter_retriever import (
-    LLMFilterRetriever,
+from DashAI.back.models.RAG.retrievers.composite.agentic_single_retriever import (
+    AgenticSingleRetriever,
 )
 from DashAI.back.models.RAG.retrievers.composite.mmr_reranker_retriever import (
     MMRRerankerRetriever,
@@ -1092,8 +1090,6 @@ def get_initial_components():
         DefaultRAGGenerationPrompt,
         CustomRAGGenerationPrompt,
         DefaultQARAGGenerationPrompt,
-        DefaultAugmentationPrompt,
-        CustomAugmentationPrompt,
         # Query Transformation Prompts
         DefaultQueryRewritingPrompt,
         CustomQueryRewritingPrompt,
@@ -1101,12 +1097,12 @@ def get_initial_components():
         CustomQueryExpansionPrompt,
         DefaultQueryDecompositionPrompt,
         CustomQueryDecompositionPrompt,
-        # Retrieval Sufficiency Prompts
-        DefaultRetrievalSufficiencyPrompt,
-        CustomRetrievalSufficiencyPrompt,
-        # LLM Filter Prompts
-        DefaultLLMFilterPrompt,
-        CustomLLMFilterPrompt,
+        # Agentic Retriever Prompts
+        DefaultAgenticRetrieverPrompt,
+        CustomAgenticRetrieverPrompt,
+        # Agentic Reranker Prompts
+        DefaultAgenticRerankerPrompt,
+        CustomAgenticRerankerPrompt,
         # Retrievers
         BM25Retriever,
         TFIDFRetriever,
@@ -1115,9 +1111,9 @@ def get_initial_components():
         MMRRerankerRetriever,
         SequentialRetriever,
         ParallelRetriever,
-        LLMEvaluatedDepthRetriever,
-        LLMEvaluatedEnsembleRetriever,
-        LLMFilterRetriever,
+        AgenticSingleRetriever,
+        AgenticEnsembleRetriever,
+        AgenticRerankerRetriever,
         # Query Transformation
         LLMQueryRewriter,
         LLMQueryExpander,

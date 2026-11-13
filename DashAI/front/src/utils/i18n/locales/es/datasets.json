@@ -548,6 +548,8 @@
     "failedToUpdate": "No se pudo renombrar el documento",
     "nameExists": "Ya existe un documento con este nombre",
     "confirmDelete": "¿Seguro que quieres eliminar el documento \"{{name}}\"? Esta acción no se puede deshacer.",
+    "cascadeWarning": "Las siguientes sesiones RAG también usan este documento y se eliminarán: {{sessions}}.",
+    "cascadeConfirm": "Este documento lo usan estas sesiones RAG, que también se eliminarán: {{sessions}}. ¿Continuar?",
     "statusProcessing": "Procesando...",
     "statusError": "Error al procesar",
     "contentSummary": "{{text}} elementos de texto, {{image}} imágenes",

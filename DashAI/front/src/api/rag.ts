@@ -258,6 +258,122 @@ export const getDefaultPrompts = async (): Promise<IComponent[]> => {
   return getChildComponents("RAGGenerationPrompt", false);
 };
 
+/** A RAG session that uses a saved prompt. */
+export interface IPromptSession {
+  id: number;
+  name: string;
+}
+
+/** A prompt saved in the prompt library. */
+export interface IRAGPrompt {
+  id: number;
+  class_name: string;
+  name: string | null;
+  parameters: {
+    template?: string;
+    templates?: Record<string, string>;
+    language?: string;
+  } | null;
+  created: string;
+  last_modified: string;
+  is_library: boolean;
+  is_default: boolean;
+  based_on_id?: number | null;
+  origin?: "default" | "library";
+  prompt_type?: string | null;
+  prompt_subtype?: string | null;
+  sessions: IPromptSession[];
+}
+
+export interface IRAGPromptCreate {
+  class_name: string;
+  name: string;
+  parameters: { template: string; language?: string };
+}
+
+export interface IRAGPromptUpdate {
+  name?: string;
+  parameters?: { template?: string; templates?: Record<string, string> };
+}
+
+export interface IRAGPromptFork {
+  name: string;
+  parameters?: { template?: string; templates?: Record<string, string> };
+}
+
+/** Fetches the prompts saved by the user (not internal pipeline rows). */
+export const getLibraryPrompts = async (): Promise<IRAGPrompt[]> => {
+  const response = await api.get<IRAGPrompt[]>("/v1/prompt/library");
+  if (response.status !== 200) {
+    throw new Error(`Failed to fetch prompt library: ${response.statusText}`);
+  }
+  return response.data;
+};
+
+/** Creates a prompt in the prompt library. */
+export const createRAGPrompt = async (
+  prompt: IRAGPromptCreate,
+): Promise<{ id: number }> => {
+  const response = await api.post<{ id: number }>("/v1/prompt/", prompt);
+  if (response.status !== 201) {
+    throw new Error(`Failed to create RAG prompt: ${response.statusText}`);
+  }
+  return response.data;
+};
+
+/** Fetches a single prompt from the library by ID. */
+export const getRAGPrompt = async (promptId: number): Promise<IRAGPrompt> => {
+  const response = await api.get<IRAGPrompt>(`/v1/prompt/${promptId}`);
+  if (response.status !== 200) {
+    throw new Error(`Failed to fetch RAG prompt: ${response.statusText}`);
+  }
+  return response.data;
+};
+
+/** Edits a library prompt in place. Defaults and drafts are rejected by the API. */
+export const updateRAGPrompt = async (
+  promptId: number,
+  payload: IRAGPromptUpdate,
+): Promise<IRAGPrompt> => {
+  const response = await api.patch<IRAGPrompt>(
+    `/v1/prompt/${promptId}`,
+    payload,
+  );
+  if (response.status !== 200) {
+    throw new Error(`Failed to update RAG prompt: ${response.statusText}`);
+  }
+  return response.data;
+};
+
+/** Creates a library copy of a prompt, switching defaults to their Custom* class. */
+export const forkRAGPrompt = async (
+  promptId: number,
+  payload: IRAGPromptFork,
+): Promise<IRAGPrompt> => {
+  const response = await api.post<IRAGPrompt>(
+    `/v1/prompt/${promptId}/fork`,
+    payload,
+  );
+  if (response.status !== 201) {
+    throw new Error(`Failed to fork RAG prompt: ${response.statusText}`);
+  }
+  return response.data;
+};
+
+/** Deletes a library prompt, optionally detaching or deleting its sessions. */
+export const deleteRAGPrompt = async (
+  promptId: number,
+  cascadeSessions = false,
+  detach = false,
+): Promise<void> => {
+  const response = await api.delete(`/v1/prompt/${promptId}`, {
+    params: { cascade_sessions: cascadeSessions, detach },
+  });
+  if (response.status !== 204) {
+    throw new Error(`Failed to delete RAG prompt: ${response.statusText}`);
+  }
+};
+
 /**
  * Fetches query transformation components (children of BaseQueryTransformation).
  * @returns List of transformer components, each carrying `metadata.technique`

@@ -100,6 +100,8 @@ class DefaultRAGGenerationPrompt(RAGGenerationPrompt):
     """
 
     SCHEMA = DefaultRAGGenerationPromptSchema
+    #: Registered component used when a user forks this default.
+    CUSTOM_CLASS: str = "CustomRAGGenerationPrompt"
     DESCRIPTION: str = MultilingualString(
         en="Default prompt template used in the language generation step of RAG.",
         es="Plantilla de prompt predeterminada utilizada en el paso de"

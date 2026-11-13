@@ -8,25 +8,41 @@ nor another session's index.
 """
 
 import logging
-from typing import List, Optional
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session, joinedload
 
 from DashAI.back.core.enums.status import DocumentStatus
 from DashAI.back.dependencies.database.models import (
     DataDocument,
+    GenerativeProcess,
     GenerativeSession,
     GenerativeSessionParameterHistory,
+    ProcessData,
+    RAGPipeline,
     RAGSessionDocument,
+    RAGSessionPrompt,
 )
 from DashAI.back.dependencies.job_queues.base_job_queue import BaseJobQueue
 from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_DOCUMENTS
 from DashAI.back.services.RAG.cleanup_service import CleanupService
 from DashAI.back.services.RAG.index_job_service import cancel_live_index_job
+from DashAI.back.services.RAG.prompt_service import (
+    snapshot_bindings as snapshot_session_bindings,
+)
 
 log = logging.getLogger(__name__)
 
 _RAG_TASK_NAME = "RAGTask"
+
+
+@dataclass(frozen=True)
+class SessionRef:
+    """A session's id and name, as document payloads expose them."""
+
+    id: int
+    name: str
 
 
 class DocumentNotReadyError(ValueError):
@@ -34,7 +50,8 @@ class DocumentNotReadyError(ValueError):
 
 
 class SessionDocumentService:
-    """Attach, detach and list the Data documents of RAG sessions.
+    """Attach, detach and list the Data documents of RAG sessions, and delete
+    the sessions themselves with their RAG artifacts.
 
     Parameters
     ----------
@@ -196,6 +213,89 @@ class SessionDocumentService:
         self.sync_session_documents(session)
         self.db.commit()
 
+    def delete_session(
+        self,
+        session_id: int,
+        *,
+        commit: bool = True,
+        missing_ok: bool = False,
+    ) -> bool:
+        """Delete a session, its processes and its RAG artifacts.
+
+        SQLite foreign keys are not enforced, so every dependant row is
+        deleted explicitly: process data, processes, parameter history,
+        document links, prompt-slot bindings, chunk sets and the
+        ``rag_pipeline`` row.
+
+        Parameters
+        ----------
+        session_id : int
+            The session to delete.
+        commit : bool
+            Commit when done. ``False`` lets a caller delete several sessions
+            and their shared document in one transaction.
+        missing_ok : bool
+            Return ``False`` instead of raising when the session does not
+            exist. The bulk endpoint uses this to skip unknown ids.
+
+        Returns
+        -------
+        bool
+            Whether a session was found and deleted.
+
+        Raises
+        ------
+        LookupError
+            If the session does not exist and ``missing_ok`` is false.
+        """
+        session = self.db.get(GenerativeSession, session_id)
+        if session is None:
+            if missing_ok:
+                return False
+            raise LookupError(f"Generative session {session_id} does not exist.")
+
+        old_parameters = dict(session.parameters or {})
+        try:
+            # Stop work that would otherwise keep writing the rows deleted
+            # below. The pointer is cleared with the same transaction.
+            cancel_live_index_job(session, self._job_queue)
+            self._delete_processes(session_id)
+            CleanupService(self.db).invalidate_session_artifacts(
+                session_id, commit=False
+            )
+            self._delete_history(session_id)
+            self._delete_document_links(session_id)
+            # SQLite foreign keys are not enforced in this application, so the
+            # ``ondelete="CASCADE"`` of ``rag_session_prompt`` never fires.
+            # Delete the bindings explicitly in the same transaction as the
+            # session: a dangling binding would make the next session that
+            # reuses the id inherit another session's prompts.
+            self._delete_prompt_bindings(session_id)
+            # The bulk delete above bypasses the identity map. If the
+            # collection had been loaded, the session's delete-orphan cascade
+            # would otherwise try to delete those rows a second time.
+            self.db.expire(session, ["document_links"])
+
+            # Runs while the pipeline still exists: it looks the pipeline up
+            # to know which retriever and chunking rows belong to the session.
+            CleanupService(self.db).cleanup_orphaned_resources(
+                session_id, old_parameters, commit=False
+            )
+            # SQLite will not cascade this, and leaving it behind would make
+            # the next session that reuses the id inherit a stale pipeline.
+            self.db.query(RAGPipeline).filter(
+                RAGPipeline.session_id == session_id
+            ).delete(synchronize_session="fetch")
+
+            self.db.delete(session)
+            if commit:
+                self.db.commit()
+        except Exception:
+            self.db.rollback()
+            log.exception("Could not delete generative session %s", session_id)
+            raise
+        return True
+
     def sessions_using(self, data_document_id: int) -> List[GenerativeSession]:
         """Return the sessions that use a document, by id.
 
@@ -219,6 +319,31 @@ class SessionDocumentService:
             .order_by(GenerativeSession.id)
             .all()
         )
+
+    def sessions_by_document(self) -> Dict[int, List[SessionRef]]:
+        """Map every document id to the sessions that use it.
+
+        Returns
+        -------
+        dict
+            ``{document_id: [SessionRef(id, name)]}``. Documents without
+            sessions are absent.
+        """
+        rows = (
+            self.db.query(RAGSessionDocument.data_document_id, GenerativeSession)
+            .join(
+                GenerativeSession,
+                GenerativeSession.id == RAGSessionDocument.session_id,
+            )
+            .order_by(GenerativeSession.id)
+            .all()
+        )
+        usage: Dict[int, List[SessionRef]] = {}
+        for document_id, session in rows:
+            usage.setdefault(document_id, []).append(
+                SessionRef(id=session.id, name=session.name)
+            )
+        return usage
 
     def linked_document_ids(self, session_id: int) -> List[int]:
         """Return the ids of the documents a session uses, ascending.
@@ -261,10 +386,13 @@ class SessionDocumentService:
             return
         parameters[RAG_PARAM_DOCUMENTS] = document_ids
         session.parameters = parameters
+        # ``PromptService.snapshot_bindings`` delegates to this same helper, so
+        # document-driven entries capture prompts exactly like session edits.
         self.db.add(
             GenerativeSessionParameterHistory(
                 session_id=session.id,
                 parameters=parameters,
+                prompt_bindings=snapshot_session_bindings(self.db, session.id),
                 model_name=session.model_name,
             )
         )
@@ -279,3 +407,52 @@ class SessionDocumentService:
         """
         cancel_live_index_job(session, self._job_queue)
         CleanupService(self.db).invalidate_session_artifacts(session.id, commit=False)
+
+    def _delete_processes(self, session_id: int) -> None:
+        """Delete a session's processes and their input/output rows."""
+        processes = (
+            self.db.query(GenerativeProcess)
+            .filter(GenerativeProcess.session_id == session_id)
+            .all()
+        )
+        for process in processes:
+            # ``fetch`` keeps the identity map in sync with the loaded
+            # process.input/output collections; ``False`` leaves stale
+            # ProcessData objects that the later ``delete(process)`` tries to
+            # nullify, raising StaleDataError.
+            self.db.query(ProcessData).filter(
+                ProcessData.process_id == process.id
+            ).delete(synchronize_session="fetch")
+        for process in processes:
+            self.db.delete(process)
+
+    def _delete_history(self, session_id: int) -> None:
+        """Delete a session's parameter history."""
+        self.db.query(GenerativeSessionParameterHistory).filter(
+            GenerativeSessionParameterHistory.session_id == session_id
+        ).delete(synchronize_session="fetch")
+
+    def _delete_document_links(self, session_id: int) -> None:
+        """Delete the session's links to Data documents.
+
+        The documents themselves belong to the Data module and stay. The
+        links must go before the document-delete cascade reaches the same
+        rows, and before the session's ``delete-orphan`` cascade tries to
+        delete them a second time.
+        """
+        self.db.query(RAGSessionDocument).filter(
+            RAGSessionDocument.session_id == session_id
+        ).delete(synchronize_session="fetch")
+        self.db.flush()
+
+    def _delete_prompt_bindings(self, session_id: int) -> None:
+        """Delete the session's prompt-slot bindings.
+
+        ``rag_session_prompt`` has an ``ondelete="CASCADE"`` foreign key, but
+        SQLite does not enforce it. The rows are removed explicitly here so a
+        deleted session can never leave a binding behind.
+        """
+        self.db.query(RAGSessionPrompt).filter(
+            RAGSessionPrompt.session_id == session_id
+        ).delete(synchronize_session="fetch")
+        self.db.flush()

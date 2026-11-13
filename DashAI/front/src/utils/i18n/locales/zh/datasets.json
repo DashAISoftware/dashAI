@@ -530,6 +530,8 @@
     "failedToUpdate": "无法重命名该文档",
     "nameExists": "已存在同名文档",
     "confirmDelete": "确定要删除文档“{{name}}”吗？此操作无法撤销。",
+    "cascadeWarning": "以下 RAG 会话也使用此文档，将会被删除：{{sessions}}。",
+    "cascadeConfirm": "此文档被以下 RAG 会话使用，这些会话也将被删除：{{sessions}}。是否继续？",
     "statusProcessing": "解析中...",
     "statusError": "解析失败",
     "contentSummary": "{{text}} 个文本项，{{image}} 张图像",

@@ -1,4 +1,4 @@
-"""Unit tests for the retrieval sufficiency prompt family.
+"""Unit tests for the agentic retriever prompt family.
 
 Verifies the anchor's placeholder contract, the language-driven default
 templates, custom-template validation, the optional-line semantics and the JSON
@@ -13,12 +13,12 @@ import pytest
 
 from DashAI.back.models.RAG.exceptions import RAGPromptTemplateError
 from DashAI.back.models.RAG.prompts.evaluation import (
-    CustomRetrievalSufficiencyPrompt,
-    DefaultRetrievalSufficiencyPrompt,
-    RetrievalSufficiencyPrompt,
+    AgenticRetrieverPrompt,
+    CustomAgenticRetrieverPrompt,
+    DefaultAgenticRetrieverPrompt,
 )
 from DashAI.back.models.RAG.prompts.evaluation import (
-    default_retrieval_sufficiency_prompt as sufficiency_mod,
+    default_agentic_retriever_prompt as sufficiency_mod,
 )
 
 OPTIONAL_PLACEHOLDERS = [
@@ -41,20 +41,18 @@ class TestPlaceholderDeclarations:
     """Class-level placeholder attributes match the fixed contract."""
 
     def test_anchor_contract(self):
-        assert RetrievalSufficiencyPrompt.required_placeholders == [
+        assert AgenticRetrieverPrompt.required_placeholders == [
             "{input}",
             "{chunks}",
         ]
-        assert RetrievalSufficiencyPrompt.optional_placeholders == (
-            OPTIONAL_PLACEHOLDERS
-        )
+        assert AgenticRetrieverPrompt.optional_placeholders == (OPTIONAL_PLACEHOLDERS)
 
     def test_default_prompt_inherits_contract(self):
-        assert DefaultRetrievalSufficiencyPrompt.required_placeholders == [
+        assert DefaultAgenticRetrieverPrompt.required_placeholders == [
             "{input}",
             "{chunks}",
         ]
-        assert DefaultRetrievalSufficiencyPrompt.optional_placeholders == (
+        assert DefaultAgenticRetrieverPrompt.optional_placeholders == (
             OPTIONAL_PLACEHOLDERS
         )
 
@@ -69,7 +67,7 @@ class TestDefaultTemplates:
 
     @pytest.mark.parametrize("lang", ["en", "es", "pt"])
     def test_templates_validate(self, lang):
-        assert DefaultRetrievalSufficiencyPrompt.validate_template(
+        assert DefaultAgenticRetrieverPrompt.validate_template(
             sufficiency_mod.TEMPLATES[lang]
         )
 
@@ -79,7 +77,7 @@ class TestDefaultTemplates:
             assert '"call_retrievers"' in template
             assert '"request_specific_chunks"' in template
             assert '"discard_specific_chunks"' in template
-            assert "evaluate_retrieval_sufficiency" in template
+            assert "evaluate_agentic_retrieval" in template
             assert "```" not in template
 
     def test_templates_reference_supported_placeholders(self):
@@ -259,7 +257,7 @@ class TestFormatRendering:
     """``format`` substitutes placeholders and drops optional lines."""
 
     def test_replaces_required_and_optional(self):
-        prompt = DefaultRetrievalSufficiencyPrompt(language="en")
+        prompt = DefaultAgenticRetrieverPrompt(language="en")
         rendered = prompt.format(
             input="What is DashAI?",
             chunks=_chunks(),
@@ -284,7 +282,7 @@ class TestFormatRendering:
             assert token not in rendered
 
     def test_round_budget_lines_render(self):
-        prompt = DefaultRetrievalSufficiencyPrompt(language="en")
+        prompt = DefaultAgenticRetrieverPrompt(language="en")
         rendered = prompt.format(
             input="Q?",
             chunks="some chunk",
@@ -299,7 +297,7 @@ class TestFormatRendering:
         assert "Free pool slots left: 5." in rendered
 
     def test_explicit_remaining_override_is_used(self):
-        prompt = DefaultRetrievalSufficiencyPrompt(language="en")
+        prompt = DefaultAgenticRetrieverPrompt(language="en")
         rendered = prompt.format(
             input="Q?",
             chunks="some chunk",
@@ -312,7 +310,7 @@ class TestFormatRendering:
         assert "Free pool slots left: 2." in rendered
 
     def test_round_budget_lines_drop_when_none(self):
-        prompt = DefaultRetrievalSufficiencyPrompt(language="en")
+        prompt = DefaultAgenticRetrieverPrompt(language="en")
         rendered = prompt.format(input="Q?", chunks="some chunk")
         assert "evaluation round" not in rendered
         assert "Free pool slots left" not in rendered
@@ -321,7 +319,7 @@ class TestFormatRendering:
         assert "{remaining}" not in rendered
 
     def test_dict_values_render_as_indented_json(self):
-        prompt = DefaultRetrievalSufficiencyPrompt(language="en")
+        prompt = DefaultAgenticRetrieverPrompt(language="en")
         rendered = prompt.format(
             input="Q?",
             chunks="chunk",
@@ -341,7 +339,7 @@ class TestFormatRendering:
 
     def test_missing_document_name_falls_back_in_the_prompt(self):
         """The prompt owns the ``document {id}`` display fallback."""
-        prompt = DefaultRetrievalSufficiencyPrompt(language="en")
+        prompt = DefaultAgenticRetrieverPrompt(language="en")
         rendered = prompt.format(
             input="Q?",
             chunks="chunk",
@@ -351,7 +349,7 @@ class TestFormatRendering:
 
     def test_malformed_chunk_payload_raises(self):
         """A structured chunk missing a required key fails loudly."""
-        prompt = CustomRetrievalSufficiencyPrompt(template="{input}|{chunks}")
+        prompt = CustomAgenticRetrieverPrompt(template="{input}|{chunks}")
 
         with pytest.raises(RAGPromptTemplateError, match="missing required keys"):
             prompt.format(
@@ -361,14 +359,14 @@ class TestFormatRendering:
 
     def test_non_mapping_chunk_payload_raises(self):
         """A non-mapping chunk payload fails loudly."""
-        prompt = CustomRetrievalSufficiencyPrompt(template="{input}|{chunks}")
+        prompt = CustomAgenticRetrieverPrompt(template="{input}|{chunks}")
 
         with pytest.raises(RAGPromptTemplateError, match="must be a mapping"):
             prompt.format(input="q", chunks=["not a mapping"])
 
     def test_truncated_chunk_text_gets_an_ellipsis(self):
         """Long chunk text is truncated and marked with an ellipsis."""
-        prompt = CustomRetrievalSufficiencyPrompt(template="{input}|{chunks}")
+        prompt = CustomAgenticRetrieverPrompt(template="{input}|{chunks}")
 
         rendered = prompt.format(
             input="q",
@@ -378,19 +376,19 @@ class TestFormatRendering:
         assert "x" * 400 + "..." in rendered
 
     def test_preformatted_chunks_are_kept_verbatim(self):
-        prompt = CustomRetrievalSufficiencyPrompt(template="{input}||{chunks}")
+        prompt = CustomAgenticRetrieverPrompt(template="{input}||{chunks}")
         rendered = prompt.format(input="q", chunks="[9] already rendered")
         assert rendered == "q||[9] already rendered"
 
     def test_preformatted_retrievers_are_kept_verbatim(self):
-        prompt = CustomRetrievalSufficiencyPrompt(
+        prompt = CustomAgenticRetrieverPrompt(
             template="{input}|{chunks}|{retriever.description}"
         )
         rendered = prompt.format(input="q", chunks="c", retrievers="1: BM25Retriever")
         assert rendered == "q|c|1: BM25Retriever"
 
     def test_optional_lines_dropped_when_none(self):
-        prompt = DefaultRetrievalSufficiencyPrompt(language="en")
+        prompt = DefaultAgenticRetrieverPrompt(language="en")
         rendered = prompt.format(input="Q?", chunks="some chunk")
         for token in OPTIONAL_PLACEHOLDERS:
             assert token not in rendered
@@ -403,12 +401,12 @@ class TestFormatRendering:
 
     def test_default_prompt_picks_template_by_language(self):
         for lang in ("en", "es", "pt"):
-            prompt = DefaultRetrievalSufficiencyPrompt(language=lang)
+            prompt = DefaultAgenticRetrieverPrompt(language=lang)
             assert prompt.template == sufficiency_mod.TEMPLATES[lang]
 
     def test_unknown_language_raises(self):
         with pytest.raises(RAGPromptTemplateError):
-            DefaultRetrievalSufficiencyPrompt(language="klingon")
+            DefaultAgenticRetrieverPrompt(language="klingon")
 
 
 # ===================================================================
@@ -421,23 +419,23 @@ class TestCustomTemplates:
 
     def test_custom_missing_required_placeholder_raises(self):
         with pytest.raises(RAGPromptTemplateError):
-            CustomRetrievalSufficiencyPrompt(template="no placeholders here")
+            CustomAgenticRetrieverPrompt(template="no placeholders here")
 
     def test_custom_missing_chunks_raises(self):
         with pytest.raises(RAGPromptTemplateError):
-            CustomRetrievalSufficiencyPrompt(template="only {input} present")
+            CustomAgenticRetrieverPrompt(template="only {input} present")
 
     def test_custom_valid_renders(self):
-        prompt = CustomRetrievalSufficiencyPrompt(template="{input} || {chunks}")
+        prompt = CustomAgenticRetrieverPrompt(template="{input} || {chunks}")
         assert prompt.format(input="a", chunks="b") == "a || b"
 
     def test_custom_allows_absent_optional(self):
-        prompt = CustomRetrievalSufficiencyPrompt(template="{input} || {chunks}")
+        prompt = CustomAgenticRetrieverPrompt(template="{input} || {chunks}")
         rendered = prompt.format(input="a", chunks="b", pool_size=None)
         assert rendered == "a || b"
 
     def test_custom_renders_document_names_and_topk(self):
-        prompt = CustomRetrievalSufficiencyPrompt(
+        prompt = CustomAgenticRetrieverPrompt(
             template="{input}|{chunks}|{documents.names}|{topk}"
         )
         rendered = prompt.format(

@@ -18,15 +18,15 @@ export const PROMPT_LANGUAGE_PARAM = "language";
 /** Schema type a prompt field declares. */
 const PROMPT_FIELD_TYPE = "object";
 
-/** Suffix every prompt parent class ends with (`LLMFilterPrompt`, ...). */
+/** Suffix every prompt parent class ends with (`AgenticRerankerPrompt`, ...). */
 const PROMPT_PARENT_SUFFIX = "Prompt";
 
 /**
  * Whether a schema property describes a prompt component reference.
  *
  * Prompt properties are objects typed as a prompt parent (`BasePrompt` or a
- * descendant such as `LLMFilterPrompt`), which is what distinguishes them from
- * every other component reference in a schema.
+ * descendant such as `AgenticRerankerPrompt`), which is what distinguishes
+ * them from every other component reference in a schema.
  *
  * @param {object} fieldSchema - One property of a formatted model schema.
  * @returns {boolean} True when the property holds a prompt reference.

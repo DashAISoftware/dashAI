@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
@@ -9,6 +9,9 @@ class GenerativeSessionParams(BaseModel):
     parameters: dict
     name: str
     description: Union[str, None] = None
+    #: Optional slot-path to prompt-input map. When present its entries win
+    #: over prompts embedded in ``parameters``.
+    prompts: Optional[Dict[str, Any]] = None
 
 
 class GenerativeSessionBulkDeleteParams(BaseModel):

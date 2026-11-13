@@ -6,10 +6,15 @@ from pathlib import Path
 from DashAI.back.core.enums.status import DocumentStatus
 from DashAI.back.dependencies.database.models import (
     DataDocument,
+    GenerativeSession,
     Notebook,
     RAGChunkSet,
     RAGChunkSetDocument,
+    RAGPrompt,
+    RAGSessionDocument,
+    RAGSessionPrompt,
 )
+from DashAI.back.services.RAG.utils import build_prompt_hash
 from tests.back.RAG.conftest import (
     _create_data_document,
     _create_holder_session,
@@ -183,6 +188,41 @@ def test_deleting_a_session_keeps_the_document_and_other_links(client):
     assert [row["id"] for row in client.get(_url(second)).json()] == [document_id]
 
 
+def test_deleting_a_session_through_the_api_drops_its_prompt_bindings(client):
+    """The DELETE endpoint leaves no prompt binding for the removed session."""
+    session_id = _session(client)
+    parameters = {"template": "Rewrite {input} using {history} api"}
+    with client.app.container["session_factory"]() as db:
+        prompt = RAGPrompt(
+            class_name="CustomQueryRewritingPrompt",
+            name=None,
+            parameters=parameters,
+            parameters_hash=build_prompt_hash("CustomQueryRewritingPrompt", parameters),
+            is_library=False,
+            is_default=False,
+        )
+        db.add(prompt)
+        db.flush()
+        db.add(
+            RAGSessionPrompt(
+                session_id=session_id,
+                slot_path="query_transformation.prompt",
+                prompt_id=prompt.id,
+            )
+        )
+        db.commit()
+
+    assert client.delete(f"/api/v1/generative-session/{session_id}").status_code == 204
+
+    with client.app.container["session_factory"]() as db:
+        assert (
+            db.query(RAGSessionPrompt)
+            .filter(RAGSessionPrompt.session_id == session_id)
+            .count()
+            == 0
+        )
+
+
 def test_deleting_a_document_a_session_uses_is_refused(client):
     session_id = _session(client)
     document_id = _create_data_document(client, text="guarded")
@@ -195,6 +235,63 @@ def test_deleting_a_document_a_session_uses_is_refused(client):
     assert refused.json()["detail"]["notebooks"] == []
     assert client.delete(_url(session_id, document_id)).status_code == 204
     assert client.delete(f"/api/v1/documents/{document_id}").status_code == 204
+
+
+def test_document_payload_reports_the_sessions_using_it(client):
+    session_id = _session(client)
+    document_id = _create_data_document(client, text="reported")
+    client.post(_url(session_id), json={"document_ids": [document_id]})
+
+    with client.app.container["session_factory"]() as db:
+        session_name = db.get(GenerativeSession, session_id).name
+
+    fetched = client.get(f"/api/v1/documents/{document_id}")
+    listed = client.get("/api/v1/documents/")
+
+    expected = [{"id": session_id, "name": session_name}]
+    assert fetched.json()["sessions"] == expected
+    assert (
+        next(row for row in listed.json() if row["id"] == document_id)["sessions"]
+        == expected
+    )
+
+
+def test_deleting_a_document_cascades_its_sessions(client):
+    session_id = _session(client)
+    document_id = _create_data_document(client, text="cascade me")
+    client.post(_url(session_id), json={"document_ids": [document_id]})
+    chunk_set_id = _owned_chunk_set(client, session_id, document_id)
+    with client.app.container["session_factory"]() as db:
+        document_folder = Path(db.get(DataDocument, document_id).file_path)
+
+    response = client.delete(f"/api/v1/documents/{document_id}?cascade_sessions=true")
+
+    assert response.status_code == 204, response.text
+    with client.app.container["session_factory"]() as db:
+        assert db.get(DataDocument, document_id) is None
+        assert db.get(GenerativeSession, session_id) is None
+        assert db.get(RAGChunkSet, chunk_set_id) is None
+        assert (
+            db.query(RAGSessionDocument)
+            .filter(RAGSessionDocument.session_id == session_id)
+            .count()
+            == 0
+        )
+    assert not document_folder.exists()
+
+
+def test_document_cascade_keeps_sessions_that_do_not_use_it(client):
+    owning_session = _session(client)
+    other_session = _session(client)
+    document_id = _create_data_document(client, text="owned")
+    client.post(_url(owning_session), json={"document_ids": [document_id]})
+
+    response = client.delete(f"/api/v1/documents/{document_id}?cascade_sessions=true")
+
+    assert response.status_code == 204, response.text
+    with client.app.container["session_factory"]() as db:
+        assert db.get(GenerativeSession, owning_session) is None
+        assert db.get(GenerativeSession, other_session) is not None
 
 
 def test_a_document_used_only_by_notebooks_still_deletes(client, tmp_path):
