@@ -123,6 +123,7 @@
     "pipelineNoConverters": "Es sind keine Dokumentkonverter verfügbar."
   },
   "error": {
+    "exportSession": "Die Sitzung konnte nicht exportiert werden",
     "failedToCreateSession": "Sitzung konnte nicht erstellt werden",
     "failedToDeleteSession": "Sitzung konnte nicht gelöscht werden",
     "failedToDeleteSessions": "Die ausgewählten Sitzungen konnten nicht gelöscht werden",
@@ -133,6 +134,7 @@
     "failedToLoadModels": "Modelle konnten nicht geladen werden",
     "failedToSendMessage": "Die Nachricht konnte nicht gesendet werden",
     "failedToUpdateSession": "Sitzung konnte nicht aktualisiert werden",
+    "loadExportPreview": "Die Sitzungsinformationen konnten nicht geladen werden",
     "modelSwitchFailed": "Sitzungsmodell konnte nicht geändert werden",
     "nameRequired": "Name ist erforderlich",
     "processError": "Der Prozess ist fehlgeschlagen. Wird gelöscht... {{error}}",
@@ -153,7 +155,21 @@
     "createNewSessionDescription": "Wählen Sie ein Modell, konfigurieren Sie dessen Parameter und beginnen Sie zu chatten.",
     "deleteSessionConfirmation": "Sind Sie sicher, dass Sie diese Sitzung löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "downloadRequired": "Download erforderlich",
+    "exportIncludes": "Die Datei enthält:",
+    "exportItemConfiguration": "Konfiguration: Aufgabe, Modell und Parameter",
+    "exportItemDocuments_one": "{{count}} Dokument",
+    "exportItemDocuments_other": "{{count}} Dokumente",
     "generativeModule": "Generativ-Modul",
+    "importedDocuments_one": "{{count}} Dokument wurde zum Modul Data hinzugefügt.",
+    "importedDocuments_other": "{{count}} Dokumente wurden zum Modul Data hinzugefügt.",
+    "importedIndexOnOpen": "Der Index wird beim Öffnen der Sitzung erstellt.",
+    "importedNeedsDownload": "Diese Modelle müssen heruntergeladen werden, bevor die Sitzung verwendet werden kann: {{names}}",
+    "importedReusedDocuments_one": "{{count}} Dokument war bereits im Modul Data und wurde wiederverwendet.",
+    "importedReusedDocuments_other": "{{count}} Dokumente waren bereits im Modul Data und wurden wiederverwendet.",
+    "includeConversationHelp": "Prüfe, dass die Unterhaltung nichts enthält, das du nicht teilen möchtest.",
+    "includeConversationImages": "Bilder aus dem Chat werden ebenfalls eingeschlossen.",
+    "includeConversation_one": "Unterhaltung ({{count}} Nachricht)",
+    "includeConversation_other": "Unterhaltung ({{count}} Nachrichten)",
     "modelChangeEvent": "Modell geändert: <1></1>",
     "modelHasNoParameters": "Dieses Modell hat keine konfigurierbaren Parameter.",
     "modelNotDownloaded": "Das Modell dieser Sitzung ist noch nicht heruntergeladen. Laden Sie es herunter, um fortzufahren.",
@@ -161,6 +177,7 @@
     "nameAndDescribeYourSession": "Benennen Sie Ihre Sitzung. Passen Sie Parameter rechts an. Sie können diese jederzeit während der Sitzung ändern.",
     "nameYourSession": "Sitzung benennen",
     "newSession": "Neue Sitzung",
+    "noConversation": "Diese Sitzung hat noch keine abgeschlossenen Nachrichten.",
     "noDescriptionAvailable": "Keine Beschreibung verfügbar",
     "noInputAvailable": "Keine Eingabe für diese Aufgabe verfügbar",
     "noSessionsFound": "Keine Sitzungen gefunden",
@@ -177,6 +194,7 @@
     "selectSessionToViewParameters": "Sitzung auswählen, um Parameter anzuzeigen und zu bearbeiten.",
     "selectSessionsToDelete": "Sitzungen zum Löschen auswählen",
     "sessionDescription": "Sitzungsbeschreibung",
+    "sessionImported": "Sitzung als \"{{session}}\" importiert",
     "sessionInformation": "Sitzungsinformationen",
     "sessionModel": "Modell",
     "sessionName": "Sitzungsname",
@@ -185,6 +203,8 @@
     "startBySelectingATask": "Beginnen Sie mit der Auswahl einer generativen Aufgabe.",
     "tourDisabledMessage": "Zurück zur Startseite, um die Tour zu starten",
     "typeYourMessage": "Nachricht eingeben",
+    "unfinishedNotExported_one": "{{count}} laufende oder fehlgeschlagene Nachricht wird nicht exportiert.",
+    "unfinishedNotExported_other": "{{count}} laufende oder fehlgeschlagene Nachrichten werden nicht exportiert.",
     "untitledSession": "Unbenannte Sitzung"
   },
   "message": {
@@ -512,5 +532,8 @@
     "addSelected_other": "{{count}} Dokumente hinzufügen",
     "selectDocuments": "Dokumente auswählen",
     "clearSearchToSelectFolder": "Löschen Sie die Suche, um den ganzen Ordner auszuwählen"
+  },
+  "importError": {
+    "wrongKind": "Diese Datei ist keine generative Sitzung. Modellsitzungen werden im Modul Modelle importiert."
   }
 }

@@ -123,6 +123,7 @@
     "pipelineNoConverters": "No document converters are available."
   },
   "error": {
+    "exportSession": "Could not export the session",
     "failedToCreateSession": "Failed to create session",
     "failedToDeleteSession": "Failed to delete session",
     "failedToDeleteSessions": "Failed to delete the selected sessions",
@@ -133,6 +134,7 @@
     "failedToLoadModels": "Failed to load models",
     "failedToSendMessage": "Could not send the message",
     "failedToUpdateSession": "Failed to update session",
+    "loadExportPreview": "Could not load the session information",
     "modelSwitchFailed": "Failed to change the session model",
     "nameRequired": "Name is required",
     "processError": "The process has failed. Deleting it... {{error}}",
@@ -153,7 +155,21 @@
     "createNewSessionDescription": "Pick a model, configure its parameters, and start chatting.",
     "deleteSessionConfirmation": "Are you sure you want to delete this session? This action cannot be undone.",
     "downloadRequired": "download required",
+    "exportIncludes": "The file includes:",
+    "exportItemConfiguration": "Configuration: task, model and parameters",
+    "exportItemDocuments_one": "{{count}} document",
+    "exportItemDocuments_other": "{{count}} documents",
     "generativeModule": "Generative Module",
+    "importedDocuments_one": "{{count}} document was added to the Data module.",
+    "importedDocuments_other": "{{count}} documents were added to the Data module.",
+    "importedIndexOnOpen": "The index will be built when the session opens.",
+    "importedNeedsDownload": "These models must be downloaded before using the session: {{names}}",
+    "importedReusedDocuments_one": "{{count}} document was already in the Data module and was reused.",
+    "importedReusedDocuments_other": "{{count}} documents were already in the Data module and were reused.",
+    "includeConversationHelp": "Check that the conversation holds nothing you do not want to share.",
+    "includeConversationImages": "Images from the chat are included too.",
+    "includeConversation_one": "Conversation ({{count}} message)",
+    "includeConversation_other": "Conversation ({{count}} messages)",
     "modelChangeEvent": "Model changed: <1></1>",
     "modelHasNoParameters": "This model has no configurable parameters.",
     "modelNotDownloaded": "This session's model is not downloaded yet. Download it to continue.",
@@ -161,6 +177,7 @@
     "nameAndDescribeYourSession": "Name your session. Tweak parameters on the right. You can change them at any time during the session.",
     "nameYourSession": "Name your session",
     "newSession": "New Session",
+    "noConversation": "This session has no finished messages yet.",
     "noDescriptionAvailable": "No description available",
     "noInputAvailable": "No input available for this task",
     "noSessionsFound": "No sessions found",
@@ -177,6 +194,7 @@
     "selectSessionToViewParameters": "Select a session to view and edit its parameters.",
     "selectSessionsToDelete": "Select sessions to delete",
     "sessionDescription": "Session Description",
+    "sessionImported": "Session imported as \"{{session}}\"",
     "sessionInformation": "Session Information",
     "sessionModel": "Model",
     "sessionName": "Session Name",
@@ -185,6 +203,8 @@
     "startBySelectingATask": "Start by selecting a generative task.",
     "tourDisabledMessage": "Return to home to start the tour",
     "typeYourMessage": "Type a message",
+    "unfinishedNotExported_one": "{{count}} message still running or that failed is not exported.",
+    "unfinishedNotExported_other": "{{count}} messages still running or that failed are not exported.",
     "untitledSession": "Untitled Session"
   },
   "message": {
@@ -512,5 +532,8 @@
     "addSelected_other": "Add {{count}} documents",
     "selectDocuments": "Select documents",
     "clearSearchToSelectFolder": "Clear the search to select the whole folder"
+  },
+  "importError": {
+    "wrongKind": "This file is not a generative session. Model sessions are imported from the Models module."
   }
 }

@@ -12,6 +12,8 @@ import GenerativeHubHeader from "./GenerativeHubHeader";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
 import { standaloneRouteFor } from "./standaloneEntryPoints";
+import ImportGenerativeSessionButton from "./ImportGenerativeSessionButton";
+import ExportGenerativeSessionDialog from "./ExportGenerativeSessionDialog";
 
 /**
  * The generative module's session list.
@@ -51,6 +53,7 @@ export default function SessionBar({
     deleteSessionById,
     deleteSessionsByIds,
     editSession,
+    fetchSessions,
     openSections,
     setOpenSections,
   } = useGenerative();
@@ -61,6 +64,7 @@ export default function SessionBar({
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
   const { t } = useTranslation(["generative", "common"]);
+  const [exportSessionId, setExportSessionId] = useState(null);
 
   const SEARCH_THRESHOLD = 10;
 
@@ -253,6 +257,10 @@ export default function SessionBar({
           onItemDelete={handleSessionDelete}
           onItemEdit={editSession}
           onItemInfo={handleSessionInfo}
+          onItemExport={setExportSessionId}
+          headerActions={
+            <ImportGenerativeSessionButton onImported={fetchSessions} />
+          }
           title={title ?? t("common:generative")}
           Icon={FolderIcon}
           openGroups={openSections}
@@ -272,6 +280,11 @@ export default function SessionBar({
 
       {/* Footer */}
       <Footer />
+      <ExportGenerativeSessionDialog
+        open={exportSessionId != null}
+        sessionId={exportSessionId}
+        onClose={() => setExportSessionId(null)}
+      />
       {/* Session Info Modal */}
       {selectedInfoSession && (
         <InfoSessionModal

@@ -124,6 +124,7 @@
     "pipelineNoConverters": "No hay convertidores de documentos disponibles."
   },
   "error": {
+    "exportSession": "No se pudo exportar la sesión",
     "failedToCreateSession": "Error al crear la sesión",
     "failedToDeleteSession": "Error al eliminar sesión",
     "failedToDeleteSessions": "Error al eliminar las sesiones seleccionadas",
@@ -134,6 +135,7 @@
     "failedToLoadModels": "Error al cargar los modelos",
     "failedToSendMessage": "No se pudo enviar el mensaje",
     "failedToUpdateSession": "Error al actualizar la sesión",
+    "loadExportPreview": "No se pudo cargar la información de la sesión",
     "modelSwitchFailed": "No se pudo cambiar el modelo de la sesión",
     "nameRequired": "Se requiere un nombre",
     "processError": "El proceso ha fallado. Eliminándolo... {{error}}",
@@ -155,7 +157,21 @@
     "createNewSessionDescription": "Elige un modelo, configura sus parámetros y empieza a conversar.",
     "deleteSessionConfirmation": "¿Seguro que quieres eliminar esta sesión? Esta acción no se puede deshacer.",
     "downloadRequired": "descarga requerida",
+    "exportIncludes": "El archivo incluye:",
+    "exportItemConfiguration": "Configuración: tarea, modelo y parámetros",
+    "exportItemDocuments_one": "{{count}} documento",
+    "exportItemDocuments_other": "{{count}} documentos",
     "generativeModule": "Módulo Generativo",
+    "importedDocuments_one": "Se agregó {{count}} documento al módulo Data.",
+    "importedDocuments_other": "Se agregaron {{count}} documentos al módulo Data.",
+    "importedIndexOnOpen": "El índice se creará al abrir la sesión.",
+    "importedNeedsDownload": "Estos modelos deben descargarse antes de usar la sesión: {{names}}",
+    "importedReusedDocuments_one": "{{count}} documento ya estaba en el módulo Data y se reutilizó.",
+    "importedReusedDocuments_other": "{{count}} documentos ya estaban en el módulo Data y se reutilizaron.",
+    "includeConversationHelp": "Revisa que la conversación no tenga información que no quieras compartir.",
+    "includeConversationImages": "Las imágenes del chat también se incluyen.",
+    "includeConversation_one": "Conversación ({{count}} mensaje)",
+    "includeConversation_other": "Conversación ({{count}} mensajes)",
     "modelChangeEvent": "Modelo cambiado: <1></1>",
     "modelHasNoParameters": "Este modelo no tiene parámetros configurables.",
     "modelNotDownloaded": "El modelo de esta sesión aún no está descargado. Descárgalo para continuar.",
@@ -163,6 +179,7 @@
     "nameAndDescribeYourSession": "Nombra tu sesión. Ajusta los parámetros a la derecha. Puedes cambiarlos en cualquier momento durante la sesión.",
     "nameYourSession": "Nombre su sesión",
     "newSession": "Nueva Sesión",
+    "noConversation": "Esta sesión aún no tiene mensajes terminados.",
     "noDescriptionAvailable": "No hay descripción disponible",
     "noInputAvailable": "No hay entrada disponible para esta tarea",
     "noSessionsFound": "No se encontraron sesiones",
@@ -179,6 +196,7 @@
     "selectSessionToViewParameters": "Seleccione una sesión para ver y editar sus parámetros.",
     "selectSessionsToDelete": "Seleccionar sesiones para eliminar",
     "sessionDescription": "Descripción de la sesión",
+    "sessionImported": "Sesión importada como \"{{session}}\"",
     "sessionInformation": "Información de la sesión",
     "sessionModel": "Modelo",
     "sessionName": "Nombre de la sesión",
@@ -187,6 +205,8 @@
     "startBySelectingATask": "Comienza seleccionando una tarea generativa.",
     "tourDisabledMessage": "Regresa al inicio para comenzar el tour",
     "typeYourMessage": "Escribe un mensaje",
+    "unfinishedNotExported_one": "{{count}} mensaje en curso o con error no se exporta.",
+    "unfinishedNotExported_other": "{{count}} mensajes en curso o con error no se exportan.",
     "untitledSession": "Sesión sin título"
   },
   "message": {
@@ -519,5 +539,8 @@
     "addSelected_other": "Agregar {{count}} documentos",
     "selectDocuments": "Seleccionar documentos",
     "clearSearchToSelectFolder": "Borra la búsqueda para seleccionar la carpeta completa"
+  },
+  "importError": {
+    "wrongKind": "Este archivo no es una sesión generativa. Las sesiones de modelos se importan desde el módulo de Modelos."
   }
 }

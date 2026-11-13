@@ -1,5 +1,9 @@
 import api from "./api";
-import type { ISession } from "../types/session";
+import type {
+  IGenerativeSessionExportPreview,
+  IGenerativeSessionImportResult,
+  ISession,
+} from "../types/session";
 
 /**
  * Fetches generative sessions, optionally narrowed by the backend.
@@ -59,5 +63,56 @@ export const updateGenerativeSession = async ({
   const response = await api.patch(`/v1/generative-session/${id}`, null, {
     params: formData,
   });
+  return response.data;
+};
+
+/**
+ * What exporting a generative session would carry.
+ * @param sessionId - The session to export.
+ * @returns Its conversation size and how many messages would be left out.
+ */
+export const getGenerativeSessionExportPreview = async (
+  sessionId: number,
+): Promise<IGenerativeSessionExportPreview> => {
+  const response = await api.get<IGenerativeSessionExportPreview>(
+    `/v1/generative-session/${sessionId}/export/preview`,
+  );
+  return response.data;
+};
+
+/**
+ * Downloads a generative session as a .dashai file.
+ * @param sessionId - The session to export.
+ * @param options.includeConversation - Also carry the finished messages and
+ *   their media files.
+ * @returns The file contents.
+ */
+export const exportGenerativeSession = async (
+  sessionId: number,
+  options: { includeConversation?: boolean } = {},
+): Promise<Blob> => {
+  const response = await api.post(
+    `/v1/generative-session/${sessionId}/export`,
+    { include_conversation: Boolean(options.includeConversation) },
+    { responseType: "blob" },
+  );
+  return response.data;
+};
+
+/**
+ * Creates a new generative session from a .dashai file.
+ * @param file - The file the user chose.
+ * @returns The new session and what it still needs before use.
+ */
+export const importGenerativeSession = async (
+  file: File,
+): Promise<IGenerativeSessionImportResult> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await api.post<IGenerativeSessionImportResult>(
+    "/v1/generative-session/import",
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
   return response.data;
 };

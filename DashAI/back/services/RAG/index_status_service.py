@@ -146,7 +146,8 @@ class IndexStatusService:
             message, needs_reindex}``. ``message`` is a
             :class:`MultilingualString` the caller is expected to localize;
             ``needs_reindex`` is True after legacy documents were converted
-            and until the session is indexed again.
+            or a session was imported with its documents, and until the
+            session is indexed again.
 
         Raises
         ------
