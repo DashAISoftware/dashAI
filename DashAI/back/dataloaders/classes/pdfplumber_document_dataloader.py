@@ -55,6 +55,7 @@ class PdfPlumberDocumentSchema(BaseSchema):
     x_tolerance: schema_field(
         float_field(gt=0.0),
         placeholder=3.0,
+        step=1,
         description=MultilingualString(
             en=(
                 "Horizontal distance, in points, below which two characters "
@@ -90,6 +91,7 @@ class PdfPlumberDocumentSchema(BaseSchema):
     y_tolerance: schema_field(
         float_field(gt=0.0),
         placeholder=3.0,
+        step=1,
         description=MultilingualString(
             en=(
                 "Vertical distance, in points, below which two characters "

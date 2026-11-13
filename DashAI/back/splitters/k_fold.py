@@ -74,6 +74,7 @@ class KFoldSplitterSchema(BaseSchema):
     )  # type: ignore
     test_size: schema_field(
         float_field(ge=0, le=0.5),
+        step=0.1,
         placeholder=0.1,
         description=MultilingualString(
             en=(

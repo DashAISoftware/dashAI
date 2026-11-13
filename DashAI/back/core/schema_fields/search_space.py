@@ -248,6 +248,7 @@ def search_space(
     choices: Optional[List[Any]] = None,
     description: Union[str, MultilingualString],
     alias: Union[str, MultilingualString, None] = None,
+    step: Optional[float] = None,
 ) -> Type:
     """Declare a hyperparameter the user may fix or hand to the optimizer.
 
@@ -271,7 +272,7 @@ def search_space(
     choices
         The options to search, for an enum or boolean field. Defaults to every
         option the field declares, which is usually what is wanted.
-    description, alias
+    description, alias, step
         As in ``schema_field``.
 
     Raises
@@ -360,6 +361,7 @@ def search_space(
                 "display_name": alias,
                 SEARCH_DTYPE_KEY: dtype,
                 "placeholder": placeholder,
+                **({"step": step} if step is not None else {}),
             },
         ),
     ]

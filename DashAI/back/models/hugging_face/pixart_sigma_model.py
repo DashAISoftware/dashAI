@@ -159,6 +159,7 @@ class PixArtSigmaSchema(BaseSchema):
     guidance_scale: schema_field(
         float_field(ge=0.0),
         placeholder=4.5,
+        step=0.5,
         description=MultilingualString(
             en=(
                 "Classifier-Free Guidance (CFG) scale. PixArt-Sigma works best "

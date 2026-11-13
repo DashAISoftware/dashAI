@@ -68,6 +68,7 @@ class RegressionPartialDependenceSchema(BaseSchema):
     upper_percentile: schema_field(
         float_field(ge=0.0, le=1.0),
         placeholder=0.95,
+        step=0.01,
         description=MultilingualString(
             en="Upper percentile of the feature values used as grid end.",
             es="Percentil superior de los valores usados como fin de la grilla.",

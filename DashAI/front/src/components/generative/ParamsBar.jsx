@@ -163,7 +163,10 @@ export default function ParamsBar({ onToggle }) {
 
       {selectedSessionId ? (
         <Box sx={{ flex: 1, overflowY: "auto", pt: 4 }}>
-          <form onSubmit={formik.handleSubmit}>
+          {/* noValidate: the number inputs carry native step/min/max for their
+              arrows, and native validation would block saving a value off the
+              step grid (0.75 with step 0.1). Formik's schema validates instead. */}
+          <form noValidate onSubmit={formik.handleSubmit}>
             <Box sx={{ mr: 4, ml: 4 }}>
               {/* Render the parameter fields */}
               <FormSchemaRenderFields

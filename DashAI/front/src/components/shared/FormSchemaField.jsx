@@ -6,6 +6,7 @@ import SelectInput from "../configurableObject/Inputs/SelectInput";
 import TextInput from "../configurableObject/Inputs/TextInput";
 import ArrayInput from "../configurableObject/Inputs/ArrayInput";
 import PropTypes from "prop-types";
+import { numberInputAttributes } from "../../utils/numberStep";
 
 /**
  * This function takes JSON object that describes a configurable object
@@ -50,7 +51,12 @@ function FormSchemaField({
     case "integer":
       return <IntegerInput {...commonProps} />;
     case "number":
-      return <NumberInput {...commonProps} />;
+      return (
+        <NumberInput
+          {...commonProps}
+          inputAttributes={numberInputAttributes(paramJsonSchema)}
+        />
+      );
     case "string":
       if (paramJsonSchema.enum) {
         return (
