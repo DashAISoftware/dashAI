@@ -1,0 +1,8 @@
+{
+  "credentialRequired": "请点击卡片上的钥匙图标添加您的 {{platform}} 凭证后继续。",
+  "noPlatforms": "没有可用的导出平台。",
+  "searchPlatforms": "搜索平台",
+  "selectPlatformSubtitle": "选择发布数据集的位置。下一步您将看到该平台接受哪些数据集。",
+  "selectPlatformTitle": "选择目标平台",
+  "title": "导出"
+}

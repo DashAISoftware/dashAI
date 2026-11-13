@@ -1,0 +1,8 @@
+{
+  "credentialRequired": "Add your {{platform}} credential with the key icon on its card to continue.",
+  "noPlatforms": "No export platforms are available.",
+  "searchPlatforms": "Search platforms",
+  "selectPlatformSubtitle": "Choose where to publish your dataset. In the next step you will see which datasets the platform accepts.",
+  "selectPlatformTitle": "Select target platform",
+  "title": "Export"
+}

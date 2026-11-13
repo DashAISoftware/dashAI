@@ -46,6 +46,11 @@ import credentialsES from "./locales/es/credentials.json";
 import credentialsPT from "./locales/pt/credentials.json";
 import credentialsDE from "./locales/de/credentials.json";
 import credentialsZH from "./locales/zh/credentials.json";
+import exportEN from "./locales/en/export.json";
+import exportES from "./locales/es/export.json";
+import exportPT from "./locales/pt/export.json";
+import exportDE from "./locales/de/export.json";
+import exportZH from "./locales/zh/export.json";
 import updatesEN from "./locales/en/updates.json";
 import updatesES from "./locales/es/updates.json";
 import updatesPT from "./locales/pt/updates.json";
@@ -136,6 +141,7 @@ const resources = {
     hubTour: hubTourEN,
     hub: hubEN,
     credentials: credentialsEN,
+    export: exportEN,
     updates: updatesEN,
   },
   es: {
@@ -160,6 +166,7 @@ const resources = {
     hubTour: hubTourES,
     hub: hubES,
     credentials: credentialsES,
+    export: exportES,
     updates: updatesES,
   },
   pt: {
@@ -183,6 +190,7 @@ const resources = {
     generativeTour: generativeTourPT,
     hubTour: hubTourPT,
     credentials: credentialsPT,
+    export: exportPT,
     updates: updatesPT,
   },
   de: {
@@ -206,6 +214,7 @@ const resources = {
     generativeTour: generativeTourDE,
     hubTour: hubTourDE,
     credentials: credentialsDE,
+    export: exportDE,
     updates: updatesDE,
   },
   zh: {
@@ -230,6 +239,7 @@ const resources = {
     hubTour: hubTourZH,
     hub: hubZH,
     credentials: credentialsZH,
+    export: exportZH,
     updates: updatesZH,
   },
 };
@@ -265,6 +275,7 @@ i18n
       "hubTour",
       "hub",
       "credentials",
+      "export",
       "updates",
     ],
     defaultNS: "common",

@@ -1,0 +1,8 @@
+{
+  "credentialRequired": "Fügen Sie Ihre {{platform}}-Zugangsdaten über das Schlüsselsymbol auf der Karte hinzu, um fortzufahren.",
+  "noPlatforms": "Keine Exportplattformen verfügbar.",
+  "searchPlatforms": "Plattformen suchen",
+  "selectPlatformSubtitle": "Wählen Sie, wo Ihr Datensatz veröffentlicht werden soll. Im nächsten Schritt sehen Sie, welche Datensätze die Plattform akzeptiert.",
+  "selectPlatformTitle": "Zielplattform auswählen",
+  "title": "Exportieren"
+}

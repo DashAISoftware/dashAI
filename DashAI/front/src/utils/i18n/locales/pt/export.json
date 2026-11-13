@@ -1,0 +1,8 @@
+{
+  "credentialRequired": "Adicione sua credencial do {{platform}} com o ícone de chave do cartão para continuar.",
+  "noPlatforms": "Não há plataformas de exportação disponíveis.",
+  "searchPlatforms": "Buscar plataformas",
+  "selectPlatformSubtitle": "Escolha onde publicar seu conjunto de dados. Na próxima etapa você verá quais conjuntos de dados a plataforma aceita.",
+  "selectPlatformTitle": "Selecionar plataforma de destino",
+  "title": "Exportar"
+}

@@ -23,6 +23,7 @@ import { GenerativeProvider } from "./components/generative/GenerativeContext";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 import HubContent from "./pages/hub/HubContent";
 import HubImportPage from "./pages/hub/HubImportPage";
+import ExportContent from "./pages/export/ExportContent";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
 import RAGCreatePage from "./pages/generative/RAG/RAGCreatePage";
 import RAGSessionPage from "./pages/generative/RAGSession/RAGSessionPage";
@@ -98,6 +99,7 @@ function App() {
                     element={<HubImportPage />}
                   />
                   <Route path="hub/:sourceName" element={<HubContent />} />
+                  <Route path="export" element={<ExportContent />} />
                 </Route>
                 <Route path="/app/models" element={<ModelsPage />} />
                 <Route
