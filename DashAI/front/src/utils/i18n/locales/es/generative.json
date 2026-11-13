@@ -2,7 +2,9 @@
   "button": {
     "backToTaskSelection": "Volver a Selección de Tarea",
     "createSession": "Crear una sesión",
-    "generativeHub": "Centro Generativo"
+    "dismissReply": "Descartar",
+    "generativeHub": "Centro Generativo",
+    "retryReply": "Reintentar"
   },
   "documentsBar": {
     "addFromData": "Agregar desde Datos",
@@ -124,6 +126,7 @@
     "pipelineNoConverters": "No hay convertidores de documentos disponibles."
   },
   "error": {
+    "dismissFailed": "No se pudo quitar la respuesta",
     "failedToCreateSession": "Error al crear la sesión",
     "failedToDeleteSession": "Error al eliminar sesión",
     "failedToDeleteSessions": "Error al eliminar las sesiones seleccionadas",
@@ -136,7 +139,8 @@
     "failedToUpdateSession": "Error al actualizar la sesión",
     "modelSwitchFailed": "No se pudo cambiar el modelo de la sesión",
     "nameRequired": "Se requiere un nombre",
-    "processError": "El proceso ha fallado. Eliminándolo... {{error}}",
+    "replyFailed": "El modelo no pudo responder",
+    "retryFailed": "No se pudo reintentar la respuesta",
     "sessionNameEmpty": "El nombre de la sesión no puede estar vacío",
     "sessionNameExists": "Ya existe una sesión con este nombre"
   },

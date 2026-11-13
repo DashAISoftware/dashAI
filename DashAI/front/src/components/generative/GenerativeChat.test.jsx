@@ -1,5 +1,5 @@
 import React from "react";
-import { screen } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../../test-utils/renderWithProviders";
 import GenerativeChat from "./GenerativeChat";
 
@@ -14,6 +14,7 @@ jest.mock("../../api/process", () => ({
   getProcessesBySessionId: jest.fn(),
   deleteProcessById: jest.fn(),
   postProcess: jest.fn(),
+  retryProcessById: jest.fn(),
 }));
 
 jest.mock("../../api/job", () => ({
@@ -70,14 +71,27 @@ jest.mock("notistack", () => ({
 // ChatBubble's subtree pulls ESM-only deps Jest cannot parse; the branch under
 // test only needs to distinguish "waiting bubble shown" from "status line".
 jest.mock("./ChatBubble", () => {
-  const MockChatBubble = ({ isWaiting }) => (
-    <div data-testid={isWaiting ? "waiting-bubble" : "answer-bubble"} />
-  );
+  const MockChatBubble = ({ isWaiting, isError, messages, actions }) => {
+    if (isError) {
+      return (
+        <div data-testid="error-bubble">
+          {messages?.map((message) => message.data).join(" ")}
+          {actions}
+        </div>
+      );
+    }
+    return <div data-testid={isWaiting ? "waiting-bubble" : "answer-bubble"} />;
+  };
   return { ChatBubble: MockChatBubble };
 });
 
+// Keeps the composer's onSendMessage, to send as the composer would.
+let mockSendMessage;
 jest.mock("./MediaInput", () => ({
-  MediaInput: () => <div data-testid="media-input" />,
+  MediaInput: ({ onSendMessage }) => {
+    mockSendMessage = onSendMessage;
+    return <div data-testid="media-input" />;
+  },
 }));
 
 jest.mock("../jobs/JobQueueWidget", () => () => null);
@@ -95,7 +109,13 @@ const {
   getComponentById,
   getComponentDownloadStatus,
 } = require("../../api/component");
-const { getProcessById } = require("../../api/process");
+const {
+  getProcessById,
+  deleteProcessById,
+  retryProcessById,
+  postProcess,
+} = require("../../api/process");
+const { enqueueGenerativeProcessJob } = require("../../api/job");
 
 const inFlightProcess = (progress) => ({
   id: "11",
@@ -161,4 +181,111 @@ test("in-flight RAG message without progress falls back to the waiting bubble", 
   expect(
     screen.queryByText(/Searching sources with query/),
   ).not.toBeInTheDocument();
+});
+
+// A failed reply stays in the conversation with its error (#969): the turn is
+// neither removed from the screen nor deleted on the server.
+const failedProcess = {
+  ...inFlightProcess(null),
+  status: 4,
+  end_time: "2026-10-16T10:00:09",
+  output: [
+    {
+      id: 2,
+      process_id: 11,
+      data: "Error during model generation. Requested tokens exceed context",
+      data_type: "str",
+      is_input: false,
+    },
+  ],
+};
+
+test("a failed reply loaded with the session shows its error", async () => {
+  getSessionById.mockResolvedValue({
+    id: 7,
+    name: "S",
+    task_name: "TextToTextGenerationTask",
+  });
+  renderChat(failedProcess);
+
+  expect(await screen.findByTestId("error-bubble")).toHaveTextContent(
+    "Requested tokens exceed context",
+  );
+  expect(deleteProcessById).not.toHaveBeenCalled();
+});
+
+test("a reply that fails while the chat waits for it stays, with its error", async () => {
+  getSessionById.mockResolvedValue({
+    id: 7,
+    name: "S",
+    task_name: "TextToTextGenerationTask",
+  });
+  getProcessById.mockResolvedValue(failedProcess);
+  renderChat(inFlightProcess(null));
+
+  expect(
+    await screen.findByTestId("error-bubble", {}, { timeout: 4000 }),
+  ).toHaveTextContent("Requested tokens exceed context");
+  expect(deleteProcessById).not.toHaveBeenCalled();
+});
+
+const renderFailedTextChat = async () => {
+  getSessionById.mockResolvedValue({
+    id: 7,
+    name: "S",
+    task_name: "TextToTextGenerationTask",
+  });
+  renderChat(failedProcess);
+  await screen.findByTestId("error-bubble");
+};
+
+test("dismissing a failed reply removes the turn", async () => {
+  deleteProcessById.mockResolvedValue();
+  await renderFailedTextChat();
+
+  fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+
+  await waitFor(() =>
+    expect(screen.queryByTestId("error-bubble")).not.toBeInTheDocument(),
+  );
+  expect(deleteProcessById).toHaveBeenCalledWith("11");
+});
+
+test("retrying a failed reply runs the same turn again", async () => {
+  retryProcessById.mockResolvedValue({ ...inFlightProcess(null), status: 0 });
+  enqueueGenerativeProcessJob.mockResolvedValue({});
+  await renderFailedTextChat();
+
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+  expect(await screen.findByTestId("waiting-bubble")).toBeInTheDocument();
+  expect(retryProcessById).toHaveBeenCalledWith("11");
+  expect(enqueueGenerativeProcessJob).toHaveBeenCalledWith("11");
+  expect(deleteProcessById).not.toHaveBeenCalled();
+});
+
+const renderTextChat = async () => {
+  getSessionById.mockResolvedValue({
+    id: 7,
+    name: "S",
+    task_name: "TextToTextGenerationTask",
+  });
+  getProcessesBySessionId.mockResolvedValue([]);
+  renderWithProviders(<GenerativeChat indexStatus={{ status: "ready" }} />);
+  await screen.findByTestId("media-input");
+};
+
+test("a message the backend refuses is handed back to the composer", async () => {
+  postProcess.mockRejectedValue(new Error("refused"));
+  await renderTextChat();
+
+  await expect(mockSendMessage(["hi"])).rejects.toThrow("refused");
+});
+
+test("a message that became a turn is not handed back", async () => {
+  postProcess.mockResolvedValue(inFlightProcess(null));
+  enqueueGenerativeProcessJob.mockRejectedValue(new Error("queue down"));
+  await renderTextChat();
+
+  await expect(mockSendMessage(["hi"])).resolves.toBeUndefined();
 });

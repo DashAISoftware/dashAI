@@ -5,9 +5,10 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { ChatBubble } from "./ChatBubble";
 import RAGChatProgress from "./RAGChatProgress";
 import {
+  deleteProcessById,
   getProcessById,
   getProcessesBySessionId,
-  deleteProcessById,
+  retryProcessById,
 } from "../../api/process";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { postProcess } from "../../api/process";
@@ -232,8 +233,22 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
     setIsLoadingMessage(true);
     setShouldAutoScroll(true); // Enable auto-scroll when sending new message
 
-    postProcess(sessionId, input)
-      .then((response) => {
+    // Without the error handling the composer stays disabled forever and says
+    // nothing. A RAG session starts with no documents, so the backend refusing
+    // the first message is a routine outcome, not an exceptional one.
+    const reportFailure = (error) => {
+      console.error("Failed to send message:", error);
+      setIsLoadingMessage(false);
+      enqueueSnackbar(
+        getApiErrorMessage(error, t("generative:error.failedToSendMessage")),
+        { variant: "error" },
+      );
+    };
+
+    // Rejects only when the message never became a turn, so the composer can
+    // give it back (#969). Once the turn exists it is on screen.
+    return postProcess(sessionId, input).then(
+      (response) => {
         // Add the new message to the chat
         setMessages((prevMessages) => [...prevMessages, response]);
 
@@ -242,19 +257,46 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
           .then(() => startJobQueue(true))
           .then(() => {
             setIsLoadingMessage(false);
-          });
-      })
-      .catch((error) => {
-        // Without this the composer stays disabled forever and says nothing.
-        // A RAG session starts with no documents, so the backend refusing the
-        // first message is a routine outcome, not an exceptional one.
-        console.error("Failed to send message:", error);
-        setIsLoadingMessage(false);
+          })
+          .catch(reportFailure);
+      },
+      (error) => {
+        reportFailure(error);
+        throw error;
+      },
+    );
+  };
+
+  // A failed turn is removed, or reset and queued again with the same input
+  // (its files stay on the server), in its place in the conversation (#969).
+  const handleDismissFailed = (processId) => {
+    deleteProcessById(processId)
+      .then(() => setMessages((prev) => prev.filter((m) => m.id !== processId)))
+      .catch((error) =>
         enqueueSnackbar(
-          getApiErrorMessage(error, t("generative:error.failedToSendMessage")),
+          getApiErrorMessage(error, t("generative:error.dismissFailed")),
           { variant: "error" },
+        ),
+      );
+  };
+
+  const handleRetryFailed = (processId) => {
+    setShouldAutoScroll(true);
+    retryProcessById(processId)
+      .then((process) => {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === processId ? process : m)),
         );
-      });
+        return enqueueGenerativeProcessJob(processId).then(() =>
+          startJobQueue(true),
+        );
+      })
+      .catch((error) =>
+        enqueueSnackbar(
+          getApiErrorMessage(error, t("generative:error.retryFailed")),
+          { variant: "error" },
+        ),
+      );
   };
 
   useEffect(() => {
@@ -283,14 +325,15 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
     const POLL_INTERVAL = 1500;
 
     const intervalId = setInterval(() => {
+      // Finished (3) and failed (4) turns are done: a failed turn stays in
+      // the conversation with its error, and is not polled again (#969).
+      const isDone = (m) => m.status === 3 || m.status === 4;
       const unfinished = messages.filter(
-        (m) =>
-          m.status !== 3 && // Not Finished
-          !pollingProcessIdsRef.current.has(m.id),
+        (m) => !isDone(m) && !pollingProcessIdsRef.current.has(m.id),
       );
 
       if (unfinished.length === 0) {
-        if (messages.every((m) => m.status === 3)) {
+        if (messages.every(isDone)) {
           clearInterval(intervalId); // nothing left to poll
         }
         return;
@@ -301,28 +344,8 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
         pollingProcessIdsRef.current.add(msg.id);
         getProcessById(msg.id)
           .then((process) => {
-            const status = process.status;
-
-            // Error
-            if (status === 4) {
-              setMessages((prev) => prev.filter((m) => m.id !== process.id));
-              enqueueSnackbar(
-                t("generative:error.processError", {
-                  error: process.output?.[0]?.data
-                    ? `\n${process.output[0].data}`
-                    : "",
-                }),
-                {
-                  autoHideDuration: 8000,
-                  style: { whiteSpace: "pre-line" },
-                },
-              );
-
-              return deleteProcessById(process.id).catch((error) =>
-                console.error("Failed to delete errored process:", error),
-              );
-            }
-            // Update progress or final result
+            // Update progress, the final result or the error: a failed turn
+            // keeps its input and shows its error in place (#969).
             setMessages((prev) =>
               prev.map((m) => (m.id === process.id ? process : m)),
             );
@@ -677,6 +700,34 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
                           />
                         )}
                       </>
+                    ) : message.status === 4 ? (
+                      <ChatBubble
+                        messages={message.output}
+                        sender={"Model"}
+                        isError={true}
+                        actions={
+                          <Box sx={{ display: "flex", gap: 1, mt: 1, ml: 2 }}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => handleRetryFailed(message.id)}
+                            >
+                              {t("generative:button.retryReply")}
+                            </Button>
+                            <Button
+                              size="small"
+                              onClick={() => handleDismissFailed(message.id)}
+                            >
+                              {t("generative:button.dismissReply")}
+                            </Button>
+                          </Box>
+                        }
+                        timestamp={
+                          message.end_time
+                            ? new Date(message.end_time).toLocaleTimeString()
+                            : null
+                        }
+                      />
                     ) : (
                       <>
                         {/* Resolve here too: a truthy payload the helper
@@ -773,9 +824,7 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
         <>
           <MediaInput
             key={sessionId}
-            onSendMessage={(input) => {
-              handleSendMessage(input);
-            }}
+            onSendMessage={handleSendMessage}
             isLoading={isLoadingMessage || isIndexing}
             inputsCardinality={inputsCardinality}
           />

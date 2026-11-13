@@ -8,6 +8,7 @@ from sqlalchemy import exc
 from starlette.datastructures import UploadFile
 from typing_extensions import Annotated
 
+from DashAI.back.core.enums.status import RunStatus
 from DashAI.back.dependencies.database.models import (
     GenerativeProcess,
     GenerativeSession,
@@ -245,6 +246,71 @@ async def delete_generative_process(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+
+@router.post("/{process_id}/retry", status_code=status.HTTP_200_OK, response_model=None)
+async def retry_generative_process(
+    process_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+):
+    """Reset a failed turn so it can run again with the same input.
+
+    The turn keeps its id, its place in the conversation and its input, so a
+    turn with files does not need them uploaded again. Its error detail is
+    removed and it goes back to not started; the caller enqueues its job, as
+    for a new turn.
+
+    Parameters
+    ----------
+    process_id : int
+        The ID of the failed generative process.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+    component_registry : ComponentRegistry
+        Resolves the session's task, to answer as the GET endpoint does.
+
+    Returns
+    -------
+    dict
+        The reset generative process, as ``GET /{process_id}`` returns it.
+
+    Raises
+    ------
+    HTTPException
+        404 if the process does not exist, 409 if it has not failed, 500 on
+        an internal database error.
+    """
+    with session_factory() as db:
+        try:
+            process = db.get(GenerativeProcess, process_id)
+            if not process:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Generative process with ID {process_id} does not exist.",
+                )
+            if process.status != RunStatus.ERROR:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Only a failed generative process can be retried.",
+                )
+            db.query(ProcessData).filter_by(
+                process_id=process.id, is_input=False
+            ).delete()
+            process.status = RunStatus.NOT_STARTED
+            process.delivery_time = None
+            process.start_time = None
+            process.end_time = None
+            process.progress = None
+            db.commit()
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+    return await get_generative_process(process_id, session_factory, component_registry)
 
 
 @router.get(

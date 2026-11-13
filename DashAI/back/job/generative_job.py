@@ -11,6 +11,7 @@ from DashAI.back.dependencies.database.models import (
     ProcessData,
 )
 from DashAI.back.job.base_job import BaseJob, JobError, _release_frames
+from DashAI.back.job.generative_failure import fail_process
 from DashAI.back.job.RAG_job import RAGJob
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
@@ -152,9 +153,9 @@ class GenerativeJob(BaseJob):
                         )
                 except Exception as e:
                     log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.commit()
-                    raise JobError("Error retrieving generative process.") from e
+                    message = "Error retrieving generative process."
+                    fail_process(db, generative_process, message, e)
+                    raise JobError(message) from e
 
                 try:
                     generative_session: GenerativeSession = db.get(
@@ -166,9 +167,9 @@ class GenerativeJob(BaseJob):
                         )
                 except Exception as e:
                     log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.commit()
-                    raise JobError("Error retrieving generative session.") from e
+                    message = "Error retrieving generative session."
+                    fail_process(db, generative_process, message, e)
+                    raise JobError(message) from e
 
                 try:
                     model_class = component_registry[generative_session.model_name][
@@ -184,17 +185,14 @@ class GenerativeJob(BaseJob):
                         )
                     params = generative_session.parameters
                     model: BaseGenerativeModel = model_class(**params)
-                except JobError:
-                    generative_process.set_status_as_error()
-                    db.commit()
+                except JobError as e:
+                    fail_process(db, generative_process, str(e))
                     raise
                 except Exception as e:
                     log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.commit()
-                    raise JobError(
-                        "Error instantiating model with given parameters."
-                    ) from e
+                    message = "Error instantiating model with given parameters."
+                    fail_process(db, generative_process, message, e)
+                    raise JobError(message) from e
 
                 input_data = generative_process.input
 
@@ -205,16 +203,16 @@ class GenerativeJob(BaseJob):
                     task: BaseGenerativeTask = task_class()
                 except KeyError as e:
                     log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.commit()
-                    raise JobError(
+                    message = (
                         f"Task '{generative_session.task_name}' not found in registry."
-                    ) from e
+                    )
+                    fail_process(db, generative_process, message)
+                    raise JobError(message) from e
                 except Exception as e:
                     log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.commit()
-                    raise JobError("Error instantiating task.") from e
+                    message = "Error instantiating task."
+                    fail_process(db, generative_process, message, e)
+                    raise JobError(message) from e
 
                 try:
                     use_history = getattr(task_class, "USE_HISTORY", False)
@@ -236,36 +234,26 @@ class GenerativeJob(BaseJob):
                         input_data = task.prepare_for_task(input_data)
                 except Exception as e:
                     log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.commit()
-                    raise JobError("Error preparing task with history.") from e
+                    message = "Error preparing task with history."
+                    fail_process(db, generative_process, message, e)
+                    raise JobError(message) from e
 
                 try:
                     generative_process.set_status_as_started()
                     db.commit()
                 except exc.SQLAlchemyError as e:
                     log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.commit()
-                    raise JobError(
-                        "Failed to update process status in database."
-                    ) from e
+                    message = "Failed to update process status in database."
+                    fail_process(db, generative_process, message, e)
+                    raise JobError(message) from e
 
                 try:
                     output: Any = model.generate(input_data)
                 except Exception as e:
                     log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.add(
-                        ProcessData(
-                            data=f"Error details: {str(e)}",
-                            data_type="str",
-                            process_id=generative_process.id,
-                            is_input=False,
-                        )
-                    )
-                    db.commit()
-                    raise JobError("Error during model generation.") from e
+                    message = "Error during model generation."
+                    fail_process(db, generative_process, message, e)
+                    raise JobError(message) from e
 
                 try:
                     output: Any = task.process_output(
@@ -298,11 +286,9 @@ class GenerativeJob(BaseJob):
                     db.commit()
                 except Exception as e:
                     log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.commit()
-                    raise JobError(
-                        "Error processing and saving generation output."
-                    ) from e
+                    message = "Error processing and saving generation output."
+                    fail_process(db, generative_process, message, e)
+                    raise JobError(message) from e
 
             except BaseException as error:
                 failure = error
