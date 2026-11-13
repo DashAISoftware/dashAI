@@ -13,7 +13,11 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from DashAI.back.core.enums.status import RunStatus
-from DashAI.back.dependencies.database.models import GenerativeProcess, ProcessData
+from DashAI.back.dependencies.database.models import (
+    DataDocument,
+    GenerativeProcess,
+    ProcessData,
+)
 from tests.back.RAG.conftest import _create_session_with_document
 from tests.back.RAG.test_RAG_session_flow import _base_session_params
 
@@ -31,17 +35,20 @@ def _import(client: TestClient, content: bytes):
     )
 
 
-def test_rag_session_round_trip(client: TestClient):
+def test_rag_session_round_trip_reuses_the_same_document(client: TestClient):
     payload = {**_base_session_params(), "name": "Package Round Trip"}
-    session_id, _ = _create_session_with_document(client, payload)
+    session_id, document_id = _create_session_with_document(client, payload)
     original = client.get(f"/api/v1/generative-session/{session_id}").json()
 
     content = _export(client, session_id)
     with zipfile.ZipFile(io.BytesIO(content)) as archive:
         manifest = json.loads(archive.read("manifest.json"))
         recipe = json.loads(archive.read("generative_session.json"))
+        names = archive.namelist()
     assert manifest["kind"] == "generative_session"
     assert recipe["session"]["parameters"]["documents"] == []
+    assert [d["ref"] for d in recipe["documents"]] == [document_id]
+    assert any(name.startswith("documents/0/document/") for name in names)
 
     response = _import(client, content)
     assert response.status_code == 201, response.text
@@ -49,17 +56,42 @@ def test_rag_session_round_trip(client: TestClient):
     assert result["session_name"] == "Package Round Trip (2)"
     assert result["renamed"] is True
     assert result["task_name"] == "RAGTask"
+    assert result["document_count"] == 1
+    assert result["reused_document_count"] == 1
 
     imported = client.get(f"/api/v1/generative-session/{result['session_id']}").json()
     assert imported["task_name"] == original["task_name"]
     assert imported["model_name"] == original["model_name"]
-    expected = {**original["parameters"], "documents": []}
-    assert imported["parameters"] == expected
+    assert imported["parameters"] == original["parameters"]
 
-    history = client.get(
-        f"/api/v1/generative-session/{result['session_id']}/parameters-history"
-    )
-    assert history.status_code == 200
+    linked = client.get(f"/api/v1/rag/sessions/{result['session_id']}/documents")
+    assert [d["id"] for d in linked.json()] == [document_id]
+    status = client.get(f"/api/v1/rag/sessions/{result['session_id']}/index-status")
+    assert status.json()["status"] == "not_indexed"
+
+
+def test_rag_document_is_copied_when_not_already_here(client: TestClient):
+    payload = {**_base_session_params(), "name": "Package Copy"}
+    session_id, document_id = _create_session_with_document(client, payload)
+    content = _export(client, session_id)
+
+    # The same file parsed another way, or one this DashAI never saw.
+    with client.app.container["session_factory"]() as db:
+        db.get(DataDocument, document_id).file_hash = "another file"
+        db.commit()
+
+    response = _import(client, content)
+    assert response.status_code == 201, response.text
+    assert response.json()["reused_document_count"] == 0
+
+    (copy,) = client.get(
+        f"/api/v1/rag/sessions/{response.json()['session_id']}/documents"
+    ).json()
+    assert copy["id"] != document_id
+    original = client.get(f"/api/v1/documents/{document_id}").json()
+    assert copy["name"] == f"{original['name']} (2)"
+    content_response = client.get(f"/api/v1/documents/{copy['id']}/content")
+    assert content_response.status_code == 200, content_response.text
 
 
 def test_import_refuses_a_model_session_file(client: TestClient):

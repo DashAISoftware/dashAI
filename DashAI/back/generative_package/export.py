@@ -2,8 +2,12 @@
 
 The file is a zip with the session configuration as readable JSON: its task,
 its model and the model parameters. IDs stay out, since importing assigns new
-ones. A RAG session travels without its documents for now, so its document
-list is written empty.
+ones, so a RAG session's document list is written empty.
+
+A RAG session always carries its documents: each one's Data module row as
+JSON and its folder (the source file and the parsed content) under
+``documents/``, so importing needs no parsing. Its former id travels as
+``ref`` only to match the conversation's citations to it.
 
 When asked for, the file also carries the conversation: every finished
 process with its input and output rows. A media row (an image, audio or
@@ -37,10 +41,23 @@ GENERATIVE_FORMAT_VERSION = 1
 KIND_GENERATIVE_SESSION = "generative_session"
 SESSION_ENTRY = "generative_session.json"
 MEDIA_ENTRY = "media"
+DOCUMENTS_ENTRY = "documents"
 CONTENT_SESSION = "session"
 CONTENT_CONVERSATION = "conversation"
-CONTENTS = [CONTENT_SESSION, CONTENT_CONVERSATION]
+CONTENT_DOCUMENTS = "documents"
+CONTENTS = [CONTENT_SESSION, CONTENT_CONVERSATION, CONTENT_DOCUMENTS]
 SESSION_FIELDS = ("name", "description", "task_name", "model_name", "parameters")
+DOCUMENT_FIELDS = (
+    "name",
+    "file_name",
+    "file_type",
+    "file_hash",
+    "dataloader",
+    "dataloader_params",
+    "converter_pipeline",
+    "content_counts",
+    "total_pages",
+)
 # Row types whose ``data`` names a file under IMAGES_PATH rather than holding
 # the content itself.
 MEDIA_TYPES = frozenset({"Image", "Audio", "Video"})
@@ -81,6 +98,23 @@ def _media_path(row, images_path: Path) -> Optional[Path]:
     return path if path.is_file() else None
 
 
+def _folder_size(path: Path) -> int:
+    return sum(item.stat().st_size for item in path.rglob("*") if item.is_file())
+
+
+def _exportable_documents(session) -> List[Any]:
+    """The session's documents that finished parsing and are still on disk."""
+    from DashAI.back.core.enums.status import DocumentStatus
+
+    return [
+        document
+        for document in session.documents
+        if document.status == DocumentStatus.FINISHED
+        and document.file_path
+        and Path(document.file_path).is_dir()
+    ]
+
+
 def _finished_processes(db, session_id: int) -> List[Any]:
     from DashAI.back.core.enums.status import RunStatus
     from DashAI.back.dependencies.database.models import GenerativeProcess
@@ -106,7 +140,9 @@ def export_preview(
     dict
         ``session_name``, ``message_count`` (finished exchanges that would be
         exported), ``unfinished_count`` (still running or failed, never
-        exported) and ``media_size_bytes`` (files the conversation carries).
+        exported), ``media_size_bytes`` (files the conversation carries),
+        ``document_count`` and ``documents_size_bytes`` (the documents a RAG
+        session always carries).
 
     Raises
     ------
@@ -136,12 +172,33 @@ def export_preview(
                 if row.data_type in MEDIA_TYPES:
                     path = _media_path(row, images_path)
                     media_size += path.stat().st_size if path else 0
+        documents = _exportable_documents(session)
         return {
             "session_name": session.name,
             "message_count": len(finished),
             "unfinished_count": total - len(finished),
             "media_size_bytes": media_size,
+            "document_count": len(documents),
+            "documents_size_bytes": sum(
+                _folder_size(Path(document.file_path)) for document in documents
+            ),
         }
+
+
+def _documents(session, staging: Path) -> List[Dict[str, Any]]:
+    """The session's documents as recipe entries, copying their folders."""
+    entries = []
+    for index, document in enumerate(_exportable_documents(session)):
+        entry = f"{DOCUMENTS_ENTRY}/{index}"
+        shutil.copytree(document.file_path, staging / entry)
+        entries.append(
+            {
+                "ref": document.id,
+                **{field: getattr(document, field) for field in DOCUMENT_FIELDS},
+                "entry": entry,
+            }
+        )
+    return entries
 
 
 def _conversation(
@@ -228,6 +285,7 @@ def build_generative_package(
                 if include_conversation
                 else None
             )
+            documents = _documents(session, staging)
 
         parameters = dict(recipe_session["parameters"] or {})
         if RAG_PARAM_DOCUMENTS in parameters:
@@ -245,6 +303,9 @@ def build_generative_package(
         if processes is not None:
             recipe["processes"] = processes
             contents.append(CONTENT_CONVERSATION)
+        if documents:
+            recipe["documents"] = documents
+            contents.append(CONTENT_DOCUMENTS)
         (staging / SESSION_ENTRY).write_text(json.dumps(recipe, indent=2))
 
         manifest = {
@@ -258,6 +319,7 @@ def build_generative_package(
                 "task_name": recipe_session["task_name"],
                 "model_name": recipe_session["model_name"],
                 "message_count": len(processes) if processes is not None else 0,
+                "document_count": len(documents),
                 "exported_at": datetime.now().isoformat(),
             },
         }

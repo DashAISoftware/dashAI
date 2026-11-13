@@ -24,6 +24,8 @@ export interface IGenerativeSessionImportResult {
   renamed: boolean;
   warnings: string[];
   message_count: number;
+  document_count: number;
+  reused_document_count: number;
   needs_download: { name: string; display_name: string }[];
 }
 
@@ -32,4 +34,6 @@ export interface IGenerativeSessionExportPreview {
   message_count: number;
   unfinished_count: number;
   media_size_bytes: number;
+  document_count: number;
+  documents_size_bytes: number;
 }

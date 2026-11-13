@@ -7,8 +7,11 @@ clashes gets a number. A model that still has to be downloaded does not stop
 the import; it is reported so the app can ask for the download.
 
 A file with a conversation adds its processes too. Their media files are
-copied into IMAGES_PATH under new names; a failure halfway removes every row
-and file the import created.
+copied into IMAGES_PATH under new names. A RAG file adds its documents to the
+Data module and links them to the new session, which then waits to be
+indexed. A document that this DashAI already has, from the same file parsed
+the same way, is reused instead of copied. A failure halfway removes every
+row and file the import created.
 """
 
 import json
@@ -25,6 +28,8 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.generative_package.export import (
     CONTENTS,
+    DOCUMENT_FIELDS,
+    DOCUMENTS_ENTRY,
     GENERATIVE_FORMAT_VERSION,
     KIND_GENERATIVE_SESSION,
     MEDIA_ENTRY,
@@ -96,6 +101,8 @@ def _read_package(path: Union[str, Path], workdir: Path):
         for process in recipe.get("processes") or []:
             for row in [*process["input"], *process["output"]]:
                 _check_row(row, workdir)
+        for document in recipe.get("documents") or []:
+            _check_document(document, workdir)
     except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError) as e:
         raise ModelPackageError(NOT_A_GENERATIVE_SESSION.format(path=path)) from e
     return recipe, notes
@@ -122,6 +129,72 @@ def _check_row(row: Dict[str, Any], workdir: Path) -> None:
     source = (workdir / row["media_entry"]).resolve()
     if not source.is_relative_to(media_root) or not source.is_file():
         raise KeyError("media_entry")
+
+
+def _check_document(document: Dict[str, Any], workdir: Path) -> None:
+    """Refuse a document entry the importer could not store safely.
+
+    Its folder must sit inside the ``documents`` folder of the package and
+    hold the parsed content the Data module reads.
+
+    Raises
+    ------
+    KeyError
+        If a field is missing or the folder is missing or elsewhere.
+    """
+    missing = [f for f in (*DOCUMENT_FIELDS, "ref", "entry") if f not in document]
+    if missing or not isinstance(document["name"], str):
+        raise KeyError(missing or "name")
+    documents_root = (workdir / DOCUMENTS_ENTRY).resolve()
+    folder = (workdir / document["entry"]).resolve()
+    if not folder.is_relative_to(documents_root) or not (folder / "document").is_dir():
+        raise KeyError("entry")
+
+
+def _reusable_documents(
+    documents: List[Dict[str, Any]], session_factory: "sessionmaker"
+) -> Dict[Any, int]:
+    """Documents of the file this DashAI already has, by their ``ref``.
+
+    One is reused only when a finished document has the same source file
+    (``file_hash``) parsed by the same dataloader, with the same parameters
+    and converter pipeline: the same file parsed another way holds other
+    content.
+    """
+    from DashAI.back.core.enums.status import DocumentStatus
+    from DashAI.back.dependencies.database.models import DataDocument
+
+    hashes = {d["file_hash"] for d in documents if d["file_hash"]}
+    if not hashes:
+        return {}
+    with session_factory() as db:
+        candidates = (
+            db.query(DataDocument)
+            .filter(
+                DataDocument.file_hash.in_(hashes),
+                DataDocument.status == DocumentStatus.FINISHED,
+            )
+            .order_by(DataDocument.id)
+            .all()
+        )
+        reusable = {}
+        for document in documents:
+            match = next(
+                (
+                    c.id
+                    for c in candidates
+                    if c.file_hash == document["file_hash"]
+                    and c.dataloader == document["dataloader"]
+                    and (c.dataloader_params or {})
+                    == (document["dataloader_params"] or {})
+                    and (c.converter_pipeline or [])
+                    == (document["converter_pipeline"] or [])
+                ),
+                None,
+            )
+            if match is not None:
+                reusable[document["ref"]] = match
+        return reusable
 
 
 def _check_components(recipe_session: Dict[str, Any], component_registry: Any) -> None:
@@ -223,18 +296,22 @@ def import_generative_package(
     component_registry: Any,
     language: Optional[str] = "en",
     images_path: Optional[Path] = None,
+    documents_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """Create a new generative session from a ``.dashai`` file.
 
-    ``images_path`` is where the media files of a conversation are copied;
-    it is required for a file that carries one.
+    ``images_path`` is where the media files of a conversation are copied,
+    and ``documents_path`` where the documents of a RAG session are; each is
+    required for a file that carries them.
 
     Returns
     -------
     dict
         ``session_id``, its ``task_name``, the final ``session_name``, whether
         it was ``renamed``, version ``warnings``, the ``message_count`` it
-        brought and ``needs_download``: the model
+        brought, its ``document_count`` and how many of those documents were
+        already here (``reused_document_count``), and ``needs_download``: the
+        model
         and nested components (``name`` and ``display_name`` in ``language``)
         that must be downloaded before the session can be used.
 
@@ -245,13 +322,19 @@ def import_generative_package(
         than this DashAI reads, needs a missing plugin or component, or holds
         a configuration this DashAI rejects.
     """
-    from DashAI.back.core.enums.status import RunStatus
+    import os
+
+    from DashAI.back.core.enums.status import DocumentStatus, RunStatus
     from DashAI.back.dependencies.database.models import (
+        DataDocument,
         GenerativeProcess,
         GenerativeSession,
         GenerativeSessionParameterHistory,
         ProcessData,
+        RAGSessionDocument,
     )
+    from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_DOCUMENTS
+    from DashAI.back.tasks.RAG_task import RAGTask
 
     language = language or "en"
     workdir = Path(tempfile.mkdtemp(prefix="dashai-import-"))
@@ -263,6 +346,9 @@ def import_generative_package(
         recipe_session = recipe["session"]
         _check_components(recipe_session, component_registry)
         processes = recipe.get("processes") or []
+        is_rag = component_registry[recipe_session["task_name"]]["class"] == RAGTask
+        documents = (recipe.get("documents") or []) if is_rag else []
+        reused = _reusable_documents(documents, session_factory)
 
         try:
             # Files are copied before the transaction opens, as the session
@@ -280,6 +366,15 @@ def import_generative_package(
                     shutil.copy2(source, target)
                     media_names[row["media_entry"]] = name
 
+            document_folders: Dict[Any, Path] = {}
+            for document in documents:
+                if document["ref"] in reused:
+                    continue
+                folder = Path(documents_path) / str(uuid.uuid4())
+                created.append(folder)
+                shutil.copytree(workdir / document["entry"], folder)
+                document_folders[document["ref"]] = folder
+
             with session_factory() as db:
                 try:
                     parameters = _validated_parameters(
@@ -288,6 +383,33 @@ def import_generative_package(
                     taken = {name for (name,) in db.query(GenerativeSession.name)}
                     session_name = unique_name(recipe_session["name"], taken)
                     now = datetime.now()
+
+                    document_ids = dict(reused)
+                    taken_documents = {n for (n,) in db.query(DataDocument.name)}
+                    for document in documents:
+                        if document["ref"] in reused:
+                            continue
+                        name = unique_name(document["name"], taken_documents)
+                        taken_documents.add(name)
+                        row = DataDocument(
+                            **{
+                                field: document[field]
+                                for field in DOCUMENT_FIELDS
+                                if field != "name"
+                            },
+                            name=name,
+                            file_path=os.path.realpath(
+                                document_folders[document["ref"]]
+                            ),
+                            status=DocumentStatus.FINISHED,
+                        )
+                        db.add(row)
+                        db.flush()
+                        document_ids[document["ref"]] = row.id
+                    if is_rag:
+                        parameters[RAG_PARAM_DOCUMENTS] = sorted(
+                            set(document_ids.values())
+                        )
                     session = GenerativeSession(
                         name=session_name,
                         description=recipe_session["description"],
@@ -299,6 +421,12 @@ def import_generative_package(
                     )
                     db.add(session)
                     db.flush()
+                    db.add_all(
+                        RAGSessionDocument(
+                            session_id=session.id, data_document_id=document_id
+                        )
+                        for document_id in sorted(set(document_ids.values()))
+                    )
                     db.add(
                         GenerativeSessionParameterHistory(
                             session_id=session.id,
@@ -342,7 +470,10 @@ def import_generative_package(
                     raise
         except BaseException:
             for created_path in reversed(created):
-                created_path.unlink(missing_ok=True)
+                if created_path.is_dir():
+                    shutil.rmtree(created_path, ignore_errors=True)
+                else:
+                    created_path.unlink(missing_ok=True)
             raise
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
@@ -354,6 +485,8 @@ def import_generative_package(
         "renamed": session_name != recipe_session["name"],
         "warnings": notes,
         "message_count": len(processes),
+        "document_count": len(documents),
+        "reused_document_count": len(reused),
         "needs_download": _missing_downloads(
             recipe_session["model_name"], parameters, component_registry, language
         ),

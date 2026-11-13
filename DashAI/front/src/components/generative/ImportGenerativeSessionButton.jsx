@@ -65,7 +65,11 @@ export default function ImportGenerativeSessionButton({ onImported }) {
     try {
       const imported = await importGenerativeSession(file);
       await onImported?.();
-      if (imported.warnings.length > 0 || imported.needs_download.length > 0) {
+      if (
+        imported.warnings.length > 0 ||
+        imported.needs_download.length > 0 ||
+        imported.document_count > 0
+      ) {
         setResult(imported);
         setDownloadStarted(false);
         setPhase("result");
@@ -137,6 +141,8 @@ export default function ImportGenerativeSessionButton({ onImported }) {
     }
 
     if (phase === "result" && result) {
+      const addedDocuments =
+        result.document_count - result.reused_document_count;
       return (
         <>
           <Alert severity="success">
@@ -144,6 +150,23 @@ export default function ImportGenerativeSessionButton({ onImported }) {
               session: result.session_name,
             })}
           </Alert>
+          {result.document_count > 0 && (
+            <Alert severity="info">
+              {[
+                addedDocuments > 0 &&
+                  t("generative:label.importedDocuments", {
+                    count: addedDocuments,
+                  }),
+                result.reused_document_count > 0 &&
+                  t("generative:label.importedReusedDocuments", {
+                    count: result.reused_document_count,
+                  }),
+                t("generative:label.importedIndexBeforeChat"),
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            </Alert>
+          )}
           {result.warnings.map((warning) => (
             <Alert key={warning} severity="warning">
               {warning}

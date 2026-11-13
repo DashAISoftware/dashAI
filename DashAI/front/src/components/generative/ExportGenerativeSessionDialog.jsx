@@ -83,6 +83,9 @@ export default function ExportGenerativeSessionDialog({
   };
 
   const hasMessages = preview?.message_count > 0;
+  const size =
+    (preview?.documents_size_bytes || 0) +
+    (includeConversation ? preview?.media_size_bytes || 0 : 0);
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -141,6 +144,14 @@ export default function ExportGenerativeSessionDialog({
               {t("generative:label.exportConfigurationAlways")}
             </Typography>
 
+            {preview.document_count > 0 && (
+              <Alert severity="info">
+                {t("generative:label.exportIncludesDocuments", {
+                  count: preview.document_count,
+                })}
+              </Alert>
+            )}
+
             <Box>
               <FormControlLabel
                 control={
@@ -173,11 +184,9 @@ export default function ExportGenerativeSessionDialog({
               </Alert>
             )}
 
-            {includeConversation && preview.media_size_bytes > 0 && (
+            {size > 0 && (
               <Alert severity="info">
-                {t("models:label.approxSize", {
-                  size: formatBytes(preview.media_size_bytes),
-                })}
+                {t("models:label.approxSize", { size: formatBytes(size) })}
               </Alert>
             )}
 

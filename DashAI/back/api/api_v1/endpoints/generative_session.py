@@ -921,6 +921,7 @@ async def import_generative_session(
             component_registry,
             (accept_language or "en").split("-")[0].lower(),
             config["IMAGES_PATH"],
+            config["DOCUMENTS_PATH"],
         )
     except (UnsupportedPackageFormatError, MissingPluginError) as e:
         raise HTTPException(
