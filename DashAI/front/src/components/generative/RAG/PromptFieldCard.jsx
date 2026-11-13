@@ -33,36 +33,11 @@ import {
   promptTemplateLanguages,
   readPromptSelection,
   resolvePromptTemplate,
+  resolveStoredPromptTemplate,
 } from "./promptSchema";
 
 /** Width the selector keeps before it starts wrapping the action row. */
 const SELECTOR_MIN_WIDTH = 220;
-
-/**
- * Template text stored in a prompt's parameters.
- *
- * Saved prompts may store a single `template` or a `templates` map; the
- * explicit text wins, then the requested language, then any stored language.
- *
- * @param {object} parameters - The prompt's stored parameters.
- * @param {string} language - The language to prefer.
- * @returns {string} The template, or an empty string.
- */
-function templateFromParameters(parameters, language) {
-  const stored = parameters ?? {};
-  if (typeof stored.template === "string" && stored.template.trim()) {
-    return stored.template;
-  }
-  const templates = stored.templates ?? {};
-  return (
-    templates[language] ??
-    templates[DEFAULT_PROMPT_LANGUAGE] ??
-    Object.values(templates).find(
-      (value) => typeof value === "string" && value.trim(),
-    ) ??
-    ""
-  );
-}
 
 /**
  * Whether two prompt parameter objects carry the same values.
@@ -261,7 +236,7 @@ export default function PromptFieldCard({
   const language =
     selection.params?.[PROMPT_LANGUAGE_PARAM] || DEFAULT_PROMPT_LANGUAGE;
   const template = libraryMatch
-    ? templateFromParameters(libraryMatch.libraryParameters, language) ||
+    ? resolveStoredPromptTemplate(libraryMatch.libraryParameters, language) ||
       resolvePromptTemplate(activeOption, {}, language)
     : resolvePromptTemplate(selectedComponent, selection.params, language);
   const missing = getMissingPromptPlaceholders(activeOption, template);

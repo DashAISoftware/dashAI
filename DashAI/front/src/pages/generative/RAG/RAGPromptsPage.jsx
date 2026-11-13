@@ -50,18 +50,11 @@ import {
 import { getApiErrorMessage } from "../../../utils/apiError";
 import { useTableLocalization } from "../../../utils/useTableLocalization";
 import { renderTemplateWithHighlights } from "../RAGSession/components/sectionUtils";
-
-/**
- * The template of a prompt whichever shape it has.
- *
- * @param {object} prompt - A library prompt.
- * @returns {string} The template text, or an empty string.
- */
-function templateOf(prompt) {
-  const parameters = prompt?.parameters ?? {};
-  if (typeof parameters.template === "string") return parameters.template;
-  return Object.values(parameters.templates ?? {})[0] ?? "";
-}
+import {
+  resolveStoredPromptTemplate,
+  storedPromptLanguages,
+  storedPromptShape,
+} from "../../../components/generative/RAG/promptSchema";
 
 /**
  * The RAG prompt library: prompts the user saved, with create and delete.
@@ -92,6 +85,9 @@ export default function RAGPromptsPage() {
   const [deleting, setDeleting] = useState(false);
   const [typeFilter, setTypeFilter] = useState("");
   const [subtypeFilter, setSubtypeFilter] = useState("");
+  // The variant the user picked in the details panel, scoped to the prompt it
+  // was picked for so it can never leak into another prompt's options.
+  const [languageChoice, setLanguageChoice] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -116,6 +112,30 @@ export default function RAGPromptsPage() {
   const selected = useMemo(
     () => prompts.find((prompt) => prompt.id === selectedId) ?? null,
     [prompts, selectedId],
+  );
+
+  // The visible variant is derived on every render from the selected prompt,
+  // never stored: switching prompts cannot leave a language that the new
+  // prompt does not have. The user's pick is honoured while its prompt is the
+  // selected one; otherwise the prompt's configured variant is shown, which
+  // falls back to its first variant with text when that one is still empty.
+  const storedShape = storedPromptShape(selected?.parameters);
+  const templateLanguages = storedShape.usesTemplates
+    ? storedPromptLanguages(selected?.parameters)
+    : [];
+  const configuredLanguage = templateLanguages.includes(storedShape.language)
+    ? storedShape.language
+    : (templateLanguages[0] ?? null);
+  const pickedLanguage =
+    selected && languageChoice?.promptId === selected.id
+      ? languageChoice.language
+      : null;
+  const visibleLanguage = templateLanguages.includes(pickedLanguage)
+    ? pickedLanguage
+    : configuredLanguage;
+  const visibleTemplate = resolveStoredPromptTemplate(
+    selected?.parameters,
+    visibleLanguage,
   );
 
   const typeOptions = useMemo(
@@ -171,17 +191,16 @@ export default function RAGPromptsPage() {
 
   const handleUseAsBase = () => {
     if (!selected) return;
-    setCreateTemplate(templateOf(selected));
+    setCreateTemplate(visibleTemplate);
     setCreateType(selected.prompt_type ?? "");
     setCreateSubtype(selected.prompt_subtype ?? "");
     setCreateOpen(true);
   };
 
   const handleCopyTemplate = async () => {
-    const template = templateOf(selected);
-    if (!template) return;
+    if (!visibleTemplate) return;
     try {
-      await navigator.clipboard.writeText(template);
+      await navigator.clipboard.writeText(visibleTemplate);
       enqueueSnackbar(t("generative:rag.prompt.library.copied"), {
         variant: "success",
       });
@@ -745,7 +764,36 @@ export default function RAGPromptsPage() {
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>
                       {t("generative:rag.prompt.library.template")}
                     </Typography>
+                    {templateLanguages.length > 1 && (
+                      <TextField
+                        select
+                        size="small"
+                        label={t(
+                          "generative:rag.prompt.library.templateLanguage",
+                        )}
+                        value={visibleLanguage ?? ""}
+                        onChange={(event) =>
+                          setLanguageChoice({
+                            promptId: selected.id,
+                            language: event.target.value,
+                          })
+                        }
+                        helperText={t(
+                          "generative:rag.prompt.library.templatePreviewHelp",
+                        )}
+                        sx={{ mb: 1, minWidth: 180 }}
+                      >
+                        {templateLanguages.map((code) => (
+                          <MenuItem key={code} value={code}>
+                            {t(`generative:rag.prompt.languages.${code}`, {
+                              defaultValue: code,
+                            })}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    )}
                     <Box
+                      aria-live="polite"
                       sx={{
                         p: 2,
                         border: 1,
@@ -759,7 +807,7 @@ export default function RAGPromptsPage() {
                       }}
                     >
                       {renderTemplateWithHighlights(
-                        templateOf(selected),
+                        visibleTemplate,
                         placeholderColors,
                         theme.typography.code.fontFamily,
                       ) ?? (
