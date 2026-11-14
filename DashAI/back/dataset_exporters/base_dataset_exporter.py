@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, Final
 
 from DashAI.back.config_object import ConfigObject
@@ -11,6 +12,35 @@ from DashAI.back.core.utils import MultilingualString
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+    from DashAI.back.types.dashai_data_type import DashAIDataType
+
+
+class CompatibilityStatus(str, Enum):
+    """How well a dataset fits an export platform."""
+
+    COMPATIBLE = "compatible"
+    WARNING = "warning"
+    INCOMPATIBLE = "incompatible"
+
+
+@dataclass
+class DatasetCompatibility:
+    """Whether a dataset can be exported to a platform, judged by its columns.
+
+    Parameters
+    ----------
+    status : CompatibilityStatus
+        ``compatible``: exported as is. ``warning``: exported, but something
+        is left out. ``incompatible``: cannot be exported.
+    messages : list[str]
+        Human readable reasons for a warning or incompatibility.
+    unsupported_columns : list[str]
+        Columns the platform cannot store and would be left out.
+    """
+
+    status: CompatibilityStatus = CompatibilityStatus.COMPATIBLE
+    messages: list[str] = field(default_factory=list)
+    unsupported_columns: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -114,6 +144,27 @@ class BaseDatasetExporter(ConfigObject, ABC):
     SCHEMA = BaseDatasetExportSchema
     REQUIRED_CREDENTIALS: list[str] = []
     SOURCE_NAME: str | None = None
+
+    def check_dataset(
+        self, column_types: dict[str, "DashAIDataType"]
+    ) -> DatasetCompatibility:
+        """Judge whether a dataset fits this platform from its column types.
+
+        Unlike :meth:`validate`, it needs no export parameters and no data, so
+        it can run over every dataset to tell the user up front which ones the
+        platform accepts. The default implementation accepts every dataset.
+
+        Parameters
+        ----------
+        column_types : dict[str, DashAIDataType]
+            DashAI type of each column, in column order.
+
+        Returns
+        -------
+        DatasetCompatibility
+            Status, reasons and the columns that would be left out.
+        """
+        return DatasetCompatibility()
 
     def validate(self, dataset: "DashAIDataset", params: dict[str, Any]) -> list[str]:
         """Check the dataset and export parameters before exporting.

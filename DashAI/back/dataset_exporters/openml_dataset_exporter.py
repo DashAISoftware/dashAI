@@ -13,6 +13,8 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataset_exporters.base_dataset_exporter import (
     BaseDatasetExporter,
     BaseDatasetExportSchema,
+    CompatibilityStatus,
+    DatasetCompatibility,
     ExportPayload,
     ExportResult,
 )
@@ -31,6 +33,7 @@ if TYPE_CHECKING:
     import pandas as pd
 
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+    from DashAI.back.types.dashai_data_type import DashAIDataType
 
 #: DashAI types OpenML cannot store; these columns are left out of the upload.
 _UNSUPPORTED_TYPES: Final = (DashAIImage, Binary)
@@ -252,6 +255,47 @@ class OpenMLDatasetExporter(BaseDatasetExporter):
     REQUIRED_CREDENTIALS = ["OpenMLCredential"]
     SOURCE_NAME = "OpenMLDatasetSource"
 
+    def check_dataset(
+        self, column_types: dict[str, "DashAIDataType"]
+    ) -> DatasetCompatibility:
+        """Flag the columns OpenML cannot store, such as images.
+
+        Those columns are left out of the upload. When fewer than two columns
+        would remain, there is no room for a target and a feature, so the
+        dataset is incompatible.
+
+        Parameters
+        ----------
+        column_types : dict[str, DashAIDataType]
+            DashAI type of each column, in column order.
+
+        Returns
+        -------
+        DatasetCompatibility
+            Status, reasons and the columns that would be left out.
+        """
+        unsupported = _unsupported_in(column_types)
+        if not unsupported:
+            return DatasetCompatibility()
+
+        if len(column_types) - len(unsupported) < 2:
+            return DatasetCompatibility(
+                status=CompatibilityStatus.INCOMPATIBLE,
+                messages=[
+                    f"OpenML cannot store the columns {unsupported}, and the rest "
+                    "is not enough for a target and a feature column."
+                ],
+                unsupported_columns=unsupported,
+            )
+        return DatasetCompatibility(
+            status=CompatibilityStatus.WARNING,
+            messages=[
+                f"The columns {unsupported} have types OpenML cannot store and "
+                "will not be sent."
+            ],
+            unsupported_columns=unsupported,
+        )
+
     def validate(self, dataset: "DashAIDataset", params: dict[str, Any]) -> list[str]:
         """Check the base rules plus the OpenML column references.
 
@@ -401,14 +445,19 @@ def _optional_text(params: dict[str, Any], key: str) -> str | None:
     return str(value).strip()
 
 
-def _unsupported_columns(dataset: "DashAIDataset") -> list[str]:
-    """Return the columns whose DashAI type OpenML cannot store."""
-    types = dataset.types or {}
+def _unsupported_in(column_types: dict[str, Any]) -> list[str]:
+    """Return the columns, in order, whose DashAI type OpenML cannot store."""
     return [
         col
-        for col in dataset.column_names
-        if isinstance(types.get(col), _UNSUPPORTED_TYPES)
+        for col, col_type in column_types.items()
+        if isinstance(col_type, _UNSUPPORTED_TYPES)
     ]
+
+
+def _unsupported_columns(dataset: "DashAIDataset") -> list[str]:
+    """Return the columns of a loaded dataset that OpenML cannot store."""
+    types = dataset.types or {}
+    return _unsupported_in({col: types.get(col) for col in dataset.column_names})
 
 
 def _to_openml_dataframe(

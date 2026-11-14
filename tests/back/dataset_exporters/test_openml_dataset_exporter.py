@@ -11,6 +11,7 @@ from pydantic import ValidationError
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.dataset_exporters.base_dataset_exporter import (
+    CompatibilityStatus,
     ExportPayload,
     ExportResult,
 )
@@ -148,6 +149,46 @@ def test_validate_rejects_target_in_ignored_columns():
 def test_validate_keeps_base_errors():
     errors = OpenMLDatasetExporter().validate(_dataset(num_rows=0), VALID_PARAMS)
     assert "The dataset has no rows." in errors
+
+
+def test_check_dataset_accepts_tabular_columns():
+    column_types = {
+        "id": Integer(pa.int64()),
+        "sepal_length": Float(pa.float64()),
+        "class": Categorical(["setosa", "virginica"]),
+    }
+
+    compatibility = OpenMLDatasetExporter().check_dataset(column_types)
+
+    assert compatibility.status == CompatibilityStatus.COMPATIBLE
+    assert compatibility.unsupported_columns == []
+
+
+def test_check_dataset_warns_about_columns_left_out():
+    column_types = {
+        "price": Float(pa.float64()),
+        "photo": Binary(pa.binary()),
+        "category": Categorical(["a", "b"]),
+    }
+
+    compatibility = OpenMLDatasetExporter().check_dataset(column_types)
+
+    assert compatibility.status == CompatibilityStatus.WARNING
+    assert compatibility.unsupported_columns == ["photo"]
+    assert "photo" in compatibility.messages[0]
+
+
+def test_check_dataset_refuses_when_too_little_would_remain():
+    # Like an image dataset: the image is dropped and only the label is left.
+    column_types = {
+        "image": Binary(pa.binary()),
+        "label": Categorical(["a", "b"]),
+    }
+
+    compatibility = OpenMLDatasetExporter().check_dataset(column_types)
+
+    assert compatibility.status == CompatibilityStatus.INCOMPATIBLE
+    assert compatibility.unsupported_columns == ["image"]
 
 
 def test_prepare_builds_openml_dataset():

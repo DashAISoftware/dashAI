@@ -2,13 +2,13 @@
 
 import pytest
 
-from DashAI.back.core.enums.status import DatasetExportStatus
+from DashAI.back.core.enums.status import DatasetExportStatus, DatasetStatus
 from DashAI.back.dataset_exporters.base_dataset_exporter import (
     BaseDatasetExporter,
     ExportPayload,
     ExportResult,
 )
-from DashAI.back.dependencies.database.models import DatasetExport
+from DashAI.back.dependencies.database.models import Dataset, DatasetExport
 from DashAI.back.dependencies.database.utils import find_entity_by_huey_id
 
 URL = "/api/v1/dataset-export"
@@ -219,3 +219,63 @@ def test_delete_refuses_an_export_in_progress(
 
 def test_delete_refuses_an_unknown_export(client):
     assert client.delete(f"{URL}/999999").status_code == 404
+
+
+def test_exportable_datasets_report_their_compatibility(client, dataset_1):
+    response = client.get(f"{URL}/OpenMLDatasetExporter/datasets")
+    assert response.status_code == 200
+
+    entry = next(row for row in response.json() if row["id"] == dataset_1.id)
+    assert entry["name"] == dataset_1.name
+    assert entry["total_rows"] == dataset_1.total_rows
+    assert entry["total_columns"] == dataset_1.total_columns
+    assert entry["compatibility"] == {
+        "status": "compatible",
+        "messages": [],
+        "unsupported_columns": [],
+    }
+
+
+def test_exportable_datasets_mark_unreadable_datasets(client, session_factory):
+    with session_factory() as db:
+        broken = Dataset(
+            name="broken_export_dataset",
+            file_path="/nowhere/broken_export_dataset",
+            status=DatasetStatus.FINISHED,
+        )
+        db.add(broken)
+        db.commit()
+        broken_id = broken.id
+
+    try:
+        rows = client.get(f"{URL}/OpenMLDatasetExporter/datasets").json()
+        entry = next(row for row in rows if row["id"] == broken_id)
+        assert entry["compatibility"]["status"] == "incompatible"
+    finally:
+        with session_factory() as db:
+            db.delete(db.get(Dataset, broken_id))
+            db.commit()
+
+
+def test_exportable_datasets_skip_unfinished_datasets(client, session_factory):
+    with session_factory() as db:
+        loading = Dataset(
+            name="loading_export_dataset",
+            file_path="",
+            status=DatasetStatus.STARTED,
+        )
+        db.add(loading)
+        db.commit()
+        loading_id = loading.id
+
+    try:
+        rows = client.get(f"{URL}/OpenMLDatasetExporter/datasets").json()
+        assert loading_id not in [row["id"] for row in rows]
+    finally:
+        with session_factory() as db:
+            db.delete(db.get(Dataset, loading_id))
+            db.commit()
+
+
+def test_exportable_datasets_refuse_an_unknown_exporter(client):
+    assert client.get(f"{URL}/Nope/datasets").status_code == 404

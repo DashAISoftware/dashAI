@@ -276,6 +276,99 @@ async def create_export(
     return {"export_id": export_id, "job_id": job_id}
 
 
+def _read_column_types(dataset_path: str) -> Dict[str, Any]:
+    """Read a saved dataset's DashAI column types from its Arrow header only.
+
+    Parameters
+    ----------
+    dataset_path : str
+        ``Dataset.file_path`` of a finished dataset.
+
+    Returns
+    -------
+    dict
+        Column name mapped to its DashAI type.
+    """
+    import pyarrow as pa
+
+    from DashAI.back.types.utils import get_types_from_arrow_metadata
+
+    data_file = Path(dataset_path) / "dataset" / "data.arrow"
+    with pa.OSFile(str(data_file), "rb") as source:
+        schema = pa.ipc.open_file(source).schema
+    return get_types_from_arrow_metadata(schema)
+
+
+@router.get("/{exporter_name}/datasets")
+async def list_exportable_datasets(
+    exporter_name: str,
+    registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+) -> List[Dict[str, Any]]:
+    """List the finished datasets and how well each fits the platform.
+
+    Only the column types are read, never the data, so the whole list is
+    cheap to build.
+
+    Parameters
+    ----------
+    exporter_name : str
+        Registered DatasetExporter class name.
+    registry : ComponentRegistry
+        Injected component registry.
+    session_factory : sessionmaker
+        Injected DB session factory.
+
+    Returns
+    -------
+    list of dict
+        One entry per finished dataset with its ``compatibility`` status,
+        messages and the columns that would be left out.
+    """
+    from DashAI.back.dataset_exporters.base_dataset_exporter import (
+        CompatibilityStatus,
+        DatasetCompatibility,
+    )
+
+    exporter = _get_exporter_class(exporter_name, registry)()
+
+    with session_factory() as db:
+        datasets = (
+            db.query(Dataset)
+            .filter(Dataset.status == DatasetStatus.FINISHED)
+            .order_by(Dataset.name)
+            .all()
+        )
+        rows = [
+            (d.id, d.name, d.total_rows, d.total_columns, d.file_path) for d in datasets
+        ]
+
+    result = []
+    for dataset_id, name, total_rows, total_columns, file_path in rows:
+        try:
+            compatibility = exporter.check_dataset(_read_column_types(file_path))
+        except Exception:
+            log.exception("Could not read the column types of dataset %s", name)
+            compatibility = DatasetCompatibility(
+                status=CompatibilityStatus.INCOMPATIBLE,
+                messages=["The column types of this dataset could not be read."],
+            )
+        result.append(
+            {
+                "id": dataset_id,
+                "name": name,
+                "total_rows": total_rows,
+                "total_columns": total_columns,
+                "compatibility": {
+                    "status": compatibility.status.value,
+                    "messages": compatibility.messages,
+                    "unsupported_columns": compatibility.unsupported_columns,
+                },
+            }
+        )
+    return result
+
+
 @router.get("/")
 async def list_exports(
     dataset_id: Optional[int] = Query(default=None),

@@ -7,6 +7,8 @@ from pydantic import ValidationError
 
 from DashAI.back.dataset_exporters.base_dataset_exporter import (
     BaseDatasetExporter,
+    CompatibilityStatus,
+    DatasetCompatibility,
     DatasetExportValidationError,
     ExportPayload,
     ExportResult,
@@ -118,6 +120,15 @@ def test_default_validate_reports_blank_fields():
         "The dataset name cannot be blank.",
         "The dataset description cannot be blank.",
     ]
+
+
+def test_check_dataset_accepts_every_dataset_by_default():
+    compatibility = ConcreteExporter().check_dataset({"a": object(), "b": object()})
+
+    assert compatibility == DatasetCompatibility()
+    assert compatibility.status == CompatibilityStatus.COMPATIBLE
+    assert compatibility.messages == []
+    assert compatibility.unsupported_columns == []
 
 
 def test_get_remote_status_defaults_to_none():
