@@ -100,6 +100,10 @@ function App() {
                   />
                   <Route path="hub/:sourceName" element={<HubContent />} />
                   <Route path="export" element={<ExportContent />} />
+                  <Route
+                    path="export/:exporterName"
+                    element={<ExportContent />}
+                  />
                 </Route>
                 <Route path="/app/models" element={<ModelsPage />} />
                 <Route
