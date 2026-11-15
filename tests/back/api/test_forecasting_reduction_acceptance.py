@@ -37,10 +37,6 @@ MODEL = "RecursiveRegressionForecaster"
 LINEAR = {"regressor": {"component": "LinearRegression", "params": {}}}
 
 
-def pending(slice_name: str):
-    return pytest.mark.xfail(strict=True, reason=f"PR 6, slice {slice_name}")
-
-
 def _train(client, session_id, params=None, **run) -> int:
     run_id = _create_run(client, session_id, MODEL, params or LINEAR, **run)
     ModelJob(run_id=run_id).run()
@@ -144,7 +140,6 @@ def test_the_extracted_estimator_keeps_every_hyperparameter(client, name):
 # --------------------------------------------------------------------------- #
 
 
-@pending("6")
 def test_the_model_offers_the_scikit_learn_regressors(client):
     registry = client.app.container["component_registry"]
     field = registry[MODEL]["schema"]["properties"]["regressor"]
@@ -163,7 +158,6 @@ def test_the_model_offers_the_scikit_learn_regressors(client):
     assert field["placeholder"]["component"] == "LinearRegression"
 
 
-@pending("6")
 @pytest.mark.parametrize(
     ("strategy", "splits"), [(HOLDOUT_STRATEGY, HOLDOUT), (CV, ROLLING)]
 )
@@ -190,7 +184,6 @@ def test_a_run_backtests_with_nested_intervals_and_their_coverage(
     assert 0.0 <= coverage["IntervalCoverage"] <= 1.0
 
 
-@pending("6")
 def test_left_out_the_season_sets_twelve_lags_on_a_monthly_series(client, tmp_path):
     session_id = _session(client, tmp_path, _monthly())
 
@@ -200,7 +193,6 @@ def test_left_out_the_season_sets_twelve_lags_on_a_monthly_series(client, tmp_pa
     assert model.resolved_lags() == 12
 
 
-@pending("6")
 def test_a_search_over_the_nested_regressor_keeps_its_best_value(client, tmp_path):
     session_id = _session(client, tmp_path, _monthly())
     searched = {
@@ -233,7 +225,6 @@ def test_a_search_over_the_nested_regressor_keeps_its_best_value(client, tmp_pat
     assert model.fitted_estimator().n_estimators == 7
 
 
-@pending("6")
 def test_with_exogenous_columns_the_run_reads_them_and_forecasts_the_future(
     client, tmp_path
 ):
@@ -265,7 +256,6 @@ def test_with_exogenous_columns_the_run_reads_them_and_forecasts_the_future(
     assert len(saved) == len(future)
 
 
-@pending("6")
 @pytest.mark.parametrize("nested", ["MLPRegression", "SVC"])
 def test_a_regressor_that_is_not_scikit_learn_fails_the_run_when_built(
     client, tmp_path, nested
@@ -283,7 +273,6 @@ def test_a_regressor_that_is_not_scikit_learn_fails_the_run_when_built(
     assert _get(client, Run, run_id).status == RunStatus.ERROR
 
 
-@pending("6")
 def test_a_series_too_short_for_the_lags_fails_naming_them(client, tmp_path):
     from DashAI.back.job.base_job import JobError
 
@@ -298,7 +287,6 @@ def test_a_series_too_short_for_the_lags_fails_naming_them(client, tmp_path):
         ModelJob(run_id=run_id).run()
 
 
-@pending("6")
 def test_the_kept_model_predicts_by_horizon(client, tmp_path):
     from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 
