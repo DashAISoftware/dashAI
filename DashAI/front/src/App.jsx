@@ -104,6 +104,10 @@ function App() {
                     path="export/:exporterName"
                     element={<ExportContent />}
                   />
+                  <Route
+                    path="export/:exporterName/:datasetId"
+                    element={<ExportContent />}
+                  />
                 </Route>
                 <Route path="/app/models" element={<ModelsPage />} />
                 <Route
