@@ -66,7 +66,7 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
         "grid",
         "exogenous",
     )
-    PROVIDES = ("forecasts", "plot_paths", "best_parameters")
+    PROVIDES = ("forecasts", "hyperparameter_plots_path", "best_parameters")
     RUNTIME_PARAMS = ("run_id", "artifact_prefix")
 
     def __init__(self, **config) -> None:
@@ -90,13 +90,13 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
         best_parameters = ctx.require("model_parameters")
         exogenous = ctx.require("exogenous")
 
-        plot_paths = []
+        plots_path = None
         try:
             if self._will_search(optimizable_parameters):
                 # The search checks the model it gets back still points at
                 # its data; a forecaster's data is the series.
                 model.x_data = series
-                _, best_parameters, plot_paths = self._search(
+                _, best_parameters, plots_path = self._search(
                     model,
                     series,
                     cuts,
@@ -172,7 +172,7 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
                 "origins": origins,
             },
         )
-        ctx.put_ref("plot_paths", plot_paths)
+        ctx.put_ref("hyperparameter_plots_path", plots_path)
         ctx.put_ref("best_parameters", best_parameters)
 
     def _score_one_trial(self, model, series, cuts, metric, grid, exogenous) -> float:

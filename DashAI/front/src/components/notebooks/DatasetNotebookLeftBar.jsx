@@ -214,6 +214,20 @@ export default function DatasetsNotebooksLeftBar({
   const getDocumentDeleteConfirmationContent = (item) =>
     t("datasets:document.confirmDelete", { name: item.name });
 
+  const getDocumentCascadeWarning = (items) => {
+    const names = [
+      ...new Set(
+        items.flatMap((item) =>
+          (item.sessions ?? []).map((session) => session.name),
+        ),
+      ),
+    ];
+    if (names.length === 0) return undefined;
+    return t("datasets:document.cascadeWarning", {
+      sessions: names.join(", "),
+    });
+  };
+
   const dataItems = useMemo(
     () => [
       ...filteredDatasets.map((dataset) => ({
@@ -248,7 +262,7 @@ export default function DatasetsNotebooksLeftBar({
 
   const getDataDeleteConfirmationWarning = (item) =>
     item.dataKind === DOCUMENT_KIND
-      ? undefined
+      ? getDocumentCascadeWarning([item])
       : getDatasetDeleteConfirmationWarning();
 
   const onDataItemClick = (itemId) => {
@@ -338,10 +352,20 @@ export default function DatasetsNotebooksLeftBar({
         "Are you sure you want to delete the {{count}} selected items? This action cannot be undone.",
     });
 
-  const getBulkDataDeleteConfirmationWarning = (itemIds) =>
-    itemIds.some((itemId) => parseDataItemId(itemId).kind === DATASET_KIND)
-      ? getDatasetDeleteConfirmationWarning()
-      : undefined;
+  const getBulkDataDeleteConfirmationWarning = (itemIds) => {
+    const parsed = itemIds.map(parseDataItemId);
+    const warnings = [];
+    if (parsed.some((item) => item.kind === DATASET_KIND)) {
+      warnings.push(getDatasetDeleteConfirmationWarning());
+    }
+    const selectedDocuments = parsed
+      .filter((item) => item.kind === DOCUMENT_KIND)
+      .map((item) => documents.find((document) => document.id === item.id))
+      .filter(Boolean);
+    const documentWarning = getDocumentCascadeWarning(selectedDocuments);
+    if (documentWarning) warnings.push(documentWarning);
+    return warnings.length > 0 ? warnings.join(" ") : undefined;
+  };
 
   const onNotebookClick = (id) => {
     navigate(`/app/data/notebooks/${id}`);

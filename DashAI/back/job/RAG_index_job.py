@@ -17,6 +17,7 @@ from DashAI.back.dependencies.database.models import GenerativeSession
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_KEYS as _RAG_PARAM_KEYS
 from DashAI.back.models.RAG.RAG_pipeline import RAGPipelineConfig
+from DashAI.back.services.RAG.prompt_service import PromptService
 from DashAI.back.services.RAG.session_validation_service import (
     SessionValidationService,
 )
@@ -97,8 +98,14 @@ class RAGIndexJob(BaseJob):
                     raise JobError(f"Session {session_id} not found in DB.")
 
                 # Whitelist-only, same as RAGJob: session parameters may carry
-                # keys the pipeline config would reject.
-                raw_params = dict(session.parameters or {})
+                # keys the pipeline config would reject. Prompts are stored in
+                # their own table and are materialized back first.
+                raw_params = PromptService(
+                    db, component_registry
+                ).materialize_session_parameters(
+                    session_id,
+                    dict(session.parameters or {}),
+                )
                 clean_params = {
                     k: v for k, v in raw_params.items() if k in _RAG_PARAM_KEYS
                 }

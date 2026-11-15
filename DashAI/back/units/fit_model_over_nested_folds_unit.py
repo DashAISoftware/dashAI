@@ -72,7 +72,12 @@ class FitModelOverNestedFoldsUnit(FitModelOverFoldsUnit):
 
     SCHEMA = FitModelOverNestedFoldsSchema
 
-    PROVIDES = ("model", "plot_paths", "fold_metrics", "outer_fold_metrics")
+    PROVIDES = (
+        "model",
+        "hyperparameter_plots_path",
+        "fold_metrics",
+        "outer_fold_metrics",
+    )
 
     def __init__(self, **config) -> None:
         super().__init__(**config)

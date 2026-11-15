@@ -1,4 +1,4 @@
-"""Prompt + LLM evaluation collaborator for the LLM-evaluated retrievers.
+"""Prompt + LLM evaluation collaborator for the agentic retrievers.
 
 ``RetrievalEvaluator`` is the single place that turns structured retrieval data
 into a prompt and obtains a function-calling verdict. It performs no retrieval,
@@ -52,7 +52,7 @@ class RetrievalEvaluator:
     Parameters
     ----------
     prompt : Any
-        A retrieval-sufficiency prompt exposing ``format(**kwargs)``.
+        An agentic retriever prompt exposing ``format(**kwargs)``.
     llm_model : Any
         The text-to-text model used to judge the pool.
     expected_function : str

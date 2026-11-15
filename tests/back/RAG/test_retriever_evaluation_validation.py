@@ -1,7 +1,7 @@
-"""Unit tests for the LLM-evaluated retriever validation service.
+"""Unit tests for the agentic retriever validation service.
 
 Covers the nested ``llm_model`` and ``prompt`` references of the two
-LLM-evaluated composite retrievers: missing/invalid refs, wrong prompt
+agentic composite retrievers: missing/invalid refs, wrong prompt
 family, unregistered LLM, wrong param container types, blank custom
 templates and the schema-driven default resolution.
 
@@ -16,22 +16,22 @@ import pytest
 
 from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.models.RAG.prompts.evaluation import (
-    CustomLLMFilterPrompt,
-    CustomRetrievalSufficiencyPrompt,
-    DefaultLLMFilterPrompt,
-    DefaultRetrievalSufficiencyPrompt,
-    LLMFilterPrompt,
-    RetrievalSufficiencyPrompt,
+    AgenticRerankerPrompt,
+    AgenticRetrieverPrompt,
+    CustomAgenticRerankerPrompt,
+    CustomAgenticRetrieverPrompt,
+    DefaultAgenticRerankerPrompt,
+    DefaultAgenticRetrieverPrompt,
 )
 from DashAI.back.models.RAG.prompts.transformation import DefaultQueryRewritingPrompt
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
 from DashAI.back.services.RAG.retriever_evaluation_validation import (
-    DEFAULT_FILTER_PROMPT_NAMES,
-    DEFAULT_LLM_PROMPT_NAMES,
-    DEFAULT_SUFFICIENCY_PROMPT_NAMES,
-    LLM_EVALUATED_RETRIEVER_NAMES,
+    AGENTIC_RETRIEVER_NAMES,
+    DEFAULT_AGENTIC_PROMPT_NAMES,
+    DEFAULT_AGENTIC_RERANKER_PROMPT_NAMES,
+    DEFAULT_AGENTIC_RETRIEVER_PROMPT_NAMES,
     RetrieverEvaluationValidationService,
 )
 
@@ -70,17 +70,17 @@ class StubNonFunctionCallingLLM(TextToTextGenerationTaskModel):
 
 
 class StubDepthRetriever:
-    """Stand-in for ``LLMEvaluatedDepthRetriever`` (owned by workstream B)."""
+    """Stand-in for ``AgenticSingleRetriever`` (owned by workstream B)."""
 
 
 class StubEnsembleRetriever:
-    """Stand-in for ``LLMEvaluatedEnsembleRetriever`` (owned by workstream B)."""
+    """Stand-in for ``AgenticEnsembleRetriever`` (owned by workstream B)."""
 
 
 class StubFilterRetriever:
-    """Stand-in for ``LLMFilterRetriever`` with its prompt-family marker."""
+    """Stand-in for ``AgenticRerankerRetriever`` with its prompt-family marker."""
 
-    EVALUATION_PROMPT_BASE = LLMFilterPrompt
+    EVALUATION_PROMPT_BASE = AgenticRerankerPrompt
 
 
 _RETRIEVER_SCHEMA = {
@@ -90,7 +90,7 @@ _RETRIEVER_SCHEMA = {
         },
         "prompt": {
             "placeholder": {
-                "component": "DefaultRetrievalSufficiencyPrompt",
+                "component": "DefaultAgenticRetrieverPrompt",
                 "params": {},
             },
         },
@@ -127,7 +127,7 @@ _FILTER_RETRIEVER_SCHEMA = {
         "function_call_max_trials": {"placeholder": 3},
         "prompt": {
             "placeholder": {
-                "component": "DefaultLLMFilterPrompt",
+                "component": "DefaultAgenticRerankerPrompt",
                 "params": {},
             },
         },
@@ -144,15 +144,15 @@ class _FakeRegistry(dict):
     def __init__(self):
         super().__init__(
             {
-                "LLMEvaluatedDepthRetriever": {
+                "AgenticSingleRetriever": {
                     "class": StubDepthRetriever,
                     "schema": _RETRIEVER_SCHEMA,
                 },
-                "LLMEvaluatedEnsembleRetriever": {
+                "AgenticEnsembleRetriever": {
                     "class": StubEnsembleRetriever,
                     "schema": _RETRIEVER_SCHEMA,
                 },
-                "LLMFilterRetriever": {
+                "AgenticRerankerRetriever": {
                     "class": StubFilterRetriever,
                     "schema": _FILTER_RETRIEVER_SCHEMA,
                 },
@@ -164,20 +164,20 @@ class _FakeRegistry(dict):
                     "class": StubNonFunctionCallingLLM,
                     "schema": _LLM_SCHEMA,
                 },
-                "DefaultRetrievalSufficiencyPrompt": {
-                    "class": DefaultRetrievalSufficiencyPrompt,
+                "DefaultAgenticRetrieverPrompt": {
+                    "class": DefaultAgenticRetrieverPrompt,
                     "schema": _DEFAULT_PROMPT_SCHEMA,
                 },
-                "CustomRetrievalSufficiencyPrompt": {
-                    "class": CustomRetrievalSufficiencyPrompt,
+                "CustomAgenticRetrieverPrompt": {
+                    "class": CustomAgenticRetrieverPrompt,
                     "schema": _CUSTOM_PROMPT_SCHEMA,
                 },
-                "DefaultLLMFilterPrompt": {
-                    "class": DefaultLLMFilterPrompt,
+                "DefaultAgenticRerankerPrompt": {
+                    "class": DefaultAgenticRerankerPrompt,
                     "schema": _DEFAULT_PROMPT_SCHEMA,
                 },
-                "CustomLLMFilterPrompt": {
-                    "class": CustomLLMFilterPrompt,
+                "CustomAgenticRerankerPrompt": {
+                    "class": CustomAgenticRerankerPrompt,
                     "schema": _CUSTOM_PROMPT_SCHEMA,
                 },
                 "DefaultQueryRewritingPrompt": {
@@ -196,8 +196,8 @@ def _service() -> RetrieverEvaluationValidationService:
 
 
 def _ref(
-    retriever: str = "LLMEvaluatedDepthRetriever",
-    prompt_component: str = "DefaultRetrievalSufficiencyPrompt",
+    retriever: str = "AgenticSingleRetriever",
+    prompt_component: str = "DefaultAgenticRetrieverPrompt",
     prompt_params: dict | None = None,
     llm_component: str = "StubEvaluationLLM",
     llm_params: object = None,
@@ -230,30 +230,34 @@ class TestConstants:
         assert (
             frozenset(
                 {
-                    "LLMEvaluatedDepthRetriever",
-                    "LLMEvaluatedEnsembleRetriever",
-                    "LLMFilterRetriever",
+                    "AgenticSingleRetriever",
+                    "AgenticEnsembleRetriever",
+                    "AgenticRerankerRetriever",
                 }
             )
-            == LLM_EVALUATED_RETRIEVER_NAMES
+            == AGENTIC_RETRIEVER_NAMES
         )
 
     def test_default_prompt_names(self):
         assert (
-            frozenset({"DefaultRetrievalSufficiencyPrompt"})
-            == DEFAULT_SUFFICIENCY_PROMPT_NAMES
+            frozenset({"DefaultAgenticRetrieverPrompt"})
+            == DEFAULT_AGENTIC_RETRIEVER_PROMPT_NAMES
         )
 
-    def test_filter_prompt_names(self):
-        assert frozenset({"DefaultLLMFilterPrompt"}) == DEFAULT_FILTER_PROMPT_NAMES
+    def test_reranker_prompt_names(self):
+        assert (
+            frozenset({"DefaultAgenticRerankerPrompt"})
+            == DEFAULT_AGENTIC_RERANKER_PROMPT_NAMES
+        )
 
     def test_combined_default_llm_prompt_names(self):
-        assert DEFAULT_LLM_PROMPT_NAMES == (
-            DEFAULT_SUFFICIENCY_PROMPT_NAMES | DEFAULT_FILTER_PROMPT_NAMES
+        assert DEFAULT_AGENTIC_PROMPT_NAMES == (
+            DEFAULT_AGENTIC_RETRIEVER_PROMPT_NAMES
+            | DEFAULT_AGENTIC_RERANKER_PROMPT_NAMES
         )
 
     def test_anchor_is_subclass_target(self):
-        assert issubclass(DefaultRetrievalSufficiencyPrompt, RetrievalSufficiencyPrompt)
+        assert issubclass(DefaultAgenticRetrieverPrompt, AgenticRetrieverPrompt)
 
 
 # ===================================================================
@@ -266,7 +270,7 @@ class TestValidate:
 
     @pytest.mark.parametrize(
         "retriever",
-        ["LLMEvaluatedDepthRetriever", "LLMEvaluatedEnsembleRetriever"],
+        ["AgenticSingleRetriever", "AgenticEnsembleRetriever"],
     )
     def test_valid_ref_accepted(self, retriever):
         _service().validate(_ref(retriever=retriever))
@@ -281,7 +285,7 @@ class TestValidate:
 
     def test_missing_params_rejected(self):
         with pytest.raises(ValueError, match="params"):
-            _service().validate({"component": "LLMEvaluatedDepthRetriever"})
+            _service().validate({"component": "AgenticSingleRetriever"})
 
     def test_unregistered_retriever_rejected(self):
         with pytest.raises(ValueError, match="not registered"):
@@ -289,7 +293,7 @@ class TestValidate:
 
     @pytest.mark.parametrize(
         "retriever",
-        ["LLMEvaluatedDepthRetriever", "LLMEvaluatedEnsembleRetriever"],
+        ["AgenticSingleRetriever", "AgenticEnsembleRetriever"],
     )
     def test_missing_prompt_rejected(self, retriever):
         ref = _ref(retriever=retriever)
@@ -304,7 +308,7 @@ class TestValidate:
             _service().validate(ref)
 
     def test_wrong_prompt_family_rejected(self):
-        with pytest.raises(ValueError, match="RetrievalSufficiencyPrompt"):
+        with pytest.raises(ValueError, match="AgenticRetrieverPrompt"):
             _service().validate(_ref(prompt_component="DefaultQueryRewritingPrompt"))
 
     def test_prompt_params_wrong_type_rejected(self):
@@ -315,7 +319,7 @@ class TestValidate:
 
     @pytest.mark.parametrize(
         "retriever",
-        ["LLMEvaluatedDepthRetriever", "LLMEvaluatedEnsembleRetriever"],
+        ["AgenticSingleRetriever", "AgenticEnsembleRetriever"],
     )
     def test_missing_llm_rejected(self, retriever):
         ref = _ref(retriever=retriever)
@@ -341,43 +345,41 @@ class TestValidate:
         with pytest.raises(ValueError, match="blank"):
             _service().validate(
                 _ref(
-                    prompt_component="CustomRetrievalSufficiencyPrompt",
+                    prompt_component="CustomAgenticRetrieverPrompt",
                     prompt_params={"template": "   "},
                 )
             )
 
     def test_missing_custom_template_rejected(self):
         with pytest.raises(ValueError, match="blank"):
-            _service().validate(
-                _ref(prompt_component="CustomRetrievalSufficiencyPrompt")
-            )
+            _service().validate(_ref(prompt_component="CustomAgenticRetrieverPrompt"))
 
     def test_default_prompt_blank_template_allowed(self):
         _service().validate(
             _ref(
-                prompt_component="DefaultRetrievalSufficiencyPrompt",
+                prompt_component="DefaultAgenticRetrieverPrompt",
                 prompt_params={"template": ""},
             )
         )
 
-    def test_filter_retriever_accepts_filter_prompt(self):
+    def test_reranker_retriever_accepts_reranker_prompt(self):
         _service().validate(
             _ref(
-                retriever="LLMFilterRetriever",
-                prompt_component="DefaultLLMFilterPrompt",
+                retriever="AgenticRerankerRetriever",
+                prompt_component="DefaultAgenticRerankerPrompt",
             )
         )
 
-    def test_filter_retriever_rejects_sufficiency_prompt(self):
-        with pytest.raises(ValueError, match="LLMFilterPrompt"):
-            _service().validate(_ref(retriever="LLMFilterRetriever"))
+    def test_reranker_retriever_rejects_retriever_prompt(self):
+        with pytest.raises(ValueError, match="AgenticRerankerPrompt"):
+            _service().validate(_ref(retriever="AgenticRerankerRetriever"))
 
     def test_filter_custom_blank_template_rejected(self):
         with pytest.raises(ValueError, match="blank"):
             _service().validate(
                 _ref(
-                    retriever="LLMFilterRetriever",
-                    prompt_component="CustomLLMFilterPrompt",
+                    retriever="AgenticRerankerRetriever",
+                    prompt_component="CustomAgenticRerankerPrompt",
                     prompt_params={"template": "   "},
                 )
             )
@@ -385,8 +387,8 @@ class TestValidate:
     def test_filter_default_blank_template_allowed(self):
         _service().validate(
             _ref(
-                retriever="LLMFilterRetriever",
-                prompt_component="DefaultLLMFilterPrompt",
+                retriever="AgenticRerankerRetriever",
+                prompt_component="DefaultAgenticRerankerPrompt",
                 prompt_params={"template": ""},
             )
         )
@@ -412,7 +414,7 @@ class TestApplyDefaults:
 
     def test_preserves_user_values(self):
         ref = _ref(
-            prompt_component="CustomRetrievalSufficiencyPrompt",
+            prompt_component="CustomAgenticRetrieverPrompt",
             prompt_params={"template": "Q:{input} C:{chunks}"},
             llm_params={"temperature": 0.35},
         )
@@ -459,7 +461,7 @@ class TestApplyDefaults:
 
     @pytest.mark.parametrize(
         "retriever",
-        ["LLMEvaluatedDepthRetriever", "LLMEvaluatedEnsembleRetriever"],
+        ["AgenticSingleRetriever", "AgenticEnsembleRetriever"],
     )
     def test_applies_for_both_retrievers(self, retriever):
         ref = _ref(retriever=retriever)
@@ -467,7 +469,7 @@ class TestApplyDefaults:
         assert ref["params"]["top_k"] == 5
         assert ref["params"]["function_call_max_trials"] == 3
 
-    def test_recursive_defaults_fill_nested_llm_evaluated_children(self):
+    def test_recursive_defaults_fill_nested_agentic_children(self):
         nested = _ref()
         parent = {
             "component": "ParallelRetriever",
@@ -480,10 +482,10 @@ class TestApplyDefaults:
         assert nested["params"]["top_k"] == 5
         assert nested["params"]["llm_model"]["params"]["max_tokens"] == 300
 
-    def test_filter_retriever_fills_nested_defaults(self):
+    def test_reranker_retriever_fills_nested_defaults(self):
         ref = _ref(
-            retriever="LLMFilterRetriever",
-            prompt_component="DefaultLLMFilterPrompt",
+            retriever="AgenticRerankerRetriever",
+            prompt_component="DefaultAgenticRerankerPrompt",
         )
 
         _service().apply_defaults(ref)
@@ -497,8 +499,8 @@ class TestApplyDefaults:
 
     def test_recursive_defaults_fill_nested_filter_children(self):
         nested = _ref(
-            retriever="LLMFilterRetriever",
-            prompt_component="DefaultLLMFilterPrompt",
+            retriever="AgenticRerankerRetriever",
+            prompt_component="DefaultAgenticRerankerPrompt",
         )
         parent = {
             "component": "ParallelRetriever",
@@ -512,7 +514,7 @@ class TestApplyDefaults:
 
 
 class TestValidateRecursive:
-    """Nested LLM-evaluated retrievers are validated like top-level ones."""
+    """Nested agentic retrievers are validated like top-level ones."""
 
     def test_recursive_validation_checks_a_nested_child(self):
         nested = _ref(prompt_component="DefaultQueryRewritingPrompt")

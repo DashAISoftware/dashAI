@@ -3,6 +3,7 @@
 import pytest
 from kink import di
 
+from DashAI.back.core.run_plots import read_run_plot_file
 from DashAI.back.job.base_job import JobError
 from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
 from DashAI.back.units.context import ExecutionContext, UnitContractError
@@ -398,15 +399,11 @@ class _SlotSkippingOptimizer(_RecordingOptimizer):
         )
 
 
-def test_a_plot_the_optimizer_skipped_keeps_its_slot(tmp_path):
-    """A None in the plot list stays a None in the paths, at the same index.
+def test_a_plot_the_optimizer_skipped_is_left_out_of_the_file(tmp_path):
+    """The search's plots go to one file, without the ones it skipped.
 
-    The caller writes the paths into four fixed columns of the run, by
-    position, so a skipped contour plot has to leave the third slot empty
-    rather than let the importance plot slide into it. Nor may it be
-    normalized: ``normalize_artifacts`` stringifies anything it does not
-    recognise, so the slot would otherwise point at a pickle of the text
-    "None", a file that exists and that the missing-plot 404 never sees.
+    ``normalize_artifacts`` stringifies anything it does not recognise, so a
+    skipped plot normalized with the rest would be saved as the text "None".
     """
     import pathlib
 
@@ -423,10 +420,10 @@ def test_a_plot_the_optimizer_skipped_keeps_its_slot(tmp_path):
 
         _unit(optimizer_name="SlotSkippingOptimizer", artifact_prefix="7")(ctx)
 
-        paths = ctx.require("plot_paths")
-        assert [path is None for path in paths] == [False, False, True, False]
-        assert paths[3].endswith("importance_plot_7.pickle")
-        assert all(pathlib.Path(path).is_file() for path in paths if path)
+        path = ctx.require("hyperparameter_plots_path")
+        assert pathlib.Path(path).name == "hyperparameter_plots_7.pickle"
+        leaves = read_run_plot_file(path)
+        assert [leaf["type"] for leaf in leaves] == ["plotly", "plotly", "plotly"]
         assert not (tmp_path / "contour_plot_7.pickle").exists()
     finally:
         del di["component_registry"]

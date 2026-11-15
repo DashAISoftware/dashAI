@@ -2,7 +2,7 @@
 
 The defaults module is the single source of truth for the retriever preset
 identities and parameters, the default RAG function-calling LLM, and the
-placeholders of the LLM-evaluated composite retrievers.
+placeholders of the agentic composite retrievers.
 """
 
 from __future__ import annotations
@@ -20,40 +20,40 @@ from DashAI.back.converters.scikit_learn.bag_of_words import BagOfWordsConverter
 from DashAI.back.initial_components import get_initial_components
 from DashAI.back.models.hugging_face.qwen_model import Qwen25_15BInstruct
 from DashAI.back.models.RAG.RAG_constants import (
+    AGENTIC_RETRIEVER_NAMES,
     COMPOSITE_RETRIEVER_NAMES,
-    LLM_EVALUATED_RETRIEVER_NAMES,
 )
 from DashAI.back.models.RAG.RAG_defaults import (
     DEFAULT_DEVICE,
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_EMBEDDING_OVERFLOW_STRATEGY,
-    DEFAULT_FILTER_K1,
-    DEFAULT_FILTER_TOP_K,
     DEFAULT_FUNCTION_CALL_MAX_TRIALS,
     DEFAULT_FUNCTION_CALLING_LLM_CONTEXT_WINDOW,
     DEFAULT_MAX_CHUNKS,
     DEFAULT_MAX_ITERS,
     DEFAULT_RAG_LLM_MAX_TOKENS,
     DEFAULT_RAG_LLM_TEMPERATURE,
+    DEFAULT_RERANKER_K1,
+    DEFAULT_RERANKER_TOP_K,
     DEFAULT_SEMANTIC_MODEL_NAME,
     DEFAULT_TOP_K,
+    default_agentic_reranker_prompt,
+    default_agentic_retriever_prompt,
     default_function_calling_llm,
     default_hybrid_retriever,
     default_keyword_retriever,
-    default_llm_filter_prompt,
-    default_retrieval_sufficiency_prompt,
     default_semantic_retriever,
     merge_rag_llm_params,
     rag_llm_param_overrides,
 )
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_depth_retriever import (
-    LLMEvaluatedDepthRetriever,
+from DashAI.back.models.RAG.retrievers.composite.agentic_ensemble_retriever import (  # noqa: E501
+    AgenticEnsembleRetriever,
 )
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_ensemble_retriever import (  # noqa: E501
-    LLMEvaluatedEnsembleRetriever,
+from DashAI.back.models.RAG.retrievers.composite.agentic_reranker_retriever import (
+    AgenticRerankerRetriever,
 )
-from DashAI.back.models.RAG.retrievers.composite.llm_filter_retriever import (
-    LLMFilterRetriever,
+from DashAI.back.models.RAG.retrievers.composite.agentic_single_retriever import (
+    AgenticSingleRetriever,
 )
 from DashAI.back.models.RAG.retrievers.composite.parallel_retriever import (
     ParallelRetriever,
@@ -431,121 +431,123 @@ class TestMergeRagLLMParams:
 
 
 # ---------------------------------------------------------------------------
-# LLM-evaluated retriever placeholders
+# agentic retriever placeholders
 # ---------------------------------------------------------------------------
 
 
-class TestLLMEvaluatedRetrieverPlaceholders:
+class TestAgenticRetrieverPlaceholders:
     """The adaptive retrievers seed their component fields with the defaults."""
 
     def _placeholder(self, component: Any, field: str) -> Dict[str, Any]:
         return component.get_schema()["properties"][field]["placeholder"]
 
-    def test_depth_retriever_placeholders(self):
-        assert self._placeholder(LLMEvaluatedDepthRetriever, "children") == [
+    def test_single_retriever_placeholders(self):
+        assert self._placeholder(AgenticSingleRetriever, "children") == [
             default_hybrid_retriever()
         ]
         assert (
-            self._placeholder(LLMEvaluatedDepthRetriever, "llm_model")
+            self._placeholder(AgenticSingleRetriever, "llm_model")
             == default_function_calling_llm()
         )
         assert (
-            self._placeholder(LLMEvaluatedDepthRetriever, "prompt")
-            == default_retrieval_sufficiency_prompt()
+            self._placeholder(AgenticSingleRetriever, "prompt")
+            == default_agentic_retriever_prompt()
         )
         assert (
-            self._placeholder(LLMEvaluatedDepthRetriever, "max_chunks")
+            self._placeholder(AgenticSingleRetriever, "max_chunks")
             == DEFAULT_MAX_CHUNKS
         )
         assert (
-            self._placeholder(LLMEvaluatedDepthRetriever, "max_iters")
-            == DEFAULT_MAX_ITERS
+            self._placeholder(AgenticSingleRetriever, "max_iters") == DEFAULT_MAX_ITERS
         )
         assert (
-            self._placeholder(LLMEvaluatedDepthRetriever, "function_call_max_trials")
+            self._placeholder(AgenticSingleRetriever, "function_call_max_trials")
             == DEFAULT_FUNCTION_CALL_MAX_TRIALS
         )
 
     def test_ensemble_retriever_placeholders(self):
-        assert self._placeholder(LLMEvaluatedEnsembleRetriever, "children") == [
+        assert self._placeholder(AgenticEnsembleRetriever, "children") == [
             default_semantic_retriever(),
             default_keyword_retriever(),
         ]
         assert (
-            self._placeholder(LLMEvaluatedEnsembleRetriever, "llm_model")
+            self._placeholder(AgenticEnsembleRetriever, "llm_model")
             == default_function_calling_llm()
         )
         assert (
-            self._placeholder(LLMEvaluatedEnsembleRetriever, "prompt")
-            == default_retrieval_sufficiency_prompt()
+            self._placeholder(AgenticEnsembleRetriever, "prompt")
+            == default_agentic_retriever_prompt()
         )
         assert (
-            self._placeholder(LLMEvaluatedEnsembleRetriever, "max_chunks")
+            self._placeholder(AgenticEnsembleRetriever, "max_chunks")
             == DEFAULT_MAX_CHUNKS
         )
         assert (
-            self._placeholder(LLMEvaluatedEnsembleRetriever, "max_iters")
+            self._placeholder(AgenticEnsembleRetriever, "max_iters")
             == DEFAULT_MAX_ITERS
         )
         assert (
-            self._placeholder(LLMEvaluatedEnsembleRetriever, "function_call_max_trials")
+            self._placeholder(AgenticEnsembleRetriever, "function_call_max_trials")
             == DEFAULT_FUNCTION_CALL_MAX_TRIALS
         )
 
-    def test_filter_retriever_placeholders(self):
-        assert self._placeholder(LLMFilterRetriever, "children") == [
+    def test_reranker_retriever_placeholders(self):
+        assert self._placeholder(AgenticRerankerRetriever, "children") == [
             default_hybrid_retriever()
         ]
-        assert self._placeholder(LLMFilterRetriever, "k1") == DEFAULT_FILTER_K1
-        assert self._placeholder(LLMFilterRetriever, "top_k") == DEFAULT_FILTER_TOP_K
+        assert self._placeholder(AgenticRerankerRetriever, "k1") == DEFAULT_RERANKER_K1
         assert (
-            self._placeholder(LLMFilterRetriever, "llm_model")
+            self._placeholder(AgenticRerankerRetriever, "top_k")
+            == DEFAULT_RERANKER_TOP_K
+        )
+        assert (
+            self._placeholder(AgenticRerankerRetriever, "llm_model")
             == default_function_calling_llm()
         )
         assert (
-            self._placeholder(LLMFilterRetriever, "prompt")
-            == default_llm_filter_prompt()
+            self._placeholder(AgenticRerankerRetriever, "prompt")
+            == default_agentic_reranker_prompt()
         )
         assert (
-            self._placeholder(LLMFilterRetriever, "function_call_max_trials")
+            self._placeholder(AgenticRerankerRetriever, "function_call_max_trials")
             == DEFAULT_FUNCTION_CALL_MAX_TRIALS
         )
 
-    def test_default_llm_filter_prompt(self):
-        ref = default_llm_filter_prompt()
+    def test_default_agentic_reranker_prompt(self):
+        ref = default_agentic_reranker_prompt()
 
-        assert ref == {"component": "DefaultLLMFilterPrompt", "params": {}}
+        assert ref == {"component": "DefaultAgenticRerankerPrompt", "params": {}}
 
-    def test_default_llm_filter_prompt_is_fresh(self):
-        first = default_llm_filter_prompt()
+    def test_default_agentic_reranker_prompt_is_fresh(self):
+        first = default_agentic_reranker_prompt()
         first["params"]["language"] = "es"
 
-        assert default_llm_filter_prompt() == {
-            "component": "DefaultLLMFilterPrompt",
+        assert default_agentic_reranker_prompt() == {
+            "component": "DefaultAgenticRerankerPrompt",
             "params": {},
         }
 
     def test_filter_defaults_are_sane(self):
-        assert DEFAULT_FILTER_K1 >= 1
-        assert DEFAULT_FILTER_TOP_K >= 1
-        assert DEFAULT_FILTER_TOP_K <= DEFAULT_FILTER_K1
+        assert DEFAULT_RERANKER_K1 >= 1
+        assert DEFAULT_RERANKER_TOP_K >= 1
+        assert DEFAULT_RERANKER_TOP_K <= DEFAULT_RERANKER_K1
 
-    def test_filter_retriever_and_prompts_are_registered(self):
+    def test_reranker_retriever_and_prompts_are_registered(self):
         registered = {component.__name__ for component in get_initial_components()}
 
-        assert "LLMFilterRetriever" in registered
-        assert "DefaultLLMFilterPrompt" in registered
-        assert "CustomLLMFilterPrompt" in registered
-        assert "LLMFilterRetriever" in COMPOSITE_RETRIEVER_NAMES
-        assert "LLMFilterRetriever" in LLM_EVALUATED_RETRIEVER_NAMES
+        assert "AgenticRerankerRetriever" in registered
+        assert "DefaultAgenticRerankerPrompt" in registered
+        assert "CustomAgenticRerankerPrompt" in registered
+        assert "AgenticRerankerRetriever" in COMPOSITE_RETRIEVER_NAMES
+        assert "AgenticRerankerRetriever" in AGENTIC_RETRIEVER_NAMES
 
     def test_placeholders_are_independent_copies(self):
-        depth_schema = LLMEvaluatedDepthRetriever.get_schema()
+        depth_schema = AgenticSingleRetriever.get_schema()
         depth_schema["properties"]["children"]["placeholder"][0]["params"][
             "merge_strategy"
         ] = "interleave"
 
-        assert self._placeholder(LLMEvaluatedDepthRetriever, "children") == [
+        assert self._placeholder(AgenticSingleRetriever, "children") == [
             default_hybrid_retriever()
         ]
 

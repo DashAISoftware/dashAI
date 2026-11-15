@@ -26,6 +26,7 @@ jest.mock("../../../api/rag", () => ({
   getSessionConfiguration: jest.fn(),
   updateGenerativeSessionParams: jest.fn(),
   getDefaultPrompts: jest.fn(),
+  getLibraryPrompts: jest.fn(),
   getQueryTransformationComponents: jest.fn(),
   getQueryTransformationPrompts: jest.fn(),
   getGeneratorComponents: jest.fn(),
@@ -172,6 +173,7 @@ beforeEach(() => {
   api.getRetrieverComponents.mockResolvedValue([]);
   api.updateGenerativeSessionParams.mockResolvedValue({});
   api.getDefaultPrompts.mockResolvedValue([]);
+  api.getLibraryPrompts.mockResolvedValue([]);
   api.getQueryTransformationComponents.mockResolvedValue([]);
   api.getQueryTransformationPrompts.mockResolvedValue([]);
   api.getGeneratorComponents.mockResolvedValue([]);

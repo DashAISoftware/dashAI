@@ -43,7 +43,7 @@
   when its stage starts and is closed as soon as the stage ends, so peak memory
   is the largest **top-level** stage — the generation model, the retriever LLM
   and the transformer are never resident at the same time. A **nested**
-  LLM-evaluated retriever can keep its parent and child evaluation LLMs live
+  agentic retriever can keep its parent and child evaluation LLMs live
   simultaneously, so peak can exceed one model in that configuration. The
   trade-off is reloading weights per turn/stage whenever the same checkpoint is
   used more than once. `context_window` still dominates the KV-cache footprint —
@@ -103,12 +103,7 @@
   progress before the job is marked errored, so a failed turn leaves neither
   loaded weights nor a stale progress payload behind.
 
-## Unused Components
-
-- **`DefaultAugmentationPrompt`** and **`CustomAugmentationPrompt`** are
-  registered in `get_initial_components()` but are not referenced by any
-  pipeline or validation code. The augmentation prompt family (query expansion
-  / HyDE-style) is not yet wired into the pipeline.
+## Prompt Wiring
 
 - The query-transformation prompts (`Default`/`Custom` `QueryRewriting`,
   `QueryExpansion`, `QueryDecomposition`) and the `LLMQueryRewriter`,
@@ -138,11 +133,11 @@
   Sessions created before this default changed keep their stored parameters:
   clear the `context_window` field to pick up the new value.
 
-- **Sessions created before the sufficiency prompt changed keep their stored
-  template.** The zero-based chunk-position rule is part of the default
+- **Sessions created before the agentic retriever prompt changed keep their
+  stored template.** The zero-based chunk-position rule is part of the default
   template; an existing session that already stores the previous template must
-  clear the prompt template (or reselect the default sufficiency prompt) to
-  receive it.
+  clear the prompt template (or reselect the default agentic retriever prompt)
+  to receive it.
 
 - **`prompt` and `llm_model` refs are mandatory.** A transformer is built only
   from an explicit prompt component and an explicit text-to-text model
@@ -221,15 +216,27 @@
 - **Parameters hash** only covers `rag_prompt` and `rag_generation_model`.
   `rag_chunking_model`, `rag_embedding_model`, and retriever tables still
   compare JSON columns directly — fragile to key ordering in SQLite.
-- **Orphaned `rag_prompt` rows are not cleaned up.**
-  `CleanupService.cleanup_orphaned_resources` handles retrievers and chunking
-  models only. Rows are deduplicated by `parameters_hash` and the only writer
-  is `get_or_create`, so orphans are bounded and harmless — but they do
-  accumulate.
-- **`RAGPrompt.pipelines` no longer cascades**, because a hash-deduplicated row
-  is shared: deleting one prompt would have deleted other sessions'
-  `rag_pipeline` rows. There is no DELETE endpoint for prompts; do not add one
-  without re-auditing that.
+- **Internal `rag_prompt` rows are not garbage-collected.** Rows written by
+  `get_or_create` are keyed by `parameters_hash` and shared between sessions;
+  they are marked `is_library=False` and are not exposed in the prompt library.
+  They stay until a session deletion removes its `rag_pipeline` (the rows
+  themselves remain, bounded by distinct templates).
+- **Prompt deletion is explicit and audited.** `GET /api/v1/prompt/library`
+  returns the user-created rows (`is_library=True`) and the built-in defaults
+  (`is_library=False`, read-only). `DELETE /api/v1/prompt/{id}` only accepts
+  `is_library=True` rows; internal pipeline rows and built-in defaults are
+  refused. A library prompt used by a session returns `409` with
+  the dependent sessions; `?cascade_sessions=true` deletes those sessions
+  through `SessionDocumentService.delete_session()` before deleting the
+  prompt. The FK cascade
+  is still not trusted (SQLite foreign keys are off). A session counts as a
+  dependent when a `rag_pipeline` points at the prompt, when its parameters
+  carry a legacy `prompt_id`, or when its stored prompt component and template
+  text match the library row. The last case ignores `language` and treats a
+  copied template as a dependency, because that is how the session was seeded.
+  If a user saves a template that already exists as an internal pipeline row,
+  `POST /api/v1/prompt/` promotes that row to `is_library=True` and renames it
+  instead of returning a duplicate error for a row the library did not show.
 
 ## Empty sessions
 

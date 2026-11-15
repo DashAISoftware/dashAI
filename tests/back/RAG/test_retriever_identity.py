@@ -539,18 +539,17 @@ def test_effective_chunk_count_sums_composite_children():
     assert retriever_presets.effective_chunk_count("ParallelRetriever", params) == 14
 
 
-def test_effective_chunk_count_caps_an_llm_evaluated_composite():
+def test_effective_chunk_count_caps_an_agentic_composite():
     """``max_chunks`` caps the pool, and the parent's window multiplies it."""
     children = [{"component": "BM25Retriever", "params": {"top_k": 20}}]
     capped = {"max_chunks": 5, "children": children}
     expanded = {**capped, ENABLE_FIELD: True, WINDOW_FIELD: 3}
 
     assert (
-        retriever_presets.effective_chunk_count("LLMEvaluatedDepthRetriever", capped)
-        == 5
+        retriever_presets.effective_chunk_count("AgenticSingleRetriever", capped) == 5
     )
     assert (
-        retriever_presets.effective_chunk_count("LLMEvaluatedDepthRetriever", expanded)
+        retriever_presets.effective_chunk_count("AgenticSingleRetriever", expanded)
         == 15
     )
 

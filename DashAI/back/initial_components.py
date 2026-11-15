@@ -394,17 +394,15 @@ from DashAI.back.models.RAG.chunking_models import (
     TokenChunkModel,
 )
 from DashAI.back.models.RAG.prompts import (
-    CustomAugmentationPrompt,
     CustomRAGGenerationPrompt,
-    DefaultAugmentationPrompt,
     DefaultQARAGGenerationPrompt,
     DefaultRAGGenerationPrompt,
 )
 from DashAI.back.models.RAG.prompts.evaluation import (
-    CustomLLMFilterPrompt,
-    CustomRetrievalSufficiencyPrompt,
-    DefaultLLMFilterPrompt,
-    DefaultRetrievalSufficiencyPrompt,
+    CustomAgenticRerankerPrompt,
+    CustomAgenticRetrieverPrompt,
+    DefaultAgenticRerankerPrompt,
+    DefaultAgenticRetrieverPrompt,
 )
 from DashAI.back.models.RAG.prompts.transformation import (
     CustomQueryDecompositionPrompt,
@@ -414,14 +412,14 @@ from DashAI.back.models.RAG.prompts.transformation import (
     DefaultQueryExpansionPrompt,
     DefaultQueryRewritingPrompt,
 )
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_depth_retriever import (
-    LLMEvaluatedDepthRetriever,
+from DashAI.back.models.RAG.retrievers.composite.agentic_ensemble_retriever import (  # noqa: E501
+    AgenticEnsembleRetriever,
 )
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_ensemble_retriever import (  # noqa: E501
-    LLMEvaluatedEnsembleRetriever,
+from DashAI.back.models.RAG.retrievers.composite.agentic_reranker_retriever import (
+    AgenticRerankerRetriever,
 )
-from DashAI.back.models.RAG.retrievers.composite.llm_filter_retriever import (
-    LLMFilterRetriever,
+from DashAI.back.models.RAG.retrievers.composite.agentic_single_retriever import (
+    AgenticSingleRetriever,
 )
 from DashAI.back.models.RAG.retrievers.composite.mmr_reranker_retriever import (
     MMRRerankerRetriever,
@@ -608,6 +606,9 @@ from DashAI.back.tasks.translation_task import TranslationTask
 from DashAI.back.units.apply_converter_unit import ApplyConverterUnit
 from DashAI.back.units.apply_cut_preprocessing_unit import ApplyCutPreprocessingUnit
 from DashAI.back.units.apply_dataset_schema_unit import ApplyDatasetSchemaUnit
+from DashAI.back.units.apply_document_pipeline_unit import (
+    ApplyDocumentPipelineUnit,
+)
 from DashAI.back.units.apply_session_preprocessing_unit import (
     ApplySessionPreprocessingUnit,
 )
@@ -658,6 +659,7 @@ from DashAI.back.units.save_dataset_to_path_unit import SaveDatasetToPathUnit
 from DashAI.back.units.save_dataset_unit import SaveDatasetUnit
 from DashAI.back.units.save_document_to_path_unit import SaveDocumentToPathUnit
 from DashAI.back.units.save_exploration_unit import SaveExplorationUnit
+from DashAI.back.units.save_forecasts_plot_unit import SaveForecastsPlotUnit
 from DashAI.back.units.save_forecasts_unit import SaveForecastsUnit
 from DashAI.back.units.save_model_unit import SaveModelUnit
 from DashAI.back.units.save_prediction_unit import SavePredictionUnit
@@ -893,6 +895,7 @@ def get_initial_components():
         ScoreForecastsUnit,
         FitFinalForecasterUnit,
         SaveForecastsUnit,
+        SaveForecastsPlotUnit,
         ForecastHorizonUnit,
         FitModelOverFoldsUnit,
         FitModelOverNestedFoldsUnit,
@@ -927,6 +930,7 @@ def get_initial_components():
         StoreDatafileDocumentSourceUnit,
         ParseDocumentUnit,
         SaveDocumentToPathUnit,
+        ApplyDocumentPipelineUnit,
         RAGJob,
         # Reports
         ConfusionMatrix,
@@ -1085,8 +1089,6 @@ def get_initial_components():
         DefaultRAGGenerationPrompt,
         CustomRAGGenerationPrompt,
         DefaultQARAGGenerationPrompt,
-        DefaultAugmentationPrompt,
-        CustomAugmentationPrompt,
         # Query Transformation Prompts
         DefaultQueryRewritingPrompt,
         CustomQueryRewritingPrompt,
@@ -1094,12 +1096,12 @@ def get_initial_components():
         CustomQueryExpansionPrompt,
         DefaultQueryDecompositionPrompt,
         CustomQueryDecompositionPrompt,
-        # Retrieval Sufficiency Prompts
-        DefaultRetrievalSufficiencyPrompt,
-        CustomRetrievalSufficiencyPrompt,
-        # LLM Filter Prompts
-        DefaultLLMFilterPrompt,
-        CustomLLMFilterPrompt,
+        # Agentic Retriever Prompts
+        DefaultAgenticRetrieverPrompt,
+        CustomAgenticRetrieverPrompt,
+        # Agentic Reranker Prompts
+        DefaultAgenticRerankerPrompt,
+        CustomAgenticRerankerPrompt,
         # Retrievers
         BM25Retriever,
         TFIDFRetriever,
@@ -1108,9 +1110,9 @@ def get_initial_components():
         MMRRerankerRetriever,
         SequentialRetriever,
         ParallelRetriever,
-        LLMEvaluatedDepthRetriever,
-        LLMEvaluatedEnsembleRetriever,
-        LLMFilterRetriever,
+        AgenticSingleRetriever,
+        AgenticEnsembleRetriever,
+        AgenticRerankerRetriever,
         # Query Transformation
         LLMQueryRewriter,
         LLMQueryExpander,

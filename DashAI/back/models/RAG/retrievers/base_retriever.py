@@ -434,7 +434,7 @@ class BaseRetriever(ConfigObject, ABC):
             chunks: Nested dictionary mapping document IDs to chunk IDs
                 to :class:`Chunk` instances.
             persistence: Persistence object for saving/loading state.
-            documents: Optional document mapping used by the LLM-evaluated
+            documents: Optional document mapping used by the agentic
                 retrievers to describe the corpus in their prompts.
         """
         self.env_RAG_path = env_RAG_path

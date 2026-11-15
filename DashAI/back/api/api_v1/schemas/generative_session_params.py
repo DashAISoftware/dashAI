@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, model_validator
 
@@ -9,7 +9,9 @@ class GenerativeSessionParams(BaseModel):
     ``workflow_name`` names the workflow that runs the session. Without it the
     session runs ``InferenceWorkflow`` and must name its task and model. A
     workflow built on one task, or taking its model from the parameters,
-    derives them, so they may be left out.
+    derives them, so they may be left out. ``prompts`` is an optional slot path
+    to prompt input map; its entries win over prompts embedded in
+    ``parameters``.
     """
 
     workflow_name: Optional[str] = None
@@ -18,6 +20,7 @@ class GenerativeSessionParams(BaseModel):
     parameters: dict
     name: str
     description: Union[str, None] = None
+    prompts: Optional[Dict[str, Any]] = None
 
     @model_validator(mode="after")
     def check_task_and_model_without_workflow(self) -> "GenerativeSessionParams":

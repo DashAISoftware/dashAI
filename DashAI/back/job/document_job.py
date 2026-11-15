@@ -15,6 +15,7 @@ from sqlalchemy import exc
 from DashAI.back.dataloaders.classes.document_dataloader import redact_params
 from DashAI.back.dependencies.database.models import DataDocument
 from DashAI.back.job.base_job import BaseJob, JobError
+from DashAI.back.units.apply_document_pipeline_unit import ApplyDocumentPipelineUnit
 from DashAI.back.units.context import ExecutionContext
 from DashAI.back.units.parse_document_unit import ParseDocumentUnit
 from DashAI.back.units.save_document_to_path_unit import SaveDocumentToPathUnit
@@ -42,6 +43,10 @@ class DocumentJob(BaseJob):
     The source is either an upload or a file inside a completed hub download.
     Each has its own unit to store it, and both publish the same keys, so the
     parsing and saving units are shared.
+
+    When the row carries a ``converter_pipeline``, the job applies it after
+    parsing and before saving, so the stored document and its counts are the
+    converted result.
 
     Parameters
     ----------
@@ -201,6 +206,7 @@ class DocumentJob(BaseJob):
                     raise JobError(f"Document with id {document_id} not found.")
                 dataloader_name = document.dataloader
                 dataloader_params = dict(document.dataloader_params or {})
+                pipeline = list(document.converter_pipeline or []) or None
                 folder_path = Path(config["DOCUMENTS_PATH"]) / str(uuid.uuid4())
                 folder_path.mkdir(parents=True)
                 document.file_path = os.path.realpath(folder_path)
@@ -230,6 +236,10 @@ class DocumentJob(BaseJob):
 
             self.report_progress(0.3, "Parsing document")
             parse_document(ctx)
+
+            if pipeline:
+                self.report_progress(0.5, "Applying converter pipeline")
+                ApplyDocumentPipelineUnit(pipeline=pipeline)(ctx)
 
             self.report_progress(0.8, "Saving document")
             SaveDocumentToPathUnit(path=str(folder_path / "document"))(ctx)

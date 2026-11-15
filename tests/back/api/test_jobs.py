@@ -7,7 +7,12 @@ from datasets import ClassLabel, Value
 from fastapi.testclient import TestClient
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
-from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
+from DashAI.back.dependencies.database.models import (
+    Dataset,
+    ModelSession,
+    Run,
+    RunPlot,
+)
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
 from DashAI.back.job.model_job import ModelJob
@@ -176,10 +181,6 @@ def create_run(client: TestClient, model_session_id: int, test_registry):
             },
             "goal_metric": "",
             "description": "This is a test run",
-            "plot_history_path": "path/to/history.png",
-            "plot_slice_path": "path/to/slice.png",
-            "plot_contour_path": "path/to/contour.png",
-            "plot_importance_path": "path/to/importance.png",
         },
     )
     assert response.status_code == 201, response.text
@@ -359,10 +360,6 @@ def _run_with_splits(
             },
             "goal_metric": "",
             "description": "Run over a specific splits payload",
-            "plot_history_path": "path/to/history.png",
-            "plot_slice_path": "path/to/slice.png",
-            "plot_contour_path": "path/to/contour.png",
-            "plot_importance_path": "path/to/importance.png",
         },
     )
     assert response.status_code == 201, response.text
@@ -487,10 +484,6 @@ def test_legacy_manual_splits_still_train(client: TestClient, model_session_id: 
             },
             "goal_metric": "",
             "description": "Run over a legacy manual split payload",
-            "plot_history_path": "path/to/history.png",
-            "plot_slice_path": "path/to/slice.png",
-            "plot_contour_path": "path/to/contour.png",
-            "plot_importance_path": "path/to/importance.png",
         },
     )
     assert response.status_code == 201, response.text
@@ -623,9 +616,12 @@ def test_delete_model_session_cleans_up_run_files(
             goal_metric="",
             name="CleanupRun",
             run_path=str(run_dir),
-            plot_history_path=str(plot_file),
         )
         db.add(run)
+        db.commit()
+        db.add(
+            RunPlot(run_id=run.id, view="hyperparameter", artifacts_path=str(plot_file))
+        )
         db.commit()
 
     response = client.delete(f"/api/v1/model-session/{ms_id}")

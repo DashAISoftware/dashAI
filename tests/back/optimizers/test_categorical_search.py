@@ -368,13 +368,15 @@ def test_contour_plot_pairs_only_the_numeric_parameters():
         ]
     )
 
-    figure = json.loads(optimizer.contour_plot(trials, GOAL_METRIC).payload)
+    plot = optimizer.contour_plot(trials, GOAL_METRIC)
 
-    names = {trace["name"] for trace in figure["data"]}
-    assert not any("criterion" in name for name in names), names
-    for trace in figure["data"]:
-        assert all(isinstance(value, (int, float)) for value in trace["x"]), trace
-        assert all(isinstance(value, (int, float)) for value in trace["y"]), trace
+    titles = [group.title for group in plot.groups]
+    assert not any("criterion" in title for title in titles), titles
+    for group in plot.groups:
+        figure = json.loads(group.artifacts[0].payload)
+        for trace in figure["data"]:
+            assert all(isinstance(v, (int, float)) for v in trace["x"]), trace
+            assert all(isinstance(v, (int, float)) for v in trace["y"]), trace
 
 
 def test_contour_plot_is_skipped_when_fewer_than_two_parameters_are_numeric():

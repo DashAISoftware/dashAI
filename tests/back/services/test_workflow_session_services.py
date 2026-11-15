@@ -16,7 +16,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.core.schema_fields import BaseSchema, int_field, schema_field
-from DashAI.back.dependencies.database.models import Base, GenerativeSession
+from DashAI.back.dependencies.database.models import (
+    Base,
+    GenerativeSession,
+    GenerativeSessionParameterHistory,
+)
 from DashAI.back.models.RAG.exceptions.base import RAGWorkflowError
 from DashAI.back.services.workflows import RAG_workflow_session_service as rag_module
 from DashAI.back.services.workflows import (
@@ -106,6 +110,8 @@ class FakeCleanup:
         session_id: int,
         old_parameters: dict,
         new_parameters: Optional[dict] = None,
+        *,
+        commit: bool = True,
     ) -> None:
         """Record an orphan sweep.
 
@@ -117,8 +123,10 @@ class FakeCleanup:
             Parameters before the change.
         new_parameters : Optional[dict]
             Parameters after the change, ``None`` on deletion.
+        commit : bool
+            Whether the call commits.
         """
-        EVENTS.append(("cleanup", session_id, old_parameters, new_parameters))
+        EVENTS.append(("cleanup", session_id, old_parameters, new_parameters, commit))
 
     def invalidate_session_artifacts(self, session_id: int, *, commit: bool) -> None:
         """Record an artifact discard.
@@ -131,6 +139,101 @@ class FakeCleanup:
             Whether the call commits.
         """
         EVENTS.append(("invalidate", session_id, commit))
+
+
+class FakePrompts:
+    """Stands in for ``PromptService``, recording every binding sync."""
+
+    def __init__(self, db: Any, registry: Any) -> None:
+        """Keep nothing.
+
+        Parameters
+        ----------
+        db : Any
+            Database session.
+        registry : Any
+            Component registry.
+        """
+
+    def split_prompts(self, parameters: dict) -> tuple:
+        """Split out a top level ``prompt`` key.
+
+        Parameters
+        ----------
+        parameters : dict
+            Parameters that may embed a prompt.
+
+        Returns
+        -------
+        tuple
+            The prompt free parameters and the prompt inputs.
+        """
+        clean = {k: v for k, v in parameters.items() if k != "prompt"}
+        inputs = {"prompt": parameters["prompt"]} if "prompt" in parameters else {}
+        return clean, inputs
+
+    def sync_session_bindings(
+        self,
+        session_id: int,
+        parameters: dict,
+        prompt_inputs: dict,
+        *,
+        generation_default: Any = None,
+    ) -> dict:
+        """Record a binding sync.
+
+        Parameters
+        ----------
+        session_id : int
+            Session id.
+        parameters : dict
+            Prompt free parameters.
+        prompt_inputs : dict
+            Prompt inputs keyed by slot path.
+        generation_default : Any
+            Default generation prompt.
+
+        Returns
+        -------
+        dict
+            A fake bindings snapshot.
+        """
+        EVENTS.append(("bind", session_id, parameters, prompt_inputs))
+        return {"prompt": {"prompt_id": 1}}
+
+
+class FakeSessionDocuments:
+    """Stands in for ``SessionDocumentService``, recording deletions."""
+
+    def __init__(self, db: Any, job_queue: Any) -> None:
+        """Keep the job queue.
+
+        Parameters
+        ----------
+        db : Any
+            Database session.
+        job_queue : Any
+            Job queue.
+        """
+        self.job_queue = job_queue
+
+    def delete_session(self, session_id: int, *, commit: bool = True) -> bool:
+        """Record a deletion.
+
+        Parameters
+        ----------
+        session_id : int
+            Session id.
+        commit : bool
+            Whether the call commits.
+
+        Returns
+        -------
+        bool
+            Always ``True``.
+        """
+        EVENTS.append(("delete", session_id, self.job_queue, commit))
+        return True
 
 
 EVENTS: List[tuple] = []
@@ -208,6 +311,8 @@ def fake_collaborators(monkeypatch):
     monkeypatch.setattr(rag_module, "SessionValidationService", FakeValidator)
     monkeypatch.setattr(rag_module, "CleanupService", FakeCleanup)
     monkeypatch.setattr(rag_module, "cancel_live_index_job", fake_cancel)
+    monkeypatch.setattr(rag_module, "PromptService", FakePrompts)
+    monkeypatch.setattr(rag_module, "SessionDocumentService", FakeSessionDocuments)
 
 
 def _rag_service(db) -> RAGWorkflowSessionService:
@@ -264,16 +369,35 @@ def test_default_service_passes_parameters_through(db, session):
 
 
 def test_default_service_hooks_do_nothing(db, session):
-    """Inference sessions need no readiness check, side effect or cleanup."""
+    """Inference sessions need no readiness check, side effect or prompts."""
     service = WorkflowSessionService(db, "registry", "queue")
 
-    service.apply_update(session, {"a": 1}, {"a": 2})
+    assert service.apply_update(session, {"a": 1}, {"a": 2}) is None
+    assert service.bind_new_session(session, {"a": 1}) is None
+    assert service.snapshot_prompts(session) is None
+    assert service.read_parameters(session) == ({"documents": []}, None)
+    assert service.stored_parameters({"a": 1}) == {"a": 1}
+    assert not service.is_unchanged(session, {"a": 1}, {"a": 1}, {})
     service.check_ready(session)
-    service.before_delete(session)
-    service.after_delete(session.id, {"a": 1})
 
     assert EVENTS == []
     assert FakeValidator.calls == []
+
+
+def test_default_service_deletes_the_session_and_its_history(db, session):
+    """Inference deletion stages the session and its history for the commit."""
+    db.add(
+        GenerativeSessionParameterHistory(
+            session_id=session.id, parameters={}, model_name=session.model_name
+        )
+    )
+    db.commit()
+
+    WorkflowSessionService(db, "registry", "queue").delete(session)
+    db.commit()
+
+    assert db.get(GenerativeSession, session.id) is None
+    assert db.query(GenerativeSessionParameterHistory).count() == 0
 
 
 def test_rag_prepare_parameters_returns_the_validated_parameters(db):
@@ -319,16 +443,37 @@ def test_rag_validate_update_reports_validation_errors(db, session, error):
 
 
 def test_rag_apply_update_cancels_the_index_before_cleaning_up(db, session):
-    """A running index is stopped before the rows it writes are deleted."""
+    """A running index is stopped before the rows it writes are deleted, the
+    cleanup stays in the caller's transaction and the prompts are bound."""
     old = {"retriever_model": {"component": "A"}}
     new = {"retriever_model": {"component": "B"}}
+    changes = {**new, "prompt": {"component": "P"}}
 
-    _rag_service(db).apply_update(session, old, new)
+    snapshot = _rag_service(db).apply_update(session, old, new, changes)
 
+    assert snapshot == {"prompt": {"prompt_id": 1}}
     assert [
         ("cancel", session.id, "queue"),
-        ("cleanup", session.id, old, new),
+        ("cleanup", session.id, old, new, False),
+        ("bind", session.id, new, {"prompt": {"component": "P"}}),
     ] == EVENTS
+
+
+def test_rag_explicit_prompts_win_over_embedded_ones(db, session):
+    """A ``prompts`` map entry replaces the prompt embedded in the changes."""
+    changes = {"prompt": {"component": "Embedded"}}
+    explicit = {"prompt": {"component": "Explicit"}}
+
+    _rag_service(db).apply_update(session, {}, {}, changes, explicit)
+
+    assert EVENTS[-1] == ("bind", session.id, {}, explicit)
+
+
+def test_rag_stored_parameters_drop_the_prompts(db):
+    """The session row keeps prompt free parameters."""
+    stored = _rag_service(db).stored_parameters({"a": 1, "prompt": {"c": "P"}})
+
+    assert stored == {"a": 1}
 
 
 @pytest.mark.parametrize("parameters", [{"documents": []}, {}, None])
@@ -347,24 +492,11 @@ def test_rag_check_ready_accepts_a_session_with_documents(db, session):
     _rag_service(db).check_ready(session)
 
 
-def test_rag_before_delete_stops_the_index_and_discards_artifacts(db, session):
-    """Deletion stops the index, then discards artifacts inside the caller's
-    transaction."""
-    _rag_service(db).before_delete(session)
+def test_rag_delete_removes_the_session_with_its_rag_rows(db, session):
+    """Deletion goes through the session document service, uncommitted."""
+    _rag_service(db).delete(session)
 
-    assert [
-        ("cancel", session.id, "queue"),
-        ("invalidate", session.id, False),
-    ] == EVENTS
-
-
-def test_rag_after_delete_sweeps_orphaned_resources(db):
-    """After deletion the shared rows nobody uses any more are swept."""
-    old = {"chunking_model": {"component": "CharacterChunkModel"}}
-
-    _rag_service(db).after_delete(7, old)
-
-    assert [("cleanup", 7, old, None)] == EVENTS
+    assert [("delete", session.id, "queue", False)] == EVENTS
 
 
 class StepsSchema(BaseSchema):

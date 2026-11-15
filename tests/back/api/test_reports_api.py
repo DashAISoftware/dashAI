@@ -139,10 +139,6 @@ def train_a_real_model(client: TestClient, model_session_id: int, test_registry)
             },
             "goal_metric": "",
             "description": "Run under report",
-            "plot_history_path": "path/to/history.png",
-            "plot_slice_path": "path/to/slice.png",
-            "plot_contour_path": "path/to/contour.png",
-            "plot_importance_path": "path/to/importance.png",
         },
     )
     assert response.status_code == 201, response.text
@@ -390,10 +386,6 @@ def train_a_cross_validated_model(
             },
             "goal_metric": "",
             "description": "Cross validated run under report",
-            "plot_history_path": "path/to/history.png",
-            "plot_slice_path": "path/to/slice.png",
-            "plot_contour_path": "path/to/contour.png",
-            "plot_importance_path": "path/to/importance.png",
         },
     )
     assert response.status_code == 201, response.text

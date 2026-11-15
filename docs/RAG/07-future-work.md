@@ -22,7 +22,6 @@ The optional transformation stage (rewriting, expansion, decomposition) is imple
 
 - **Fusion beyond round-robin** — multi-query retrieval interleaves the per-query ranked lists and de-duplicates; Reciprocal Rank Fusion or score-based fusion would rank the merged results better.
 - **Adaptive technique selection** — the transformer is fixed per session; a future stage could choose the technique (or its parameters) per query.
-- **HyDE via the registered augmentation prompts** — `DefaultAugmentationPrompt` and `CustomAugmentationPrompt` are registered but not wired into any pipeline; a hypothetical-document stage could build on them.
 - **Pretrained (non-LLM) transformers** — `BaseQueryTransformation` already admits any implementation; only the LLM + prompt family ships today.
 
 ## PDF Parsing

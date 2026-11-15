@@ -39,6 +39,7 @@ from DashAI.back.dependencies.database.models import (
     ModelSession,
     Prediction,
     Run,
+    RunPlot,
 )
 from DashAI.back.job.base_job import JobError
 from DashAI.back.job.dataset_job import DatasetJob
@@ -177,10 +178,6 @@ def _create_run(client: TestClient, session_id: int, model: str, params) -> int:
             "parameters": params,
             "optimizer_name": "",
             "optimizer_parameters": {},
-            "plot_history_path": "",
-            "plot_slice_path": "",
-            "plot_contour_path": "",
-            "plot_importance_path": "",
             "goal_metric": "",
             "description": "",
             "nested": None,
@@ -320,10 +317,8 @@ def test_a_run_finishes_and_recovers_the_three_blobs(
 
     # Nothing is held out, searched or plotted.
     assert run.split_indexes is None
-    assert run.plot_history_path is None
-    assert run.plot_slice_path is None
-    assert run.plot_contour_path is None
-    assert run.plot_importance_path is None
+    with client.app.container["session_factory"]() as db:
+        assert db.query(RunPlot).filter_by(run_id=run_id).count() == 0
     assert run.parameters == params
     assert run.optimizer_name == ""
     assert run.goal_metric == ""

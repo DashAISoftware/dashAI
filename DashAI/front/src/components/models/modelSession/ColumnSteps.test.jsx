@@ -19,45 +19,21 @@ jest.mock("../../../api/modelSession", () => ({
 import BaseColumnsStep from "./BaseColumnsStep";
 import SelectColumnsStep from "./SelectColumnsStep";
 
-const role = (name, label, overrides = {}) => ({
-  name,
-  label,
-  types: ["Float"],
-  min: 0,
-  max: "n",
-  required: false,
-  transformable: true,
-  ...overrides,
-});
-const PROTECTED = { min: 1, max: 1, required: true, transformable: false };
+import taskColumnCases from "./__fixtures__/taskColumnCases.json";
 
-const SUPERVISED = {
-  column_roles: [
-    role("features", "Features"),
-    role("target", "Target", { ...PROTECTED, types: ["Categorical"] }),
-  ],
-  io_roles: { inputs: ["features"], outputs: ["target"] },
-};
+// The metadata the registered tasks declare, as the backend generates it
+// (tests/back/tasks/task_column_cases.py), instead of hand-written copies
+// that drift from the real tasks (#994).
+const taskMetadata = (name) =>
+  taskColumnCases.tasks.find((entry) => entry.task === name).metadata;
+
+const SUPERVISED = taskMetadata("TabularClassificationTask");
 // A task without outputs declares no target role at all.
-const CLUSTERING = {
-  column_roles: [role("features", "Features")],
-  io_roles: { inputs: ["features"], outputs: [] },
-};
-// A task with roles of its own, as a forecasting task would declare them.
-const THREE_ROLES = {
-  column_roles: [
-    role("index", "Index", { ...PROTECTED, types: ["Date"] }),
-    role("series", "Series", PROTECTED),
-    role("exogenous", "Exogenous"),
-  ],
-  io_roles: { inputs: ["exogenous"], outputs: ["series"] },
-};
-// As forecasting declares them: the index feeds the model's inputs too, so
-// the exogenous variables are optional.
-const FORECASTING = {
-  ...THREE_ROLES,
-  io_roles: { inputs: ["index", "exogenous"], outputs: ["series"] },
-};
+const CLUSTERING = taskMetadata("ClusteringTask");
+// A task with roles of its own: a protected time index and series, and
+// optional exogenous variables. The time index feeds the model's inputs too,
+// so the exogenous variables may stay empty.
+const FORECASTING = taskMetadata("SingleSeriesForecastingTask");
 
 const COLUMNS = ["a", "b", "c"];
 
@@ -152,12 +128,16 @@ describe("SelectColumnsStep", () => {
   });
 
   it("shows the roles a task declares, without naming them", async () => {
-    renderSelect(THREE_ROLES);
+    renderSelect(FORECASTING);
     await waitFor(() => expect(validateColumns).toHaveBeenCalled());
 
-    expect(selectorLabels()).toEqual(["Index", "Series", "Exogenous"]);
+    expect(selectorLabels()).toEqual([
+      "Time index",
+      "Series",
+      "Exogenous variables",
+    ]);
     expect(validateColumns.mock.calls.at(-1)[2]).toEqual({
-      index: [{ kind: "raw", name: "c" }],
+      time_index: [{ kind: "raw", name: "c" }],
       series: [{ kind: "raw", name: "b" }],
       exogenous: [{ kind: "raw", name: "a" }],
     });
@@ -166,14 +146,14 @@ describe("SelectColumnsStep", () => {
   it("creates a forecasting session without exogenous variables", async () => {
     const { setNewExp, setNextEnabled } = renderSelect(FORECASTING, {
       column_roles: {
-        index: [{ kind: "raw", name: "c" }],
+        time_index: [{ kind: "raw", name: "c" }],
         series: [{ kind: "raw", name: "b" }],
       },
     });
 
     await waitFor(() => expect(setNextEnabled).toHaveBeenLastCalledWith(true));
     expect(setNewExp.mock.calls.at(-1)[0].column_roles).toEqual({
-      index: [{ kind: "raw", name: "c" }],
+      time_index: [{ kind: "raw", name: "c" }],
       series: [{ kind: "raw", name: "b" }],
     });
   });
@@ -223,13 +203,14 @@ describe("SelectColumnsStep", () => {
     expect(target).toBeDisabled();
   });
   it("shows the type of the column every role that takes one holds", async () => {
-    renderSelect(THREE_ROLES, {}, TYPES);
+    renderSelect(FORECASTING, {}, TYPES);
     await waitFor(() => expect(validateColumns).toHaveBeenCalled());
 
-    // No Date column: the index takes the last one, as without types. The
-    // series takes the last column of a type it accepts (Float).
-    expect(heldType("index", "c")).toBe("cCategorical");
-    expect(heldType("series", "a")).toBe("aFloat");
+    // No Date column: the time index takes the last one, as without types.
+    // The series takes the last column left of a type it accepts (Float or
+    // Integer).
+    expect(heldType("time_index", "c")).toBe("cCategorical");
+    expect(heldType("series", "b")).toBe("bInteger");
   });
 
   it("with preprocessing, the fixed target still shows its type", async () => {
@@ -297,7 +278,7 @@ describe("BaseColumnsStep", () => {
     const setNextEnabled = jest.fn();
     renderWithProviders(
       <BaseColumnsStep
-        newExp={{ column_roles_stage1: { index: ["c"], series: ["b"] } }}
+        newExp={{ column_roles_stage1: { time_index: ["c"], series: ["b"] } }}
         setNewExp={jest.fn()}
         setNextEnabled={setNextEnabled}
         datasetInfo={{ column_names: COLUMNS }}

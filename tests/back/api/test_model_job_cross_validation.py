@@ -27,9 +27,16 @@ from fastapi.testclient import TestClient
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.enums.status import RunStatus
+from DashAI.back.core.run_plots import read_run_plot_file
 from DashAI.back.core.schema_fields import BaseSchema, int_field, schema_field
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
-from DashAI.back.dependencies.database.models import Dataset, Metric, ModelSession, Run
+from DashAI.back.dependencies.database.models import (
+    Dataset,
+    Metric,
+    ModelSession,
+    Run,
+    RunPlot,
+)
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
 from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
@@ -616,21 +623,18 @@ def test_a_search_over_folds_persists_the_best_parameters(
     assert 1 <= best <= 5
 
 
-def test_a_search_over_folds_saves_two_plots_named_after_the_run(
+def test_a_search_over_folds_saves_one_plot_file_named_after_the_run(
     client: TestClient, hpo_run: dict
 ):
-    run = _reload(client, hpo_run["run_id"])
+    with client.app.container["session_factory"]() as db:
+        [row] = db.query(RunPlot).filter_by(run_id=hpo_run["run_id"]).all()
 
-    assert run.plot_history_path is not None
-    assert run.plot_slice_path is not None
-    assert os.path.exists(run.plot_history_path)
-    assert os.path.exists(run.plot_slice_path)
-    assert os.path.basename(run.plot_history_path) == (
-        f"history_objective_plot_{run.id}.pickle"
+    assert row.view == "hyperparameter"
+    assert os.path.basename(row.artifacts_path) == (
+        f"hyperparameter_plots_{hpo_run['run_id']}.pickle"
     )
-    # The contour and importance plots need more than one searched parameter.
-    assert run.plot_contour_path is None
-    assert run.plot_importance_path is None
+    leaves = read_run_plot_file(row.artifacts_path)
+    assert [leaf["type"] for leaf in leaves] == ["plotly", "plotly"]
 
 
 def test_a_search_over_folds_still_aggregates_its_folds(

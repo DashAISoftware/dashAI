@@ -10,10 +10,6 @@ class RunParams(BaseModel):
     parameters: dict
     optimizer_name: str
     optimizer_parameters: dict
-    plot_history_path: str
-    plot_slice_path: str
-    plot_contour_path: str
-    plot_importance_path: str
     goal_metric: str
     description: Union[str, None] = None
     nested: Optional[dict] = None

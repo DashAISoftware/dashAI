@@ -1,8 +1,13 @@
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from DashAI.back.dependencies.database.models import GenerativeSession
+from DashAI.back.dependencies.database.models import (
+    GenerativeProcess,
+    GenerativeSession,
+    GenerativeSessionParameterHistory,
+    ProcessData,
+)
 
 if TYPE_CHECKING:
     from DashAI.back.dependencies.registry import ComponentRegistry
@@ -12,14 +17,22 @@ class WorkflowSessionError(ValueError):
     """A session request the workflow refuses; its message is shown to the user."""
 
 
+class WorkflowConflictError(Exception):
+    """A request that conflicts with what the session already stores."""
+
+
+class WorkflowStorageError(RuntimeError):
+    """The workflow could not read or write its own rows; a server fault."""
+
+
 class WorkflowSessionService:
     """Session lifecycle steps a workflow adds to the generic session endpoints.
 
     The defaults are the inference behaviour: the session model is the one the
     client picks, its own schema validates the parameters, ``GenerativeJob``
-    runs each turn and nothing happens around updates, turns or deletion. A
-    workflow that needs more subclasses this and registers the subclass with
-    ``session_service_for``.
+    runs each turn, the session has no prompts and nothing happens around
+    updates, turns or deletion. A workflow that needs more subclasses this and
+    registers the subclass with ``session_service_for``.
 
     Parameters
     ----------
@@ -52,6 +65,7 @@ class WorkflowSessionService:
         self,
         parameters: Dict[str, Any],
         language: Optional[str] = None,
+        prompts: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Validate and complete the parameters of a new session.
 
@@ -61,13 +75,127 @@ class WorkflowSessionService:
             Parameters sent by the client.
         language : Optional[str]
             Client language, for language dependent defaults.
+        prompts : Optional[Dict[str, Any]]
+            Slot path to prompt input map sent next to the parameters.
 
         Returns
         -------
         Dict[str, Any]
-            The parameters to store.
+            The complete parameters.
         """
         return parameters
+
+    def stored_parameters(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Return the part of the parameters the session row stores.
+
+        Parameters
+        ----------
+        parameters : Dict[str, Any]
+            Complete parameters.
+
+        Returns
+        -------
+        Dict[str, Any]
+            The parameters to store; all of them by default.
+        """
+        return dict(parameters)
+
+    def bind_new_session(
+        self,
+        session: GenerativeSession,
+        parameters: Dict[str, Any],
+        prompts: Optional[Dict[str, Any]] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Store what a new, flushed session keeps outside its row.
+
+        Parameters
+        ----------
+        session : GenerativeSession
+            The new session, flushed but not committed.
+        parameters : Dict[str, Any]
+            Complete parameters returned by ``prepare_parameters``.
+        prompts : Optional[Dict[str, Any]]
+            Slot path to prompt input map sent by the client.
+
+        Returns
+        -------
+        Optional[Dict[str, Any]]
+            Snapshot of the session's prompts for its history, or ``None``
+            when the workflow has no prompts.
+        """
+        return None
+
+    def client_parameters(
+        self, session: GenerativeSession, parameters: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Return stored parameters in the shape the client edits.
+
+        Parameters
+        ----------
+        session : GenerativeSession
+            The session.
+        parameters : Dict[str, Any]
+            Stored parameters.
+
+        Returns
+        -------
+        Dict[str, Any]
+            The parameters to send back; unchanged by default.
+        """
+        return parameters
+
+    def read_parameters(
+        self, session: GenerativeSession
+    ) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
+        """Return a stored session's parameters and prompts for the client.
+
+        Parameters
+        ----------
+        session : GenerativeSession
+            The stored session.
+
+        Returns
+        -------
+        Tuple[Dict[str, Any], Optional[Dict[str, Any]]]
+            The parameters and the prompt bindings, ``None`` without prompts.
+        """
+        return dict(session.parameters or {}), None
+
+    def snapshot_prompts(self, session: GenerativeSession) -> Optional[Dict[str, Any]]:
+        """Return the prompts a new history entry of the session records.
+
+        Parameters
+        ----------
+        session : GenerativeSession
+            The session.
+
+        Returns
+        -------
+        Optional[Dict[str, Any]]
+            The prompt bindings, ``None`` without prompts.
+        """
+        return None
+
+    def history_parameters(
+        self,
+        session: GenerativeSession,
+        entry: GenerativeSessionParameterHistory,
+    ) -> Dict[str, Any]:
+        """Return the parameters a history entry shows the client.
+
+        Parameters
+        ----------
+        session : GenerativeSession
+            The session the entry belongs to.
+        entry : GenerativeSessionParameterHistory
+            The history entry.
+
+        Returns
+        -------
+        Dict[str, Any]
+            The entry's parameters.
+        """
+        return dict(entry.parameters or {})
 
     def model_name_from(self, parameters: Optional[Dict[str, Any]]) -> Optional[str]:
         """Return the model the session parameters name, if any.
@@ -105,6 +233,7 @@ class WorkflowSessionService:
         self,
         session: GenerativeSession,
         new_parameters: Dict[str, Any],
+        prompts: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Validate a partial parameter update without side effects.
 
@@ -114,20 +243,56 @@ class WorkflowSessionService:
             Session being updated.
         new_parameters : Dict[str, Any]
             Partial parameters sent by the client.
+        prompts : Optional[Dict[str, Any]]
+            Slot path to prompt input map sent by the client.
 
         Returns
         -------
         Dict[str, Any]
-            The parameters to merge over the stored ones.
+            The validated changes.
         """
         return new_parameters
+
+    def is_unchanged(
+        self,
+        session: GenerativeSession,
+        old_parameters: Dict[str, Any],
+        updated_parameters: Dict[str, Any],
+        changes: Dict[str, Any],
+        prompts: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        """Whether an accepted update leaves the session as it was.
+
+        An unchanged update is answered without a new history entry.
+
+        Parameters
+        ----------
+        session : GenerativeSession
+            Session being updated.
+        old_parameters : Dict[str, Any]
+            Stored parameters before the update.
+        updated_parameters : Dict[str, Any]
+            Stored parameters after the update.
+        changes : Dict[str, Any]
+            Changes returned by ``validate_update``.
+        prompts : Optional[Dict[str, Any]]
+            Slot path to prompt input map sent by the client.
+
+        Returns
+        -------
+        bool
+            ``False``: every update is recorded by default.
+        """
+        return False
 
     def apply_update(
         self,
         session: GenerativeSession,
         old_parameters: Dict[str, Any],
         updated_parameters: Dict[str, Any],
-    ) -> None:
+        changes: Optional[Dict[str, Any]] = None,
+        prompts: Optional[Dict[str, Any]] = None,
+    ) -> Optional[Dict[str, Any]]:
         """Run the side effects of an accepted update, before it is stored.
 
         Parameters
@@ -135,10 +300,21 @@ class WorkflowSessionService:
         session : GenerativeSession
             Session being updated.
         old_parameters : Dict[str, Any]
-            Parameters before the update.
+            Stored parameters before the update.
         updated_parameters : Dict[str, Any]
-            Parameters after the update.
+            Stored parameters after the update.
+        changes : Optional[Dict[str, Any]]
+            Changes returned by ``validate_update``.
+        prompts : Optional[Dict[str, Any]]
+            Slot path to prompt input map sent by the client.
+
+        Returns
+        -------
+        Optional[Dict[str, Any]]
+            Snapshot of the session's prompts for its history, or ``None``
+            when the workflow has no prompts.
         """
+        return None
 
     def check_ready(self, session: GenerativeSession) -> None:
         """Refuse a turn the session cannot answer yet.
@@ -154,22 +330,29 @@ class WorkflowSessionService:
             When the session cannot answer yet.
         """
 
-    def before_delete(self, session: GenerativeSession) -> None:
-        """Release what the session owns, inside the deleting transaction.
+    def delete(self, session: GenerativeSession) -> None:
+        """Stage the deletion of a session and every row it owns, uncommitted.
+
+        Deletes the session's processes with their data, its parameter history
+        and the session itself; the caller commits.
 
         Parameters
         ----------
         session : GenerativeSession
-            Session about to be deleted.
+            Session to delete.
         """
-
-    def after_delete(self, session_id: int, old_parameters: Dict[str, Any]) -> None:
-        """Sweep what the deleted session left unused.
-
-        Parameters
-        ----------
-        session_id : int
-            Id of the deleted session.
-        old_parameters : Dict[str, Any]
-            Parameters the session had.
-        """
+        processes = (
+            self.db.query(GenerativeProcess)
+            .filter(GenerativeProcess.session_id == session.id)
+            .all()
+        )
+        for process in processes:
+            self.db.query(ProcessData).filter(
+                ProcessData.process_id == process.id
+            ).delete(synchronize_session="fetch")
+        for process in processes:
+            self.db.delete(process)
+        self.db.query(GenerativeSessionParameterHistory).filter(
+            GenerativeSessionParameterHistory.session_id == session.id
+        ).delete(synchronize_session="fetch")
+        self.db.delete(session)

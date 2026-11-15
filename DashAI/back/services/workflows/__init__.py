@@ -4,8 +4,10 @@ from sqlalchemy.orm import Session
 
 from DashAI.back.models.RAG.RAG_constants import RAG_WORKFLOW_NAME
 from DashAI.back.services.workflows.base import (
+    WorkflowConflictError,
     WorkflowSessionError,
     WorkflowSessionService,
+    WorkflowStorageError,
 )
 from DashAI.back.services.workflows.RAG_workflow_session_service import (
     RAGWorkflowSessionService,
@@ -66,8 +68,10 @@ def job_name_for(workflow_name: str) -> str:
 
 __all__ = [
     "RAGWorkflowSessionService",
+    "WorkflowConflictError",
     "WorkflowSessionError",
     "WorkflowSessionService",
+    "WorkflowStorageError",
     "job_name_for",
     "session_service_for",
 ]

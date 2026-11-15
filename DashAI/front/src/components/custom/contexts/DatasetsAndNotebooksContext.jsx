@@ -115,6 +115,16 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     fetchNotebooks();
   }, []);
 
+  // Folders live in the app-level DatasetsProvider and are fetched once there.
+  // A batch upload creates a folder after that, so entering the Data module
+  // must refresh them; otherwise DatasetFolderList drops every document whose
+  // folder is still missing from the list.
+  useEffect(() => {
+    fetchFolders().catch((error) => {
+      console.error("Error refreshing folders:", error);
+    });
+  }, [fetchFolders]);
+
   const value = {
     downloads,
     fetchDownloads,

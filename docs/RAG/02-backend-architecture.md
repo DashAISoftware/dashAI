@@ -25,8 +25,8 @@ Services (services/RAG/)
   ├── SetupService              — indexing (build_index) + pipeline assembly
   ├── IndexStatusService        — read-only view of a session's index state
   ├── index_job_service.py      — functions to resolve / cancel a live indexing job
-  ├── DocumentService           — loads parsed Data documents for the pipeline
-  ├── SessionDocumentService    — session ↔ Data document links (attach/detach)
+  ├── DocumentService           — loads parsed Data documents and deletes them with their session cascade
+  ├── SessionDocumentService    — session ↔ Data document links (attach/detach) and session deletion
   ├── SessionDefaultsService    — server-side defaults for a new session
   ├── SessionConfigurationService — resolved configuration for the panel
   ├── ChunkingService           — chunk set identity (SHA-256), chunking lifecycle
@@ -146,11 +146,73 @@ paths.
   `config.query_transformation` is not `None`, and returns a `RAGPipeline`
   instance.
 
+### Session deletion
+
+`SessionDocumentService.delete_session()` centralises the explicit cascade
+SQLite cannot enforce. It stops the live indexing job, deletes `process_data`
+and `generative_process` rows, invalidates the session's chunk sets, deletes
+its parameter history and document links, runs
+`CleanupService.cleanup_orphaned_resources(..., commit=False)` while the
+pipeline still exists, then deletes the `rag_pipeline` row and the session.
+
+`DocumentService.delete()` owns the document side: it checks for dependent
+sessions, optionally calls `delete_session(..., commit=False)` for each one,
+and then deletes the document and its notebooks. The same `commit=False`
+pattern is used by `DELETE /api/v1/documents/{id}?cascade_sessions=true` and
+`DELETE /api/v1/prompt/{id}?cascade_sessions=true`, so the sessions and the
+resource disappear in one transaction.
+
+### Prompt scopes and deletion
+
+`rag_prompt` has three scopes, tracked by `is_default` and `is_library`:
+
+- **default** (`is_default`) — code-owned rows seeded from the registered
+  `Default*` prompt components. Immutable: `PATCH` and `DELETE` refuse them.
+- **library** (`is_library`) — user-owned rows created from
+  `POST /api/v1/prompt/` or `POST /api/v1/prompt/{id}/fork`. Editable in place.
+- **draft** (neither flag) — internal, content-addressed rows written by
+  `get_or_create` and by session-local edits. Hidden from the library list.
+
+`parameters_hash` is a SHA-256 over `{"class_name", normalize(parameters)}`, so
+two prompt families with identical text never collide. Defaults are
+deduplicated by class name; library and draft rows by content hash, which makes
+them content-addressed.
+
+Each session stores its prompt slots in `rag_session_prompt`
+(`(session_id, slot_path)` primary key). `slot_path` names the pipeline
+location — `generation` for the top-level `parameters.prompt`, or component
+paths such as `query_transformation.prompt` and
+`retriever_model.children[0].prompt`. A `language` column records the selected
+default template language.
+
+Session edits are copy-on-write: a session that changes a prompt gets a draft
+row and its binding is repointed, so other sessions keep the original. Library
+edits propagate to every session bound to the row. Editing a default in a
+session forks it to its `Custom*` counterpart; editing via the API's `PATCH`
+requires forking first. `rag_pipeline.prompt_id` is only a last-build snapshot
+and is not the source of truth for a session's prompts.
+
+`GET /api/v1/prompt/library` returns the user-created rows and the built-in
+defaults, plus the sessions using each one. `DELETE /api/v1/prompt/{id}`:
+
+- refuses defaults and internal drafts (409);
+- refuses a library prompt in use unless `detach=true` (repoint bindings to an
+  internal draft and keep the sessions) or `cascade_sessions=true` (delete the
+  sessions with it) is given;
+- rejects `detach` + `cascade_sessions` together (400);
+- deletes the referencing `rag_pipeline` rows explicitly before the prompt
+  itself, because SQLite does not enforce the prompt foreign keys.
+
+`PATCH /api/v1/prompt/{id}` edits a library prompt in place; duplicate content
+is a 409, invalid templates a 400. `POST /api/v1/prompt/{id}/fork` creates a
+library copy — for a default it uses the default's `CUSTOM_CLASS` and records
+`based_on_id`, and it is idempotent when the content already exists.
+
 The split exists so indexing never loads generation weights. It is also LLM-free
 in its own right: every RAG LLM is obtained as a
 [`LazyLLM`](#lazy-llms-and-per-stage-release) proxy, so the configuration record
 is resolved and committed while the backend itself is constructed on first use.
-`build_index()` sets up the retriever — an LLM-evaluated retriever's evaluation
+`build_index()` sets up the retriever — an agentic retriever's evaluation
 model is a proxy too — without loading it; `build_pipeline()` adds the
 generation LLM, the prompt and the optional transformer, and still constructs no
 LLM model. `build_pipeline` delegates rather than repeating the steps, so the two
@@ -186,12 +248,20 @@ Chunk set identity via SHA-256 signature (migrated from `chunk_set_utils.py`)
 
 ### PromptService
 
-Prompt CRUD + get_or_create via deterministic `parameters_hash` (SHA-256 of
-`json.dumps(params, sort_keys=True)`). Uses `services/RAG/utils.py` shared
-helpers. Template validation delegates to the component's declared
-`required_placeholders` (for generation prompts `{input}` and `{chunks}`; for
-transformation prompts `{input}` and `{history}`, plus `{n}` for expansion).
-Session-scoped prompt copies.
+Prompt CRUD + get_or_create via the class-aware deterministic
+`parameters_hash` (SHA-256 of
+`json.dumps({"class_name": ..., "parameters": normalize(params)}, sort_keys=True)`).
+Uses `services/RAG/utils.py` shared helpers. Template validation delegates to
+the component's declared `required_placeholders` (for generation prompts
+`{input}` and `{chunks}`; for transformation prompts `{input}` and `{history}`,
+plus `{n}` for expansion).
+
+Also owns prompt slots and bindings: slot discovery, splitting prompts out of
+session parameters, `sync_session_bindings`, injection for reads, and
+`materialize_history_parameters`, which rebuilds a history entry from that
+entry's own `prompt_bindings` snapshot instead of the session's current
+bindings. Session-scoped edits become immutable drafts; library rows stay
+shared.
 
 ### LLMService
 
@@ -204,7 +274,7 @@ validation and commit, but returns a `LazyLLM` proxy instead of an instance:
 the real backend is constructed on the first `generate` /
 `generate_function_call` and released by `close()`. The eager
 `get_or_create()` remains for callers that need an instance immediately.
-`RetrievalLLMService` inherits the lazy path for LLM-evaluated retrievers,
+`RetrievalLLMService` inherits the lazy path for agentic retrievers,
 persisting into its own `rag_retrieval_model` table.
 
 ### RetrieverDBService
@@ -448,7 +518,7 @@ constructed on first use and released when its stage ends:
   been taken.
 - **Retrieval** — the retriever's evaluation LLM loads on its first query;
   `retriever.close()` runs once `retrieval_ms` has been taken. Composite
-  retrievers close every child, and LLM-evaluated retrievers close their own
+  retrievers close every child, and agentic retrievers close their own
   evaluation LLM before delegating to the base.
 - **Generation** — the generation LLM loads on `_generate_answer` and is closed
   once `generation_ms` (and `total_ms`) have been taken.
@@ -464,7 +534,7 @@ include the first-use model construction inside that stage and exclude that
 stage's teardown; `total_ms` includes all teardowns.
 
 The hooks live on `BaseRetriever` / `CompositeRetriever` /
-`LLMEvaluatedRetriever` and `BaseQueryTransformation` /
+`AgenticRetriever` and `BaseQueryTransformation` /
 `LLMQueryTransformation`. Their defaults are no-ops; subclasses holding a model
 extend them.
 
@@ -509,7 +579,7 @@ LLM-backed stages may add two optional, LLM-authored keys to any payload:
 `message` (a short user-facing sentence) and `justification` (a short
 rationale). `LLMQueryTransformation` emits a `transforming` update when the
 model supplies them; the pipeline forwards the transformation narrative in the
-initial `retrieving` payload; and the LLM-evaluated retrievers emit additional
+initial `retrieving` payload; and the agentic retrievers emit additional
 `retrieving` updates after each valid verdict. Those retriever updates omit
 `queries` because a retriever only knows the single query it is working on.
 When the model supplies no narrative, no extra keys or events are emitted, so
@@ -644,7 +714,7 @@ format that also keys the pipeline's `Dict` row. `children` is always a list
 (even for single-child composites) and is omitted for unit retrievers;
 techniques may add extras (the cross-encoder adds `scores` when it re-ranks).
 Composites capture their children's nodes while keeping their merge/rerank
-mathematics unchanged. The LLM-evaluated retrievers add a `rounds` list. A
+mathematics unchanged. The agentic retrievers add a `rounds` list. A
 post-round verdict entry carries the canonical `call_retrievers`,
 `request_specific_chunks`, `discard_specific_chunks` and `dropped_operations`
 keys. The ensemble's first (planning-only) entry instead carries the consulted

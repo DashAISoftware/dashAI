@@ -96,21 +96,55 @@ export function useDocuments({ t }) {
     }
   };
 
+  /**
+   * Ask before deleting the RAG sessions that use a document.
+   *
+   * @param {Array<{id:number,name:string}>} sessions - Fresh session list.
+   * @param {Array<{id:number,name:string}>} alreadyShown - Sessions the
+   *   confirmation modal already named from the local list.
+   * @returns {boolean} Whether the deletion may proceed.
+   */
+  const confirmCascade = (sessions, alreadyShown = []) => {
+    if (!Array.isArray(sessions) || sessions.length === 0) return true;
+    const shown = new Set(alreadyShown.map((session) => session.id));
+    if (sessions.every((session) => shown.has(session.id))) return true;
+    return window.confirm(
+      t("datasets:document.cascadeConfirm", {
+        sessions: sessions.map((session) => session.name).join(", "),
+      }),
+    );
+  };
+
   const deleteDocumentById = async (id) => {
+    const alreadyShown =
+      documents.find((document) => document.id === id)?.sessions ?? [];
+    let cascade = false;
     try {
-      await deleteDocument(id);
+      // Re-read the document so the confirmation never relies on a list that
+      // may have gone stale since the page loaded.
+      let fresh;
+      try {
+        fresh = await getDocument(id);
+      } catch (error) {
+        if (error.response?.status !== 404) throw error;
+      }
+      const sessions = fresh?.sessions ?? [];
+      if (!confirmCascade(sessions, alreadyShown)) return false;
+      cascade = sessions.length > 0;
+      await deleteDocument(id, cascade);
     } catch (error) {
       const usedBy = error.response?.data?.detail?.sessions;
-      if (error.response?.status === 409 && Array.isArray(usedBy)) {
-        enqueueSnackbar(
-          t("datasets:error.documentInUse", {
-            sessions: usedBy.map((session) => session.name).join(", "),
-          }),
-          { variant: "warning" },
-        );
-        return false;
-      }
-      if (error.response?.status !== 404) {
+      if (!cascade && error.response?.status === 409 && Array.isArray(usedBy)) {
+        if (!confirmCascade(usedBy, alreadyShown)) return false;
+        try {
+          await deleteDocument(id, true);
+        } catch (retryError) {
+          enqueueSnackbar(t("datasets:document.failedToDelete"), {
+            variant: "error",
+          });
+          return false;
+        }
+      } else if (error.response?.status !== 404) {
         const key =
           error.response?.status === 409
             ? "datasets:document.deleteWhileParsing"

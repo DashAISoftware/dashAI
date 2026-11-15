@@ -7,11 +7,17 @@ from pathlib import Path
 
 import pytest
 
+from DashAI.back.converters.base_converter import BaseConverterSchema
+from DashAI.back.converters.document_converter import DocumentConverter
 from DashAI.back.core.enums.status import DatafileStatus, DocumentStatus
 from DashAI.back.dataloaders.classes.dashai_document import load_document
 from DashAI.back.dependencies.database.models import DataDocument, Datafile
 from DashAI.back.job.base_job import JobError
 from DashAI.back.job.document_job import DocumentJob
+from DashAI.back.services.documents.document_pipeline_service import (
+    PIPELINE_METADATA_KEY,
+)
+from DashAI.back.types.dashai_image import DashAIImage
 from DashAI.back.types.value_types import Text
 
 
@@ -20,6 +26,7 @@ def _create_row(
     file_name,
     dataloader="PlainTextDocumentDataLoader",
     dataloader_params=None,
+    converter_pipeline=None,
 ):
     with client.app.container["session_factory"]() as db:
         row = DataDocument(
@@ -31,6 +38,7 @@ def _create_row(
             dataloader=dataloader,
             dataloader_params=dataloader_params or {},
             content_counts={},
+            converter_pipeline=converter_pipeline,
             status=DocumentStatus.NOT_STARTED,
         )
         db.add(row)
@@ -295,4 +303,125 @@ def test_a_hub_document_job_is_enqueued_without_a_file(client, tmp_path):
     assert row.status == DocumentStatus.FINISHED
     assert load_document(str(Path(row.file_path) / "document"))[Text] == [
         "Queued paragraph."
+    ]
+
+
+def test_document_job_applies_the_pipeline_before_saving(client, tmp_path):
+    document_id = _create_row(
+        client,
+        "notes.txt",
+        converter_pipeline=[
+            {"converter": "TextSplitter", "params": {"split_by": "Sentences"}}
+        ],
+    )
+    temp_dir, file_path = _upload(tmp_path, "notes.txt", b"One. Two.")
+
+    DocumentJob(
+        kwargs={
+            "document_id": document_id,
+            "file_path": str(file_path),
+            "temp_dir": str(temp_dir),
+            "filename": "notes.txt",
+        }
+    ).run()
+
+    row = _get_row(client, document_id)
+    assert row.status == DocumentStatus.FINISHED
+    assert row.content_counts == {"Text": 2}
+    document = load_document(str(Path(row.file_path) / "document"))
+    assert document[Text] == ["One.", "Two."]
+    assert document.metadata[PIPELINE_METADATA_KEY] == [
+        {
+            "converter": "TextSplitter",
+            "status": "applied",
+            "content_types": ["Text"],
+        }
+    ]
+
+
+class _ExplodingConverter(DocumentConverter):
+    """Fails once it has to convert the selected items."""
+
+    SCHEMA = BaseConverterSchema
+    metadata = {"allowed_types": [Text]}
+
+    def transform(self, x, y=None):
+        raise RuntimeError("pipeline exploded")
+
+
+def test_document_job_cleans_up_when_the_pipeline_fails(client, tmp_path):
+    registry = client.app.container["component_registry"]
+    registry.register_component(_ExplodingConverter)
+    before = set(os.listdir(_documents_root(client)))
+    try:
+        document_id = _create_row(
+            client,
+            "notes.txt",
+            converter_pipeline=[{"converter": "_ExplodingConverter", "params": {}}],
+        )
+        temp_dir, file_path = _upload(tmp_path, "notes.txt", b"Body.")
+
+        with pytest.raises(JobError, match="pipeline"):
+            DocumentJob(
+                kwargs={
+                    "document_id": document_id,
+                    "file_path": str(file_path),
+                    "temp_dir": str(temp_dir),
+                    "filename": "notes.txt",
+                }
+            ).run()
+    finally:
+        registry.unregister_component(_ExplodingConverter)
+
+    row = _get_row(client, document_id)
+    assert row.status == DocumentStatus.ERROR
+    assert row.file_path == ""
+    assert set(os.listdir(_documents_root(client))) == before
+    assert not temp_dir.exists()
+
+
+class _ImageOnlyConverter(DocumentConverter):
+    """Only ever handles Image items, so a text document skips it."""
+
+    REQUIRES_DOWNLOAD = False
+    SCHEMA = BaseConverterSchema
+    metadata = {"allowed_types": [DashAIImage]}
+
+    def transform(self, x, y=None):
+        return self.items_result([], [])
+
+
+def test_document_job_skips_a_pipeline_step_without_items(client, tmp_path):
+    registry = client.app.container["component_registry"]
+    registry.register_component(_ImageOnlyConverter)
+    try:
+        document_id = _create_row(
+            client,
+            "notes.txt",
+            converter_pipeline=[{"converter": "_ImageOnlyConverter", "params": {}}],
+        )
+        temp_dir, file_path = _upload(tmp_path, "notes.txt", b"Only text.")
+
+        DocumentJob(
+            kwargs={
+                "document_id": document_id,
+                "file_path": str(file_path),
+                "temp_dir": str(temp_dir),
+                "filename": "notes.txt",
+            }
+        ).run()
+    finally:
+        registry.unregister_component(_ImageOnlyConverter)
+
+    row = _get_row(client, document_id)
+    assert row.status == DocumentStatus.FINISHED
+    assert row.content_counts == {"Text": 1}
+    document = load_document(str(Path(row.file_path) / "document"))
+    assert document.metadata[PIPELINE_METADATA_KEY] == [
+        {
+            "converter": "_ImageOnlyConverter",
+            "status": "skipped",
+            "content_types": ["Image"],
+            "reason": "The document has no Image items.",
+        }
     ]

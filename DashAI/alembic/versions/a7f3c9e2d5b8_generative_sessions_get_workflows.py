@@ -11,7 +11,7 @@ A failing migration makes the startup recreate an empty database, so the data
 step never raises on a malformed row: what it cannot read keeps its old value.
 
 Revision ID: a7f3c9e2d5b8
-Revises: 362bcf7193f5
+Revises: b5d7e9f1a3c6
 Create Date: 2026-11-10
 """
 
@@ -22,7 +22,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "a7f3c9e2d5b8"
-down_revision: Union[str, None] = "362bcf7193f5"
+down_revision: Union[str, None] = "b5d7e9f1a3c6"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

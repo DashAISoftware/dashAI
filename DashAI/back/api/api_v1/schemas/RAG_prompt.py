@@ -15,3 +15,29 @@ class RAGPromptSchema(BaseModel):
     class_name: str
     name: str
     parameters: Optional[Dict[str, Any]] = None
+
+
+class RAGPromptUpdateSchema(BaseModel):
+    """Schema for editing a prompt saved in the library.
+
+    Attributes:
+        name: New display name. ``None`` keeps the stored name.
+        parameters: New configuration including template(s). ``None`` keeps the
+            stored parameters.
+    """
+
+    name: Optional[str] = None
+    parameters: Optional[Dict[str, Any]] = None
+
+
+class RAGPromptForkSchema(BaseModel):
+    """Schema for creating a user-owned copy of a prompt.
+
+    Attributes:
+        name: Name for the new prompt.
+        parameters: Optional configuration override. ``None`` reuses the source
+            prompt's content.
+    """
+
+    name: str
+    parameters: Optional[Dict[str, Any]] = None

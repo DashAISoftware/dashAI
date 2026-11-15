@@ -33,10 +33,10 @@ jobs:
     needs: react-build-test
     runs-on: ${{ matrix.os }}
     # Without this a hung test holds the runner for GitHub's six hour default.
-    # The suite takes four to nine minutes depending on the platform, so thirty
-    # leaves plenty of headroom while turning a deadlock into a red job with a
-    # readable log instead of a silent afternoon of runner time.
-    timeout-minutes: 30
+    # A limit still turns a deadlock into a red job with a readable log. Windows
+    # now needs about thirty minutes for the suite and has started hitting the
+    # old thirty minute limit (#1011), so sixty is a stopgap until it is faster.
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
