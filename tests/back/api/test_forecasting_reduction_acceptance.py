@@ -61,7 +61,6 @@ def _kept(client, run_id):
 # --------------------------------------------------------------------------- #
 
 
-@pending("2")
 def test_skforecast_is_installed_at_its_pinned_version():
     from importlib.metadata import version
 

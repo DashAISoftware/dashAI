@@ -1524,6 +1524,7 @@ dependencies = [
     { name = "sentencepiece" },
     { name = "setuptools" },
     { name = "shap" },
+    { name = "skforecast" },
     { name = "sqlalchemy" },
     { name = "starlette" },
     { name = "statsmodels" },
@@ -1632,6 +1633,7 @@ requires-dist = [
     { name = "sentencepiece" },
     { name = "setuptools", specifier = ">=65.0.0,<82" },
     { name = "shap", specifier = ">=0.48" },
+    { name = "skforecast", specifier = "==0.26.0" },
     { name = "sqlalchemy" },
     { name = "starlette" },
     { name = "statsmodels", specifier = ">=0.14.6" },
@@ -6935,6 +6937,27 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload-time = "2024-12-04T17:35:28.174Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
+]
+
+[[package]]
+name = "skforecast"
+version = "0.26.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "joblib" },
+    { name = "numba" },
+    { name = "numpy" },
+    { name = "optuna" },
+    { name = "pandas" },
+    { name = "rich" },
+    { name = "scikit-learn" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ee/31/0a2b7c332ad40bac2e37c79780ae161530c70193c22e0ca49c3e33ee3a0f/skforecast-0.26.0.tar.gz", hash = "sha256:f0fe8850c721589aa54a0214cba5eb63cf7dbbdecfe30abec96b18f00724c1e9", size = 541357, upload-time = "2026-10-08T20:08:01.548Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/44/46/4cef0c93c079e0a928913461d6b597513cde45f61f93297266ca65d9e664/skforecast-0.26.0-py3-none-any.whl", hash = "sha256:e69d81bc84f43b098585c90229728ddb762cb80172f30e8d5be4487f77bad436", size = 567788, upload-time = "2026-10-08T20:08:00.131Z" },
 ]
 
 [[package]]
