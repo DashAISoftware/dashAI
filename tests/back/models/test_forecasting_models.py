@@ -14,6 +14,9 @@ from DashAI.back.models.forecasting.drift import DriftForecaster
 from DashAI.back.models.forecasting.exponential_smoothing import ExponentialSmoothing
 from DashAI.back.models.forecasting.mean import MeanForecaster
 from DashAI.back.models.forecasting.naive import NaiveForecaster
+from DashAI.back.models.forecasting.recursive_regression import (
+    RecursiveRegressionForecaster,
+)
 from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
 from DashAI.back.models.forecasting.single_series_forecasting_model import (
     Forecast,
@@ -29,6 +32,7 @@ ALL_MODELS = [
     ARIMA,
     ExponentialSmoothing,
     Theta,
+    RecursiveRegressionForecaster,
 ]
 SERIES = np.arange(1.0, 31.0)
 
@@ -248,9 +252,14 @@ def test_every_model_gives_nested_intervals_around_its_forecast(model_class):
     params = {"season_length": 12} if model_class is SeasonalNaiveForecaster else {}
     forecast = model_class(**params).fit(_seasonal()).predict(6, levels=[80, 95])
 
-    for level in (80, 95):
-        assert (forecast.lower[level] <= forecast.point).all()
-        assert (forecast.point <= forecast.upper[level]).all()
+    # The reduction model bootstraps signed residuals: a regressor biased on
+    # its training data shifts every path the same way, and the point forecast
+    # can fall outside its own interval. Only the nesting holds by
+    # construction there (RECONCILING_FORECASTING §2.15, detail 8).
+    if model_class is not RecursiveRegressionForecaster:
+        for level in (80, 95):
+            assert (forecast.lower[level] <= forecast.point).all()
+            assert (forecast.point <= forecast.upper[level]).all()
     assert (forecast.lower[95] < forecast.lower[80]).all()
     assert (forecast.upper[95] > forecast.upper[80]).all()
 
@@ -486,3 +495,91 @@ def test_a_regressor_without_a_scikit_learn_estimator_is_refused():
     for model in (MLPRegression(), SVC()):
         with pytest.raises(TypeError, match="scikit-learn regressor"):
             sklearn_estimator(model)
+
+
+# --- the reduction model -----------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("lags", "season_length", "expected"),
+    [(None, 12, 12), (None, 7, 7), (None, 1, 3), (None, 2, 3), (5, 12, 5)],
+)
+def test_the_lags_default_to_a_season_and_at_least_three(lags, season_length, expected):
+    model = RecursiveRegressionForecaster(lags=lags, season_length=season_length)
+
+    assert model.resolved_lags() == expected
+
+
+def test_the_reduction_model_regresses_on_the_lags():
+    # y[t] = 0.5 y[t-1] + 2, exactly: a linear regression on one lag finds it.
+    series = [10.0]
+    for _ in range(29):
+        series.append(0.5 * series[-1] + 2.0)
+
+    forecast = RecursiveRegressionForecaster(lags=1).fit(series).predict(3)
+
+    expected = [0.5 * series[-1] + 2.0]
+    for _ in range(2):
+        expected.append(0.5 * expected[-1] + 2.0)
+    assert forecast.point == pytest.approx(expected, rel=1e-9)
+
+
+def test_differencing_lets_a_forest_follow_a_trend():
+    # A forest cannot forecast above the values it was trained on; on the
+    # differences of a line it predicts the constant step, and the forecast
+    # keeps climbing.
+    from DashAI.back.models.scikit_learn.random_forest_regression import (
+        RandomForestRegression,
+    )
+
+    line = 2.0 * np.arange(30.0)
+    forest = RandomForestRegression(n_estimators=10, random_state=0)
+
+    flat = RecursiveRegressionForecaster(forest, lags=3).fit(line).predict(3)
+    trended = (
+        RecursiveRegressionForecaster(forest, lags=3, differentiation=1)
+        .fit(line)
+        .predict(3)
+    )
+
+    assert flat.point.max() <= line.max()
+    assert trended.point == pytest.approx([60.0, 62.0, 64.0])
+
+
+@pytest.mark.parametrize(("lags", "differentiation"), [(5, 0), (4, 1)])
+def test_a_series_too_short_for_the_lags_is_refused_naming_them(lags, differentiation):
+    model = RecursiveRegressionForecaster(lags=lags, differentiation=differentiation)
+
+    with pytest.raises(
+        ValueError, match=rf"{lags} lags and differentiation {differentiation}"
+    ):
+        model.fit(np.arange(5.0))
+
+
+def test_the_reduction_model_gives_the_same_intervals_every_time():
+    model = RecursiveRegressionForecaster().fit(_seasonal())
+
+    first = model.predict(6, levels=[80, 95])
+    second = model.predict(6, levels=[80, 95])
+
+    for level in (80, 95):
+        assert list(first.lower[level]) == list(second.lower[level])
+        assert list(first.upper[level]) == list(second.upper[level])
+
+
+def test_the_reduction_intervals_widen_along_the_horizon():
+    # The recursion adds a residual at every step and feeds it forward, so
+    # the spread of the paths grows with the step, as in Naive or ARIMA.
+    forecast = (
+        RecursiveRegressionForecaster(lags=1).fit(_seasonal()).predict(6, levels=[95])
+    )
+
+    width = forecast.upper[95] - forecast.lower[95]
+    assert width[-1] > width[0]
+
+
+def test_a_regressor_that_is_not_scikit_learn_is_refused_when_built():
+    from DashAI.back.models.scikit_learn.mlp_regression import MLPRegression
+
+    with pytest.raises(TypeError, match="scikit-learn regressor"):
+        RecursiveRegressionForecaster(MLPRegression())
