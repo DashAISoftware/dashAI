@@ -166,7 +166,8 @@ async def validate_export(
     Returns
     -------
     dict
-        ``{"errors": [...]}``; an empty list means the export can proceed.
+        ``{"errors": [...], "warnings": [...]}``. No errors means the export
+        can proceed; warnings describe adjustments that do not block it.
     """
     from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 
@@ -176,10 +177,13 @@ async def validate_export(
     try:
         params = exporter.SCHEMA.model_validate(body.params).model_dump()
     except ValidationError as e:
-        return {"errors": _schema_errors(e)}
+        return {"errors": _schema_errors(e), "warnings": []}
 
     dataset = load_dataset(str(Path(dataset_row.file_path) / "dataset"))
-    return {"errors": exporter.validate(dataset, params)}
+    return {
+        "errors": exporter.validate(dataset, params),
+        "warnings": exporter.get_warnings(dataset, params),
+    }
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)

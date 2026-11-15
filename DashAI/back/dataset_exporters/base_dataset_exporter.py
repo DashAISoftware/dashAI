@@ -194,6 +194,29 @@ class BaseDatasetExporter(ConfigObject, ABC):
             errors.append("The dataset description cannot be blank.")
         return errors
 
+    def get_warnings(
+        self, dataset: "DashAIDataset", params: dict[str, Any]
+    ) -> list[str]:
+        """Describe what the platform will receive differently from the input.
+
+        Unlike :meth:`validate`, warnings never block the export; they tell
+        the user, before publishing, about adjustments such as text the
+        platform needs in another form. The default implementation has none.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset to export.
+        params : dict[str, Any]
+            Export parameters, already validated against :attr:`SCHEMA`.
+
+        Returns
+        -------
+        list[str]
+            Human readable notices.
+        """
+        return []
+
     @abstractmethod
     def prepare(
         self, dataset: "DashAIDataset", params: dict[str, Any], temp_path: str

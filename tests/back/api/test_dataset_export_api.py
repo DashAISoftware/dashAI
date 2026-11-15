@@ -142,7 +142,7 @@ def test_validate_accepts_valid_params(client, dataset_1, fake_exporter):
         json={"dataset_id": dataset_1.id, "params": PARAMS},
     )
     assert response.status_code == 200
-    assert response.json() == {"errors": []}
+    assert response.json() == {"errors": [], "warnings": []}
 
 
 def test_validate_reports_exporter_rules(client, dataset_1, fake_exporter):
@@ -150,7 +150,7 @@ def test_validate_reports_exporter_rules(client, dataset_1, fake_exporter):
         f"{URL}/{fake_exporter}/validate",
         json={"dataset_id": dataset_1.id, "params": {**PARAMS, "name": "  "}},
     )
-    assert response.json() == {"errors": ["The dataset name cannot be blank."]}
+    assert response.json()["errors"] == ["The dataset name cannot be blank."]
 
 
 def test_validate_reports_schema_errors(client, dataset_1, fake_exporter):

@@ -122,6 +122,10 @@ def test_default_validate_reports_blank_fields():
     ]
 
 
+def test_get_warnings_defaults_to_none():
+    assert ConcreteExporter().get_warnings(_dataset(), VALID_PARAMS) == []
+
+
 def test_check_dataset_accepts_every_dataset_by_default():
     compatibility = ConcreteExporter().check_dataset({"a": object(), "b": object()})
 

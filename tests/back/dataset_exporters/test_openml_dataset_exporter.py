@@ -209,6 +209,68 @@ def test_prepare_builds_openml_dataset():
     assert attributes["id"] == "INTEGER"
 
 
+def test_validate_accepts_accents_it_can_convert():
+    params = {
+        **VALID_PARAMS,
+        "name": "energía año",
+        "description": "Consumo de energía",
+    }
+    assert OpenMLDatasetExporter().validate(_dataset(), params) == []
+
+
+def test_validate_rejects_characters_it_cannot_convert():
+    params = {
+        **VALID_PARAMS,
+        "name": "iris/v2",
+        "description": "Price in €",
+        "citation": "Fisher ✓",
+    }
+
+    errors = OpenMLDatasetExporter().validate(_dataset(), params)
+
+    assert errors == [
+        "The name has characters OpenML does not accept: '/'.",
+        "The description has characters OpenML does not accept: '€'.",
+        "The citation has characters OpenML does not accept: '✓'.",
+    ]
+
+
+def test_get_warnings_announces_converted_text():
+    params = {
+        **VALID_PARAMS,
+        "name": "Mi dataset de energía",
+        "description": "Consumo de energía",
+        "citation": "Pérez (2024)",
+    }
+
+    warnings = OpenMLDatasetExporter().get_warnings(_dataset(), params)
+
+    assert len(warnings) == 3
+    assert "'Mi_dataset_de_energia'" in warnings[0]
+    assert "description" in warnings[1]
+    assert "citation" in warnings[2]
+
+
+def test_get_warnings_is_empty_for_plain_text():
+    assert OpenMLDatasetExporter().get_warnings(_dataset(), VALID_PARAMS) == []
+
+
+def test_prepare_sends_converted_text():
+    params = {
+        **VALID_PARAMS,
+        "name": "Mi dataset de energía",
+        "description": "Consumo de energía en años",
+        "citation": "Pérez (2024)",
+    }
+
+    payload = OpenMLDatasetExporter().prepare(_real_dataset(), params, ".")
+    openml_dataset = payload.metadata["openml_dataset"]
+
+    assert openml_dataset.name == "Mi_dataset_de_energia"
+    assert openml_dataset.description == "Consumo de energia en anos"
+    assert openml_dataset.citation == "Perez (2024)"
+
+
 def test_prepare_leaves_blank_optional_fields_out_of_the_description():
     # OpenML rejects empty elements such as <oml:citation></oml:citation>.
     params = {**VALID_PARAMS, "citation": "", "creator": "  ", "language": None}

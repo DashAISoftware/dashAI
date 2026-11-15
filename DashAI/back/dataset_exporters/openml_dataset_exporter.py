@@ -1,5 +1,7 @@
 """OpenML dataset exporter for DashAI."""
 
+import re
+import unicodedata
 from typing import TYPE_CHECKING, Any, Final
 
 from DashAI.back.core.schema_fields import (
@@ -39,6 +41,10 @@ if TYPE_CHECKING:
 _UNSUPPORTED_TYPES: Final = (DashAIImage, Binary)
 #: DashAI types sent to OpenML as text, since ARFF has no native equivalent.
 _TEXT_TYPES: Final = (Date, Time, Timestamp, Duration)
+#: Free text fields OpenML only accepts in plain ASCII.
+_ASCII_FIELDS: Final = ("description", "citation")
+#: One character allowed in an OpenML dataset name (the server's own rule).
+_NAME_CHAR: Final = re.compile(r"[a-zA-Z0-9_\-\.\(\),]")
 
 #: Licences offered by the OpenML upload form.
 OPENML_LICENCES: Final = [
@@ -328,7 +334,55 @@ class OpenMLDatasetExporter(BaseDatasetExporter):
             errors.append(f"The ignored columns {missing} are not in the dataset.")
         if target in ignored:
             errors.append("The target column cannot also be an ignored column.")
+
+        # OpenML only takes plain ASCII text. Accents are converted when
+        # publishing (see get_warnings); only what cannot be converted fails.
+        invalid_name = _invalid_name_characters(_openml_name(params.get("name", "")))
+        if invalid_name:
+            errors.append(
+                f"The name has characters OpenML does not accept: {invalid_name}."
+            )
+        for key in _ASCII_FIELDS:
+            leftover = _non_ascii(_to_ascii(params.get(key) or ""))
+            if leftover:
+                errors.append(
+                    f"The {key} has characters OpenML does not accept: {leftover}."
+                )
         return errors
+
+    def get_warnings(
+        self, dataset: "DashAIDataset", params: dict[str, Any]
+    ) -> list[str]:
+        """Announce the text OpenML will receive in a converted form.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset to export.
+        params : dict[str, Any]
+            Export parameters, already validated against :attr:`SCHEMA`.
+
+        Returns
+        -------
+        list[str]
+            One notice per field whose text will be adapted for OpenML.
+        """
+        warnings = []
+        name = params.get("name", "")
+        published_name = _openml_name(name)
+        if name and published_name != name:
+            warnings.append(
+                f"The name will be published as '{published_name}', since "
+                "OpenML does not accept spaces or accents in names."
+            )
+        for key in _ASCII_FIELDS:
+            text = params.get(key) or ""
+            if _to_ascii(text) != text:
+                warnings.append(
+                    f"Accents in the {key} will be converted to plain letters "
+                    "(á to a, ñ to n), since OpenML only accepts plain text."
+                )
+        return warnings
 
     def prepare(
         self, dataset: "DashAIDataset", params: dict[str, Any], temp_path: str
@@ -362,9 +416,10 @@ class OpenMLDatasetExporter(BaseDatasetExporter):
             col for col in params.get("ignore_attribute") or [] if col not in dropped
         ]
 
+        citation = _optional_text(params, "citation")
         openml_dataset = openml.datasets.create_dataset(
-            name=params["name"],
-            description=params["description"],
+            name=_openml_name(params["name"]),
+            description=_to_ascii(params["description"]),
             creator=_optional_text(params, "creator"),
             contributor=_optional_text(params, "contributor"),
             collection_date=_optional_text(params, "collection_date"),
@@ -374,7 +429,7 @@ class OpenMLDatasetExporter(BaseDatasetExporter):
             data=dataframe,
             default_target_attribute=params["default_target_attribute"],
             ignore_attribute=ignored or None,
-            citation=_optional_text(params, "citation"),
+            citation=_to_ascii(citation) if citation else None,
             original_data_url=_optional_text(params, "original_data_url"),
         )
         return ExportPayload(
@@ -431,6 +486,33 @@ class OpenMLDatasetExporter(BaseDatasetExporter):
         if listing.empty:
             return None
         return str(listing.iloc[0]["status"])
+
+
+def _to_ascii(text: str) -> str:
+    """Drop accents and similar marks, the way OpenML needs its text.
+
+    ``"energía"`` becomes ``"energia"`` and ``"ñ"`` becomes ``"n"``.
+    Characters with no plain letter equivalent (an emoji, ``€``) are kept, so
+    the validation can report them.
+    """
+    decomposed = unicodedata.normalize("NFKD", text)
+    return "".join(char for char in decomposed if not unicodedata.combining(char))
+
+
+def _openml_name(name: str) -> str:
+    """Return the dataset name OpenML will receive: ASCII, spaces as ``_``."""
+    return re.sub(r"\s+", "_", _to_ascii(name.strip()))
+
+
+def _non_ascii(text: str) -> str:
+    """List the characters outside plain ASCII, quoted, for an error message."""
+    return ", ".join(f"'{char}'" for char in sorted({c for c in text if ord(c) > 127}))
+
+
+def _invalid_name_characters(name: str) -> str:
+    """List the characters OpenML rejects in a dataset name, quoted."""
+    invalid = sorted({char for char in name if not _NAME_CHAR.match(char)})
+    return ", ".join(f"'{char}'" for char in invalid)
 
 
 def _optional_text(params: dict[str, Any], key: str) -> str | None:
