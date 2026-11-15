@@ -579,6 +579,26 @@ def test_the_reduction_model_can_be_told_not_to_use_exogenous_variables():
     assert RecursiveRegressionForecaster(use_exogenous=False).use_exogenous is False
 
 
+def test_the_reduction_model_is_kept_with_its_fitted_forecaster(tmp_path):
+    from skforecast.recursive import ForecasterRecursive
+
+    x = np.random.RandomState(2).normal(size=(48, 1))
+    model = RecursiveRegressionForecaster().fit(_seasonal(), x=x)
+    future = np.ones((4, 1))
+    expected = model.predict(4, x_future=future, levels=[80, 95])
+
+    path = tmp_path / "model.joblib"
+    model.save(str(path))
+    restored = RecursiveRegressionForecaster.load(str(path))
+
+    assert isinstance(restored._forecaster, ForecasterRecursive)
+    forecast = restored.predict(4, x_future=future, levels=[80, 95])
+    assert list(forecast.point) == list(expected.point)
+    for level in (80, 95):
+        assert list(forecast.lower[level]) == list(expected.lower[level])
+        assert list(forecast.upper[level]) == list(expected.upper[level])
+
+
 def test_the_reduction_model_gives_the_same_intervals_every_time():
     model = RecursiveRegressionForecaster().fit(_seasonal())
 
