@@ -119,8 +119,9 @@ def test_train_fits_on_the_series_and_ignores_the_dates(model_class):
 # --- what each model declares ------------------------------------------------
 
 
-def test_only_arima_takes_exogenous_variables():
+def test_only_arima_and_the_reduction_model_take_exogenous_variables():
     assert ARIMA.EXOGENOUS == "optional"
+    assert RecursiveRegressionForecaster.EXOGENOUS == "optional"
     for model_class in (NaiveForecaster, SeasonalNaiveForecaster, ExponentialSmoothing):
         assert model_class.EXOGENOUS == "none"
     # Published, so the session can mark the models that will not use them.
@@ -554,6 +555,28 @@ def test_a_series_too_short_for_the_lags_is_refused_naming_them(lags, differenti
         ValueError, match=rf"{lags} lags and differentiation {differentiation}"
     ):
         model.fit(np.arange(5.0))
+
+
+def test_the_reduction_model_regresses_on_the_exogenous_variables_too():
+    # The series is the exogenous column scaled and shifted, so a linear
+    # regression on the lag and the column finds it, and the forecast follows
+    # the future values of the column.
+    x = np.random.RandomState(1).normal(size=(40, 1))
+    y = 5.0 + 3.0 * x[:, 0]
+    model = RecursiveRegressionForecaster(lags=1).fit(y, x=x)
+
+    future = np.array([[1.0], [-1.0], [0.5]])
+    forecast = model.predict(3, x_future=future, levels=[80])
+
+    assert forecast.point == pytest.approx([8.0, 2.0, 6.5], abs=1e-6)
+    assert np.isfinite(forecast.lower[80]).all()
+
+
+def test_the_reduction_model_can_be_told_not_to_use_exogenous_variables():
+    field = RecursiveRegressionForecaster.get_schema()["properties"]["use_exogenous"]
+
+    assert field["type"] == "boolean"
+    assert RecursiveRegressionForecaster(use_exogenous=False).use_exogenous is False
 
 
 def test_the_reduction_model_gives_the_same_intervals_every_time():
