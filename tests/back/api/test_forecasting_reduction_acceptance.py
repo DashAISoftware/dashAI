@@ -72,7 +72,6 @@ def test_skforecast_is_installed_at_its_pinned_version():
 # --------------------------------------------------------------------------- #
 
 
-@pending("3")
 def test_a_search_trial_asks_a_model_with_intervals_for_none(monkeypatch):
     from DashAI.back.metrics.regression.mae import MAE
     from DashAI.back.models.forecasting.naive import NaiveForecaster
