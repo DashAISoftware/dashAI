@@ -1,4 +1,5 @@
 {
+  "backToForm": "Zurück zum Formular",
   "columnColumns": "Spalten",
   "columnCompatibility": "Kompatibilität mit {{platform}}",
   "columnName": "Name",
@@ -20,8 +21,17 @@
   "metadataTitle": "Datensatz für {{platform}} beschreiben",
   "noDatasets": "Keine Datensätze sind zum Export bereit.",
   "noPlatforms": "Keine Exportplattformen verfügbar.",
+  "paramsLost": "Die Formulardaten gingen verloren, zum Beispiel durch Neuladen der Seite. Kehren Sie zum Formular zurück, um sie auszufüllen.",
   "previewLabel": "Vorschau des Datensatzes",
+  "publicBody": "Jeder kann den Datensatz auf {{platform}} sehen und herunterladen, und er kann später nicht gelöscht werden.",
+  "publicConfirm": "Ich verstehe, dass der Datensatz öffentlich sein wird",
+  "publicTitle": "Die Veröffentlichung auf {{platform}} ist öffentlich",
+  "publish": "Auf {{platform}} veröffentlichen",
+  "publishFailed": "Der Export konnte nicht gestartet werden.",
   "review": "Überprüfen",
+  "reviewCrumb": "Überprüfung",
+  "reviewSubtitle": "Prüfen Sie die Metadaten und bestätigen Sie vor der Veröffentlichung auf {{platform}}.",
+  "reviewTitle": "Vor der Veröffentlichung prüfen",
   "role": {
     "ignored": "ignoriert",
     "target": "Ziel",
@@ -33,7 +43,16 @@
   "selectDatasetTitle": "Zu exportierenden Datensatz auswählen",
   "selectPlatformSubtitle": "Wählen Sie, wo Ihr Datensatz veröffentlicht werden soll. Im nächsten Schritt sehen Sie, welche Datensätze die Plattform akzeptiert.",
   "selectPlatformTitle": "Zielplattform auswählen",
+  "summaryColumns": "Gesendete Spalten: {{sent}} von {{total}}",
+  "summaryMetadata": "Metadaten",
+  "summaryRows": "Zeilen: {{rows}}",
+  "summarySent": "Was gesendet wird",
   "targetColumn": "Zielspalte",
   "targetColumnHelp": "Spalte, die als Vorhersageziel verwendet wird.",
-  "title": "Exportieren"
+  "title": "Exportieren",
+  "validating": "Datensatz und Metadaten werden geprüft...",
+  "validationErrors": "Beheben Sie diese Probleme vor der Veröffentlichung:",
+  "validationFailed": "Der Export konnte nicht geprüft werden. Versuchen Sie es erneut.",
+  "validationOk": "Keine Validierungsfehler",
+  "validationWarnings": "Anpassungen bei der Veröffentlichung auf {{platform}}:"
 }

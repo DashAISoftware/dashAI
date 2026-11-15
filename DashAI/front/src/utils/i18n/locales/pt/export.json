@@ -1,4 +1,5 @@
 {
+  "backToForm": "Voltar ao formulário",
   "columnColumns": "Colunas",
   "columnCompatibility": "Compatibilidade com {{platform}}",
   "columnName": "Nome",
@@ -20,8 +21,17 @@
   "metadataTitle": "Descreva o conjunto de dados para {{platform}}",
   "noDatasets": "Não há conjuntos de dados prontos para exportar.",
   "noPlatforms": "Não há plataformas de exportação disponíveis.",
+  "paramsLost": "Os dados do formulário foram perdidos, por exemplo ao recarregar a página. Volte ao formulário para preenchê-los.",
   "previewLabel": "Pré-visualização do conjunto de dados",
+  "publicBody": "Qualquer pessoa poderá ver e baixar o conjunto de dados no {{platform}}, e ele não pode ser apagado depois.",
+  "publicConfirm": "Entendo que o conjunto de dados será público",
+  "publicTitle": "A publicação no {{platform}} é pública",
+  "publish": "Publicar no {{platform}}",
+  "publishFailed": "Não foi possível iniciar a publicação.",
   "review": "Revisar",
+  "reviewCrumb": "Revisão",
+  "reviewSubtitle": "Revise os metadados e confirme antes de publicar no {{platform}}.",
+  "reviewTitle": "Revisar antes de publicar",
   "role": {
     "ignored": "ignorada",
     "target": "alvo",
@@ -33,7 +43,16 @@
   "selectDatasetTitle": "Selecionar conjunto de dados para exportar",
   "selectPlatformSubtitle": "Escolha onde publicar seu conjunto de dados. Na próxima etapa você verá quais conjuntos de dados a plataforma aceita.",
   "selectPlatformTitle": "Selecionar plataforma de destino",
+  "summaryColumns": "Colunas enviadas: {{sent}} de {{total}}",
+  "summaryMetadata": "Metadados",
+  "summaryRows": "Linhas: {{rows}}",
+  "summarySent": "O que será enviado",
   "targetColumn": "Coluna alvo",
   "targetColumnHelp": "Coluna usada como alvo da predição.",
-  "title": "Exportar"
+  "title": "Exportar",
+  "validating": "Validando o conjunto de dados e os metadados...",
+  "validationErrors": "Corrija estes problemas antes de publicar:",
+  "validationFailed": "Não foi possível validar a exportação. Tente novamente.",
+  "validationOk": "Sem erros de validação",
+  "validationWarnings": "Ajustes feitos ao publicar no {{platform}}:"
 }

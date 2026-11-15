@@ -18,6 +18,41 @@ export interface ExportableDataset {
   compatibility: DatasetCompatibility;
 }
 
+export interface CreatedExport {
+  export_id: number;
+  job_id: string;
+}
+
+export interface ExportValidation {
+  errors: string[];
+  warnings: string[];
+}
+
+export const validateExport = async (
+  exporterName: string,
+  datasetId: number,
+  params: Record<string, unknown>,
+): Promise<ExportValidation> => {
+  const response = await api.post<ExportValidation>(
+    `${datasetExportEndpoint}/${exporterName}/validate`,
+    { dataset_id: datasetId, params },
+  );
+  return response.data;
+};
+
+export const createExport = async (
+  exporterName: string,
+  datasetId: number,
+  params: Record<string, unknown>,
+): Promise<CreatedExport> => {
+  const response = await api.post<CreatedExport>(`${datasetExportEndpoint}/`, {
+    dataset_id: datasetId,
+    exporter_name: exporterName,
+    params,
+  });
+  return response.data;
+};
+
 export const getExportableDatasets = async (
   exporterName: string,
 ): Promise<ExportableDataset[]> => {

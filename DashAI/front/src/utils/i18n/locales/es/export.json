@@ -1,4 +1,5 @@
 {
+  "backToForm": "Volver al formulario",
   "columnColumns": "Columnas",
   "columnCompatibility": "Compatibilidad con {{platform}}",
   "columnName": "Nombre",
@@ -20,8 +21,17 @@
   "metadataTitle": "Describe el dataset para {{platform}}",
   "noDatasets": "No hay datasets listos para exportar.",
   "noPlatforms": "No hay plataformas de exportación disponibles.",
+  "paramsLost": "Se perdieron los datos del formulario, por ejemplo al recargar la página. Vuelve al formulario para completarlos.",
   "previewLabel": "Vista previa del dataset",
+  "publicBody": "Cualquier persona podrá ver y descargar el dataset en {{platform}}, y no se puede borrar después.",
+  "publicConfirm": "Entiendo que el dataset será público",
+  "publicTitle": "La publicación en {{platform}} es pública",
+  "publish": "Publicar en {{platform}}",
+  "publishFailed": "No se pudo iniciar la publicación.",
   "review": "Revisar",
+  "reviewCrumb": "Revisión",
+  "reviewSubtitle": "Revisa la metadata y confirma antes de publicar en {{platform}}.",
+  "reviewTitle": "Revisar antes de publicar",
   "role": {
     "ignored": "ignorada",
     "target": "objetivo",
@@ -33,7 +43,16 @@
   "selectDatasetTitle": "Seleccionar dataset a exportar",
   "selectPlatformSubtitle": "Elige dónde publicar tu dataset. En el siguiente paso verás qué datasets acepta la plataforma.",
   "selectPlatformTitle": "Seleccionar plataforma de destino",
+  "summaryColumns": "Columnas enviadas: {{sent}} de {{total}}",
+  "summaryMetadata": "Metadata",
+  "summaryRows": "Filas: {{rows}}",
+  "summarySent": "Qué se enviará",
   "targetColumn": "Columna objetivo",
   "targetColumnHelp": "Columna que se usará como objetivo a predecir.",
-  "title": "Exportar"
+  "title": "Exportar",
+  "validating": "Validando el dataset y la metadata...",
+  "validationErrors": "Corrige estos problemas antes de publicar:",
+  "validationFailed": "No se pudo validar la exportación. Inténtalo de nuevo.",
+  "validationOk": "Sin errores de validación",
+  "validationWarnings": "Ajustes que se harán al publicar en {{platform}}:"
 }
