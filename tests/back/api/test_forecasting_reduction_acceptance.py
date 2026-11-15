@@ -101,7 +101,6 @@ def test_a_search_trial_asks_a_model_with_intervals_for_none(monkeypatch):
 # --------------------------------------------------------------------------- #
 
 
-@pending("4")
 @pytest.mark.parametrize(
     "name",
     [

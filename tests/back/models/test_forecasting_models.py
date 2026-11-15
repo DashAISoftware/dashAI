@@ -434,3 +434,55 @@ def test_drift_extends_the_line_from_the_first_value_to_the_last():
 def test_drift_needs_two_observations_to_measure_a_slope():
     with pytest.raises(ValueError, match="at least 2 observations"):
         DriftForecaster().fit([5.0])
+
+
+# --- the reduction model: the scikit-learn estimator it regresses with --------
+
+
+def test_the_extracted_estimator_keeps_the_regressors_hyperparameters():
+    # A DashAI regressor takes ``**kwargs``, so scikit-learn's ``get_params``
+    # sees none and ``clone`` rebuilds it with the defaults: 100 trees, no
+    # depth limit. skforecast clones the estimator it is handed.
+    from sklearn.base import clone
+
+    from DashAI.back.models.forecasting.recursive_regression import (
+        sklearn_estimator,
+    )
+    from DashAI.back.models.scikit_learn.random_forest_regression import (
+        RandomForestRegression,
+    )
+
+    estimator = sklearn_estimator(RandomForestRegression(n_estimators=7, max_depth=3))
+
+    assert (estimator.n_estimators, estimator.max_depth) == (7, 3)
+    assert (clone(estimator).n_estimators, clone(estimator).max_depth) == (7, 3)
+    assert type(estimator).__module__.startswith("sklearn.")
+
+
+def test_extracting_the_estimator_leaves_the_regressor_untouched():
+    from DashAI.back.models.forecasting.recursive_regression import (
+        sklearn_estimator,
+    )
+    from DashAI.back.models.scikit_learn.random_forest_regression import (
+        RandomForestRegression,
+    )
+
+    regressor = RandomForestRegression(n_estimators=7, max_depth=3)
+    before = {k: v for k, v in vars(regressor).items() if not k.startswith("_")}
+
+    sklearn_estimator(regressor)
+
+    after = {k: v for k, v in vars(regressor).items() if not k.startswith("_")}
+    assert after == before
+
+
+def test_a_regressor_without_a_scikit_learn_estimator_is_refused():
+    from DashAI.back.models.forecasting.recursive_regression import (
+        sklearn_estimator,
+    )
+    from DashAI.back.models.scikit_learn.mlp_regression import MLPRegression
+    from DashAI.back.models.scikit_learn.svc import SVC
+
+    for model in (MLPRegression(), SVC()):
+        with pytest.raises(TypeError, match="scikit-learn regressor"):
+            sklearn_estimator(model)
