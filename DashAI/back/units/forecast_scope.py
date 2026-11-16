@@ -36,12 +36,14 @@ def forecasts_file(runs_path, artifact_prefix: str):
     return Path(runs_path) / f"{artifact_prefix}_forecasts.json"
 
 
-#: Steps per season, by the kind of step a frequency names. A series whose
-#: step is not here has no season assumed (1).
+#: Steps in one cycle of each base step: a day repeats weekly, an hour daily,
+#: a month yearly. "SM" is the semi-month (twice a month) and "B" the
+#: business day (five a week). A step that is not here has no season (1).
 SEASON_BY_STEP = {
     "Y": 1,
     "Q": 4,
     "M": 12,
+    "SM": 24,
     "W": 52,
     "D": 7,
     "B": 5,
@@ -50,8 +52,41 @@ SEASON_BY_STEP = {
 }
 
 
+def _base_step(rule_code: str) -> str:
+    """The base step of a pandas rule code, without its anchors.
+
+    ``"QS-JAN"`` is a quarter anchored at its start, ``"ME"`` a month at its
+    end, ``"SMS-15"`` a semi-month split on the 15th and ``"BMS"`` a month
+    starting on its first business day. The anchors say where a step begins,
+    not how long it is, so all four count as their base step.
+
+    Parameters
+    ----------
+    rule_code : str
+        The ``name`` of a pandas offset, without its multiple.
+
+    Returns
+    -------
+    str
+        The base step, or the code unchanged when it has none the table knows.
+    """
+    step = rule_code.split("-")[0]
+    if step in SEASON_BY_STEP:
+        return step
+    if step[-1:] in ("S", "E"):
+        step = step[:-1]
+    if step not in SEASON_BY_STEP and step[:1] == "B" and step[1:] in SEASON_BY_STEP:
+        step = step[1:]
+    return step
+
+
 def season_length_for(freq: str) -> int:
     """The season a frequency usually implies: 12 for months, 7 for days.
+
+    A multiple of the step divides its cycle when it can: every 2 hours is 12
+    steps a day, every 15 minutes 4 an hour. When it cannot, as every 3 days in
+    a 7-day week, no season is assumed. Neither is one for a step the table
+    does not know.
 
     Parameters
     ----------
@@ -65,12 +100,11 @@ def season_length_for(freq: str) -> int:
     """
     import pandas as pd
 
-    # "QS-JAN" is a quarter anchored at its start, "ME" a month at its end:
-    # the anchor says where a step begins, not how long it is.
-    step = pd.tseries.frequencies.to_offset(freq).name.split("-")[0]
-    if step not in SEASON_BY_STEP and step[-1:] in ("S", "E"):
-        step = step[:-1]
-    return SEASON_BY_STEP.get(step, 1)
+    offset = pd.tseries.frequencies.to_offset(freq)
+    cycle = SEASON_BY_STEP.get(_base_step(offset.name), 1)
+    if offset.n < 1 or cycle % offset.n:
+        return 1
+    return cycle // offset.n
 
 
 def with_season_from_grid(parameters: Dict[str, Any], freq: str) -> Dict[str, Any]:

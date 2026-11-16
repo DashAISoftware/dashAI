@@ -135,6 +135,35 @@ def test_the_season_follows_the_frequency(freq, season):
     assert season_length_for(freq) == season
 
 
+@pytest.mark.parametrize(
+    ("freq", "season"),
+    [
+        # The base steps. pandas 2.2 spells month, quarter and year ends with
+        # an E ("ME", "QE-DEC", "YE-DEC"); the bare "M", "Q" and "Y" warn.
+        ("D", 7),
+        ("B", 5),
+        ("W", 52),
+        ("h", 24),
+        ("ME", 12),
+        ("QE", 4),
+        ("YE", 1),
+        # A multiple divides the base cycle when it can, and 1 when it cannot.
+        ("3D", 1),
+        ("2h", 12),
+        ("15min", 4),
+        # Anchored frequencies count by their base step.
+        ("SMS", 24),
+        ("SME", 24),
+        ("BMS", 12),
+        ("QS", 4),
+        # A step the table does not know assumes no season.
+        ("ms", 1),
+    ],
+)
+def test_the_season_divides_the_cycle_by_the_step(freq, season):
+    assert season_length_for(freq) == season
+
+
 def _build(params):
     ctx = _context(task_name=TASK, grid=GRID.to_ref())
     BuildForecasterUnit(
