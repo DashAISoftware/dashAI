@@ -41,8 +41,8 @@ import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/
 import { FormSchemaProvider } from "../../../contexts/schema";
 import { useTaskDisplayName } from "../../../hooks/generative/useTaskDisplayName";
 import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
+import { RAG_WORKFLOW_NAME } from "../../../constants/generativeWorkflows";
 import {
-  RAG_TASK_NAME,
   deleteRAGPrompt,
   forkRAGPrompt,
   getLibraryPrompts,
@@ -69,7 +69,7 @@ export default function RAGPromptsPage() {
   const localization = useTableLocalization();
   const threePanelLayout = useThreePanelLayout({ storageKey: "rag-prompts" });
   const { sessions, deleteSessionById, fetchSessions } = useGenerative();
-  const ragTitle = useTaskDisplayName(RAG_TASK_NAME);
+  const ragTitle = useTaskDisplayName(RAG_WORKFLOW_NAME);
 
   const [prompts, setPrompts] = useState([]);
   const [loading, setLoading] = useState(true);

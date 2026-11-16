@@ -14,6 +14,7 @@ from DashAI.back.services.RAG.legacy_retrievers import translate_legacy_retrieve
 from DashAI.back.services.RAG.session_validation_service import (
     SessionValidationService,
 )
+from tests.back.RAG.conftest import rag_session_columns
 
 # The retrievers exactly as v0.10.0 stored them.
 LEGACY_BM25 = {
@@ -154,9 +155,9 @@ def _session(factory, name, retriever) -> int:
     with factory() as db:
         session = GenerativeSession(
             name=name,
-            task_name="RAGTask",
-            model_name="RAGPipeline",
-            parameters={"documents": [], "retriever_model": copy.deepcopy(retriever)},
+            **rag_session_columns(
+                {"documents": [], "retriever_model": copy.deepcopy(retriever)}
+            ),
         )
         db.add(session)
         db.commit()
