@@ -22,7 +22,10 @@ if TYPE_CHECKING:
     import numpy as np
 
 #: How many simulated paths bound a forecast, and the seed that draws them:
-#: fixed, so the same model gives the same intervals every time.
+#: fixed, so the same fitted model gives the same intervals every time. A new
+#: fit is as deterministic as its regressor, as in the x/y tasks: a regressor
+#: with a ``random_state`` left empty in its nested form fits differently each
+#: time.
 N_BOOT = 250
 RANDOM_STATE = 123
 
@@ -307,6 +310,11 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
     are signed, so a biased regressor can leave the point forecast outside
     its own interval.
 
+    The bootstrap's seed is fixed, so a fitted model gives the same intervals
+    every time. Fitting again is as deterministic as the regressor, as in the
+    x/y tasks: for a reproducible forest, set its ``random_state`` in the
+    nested form.
+
     Known limits, stated in the description too:
     - a regressor that fits its training data closely, as trees do, leaves
       residuals near zero and intervals too narrow; the coverage of the
@@ -553,8 +561,9 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
         One call simulates ``N_BOOT`` paths, adding a residual of the training
         fit, drawn at random, to every step before it feeds the next. The
         bounds of each level are quantiles of the same paths, so the 80%
-        interval lies within the 95% one. The seed is fixed: the same model
-        gives the same intervals.
+        interval lies within the 95% one. The seed is fixed: the same fitted
+        model gives the same intervals. A new fit gives the same ones only if
+        the regressor fits the same way.
         """
         import numpy as np
 
