@@ -14,9 +14,15 @@ Contract
 
 An insufficient verdict carries any combination of:
 
-* ``call_retrievers`` — ``{<1-based retriever index>: <top_k>}``;
+* ``call_retrievers`` — ``{<1-based retriever index>: <additional chunks>}``;
 * ``request_specific_chunks`` — ``{<document id>: [<chunk positions>]}``;
 * ``discard_specific_chunks`` — ``{<document id>: [<chunk positions>]}``.
+
+Every ``call_retrievers`` value is the number of *additional* chunks to fetch
+from that retriever in the next round, never an absolute target size: the
+retriever adds it to the identities the child already contributed and enforces
+the pool cap itself. The parser therefore only requires each value to be a
+positive integer.
 
 Requested and discarded chunks persist across rounds and can override each
 other (the last action wins). A chunk listed in both fields of one verdict is
@@ -102,8 +108,9 @@ class RetrievalVerdict:
     sufficient : bool
         Whether the accumulated pool answers the query.
     call_retrievers : Dict[int, int]
-        Mapping of 1-based retriever index to the number of chunks to retrieve
-        from it next. Empty when no retriever call is requested.
+        Mapping of 1-based retriever index to the number of additional chunks to
+        retrieve from it next (relative to what it already contributed, not an
+        absolute size). Empty when no retriever call is requested.
     request_specific_chunks : Dict[int, List[int]]
         Mapping of document id to chunk positions to include in the pool. Empty
         when no chunk is explicitly requested.
@@ -185,6 +192,10 @@ def _drop_empty_documents(mapping: Dict[int, List[int]]) -> Dict[int, List[int]]
 def _validate_call_retrievers(value: Any) -> Dict[int, int]:
     """Validate the ``call_retrievers`` mapping strictly.
 
+    Each value is an additional-chunk count, so a positive integer is accepted
+    regardless of the pool cap: the retriever clamps it when it plans the
+    cumulative child call.
+
     Parameters
     ----------
     value : Any
@@ -193,22 +204,22 @@ def _validate_call_retrievers(value: Any) -> Dict[int, int]:
     Returns
     -------
     Dict[int, int]
-        1-based retriever index to requested chunk count.
+        1-based retriever index to requested additional-chunk count.
 
     Raises
     ------
     RAGRetrieverEvaluationError
-        If the value is not a mapping, or any index or top_k is invalid or
-        duplicated. No partial result is returned.
+        If the value is not a mapping, or any index or additional-chunk count is
+        invalid or duplicated. No partial result is returned.
     """
     if not isinstance(value, Mapping):
         raise RAGRetrieverEvaluationError(
             f"'{CALL_RETRIEVERS_KEY}' must be a mapping of retriever index to "
-            f"top_k, got {type(value).__name__}."
+            f"an additional-chunk count, got {type(value).__name__}."
         )
     calls: Dict[int, int] = {}
     errors: List[str] = []
-    for raw_index, raw_top_k in value.items():
+    for raw_index, raw_additional in value.items():
         index = coerce_int(raw_index, 1, allow_digit_string=True)
         if index is None:
             errors.append(
@@ -221,14 +232,14 @@ def _validate_call_retrievers(value: Any) -> Dict[int, int]:
                 f"'{CALL_RETRIEVERS_KEY}' duplicate entry for retriever index {index}."
             )
             continue
-        top_k = coerce_int(raw_top_k, 1, allow_digit_string=False)
-        if top_k is None:
+        additional = coerce_int(raw_additional, 1, allow_digit_string=False)
+        if additional is None:
             errors.append(
-                f"'{CALL_RETRIEVERS_KEY}' entry {index}: top_k must be an "
-                "integer greater than or equal to 1."
+                f"'{CALL_RETRIEVERS_KEY}' entry {index}: the additional-chunk "
+                "count must be an integer greater than or equal to 1."
             )
             continue
-        calls[index] = top_k
+        calls[index] = additional
     if errors:
         raise RAGRetrieverEvaluationError(
             "Invalid retriever call(s) in the decision: "

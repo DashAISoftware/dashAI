@@ -35,6 +35,9 @@ from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 from DashAI.back.models.RAG.retrievers.composite.agentic_ensemble_retriever import (  # noqa: E501
     AgenticEnsembleRetriever,
 )
+from DashAI.back.models.RAG.retrievers.composite.agentic_retriever import (
+    plan_incremental_fetch,
+)
 from DashAI.back.models.RAG.retrievers.composite.agentic_single_retriever import (
     AgenticSingleRetriever,
 )
@@ -48,6 +51,13 @@ from DashAI.back.models.RAG.retrievers.composite.evaluation_output import (
     cap_dropped_operations,
     parse_evaluation_arguments,
     parse_evaluation_output,
+)
+from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
+    RetrievalContext,
+)
+from DashAI.back.models.RAG.retrievers.composite.retrieval_pool import (
+    RetrievalPool,
+    chunk_key,
 )
 from DashAI.back.models.RAG.retrievers.exceptions import CompositeValidationError
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
@@ -127,6 +137,36 @@ class _FakeChild(BaseRetriever):
     def retrieval_top_k(self) -> int:
         """Return the configured top-k."""
         return self._top_k
+
+
+class _ScriptedChild(_FakeChild):
+    """Child returning a scripted raw result per call.
+
+    Lets a test reproduce children that over-return (ignore the requested
+    ``top_k``), change result ordering between calls or stop early. The agentic
+    retrievers must therefore track chunk identities instead of raw response
+    lengths.
+    """
+
+    def __init__(
+        self,
+        responses: List[List[Chunk]],
+        top_k: int = 10,
+        corpus: Optional[List[Chunk]] = None,
+    ) -> None:
+        """Store the scripted per-call results."""
+        first = responses[0] if responses else []
+        super().__init__(first, top_k=top_k, corpus=corpus)
+        self._responses = [list(response) for response in responses]
+
+    def retrieve(
+        self, query: str, top_k: Optional[int] = None, **kwargs: Any
+    ) -> Tuple[List[Chunk], Dict[str, Any]]:
+        """Return the next scripted result, ignoring the requested size."""
+        self.retrieve_calls.append(top_k)
+        index = min(len(self.retrieve_calls) - 1, len(self._responses) - 1)
+        chunks = list(self._responses[index])
+        return chunks, retriever_trace(self, chunks)
 
 
 class _ScriptedLLM(TextToTextGenerationTaskModel):
@@ -318,6 +358,7 @@ def test_depth_sufficient_after_first_round():
     assert trace["rounds"][0]["applied"] is False
     assert trace["rounds"][0]["requested_top_k"] is None
     assert trace["rounds"][0]["returned"] == 3
+    assert trace["rounds"][0]["added"] == 3
 
 
 def test_depth_sufficient_over_empty_pool_is_retried_then_raises():
@@ -408,8 +449,8 @@ def test_depth_sufficient_pool_chunk_absent_from_partial_corpus_is_accepted():
     assert trace["rounds"][0]["applied"] is False
 
 
-def test_depth_insufficient_chain_honours_call_top_k_and_stops_at_max_iters():
-    """Each insufficient verdict's call_retrievers size drives the next round."""
+def test_depth_insufficient_chain_requests_additional_chunks_cumulatively():
+    """Each insufficient verdict asks for additional chunks on top of the prefix."""
     child = _FakeChild(_chunks(10), top_k=10, default_size=2)
     llm = _ScriptedLLM(
         [
@@ -422,14 +463,49 @@ def test_depth_insufficient_chain_honours_call_top_k_and_stops_at_max_iters():
 
     pool, trace = retriever.retrieve("q")
 
-    assert [c.document_position for c in pool] == [0, 1, 2, 3, 4, 5]
-    assert child.retrieve_calls == [None, 4, 6]
+    # 2 chunks come from the initial call, then 4 more (cumulative 6) and 4 more
+    # (capped by max_chunks at 10), so the physical top_k grows cumulatively.
+    assert child.retrieve_calls == [None, 6, 10]
+    assert [c.document_position for c in pool] == list(range(10))
+    assert [entry["requested_top_k"] for entry in trace["rounds"]] == [None, 6, 10]
+    assert [entry["returned"] for entry in trace["rounds"]] == [2, 6, 10]
+    assert [entry["added"] for entry in trace["rounds"]] == [2, 4, 4]
     assert len(llm.calls) == 2
     assert [entry["verdict"] for entry in trace["rounds"]] == [False, False, None]
     assert [entry["applied"] for entry in trace["rounds"][:-1]] == [True, True]
     assert "applied" not in trace["rounds"][-1]
     assert len(trace["rounds"]) == 3
     assert len(pool) <= retriever.retrieval_top_k
+
+
+def test_depth_repeat_request_is_bounded_by_pool_and_discard_capacity():
+    """A repeat never fetches a prefix the pool plus discards cannot use."""
+    child = _FakeChild(_chunks(10), top_k=10, default_size=6)
+    llm = _ScriptedLLM(['{"sufficient": false, "call_retrievers": {"1": 5}}'])
+    retriever = _depth(child, llm, _RecordingPrompt(), max_iters=2, max_chunks=8)
+
+    pool, trace = retriever.retrieve("q")
+
+    # 6 chunks were fetched and 5 more are requested, so 11 in total would be
+    # fetched; max_chunks bounds the effective cumulative top_k at 8.
+    assert child.retrieve_calls == [None, 8]
+    assert trace["rounds"][1]["requested_top_k"] == 8
+    assert [c.document_position for c in pool] == list(range(8))
+
+
+def test_depth_short_child_result_adds_only_the_available_suffix():
+    """A child returning fewer chunks than requested is handled safely."""
+    child = _FakeChild(_chunks(5), top_k=5, default_size=2)
+    llm = _ScriptedLLM(['{"sufficient": false, "call_retrievers": {"1": 10}}'])
+    retriever = _depth(child, llm, _RecordingPrompt(), max_iters=2, max_chunks=10)
+
+    pool, trace = retriever.retrieve("q")
+
+    assert child.retrieve_calls == [None, 10]
+    assert [c.document_position for c in pool] == [0, 1, 2, 3, 4]
+    assert trace["rounds"][1]["requested_top_k"] == 10
+    assert trace["rounds"][1]["returned"] == 5
+    assert trace["rounds"][1]["added"] == 3
 
 
 def test_failed_application_attempt_does_not_mutate_the_pool():
@@ -476,8 +552,8 @@ def test_depth_insufficient_with_only_requests_consumes_an_iteration():
     assert [c.document_position for c in pool][:1] == [4]
 
 
-def test_depth_progress_guarantee_bumps_zero_progress_request():
-    """A request that cannot add a chunk is raised to the smallest useful size."""
+def test_depth_single_additional_chunk_request_fetches_one_more():
+    """A request of one additional chunk grows the child prefix by one."""
     child = _FakeChild(_chunks(10), top_k=10, default_size=2)
     llm = _ScriptedLLM(['{"sufficient": false, "call_retrievers": {"1": 1}}'])
     prompt = _RecordingPrompt()
@@ -891,7 +967,10 @@ def test_depth_discard_persists_across_rounds():
 
     pool, trace = retriever.retrieve("q")
 
-    assert sorted(c.document_position for c in pool) == [0, 2, 3, 4]
+    # 3 fetched initially, then 5 more requested: the cumulative top_k is 8 but
+    # the corpus only holds 6 chunks, so positions 3, 4 and 5 are the new tail.
+    assert child.retrieve_calls == [None, 8]
+    assert sorted(c.document_position for c in pool) == [0, 2, 3, 4, 5]
     assert trace["rounds"][0][DISCARD_KEY] == {1: [1]}
 
 
@@ -918,6 +997,28 @@ def test_depth_full_pool_discard_refills_on_next_round():
     assert any(chunk.document_position == 5 for chunk in pool)
 
 
+def test_depth_discard_then_single_chunk_request_fetches_past_the_old_prefix():
+    """A one-chunk request after a discard grows the cumulative child prefix."""
+    corpus = _chunks(6)
+    child = _FakeChild(corpus, top_k=6, default_size=5, corpus=corpus)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 1}, '
+            '"discard_specific_chunks": {"1": [1, 3]}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _depth(child, llm, _RecordingPrompt(), max_iters=3, max_chunks=5)
+
+    pool, trace = retriever.retrieve("q")
+
+    # 5 chunks were fetched before, so asking for 1 more must fetch the
+    # cumulative prefix of 6; only the new position 5 enters the pool.
+    assert child.retrieve_calls == [None, 6]
+    assert trace["rounds"][1]["requested_top_k"] == 6
+    assert sorted(c.document_position for c in pool) == [0, 2, 4, 5]
+
+
 def test_depth_request_discard_request_across_rounds():
     """Request, discard and re-request across rounds follows the last action."""
     corpus = _chunks(5)
@@ -935,7 +1036,9 @@ def test_depth_request_discard_request_across_rounds():
 
     pool, _ = retriever.retrieve("q")
 
-    assert [c.document_position for c in pool] == [4, 0, 1, 2]
+    # The call asks for 3 additional chunks after the initial 2, so the child is
+    # consulted at cumulative top_k 5 and adds positions 2, 3 and 4.
+    assert [c.document_position for c in pool] == [4, 0, 1, 2, 3]
 
 
 def test_depth_newest_request_batch_is_materialized():
@@ -1079,7 +1182,7 @@ def test_depth_function_calling_sufficient_stops_after_one_delegation():
 
 
 def test_depth_function_calling_insufficient_drives_next_top_k():
-    """An insufficient FC verdict's call_retrievers drives the next delegation."""
+    """An insufficient FC verdict's call_retrievers adds chunks to the prefix."""
     child = _FakeChild(_chunks(10), top_k=10, default_size=2)
     llm = _FunctionCallingScriptedLLM(
         [
@@ -1098,8 +1201,8 @@ def test_depth_function_calling_insufficient_drives_next_top_k():
 
     pool, trace = retriever.retrieve("q")
 
-    assert child.retrieve_calls == [None, 4, 6]
-    assert len(pool) == 6
+    assert child.retrieve_calls == [None, 6, 10]
+    assert len(pool) == 10
     assert len(llm.fc_calls) == 2
     assert llm.generate_calls == []
     assert [entry["verdict"] for entry in trace["rounds"]] == [False, False, None]
@@ -1147,8 +1250,15 @@ def test_ensemble_planning_chooses_children_and_catalog_rendered():
     assert len(llm.calls) == 2
     assert trace["rounds"][0]["verdict"] is True
     assert trace["rounds"][0]["applied"] is False
+    assert trace["rounds"][0]["planning_call_retrievers"] == {2: 3}
     assert trace["rounds"][0]["calls"] == [
-        {"name": "_FakeChild", "requested_top_k": 3, "returned": 3}
+        {
+            "index": 2,
+            "name": "_FakeChild",
+            "requested_top_k": 3,
+            "returned": 3,
+            "added": 3,
+        }
     ]
     assert trace["children"][0]["name"] == "_FakeChild"
     catalog = prompt.calls[0]["retrievers"]
@@ -1382,8 +1492,8 @@ def test_ensemble_does_not_consult_when_pool_is_full():
     assert len(pool) == 2
 
 
-def test_ensemble_duplicate_return_does_not_exhaust_budget():
-    """Duplicate chunks add no budget cost, so later children are still consulted."""
+def test_ensemble_repeat_call_adds_new_chunks_and_consumes_budget():
+    """A repeated call fetches new chunks and consumes the pool budget."""
     child0 = _FakeChild(_chunks(5, document_id=1), top_k=2)
     child1 = _FakeChild(_chunks(5, document_id=2), top_k=2)
     llm = _ScriptedLLM(
@@ -1399,10 +1509,148 @@ def test_ensemble_duplicate_return_does_not_exhaust_budget():
 
     pool, trace = retriever.retrieve("q")
 
-    assert child0.retrieve_calls == [2, 2]
-    assert child1.retrieve_calls == [2]
-    assert len(trace["rounds"][1]["calls"]) == 2
+    # The repeat asks for 2 more chunks from child 1: cumulative top_k 4, which
+    # fills the pool, so child 2 is never consulted.
+    assert child0.retrieve_calls == [2, 4]
+    assert child1.retrieve_calls == []
+    assert len(trace["rounds"][1]["calls"]) == 1
+    assert trace["rounds"][1]["calls"][0]["requested_top_k"] == 4
+    assert [c.document_position for c in pool] == [0, 1, 2, 3]
     assert len(pool) == 4
+
+
+def test_ensemble_repeated_child_call_uses_cumulative_top_k_and_suffix():
+    """Each repeat asks the same child for additional chunks cumulatively."""
+    child0 = _FakeChild(_chunks(10, document_id=1), top_k=2)
+    child1 = _FakeChild(_chunks(10, document_id=2), top_k=2)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 2}}',
+            '{"sufficient": false, "call_retrievers": {"1": 3}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _ensemble(
+        [child0, child1], llm, _RecordingPrompt(), max_iters=3, max_chunks=10
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    # 2 chunks first, then 3 more: the child is called at 2 and then at 5, and
+    # only positions 2, 3 and 4 are new.
+    assert child0.retrieve_calls == [2, 5]
+    assert child1.retrieve_calls == []
+    assert [c.document_position for c in pool] == [0, 1, 2, 3, 4]
+    assert [entry["calls"][0]["requested_top_k"] for entry in trace["rounds"]] == [
+        2,
+        5,
+    ]
+    assert [entry["calls"][0]["returned"] for entry in trace["rounds"]] == [2, 5]
+    assert [entry["calls"][0]["added"] for entry in trace["rounds"]] == [2, 3]
+
+
+def test_ensemble_children_keep_independent_fetch_histories():
+    """Each child's cumulative prefix is tracked on its own."""
+    child0 = _FakeChild(_chunks(10, document_id=1), top_k=2)
+    child1 = _FakeChild(_chunks(10, document_id=2), top_k=2)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 2}}',
+            '{"sufficient": false, "call_retrievers": {"2": 1}}',
+            '{"sufficient": false, "call_retrievers": {"1": 1, "2": 2}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _ensemble(
+        [child0, child1], llm, _RecordingPrompt(), max_iters=4, max_chunks=10
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    assert child0.retrieve_calls == [2, 3]
+    assert child1.retrieve_calls == [1, 3]
+    assert trace["rounds"][2]["calls"] == [
+        {
+            "index": 1,
+            "name": "_FakeChild",
+            "requested_top_k": 3,
+            "returned": 3,
+            "added": 1,
+        },
+        {
+            "index": 2,
+            "name": "_FakeChild",
+            "requested_top_k": 3,
+            "returned": 3,
+            "added": 2,
+        },
+    ]
+    assert [(c.document_id, c.document_position) for c in pool] == [
+        (1, 0),
+        (1, 1),
+        (2, 0),
+        (1, 2),
+        (2, 1),
+        (2, 2),
+    ]
+
+
+def test_ensemble_overlapping_children_report_pool_growth_not_selection():
+    """``added`` is the pool growth, so a chunk another child already pooled is 0."""
+    child0 = _FakeChild(_chunks(5, document_id=1), top_k=2)
+    child1 = _FakeChild(_chunks(5, document_id=1), top_k=3)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 2}}',
+            '{"sufficient": false, "call_retrievers": {"2": 2}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _ensemble(
+        [child0, child1], llm, _RecordingPrompt(), max_iters=3, max_chunks=10
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    # Child 2 is consulted at its own cumulative size and returns two chunks,
+    # but child 1 already contributed those identities, so the pool is unchanged.
+    assert child0.retrieve_calls == [2]
+    assert child1.retrieve_calls == [2]
+    assert trace["rounds"][1]["calls"] == [
+        {
+            "index": 2,
+            "name": "_FakeChild",
+            "requested_top_k": 2,
+            "returned": 2,
+            "added": 0,
+        }
+    ]
+    assert [c.document_position for c in pool] == [0, 1]
+
+
+def test_ensemble_short_child_result_does_not_invent_chunks():
+    """A child returning fewer chunks than asked keeps a consistent count."""
+    child0 = _FakeChild(_chunks(3, document_id=1), top_k=2)
+    child1 = _FakeChild(_chunks(5, document_id=2), top_k=2)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 2}}',
+            '{"sufficient": false, "call_retrievers": {"1": 3}}',
+            '{"sufficient": false, "call_retrievers": {"1": 1}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _ensemble(
+        [child0, child1], llm, _RecordingPrompt(), max_iters=4, max_chunks=10
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    # Child 1 only holds 3 chunks: the third call asks for cumulative top_k 4,
+    # still returns 3, and adds nothing without inventing new chunks.
+    assert child0.retrieve_calls == [2, 5, 4]
+    assert [entry["calls"][0]["returned"] for entry in trace["rounds"]] == [2, 3, 3]
+    assert [c.document_position for c in pool] == [0, 1, 2]
 
 
 def test_ensemble_sufficient_verdict_with_bad_call_index_is_retried():
@@ -1599,6 +1847,53 @@ def test_ensemble_function_calling_post_round_insufficient_selects_new_children(
 # ---------------------------------------------------------------------------
 # Common behaviour
 # ---------------------------------------------------------------------------
+
+
+def test_incremental_fetch_plan_selects_leading_unseen_identities():
+    """The shared plan pins the cumulative top_k and the identity selection."""
+    chunks = _chunks(5)
+    contributed = {chunk_key(chunk) for chunk in chunks[:3]}
+
+    plan = plan_incremental_fetch(fetched=3, requested=2, call_limit=10)
+    assert (plan.top_k, plan.additional) == (5, 2)
+    assert [c.document_position for c in plan.select_new(chunks, contributed)] == [
+        3,
+        4,
+    ]
+
+    # An over-returning child contributes its highest-ranked unseen identities,
+    # never the tail of its response.
+    over = plan_incremental_fetch(fetched=0, requested=2, call_limit=10)
+    assert [c.document_position for c in over.select_new(_chunks(10), set())] == [
+        0,
+        1,
+    ]
+
+    # A short response contributes whatever unseen identities exist.
+    short = plan_incremental_fetch(fetched=3, requested=5, call_limit=10)
+    assert short.top_k == 8
+    assert [c.document_position for c in short.select_new(_chunks(4), contributed)] == [
+        3
+    ]
+
+    capped = plan_incremental_fetch(fetched=3, requested=9, call_limit=6)
+    assert (capped.top_k, capped.additional) == (6, 3)
+
+    exhausted = plan_incremental_fetch(fetched=3, requested=9, call_limit=3)
+    assert (exhausted.top_k, exhausted.additional) == (3, 0)
+    assert exhausted.select_new(chunks, contributed) == []
+
+
+def test_chunk_key_is_the_single_pool_identity():
+    """The shared helper is the identity the pool deduplicates on."""
+    original = Chunk(id=7, document_id=3, document_position=4, text="first")
+    equal_content = Chunk(id=9, document_id=3, document_position=4, text="second")
+    pool = RetrievalPool(5, RetrievalContext({}, {}))
+
+    pool.add([original, equal_content])
+
+    assert chunk_key(original) == chunk_key(equal_content) == (3, 4)
+    assert pool.materialize() == [original]
 
 
 def test_both_retrievers_trace_has_children_and_rounds():
@@ -2139,6 +2434,219 @@ def test_required_parameters_raise_when_missing():
 
 
 # ---------------------------------------------------------------------------
+# Incremental identity tracking — over-return and reordering children
+# ---------------------------------------------------------------------------
+
+
+def test_ensemble_over_returning_child_is_not_skipped_and_adds_leading_n():
+    """A child ignoring top_k keeps contributing its highest-ranked unseen chunks."""
+    corpus = _chunks(10, document_id=1)
+    child0 = _ScriptedChild([corpus] * 5, top_k=10, corpus=corpus)
+    child1 = _FakeChild(_chunks(5, document_id=2), top_k=2)
+    llm = _ScriptedLLM(['{"sufficient": false, "call_retrievers": {"1": 2}}'] * 5)
+    retriever = _ensemble(
+        [child0, child1], llm, _RecordingPrompt(), max_iters=5, max_chunks=10
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    # Every call grows the cumulative size by the requested two chunks even
+    # though the child always answers with all ten: raw lengths never skip.
+    assert child0.retrieve_calls == [2, 4, 6, 8, 10]
+    assert child1.retrieve_calls == []
+    assert [entry["calls"][0]["requested_top_k"] for entry in trace["rounds"]] == [
+        2,
+        4,
+        6,
+        8,
+        10,
+    ]
+    assert [entry["calls"][0]["returned"] for entry in trace["rounds"]] == [10] * 5
+    assert [entry["calls"][0]["added"] for entry in trace["rounds"]] == [2] * 5
+    # The child's ranking survives: the leading unseen identities enter the pool
+    # first, so quality never degrades to the tail of the response.
+    assert [c.document_position for c in pool] == list(range(10))
+
+
+def test_depth_over_returning_child_keeps_advancing_without_starvation():
+    """A child ignoring top_k keeps contributing unseen chunks across rounds."""
+    corpus = _chunks(10)
+    child = _ScriptedChild([corpus[:2], corpus, corpus], top_k=10, corpus=corpus)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 4}}',
+            '{"sufficient": false, "call_retrievers": {"1": 6}}',
+        ]
+    )
+    retriever = _depth(child, llm, _RecordingPrompt(), max_iters=3, max_chunks=10)
+
+    pool, trace = retriever.retrieve("q")
+
+    # Two chunks seed the pool, then requests of four and six grow the prefix
+    # to six and ten; the raw responses are always ten but only the leading new
+    # identities of each response enter the pool.
+    assert child.retrieve_calls == [None, 6, 10]
+    assert [entry["requested_top_k"] for entry in trace["rounds"]] == [None, 6, 10]
+    assert [entry["returned"] for entry in trace["rounds"]] == [2, 10, 10]
+    assert [entry["added"] for entry in trace["rounds"]] == [2, 4, 4]
+    assert [c.document_position for c in pool] == list(range(10))
+
+
+def test_depth_reordered_child_adds_only_highest_ranked_unseen_chunks():
+    """Depth uses identity filtering when a child's ranking changes by round."""
+    corpus = _chunks(5)
+    child = _ScriptedChild([corpus[:2], list(reversed(corpus))], top_k=5, corpus=corpus)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 2}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _depth(child, llm, _RecordingPrompt(), max_iters=3, max_chunks=10)
+
+    pool, trace = retriever.retrieve("q")
+
+    assert child.retrieve_calls == [None, 4]
+    assert [chunk.document_position for chunk in pool] == [0, 1, 4, 3]
+    assert [entry["added"] for entry in trace["rounds"]] == [2, 2]
+
+
+def test_ensemble_duplicate_ids_within_response_are_counted_once():
+    """An over-return response cannot contribute the same identity twice."""
+    chunk0, chunk1, chunk2 = _chunks(3, document_id=1)
+    child0 = _ScriptedChild([[chunk0, chunk0, chunk1, chunk1, chunk2]], top_k=5)
+    child1 = _FakeChild(_chunks(3, document_id=2), top_k=2)
+    llm = _ScriptedLLM(['{"sufficient": false, "call_retrievers": {"1": 3}}'])
+    retriever = _ensemble(
+        [child0, child1], llm, _RecordingPrompt(), max_iters=1, max_chunks=5
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    assert [chunk.document_position for chunk in pool] == [0, 1, 2]
+    assert trace["rounds"][0]["calls"][0]["returned"] == 5
+    assert trace["rounds"][0]["calls"][0]["added"] == 3
+
+
+def test_ensemble_reordered_child_adds_only_unseen_identities():
+    """A reordered child cannot re-add contributed chunks or hide unseen ones."""
+    corpus = _chunks(5, document_id=1)
+    child0 = _ScriptedChild([corpus, list(reversed(corpus))], top_k=5, corpus=corpus)
+    child1 = _FakeChild(_chunks(5, document_id=2), top_k=2)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 2}}',
+            '{"sufficient": false, "call_retrievers": {"1": 2}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _ensemble(
+        [child0, child1], llm, _RecordingPrompt(), max_iters=3, max_chunks=10
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    # The first response contributes positions 0 and 1; the reversed second
+    # response is ranked 4, 3, 2, 1, 0, so its highest-ranked unseen identities
+    # (4 and 3) enter the pool next, in that order.
+    assert child0.retrieve_calls == [2, 4]
+    assert [c.document_position for c in pool] == [0, 1, 4, 3]
+    assert [entry["calls"][0]["added"] for entry in trace["rounds"]] == [2, 2]
+
+
+def test_depth_over_return_is_bounded_by_pool_capacity():
+    """An over-returning child cannot push the depth pool past max_chunks."""
+    corpus = _chunks(10)
+    child = _ScriptedChild([corpus[:2], corpus], top_k=10, corpus=corpus)
+    llm = _ScriptedLLM(['{"sufficient": false, "call_retrievers": {"1": 10}}'])
+    retriever = _depth(child, llm, _RecordingPrompt(), max_iters=2, max_chunks=5)
+
+    pool, trace = retriever.retrieve("q")
+
+    assert child.retrieve_calls == [None, 5]
+    assert trace["rounds"][1]["requested_top_k"] == 5
+    assert trace["rounds"][1]["returned"] == 10
+    assert trace["rounds"][1]["added"] == 3
+    assert len(pool) == 5
+    assert [c.document_position for c in pool] == [0, 1, 2, 3, 4]
+
+
+def test_ensemble_over_return_respects_pool_capacity():
+    """An over-returning child stops contributing once the pool is full."""
+    corpus = _chunks(10, document_id=1)
+    child0 = _ScriptedChild([corpus] * 3, top_k=10, corpus=corpus)
+    child1 = _FakeChild(_chunks(5, document_id=2), top_k=2)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 2}}',
+            '{"sufficient": false, "call_retrievers": {"1": 2}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _ensemble(
+        [child0, child1], llm, _RecordingPrompt(), max_iters=3, max_chunks=4
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    assert child0.retrieve_calls == [2, 4]
+    assert child1.retrieve_calls == []
+    assert [c.document_position for c in pool] == [0, 1, 2, 3]
+    assert trace["rounds"][1]["calls"][0]["added"] == 2
+    assert len(pool) == 4
+
+
+def test_depth_child_returning_only_known_identities_adds_nothing():
+    """A child that repeats contributed identities never fabricates chunks."""
+    corpus = _chunks(5)
+    child = _ScriptedChild([corpus[:2]] * 3, top_k=5, corpus=corpus)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 1}}',
+            '{"sufficient": false, "call_retrievers": {"1": 1}}',
+        ]
+    )
+    retriever = _depth(child, llm, _RecordingPrompt(), max_iters=3, max_chunks=10)
+
+    pool, trace = retriever.retrieve("q")
+
+    # Every later call returns only identities the child already contributed,
+    # so it adds nothing; the retriever neither retries nor invents chunks and
+    # simply stops at its bounded max_iters.
+    assert child.retrieve_calls == [None, 3, 3]
+    assert [entry["added"] for entry in trace["rounds"]] == [2, 0, 0]
+    assert [c.document_position for c in pool] == [0, 1]
+
+
+def test_ensemble_last_slot_caps_the_next_child_call():
+    """A round never asks a later child for more new chunks than it can use."""
+    child0 = _FakeChild(_chunks(5, document_id=1), top_k=2)
+    child1 = _FakeChild(_chunks(5, document_id=2), top_k=2)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 2, "2": 3}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _ensemble(
+        [child0, child1], llm, _RecordingPrompt(), max_iters=2, max_chunks=3
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    # Child 1 fills two of the three slots, so only one slot remains: child 2 is
+    # called with a physical top_k of one instead of the requested three.
+    assert child0.retrieve_calls == [2]
+    assert child1.retrieve_calls == [1]
+    assert [(c.document_id, c.document_position) for c in pool] == [
+        (1, 0),
+        (1, 1),
+        (2, 0),
+    ]
+    assert [call["requested_top_k"] for call in trace["rounds"][0]["calls"]] == [2, 1]
+
+
+# ---------------------------------------------------------------------------
 # parser
 # ---------------------------------------------------------------------------
 
@@ -2188,9 +2696,9 @@ def test_parse_rejects_duplicate_coerced_call_key():
         )
 
 
-def test_parse_rejects_invalid_top_k_even_with_later_valid_entry():
-    """An invalid top_k invalidates the whole call map."""
-    with pytest.raises(RAGRetrieverEvaluationError, match="top_k"):
+def test_parse_rejects_invalid_additional_count_even_with_later_valid_entry():
+    """An invalid additional-chunk count invalidates the whole call map."""
+    with pytest.raises(RAGRetrieverEvaluationError, match="additional-chunk"):
         parse_evaluation_output(
             '{"sufficient": false, "call_retrievers": {"1": 0, "01": 3}}'
         )
@@ -2618,13 +3126,15 @@ def test_ensemble_planning_and_post_round_narratives_are_both_recorded():
 
 
 def test_function_descriptions_reject_invalid_decisions():
-    """Both retrievers document strict decisions, hints and requested priority."""
+    """Both retrievers document strict decisions, added chunks and priority."""
     for retriever in (AgenticSingleRetriever, AgenticEnsembleRetriever):
         description = retriever.FUNCTION_DESCRIPTION.lower()
         assert "rejected" in description
         assert "valid" in description
         assert "capacity" in description
-        assert "size hint" in description
+        assert "additional-chunk count" in description
+        assert "absolute size" in description
+        assert "not a cumulative-call ceiling" in description
         assert "requested chunks take priority" in description
 
 
