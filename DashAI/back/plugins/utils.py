@@ -1,13 +1,17 @@
 import importlib
 import json
 import logging
+import pathlib
 import sys
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Iterable, List, Optional
 
 import requests
 
 from DashAI.back.core.enums.plugin_tags import PluginTag
-from DashAI.back.plugins.environment import activate_plugins_directory
+from DashAI.back.plugins.environment import (
+    activate_plugins_directory,
+    get_plugins_directory,
+)
 from DashAI.back.plugins.installer import (
     PluginInstallError,
     install_requirement,
@@ -344,7 +348,36 @@ def uninstall_plugin(
     uninstalled_components: List[type] = set(available_plugins) - set(
         get_available_plugins()
     )
+    _forget_plugin_modules(uninstalled_components)
     return uninstalled_components
+
+
+def _forget_plugin_modules(components: Iterable[type]) -> None:
+    """Drop the modules of uninstalled plugin components from ``sys.modules``.
+
+    Python caches imported modules, so without this a plugin that is
+    reinstalled or upgraded while DashAI runs keeps its old code, and entry
+    points that name classes added by the new version fail to load until
+    DashAI is restarted. Only modules loaded from the plugins directory are
+    dropped, never DashAI's own modules or other packages.
+
+    Parameters
+    ----------
+    components : Iterable[type]
+        The plugin classes that were uninstalled.
+    """
+    top_levels = {component.__module__.split(".")[0] for component in components}
+    if not top_levels:
+        return
+    plugins_directory = get_plugins_directory()
+    for module_name in list(sys.modules):
+        if module_name.split(".")[0] not in top_levels:
+            continue
+        module_file = getattr(sys.modules[module_name], "__file__", None)
+        if module_file and pathlib.Path(module_file).absolute().is_relative_to(
+            plugins_directory
+        ):
+            del sys.modules[module_name]
 
 
 def unregister_plugin_components(

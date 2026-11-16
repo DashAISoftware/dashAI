@@ -1,3 +1,5 @@
+import sys
+import types
 from abc import ABCMeta
 from typing import Final
 from unittest.mock import Mock, patch
@@ -7,6 +9,7 @@ import requests
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+from DashAI.back.plugins.environment import get_plugins_directory
 from DashAI.back.plugins.utils import (
     _get_all_plugins,
     _is_verified_author,
@@ -229,6 +232,45 @@ def test_uninstall_plugin():
     assert uninsalled_plugins == {DummyComponent1}
     assert entry_points_mock.call_count == 2
     uninstall_requirement_mock.assert_called_once_with("Plugin1")
+
+
+def test_uninstall_plugin_forgets_the_modules_of_the_plugin():
+    """A reinstalled plugin must import its new code, not the cached old one."""
+    package_dir = get_plugins_directory() / "fake_dashai_plugin"
+    package = types.ModuleType("fake_dashai_plugin")
+    package.__file__ = str(package_dir / "__init__.py")
+    model = types.ModuleType("fake_dashai_plugin.model")
+    model.__file__ = str(package_dir / "model.py")
+    plugin_class = type(
+        "FakePluginComponent", (DummyBaseComponent,), {"__module__": model.__name__}
+    )
+    entry_points_mock = Mock(
+        side_effect=[[Mock(load=lambda: plugin_class, name="FakePluginComponent")], []]
+    )
+    cached = {package.__name__: package, model.__name__: model}
+
+    with (
+        patch.dict(sys.modules, cached),
+        patch("DashAI.back.plugins.utils.entry_points", entry_points_mock),
+        patch("DashAI.back.plugins.utils.uninstall_requirement"),
+    ):
+        assert uninstall_plugin("fake-dashai-plugin") == {plugin_class}
+        assert "fake_dashai_plugin" not in sys.modules
+        assert "fake_dashai_plugin.model" not in sys.modules
+
+
+def test_uninstall_plugin_keeps_modules_outside_the_plugins_directory():
+    entry_points_mock = Mock(
+        side_effect=[[Mock(load=lambda: DummyComponent1, name="Plugin1")], []]
+    )
+
+    with (
+        patch("DashAI.back.plugins.utils.entry_points", entry_points_mock),
+        patch("DashAI.back.plugins.utils.uninstall_requirement"),
+    ):
+        uninstall_plugin("Plugin1")
+
+    assert DummyComponent1.__module__ in sys.modules
 
 
 def test_install_plugin():
