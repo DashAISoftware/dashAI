@@ -23,6 +23,7 @@
   "metadataPanelTitle": "Metadaten des Datensatzes",
   "metadataSubtitle": "Füllen Sie das Formular im rechten Bereich aus. Die Vorschau markiert die gewählten Spalten und die nicht gesendeten.",
   "metadataTitle": "Datensatz für {{platform}} beschreiben",
+  "noColumn": "Keine",
   "noDatasets": "Keine Datensätze sind zum Export bereit.",
   "noPlatforms": "Keine Exportplattformen verfügbar.",
   "paramsLost": "Die Formulardaten gingen verloren, zum Beispiel durch Neuladen der Seite. Kehren Sie zum Formular zurück, um sie auszufüllen.",

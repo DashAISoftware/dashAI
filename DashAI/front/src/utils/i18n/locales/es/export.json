@@ -23,6 +23,7 @@
   "metadataPanelTitle": "Metadata del dataset",
   "metadataSubtitle": "Completa el formulario del panel derecho. La vista previa marca las columnas que elijas y las que no se enviarán.",
   "metadataTitle": "Describe el dataset para {{platform}}",
+  "noColumn": "Ninguna",
   "noDatasets": "No hay datasets listos para exportar.",
   "noPlatforms": "No hay plataformas de exportación disponibles.",
   "paramsLost": "Se perdieron los datos del formulario, por ejemplo al recargar la página. Vuelve al formulario para completarlos.",

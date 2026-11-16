@@ -15,6 +15,9 @@ import FormSchemaContainer from "../shared/FormSchemaContainer";
 import FormSchemaFieldCard from "../shared/FormSchemaFieldCard";
 import { columnFieldParam } from "./columnFields";
 
+/** Menu value of the "None" option in a multiple column selector. */
+const NONE = "__none__";
+
 /**
  * Right panel of the export metadata step: the platform's export form.
  *
@@ -102,6 +105,14 @@ export default function ExportMetadataPanel({
       });
   };
 
+  // An explicit "None" shows at a glance that a field is empty and lets the
+  // user empty it again after picking something.
+  const noneLabel = (
+    <Typography component="span" variant="body2" color="text.secondary">
+      {t("export:noColumn")}
+    </Typography>
+  );
+
   const renderSelect = (field) => {
     if (!field.multiple) {
       return (
@@ -111,8 +122,10 @@ export default function ExportMetadataPanel({
           displayEmpty
           value={columnValues[field.key] ?? ""}
           onChange={(event) => handleSingleChange(field, event.target.value)}
+          renderValue={(selected) => selected || noneLabel}
           inputProps={{ "aria-label": field.title }}
         >
+          <MenuItem value="">{noneLabel}</MenuItem>
           {columns.map((column) => (
             <MenuItem key={column} value={column}>
               {column}
@@ -127,17 +140,26 @@ export default function ExportMetadataPanel({
         size="small"
         fullWidth
         multiple
+        displayEmpty
         value={columnValues[field.key] ?? []}
-        onChange={(event) => onColumnChange(field.key, event.target.value)}
+        onChange={(event) => {
+          const picked = event.target.value;
+          onColumnChange(field.key, picked.includes(NONE) ? [] : picked);
+        }}
         inputProps={{ "aria-label": field.title }}
-        renderValue={(selected) => (
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-            {selected.map((column) => (
-              <Chip key={column} label={column} size="small" />
-            ))}
-          </Box>
-        )}
+        renderValue={(selected) =>
+          selected.length ? (
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+              {selected.map((column) => (
+                <Chip key={column} label={column} size="small" />
+              ))}
+            </Box>
+          ) : (
+            noneLabel
+          )
+        }
       >
+        <MenuItem value={NONE}>{noneLabel}</MenuItem>
         {options.map((column) => (
           <MenuItem key={column} value={column}>
             {column}

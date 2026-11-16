@@ -22,6 +22,7 @@
   "metadataPanelTitle": "数据集元数据",
   "metadataSubtitle": "请填写右侧面板中的表单。预览会标出您选择的列以及不会发送的列。",
   "metadataTitle": "为 {{platform}} 描述数据集",
+  "noColumn": "无",
   "noDatasets": "没有可导出的数据集。",
   "noPlatforms": "没有可用的导出平台。",
   "paramsLost": "表单数据已丢失（例如刷新了页面）。请返回表单重新填写。",

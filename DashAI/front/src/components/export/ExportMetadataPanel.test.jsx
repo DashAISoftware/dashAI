@@ -111,9 +111,45 @@ describe("ExportMetadataPanel", () => {
     const options = openSelect("Skipped columns").getAllByRole("option");
 
     expect(options.map((option) => option.textContent)).toEqual([
+      "None",
       "id",
       "price",
     ]);
+  });
+
+  it("shows None while a column field is empty", () => {
+    renderPanel();
+
+    expect(
+      screen.getByRole("combobox", { name: "Label column" }),
+    ).toHaveTextContent("None");
+    expect(
+      screen.getByRole("combobox", { name: "Skipped columns" }),
+    ).toHaveTextContent("None");
+  });
+
+  it("empties a single column field when None is picked", () => {
+    const { onColumnChange } = renderPanel({
+      columnValues: { label_column: "price" },
+    });
+
+    fireEvent.click(
+      openSelect("Label column").getByRole("option", { name: "None" }),
+    );
+
+    expect(onColumnChange).toHaveBeenCalledWith("label_column", "");
+  });
+
+  it("empties a multiple column field when None is picked", () => {
+    const { onColumnChange } = renderPanel({
+      columnValues: { skipped_columns: ["id", "price"] },
+    });
+
+    fireEvent.click(
+      openSelect("Skipped columns").getByRole("option", { name: "None" }),
+    );
+
+    expect(onColumnChange).toHaveBeenCalledWith("skipped_columns", []);
   });
 
   it("frees a column from the multiple fields when a single field takes it", () => {

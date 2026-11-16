@@ -23,6 +23,7 @@
   "metadataPanelTitle": "Metadados do conjunto de dados",
   "metadataSubtitle": "Preencha o formulário do painel direito. A pré-visualização marca as colunas que você escolher e as que não serão enviadas.",
   "metadataTitle": "Descreva o conjunto de dados para {{platform}}",
+  "noColumn": "Nenhuma",
   "noDatasets": "Não há conjuntos de dados prontos para exportar.",
   "noPlatforms": "Não há plataformas de exportação disponíveis.",
   "paramsLost": "Os dados do formulário foram perdidos, por exemplo ao recarregar a página. Volte ao formulário para preenchê-los.",
