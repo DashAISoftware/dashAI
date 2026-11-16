@@ -1,34 +1,423 @@
 {
+  "title": "Plugin-Modul",
+  "subtitle": "Komponenten, die dashAI erweitern: Modelle, Konverter, Metriken, Datenlader und mehr.",
   "button": {
+    "moreOptions": "Weitere Optionen",
+    "addToken": "Token hinzufügen",
+    "cancel": "Abbrechen",
+    "checkUpdates": "Nach Updates suchen",
+    "checkingUpdates": "Wird gesucht…",
+    "chooseOther": "Andere Datei wählen",
+    "clearFilters": "Filter zurücksetzen",
+    "close": "Schließen",
+    "hideDetails": "Details ausblenden",
     "install": "Installieren",
-    "refresh": "Aktualisieren",
-    "return": "Zurück",
+    "devPlugin": "Entwicklungs-Plugin installieren",
+    "installPlugin": "Plugin installieren",
+    "reinstall": "Neu installieren",
+    "retry": "Erneut versuchen",
+    "review": "Prüfen",
+    "selectFolder": "Ordner auswählen",
+    "selectZip": ".zip auswählen",
+    "showDetails": "Details anzeigen",
     "uninstall": "Deinstallieren",
-    "upgrade": "Aktualisieren"
-  },
-  "error": {
-    "installingPlugin": "Fehler beim Installieren des Plugins.",
-    "obtainPluginDetails": "Fehler beim Abrufen der Plugin-Details.",
-    "obtainPlugins": "Fehler beim Abrufen der Plugins.",
-    "updatePlugins": "Fehler beim Aktualisieren der Plugins.",
-    "upgradingPlugin": "Fehler beim Aktualisieren des Plugins."
+    "uninstalling": "Wird deinstalliert…",
+    "update": "Aktualisieren",
+    "updateTo": "Auf {{version}} aktualisieren",
+    "viewRelease": "Release auf GitHub ansehen",
+    "installRelease": "Diese Veröffentlichung installieren",
+    "installNamed": "{{name}} installieren",
+    "showMore": "Mehr anzeigen",
+    "showLess": "Weniger anzeigen",
+    "disable": "Deaktivieren",
+    "enable": "Aktivieren"
   },
   "label": {
-    "browse": "Durchsuchen",
-    "details": "Details",
+    "allTags": "Alle",
+    "count_one": "{{count}} Plugin",
+    "count_other": "{{count}} Plugins",
+    "disabled": "Deaktiviert",
+    "enabled": "Aktiviert",
+    "gridView": "Kartenansicht",
     "installed": "Installiert",
-    "latest": "Neueste",
-    "noPluginsToShow": "Keine Plugins anzeigbar (versuchen Sie zu aktualisieren)",
-    "oldest": "Älteste",
-    "plugins": "{{label}} - Plugins",
-    "tags": "Schlagwörter",
-    "verified": "Verifiziertes Plugin von dashAI",
-    "version": "Version: {{version}}",
-    "versionInstalledLatestAvailable": "Installierte Version: <1></1> | Neueste verfügbare Version: <3></3>"
+    "listView": "Listenansicht",
+    "newVersion": "{{version}} verfügbar",
+    "official": "Offizielles dashAI-Plugin",
+    "officialBadge": "Von dashAI veröffentlicht",
+    "search": "Suchen",
+    "searchPlaceholder": "Name des Plugins oder einer Komponente",
+    "sortBy": "Sortieren nach",
+    "tags": "Komponententyp",
+    "toggleHelp": "Beim Deaktivieren wird nichts gelöscht. Sitzungen, Durchläufe und Chats, die seine Komponenten nutzen, können angesehen, aber erst nach dem Aktivieren wieder ausgeführt werden.",
+    "retryLoadHelp": "Aktiviere es, um es erneut zu laden.",
+    "updatesAvailable_one": "{{count}} Plugin-Update verfügbar",
+    "updatesAvailable_other": "{{count}} Plugin-Updates verfügbar",
+    "explore": "Entdecken",
+    "fromGithub": "Von GitHub",
+    "pageRange": "{{from}}–{{to}} von {{count}}",
+    "perPage": "Plugins pro Seite:"
+  },
+  "filter": {
+    "status": {
+      "all": "Alle",
+      "disabled": "Deaktiviert",
+      "enabled": "Aktiviert",
+      "updates": "Mit Update",
+      "warnings": "Mit Warnungen"
+    },
+    "origin": {
+      "all": "Alle Quellen",
+      "git": "GitHub",
+      "local": "Lokal"
+    }
+  },
+  "sort": {
+    "name": "Name",
+    "newest": "Neueste",
+    "oldest": "Älteste"
+  },
+  "empty": {
+    "noMatches": "Kein Plugin entspricht den Filtern.",
+    "text": "Suche eines unter „Entdecken“ oder lade die .zip-Datei oder den Ordner eines Plugins hoch, um dashAI Modelle, Konverter, Metriken oder Datenlader hinzuzufügen.",
+    "title": "Noch keine Plugins installiert"
+  },
+  "tabs": {
+    "components": "Komponenten",
+    "dependencies": "Abhängigkeiten",
+    "details": "Details",
+    "settings": "Einstellungen"
+  },
+  "detail": {
+    "file": "Datei",
+    "id": "Kennung",
+    "installation": "Installation",
+    "installedAt": "Installiert",
+    "noReadme": "Dieses Plugin enthält keine README.md.",
+    "notFound": "Dieses Plugin wurde nicht gefunden.",
+    "release": "Release",
+    "repository": "Repository",
+    "tag": "Tag",
+    "updatedAt": "Aktualisiert",
+    "version": "Version",
+    "signedBy": "Signiert von",
+    "author": "Autor",
+    "authors": "Autoren",
+    "license": "Lizenz",
+    "trustLevel": "Vertrauensstufe",
+    "path": "Speicherort"
+  },
+  "trust": {
+    "github_attested": {
+      "label": "Verifiziert",
+      "text": "GitHub bestätigt, dass diese Datei von einem automatischen Prozess des Repositorys erstellt wurde. dashAI hat geprüft, dass sie nicht verändert wurde.",
+      "textBefore": "GitHub bestätigt, dass diese Datei von einem automatischen Prozess des Repositorys erstellt wurde. dashAI prüft, dass sie nicht verändert wurde."
+    },
+    "github_source": {
+      "label": "Teilweise verifiziert",
+      "text": "Das Release enthält nur den Quellcode. Anders als bei einem verifizierten Plugin gibt es keine von GitHub erstellte und geprüfte Datei.",
+      "textBefore": "Das Release enthält nur den Quellcode. Anders als bei einem verifizierten Plugin gibt es keine von GitHub erstellte und geprüfte Datei."
+    },
+    "github_asset": {
+      "label": "Nicht verifiziert",
+      "text": "Die Datei stammt aus einem GitHub-Release, aber wie sie erstellt wurde, ist nicht bestätigt. Sie könnte Code enthalten, der nicht im Repository steht.",
+      "textBefore": "Die Datei stammt aus einem GitHub-Release, aber wie sie erstellt wurde, ist nicht bestätigt. Sie könnte Code enthalten, der nicht im Repository steht."
+    },
+    "local": {
+      "label": "Lokal",
+      "text": "Es wurde aus einer manuell hochgeladenen Datei installiert. dashAI kann weder den Autor bestätigen noch prüfen, dass sie nicht verändert wurde.",
+      "textBefore": "Es wird aus einer manuell hochgeladenen Datei installiert. dashAI kann weder den Autor bestätigen noch prüfen, dass sie nicht verändert wurde."
+    },
+    "unknown": {
+      "label": "Unbekannt",
+      "text": "Es wurde mit einer früheren dashAI-Version installiert und seine Herkunft ist nicht erfasst. Eine Neuinstallation zeigt seine Vertrauensstufe.",
+      "textBefore": "Seine Herkunft ist nicht erfasst."
+    }
+  },
+  "tier": {
+    "attested": {
+      "label": "Verifiziert",
+      "text": "Seine Quelle bestätigt, dass diese Datei von einem automatischen Prozess des Repositorys erstellt wurde. dashAI hat geprüft, dass sie nicht verändert wurde.",
+      "textBefore": "Seine Quelle bestätigt, dass diese Datei von einem automatischen Prozess des Repositorys erstellt wurde. dashAI prüft, dass sie nicht verändert wurde."
+    },
+    "source": {
+      "label": "Teilweise verifiziert",
+      "text": "Das Release enthält nur den Quellcode. Anders als bei einem verifizierten Plugin gibt es keine von seiner Quelle erstellte und geprüfte Datei.",
+      "textBefore": "Das Release enthält nur den Quellcode. Anders als bei einem verifizierten Plugin gibt es keine von seiner Quelle erstellte und geprüfte Datei."
+    },
+    "unverified": {
+      "label": "Nicht verifiziert",
+      "text": "Die Datei stammt aus einem Release, aber wie sie erstellt wurde, ist nicht bestätigt. Sie könnte Code enthalten, der nicht im Repository steht.",
+      "textBefore": "Die Datei stammt aus einem Release, aber wie sie erstellt wurde, ist nicht bestätigt. Sie könnte Code enthalten, der nicht im Repository steht."
+    },
+    "local": {
+      "label": "Lokal",
+      "text": "Es wurde aus einer manuell hochgeladenen Datei installiert. dashAI kann weder den Autor bestätigen noch prüfen, dass sie nicht verändert wurde.",
+      "textBefore": "Es wird aus einer manuell hochgeladenen Datei installiert. dashAI kann weder den Autor bestätigen noch prüfen, dass sie nicht verändert wurde."
+    },
+    "unknown": {
+      "label": "Unbekannt",
+      "text": "Seine Herkunft ist nicht erfasst.",
+      "textBefore": "Seine Herkunft ist nicht erfasst."
+    }
+  },
+  "problem": {
+    "blocked": {
+      "chip": "Blockiert",
+      "title": "Vom Store blockiert"
+    },
+    "damaged": {
+      "chip": "Beschädigt",
+      "text": "Die eigenen Dateien des Plugins (manifest.json oder .source) können nicht gelesen werden. Installiere das Plugin neu oder deinstalliere es.",
+      "title": "Beschädigtes Plugin"
+    },
+    "incompatible": {
+      "chip": "Inkompatibel",
+      "text": "Es funktioniert wieder, sobald du eine mit dieser dashAI-Version kompatible Version des Plugins installierst oder dashAI aktualisierst, falls das Plugin eine neuere verlangt.",
+      "title": "Inkompatibel mit dieser dashAI-Version"
+    },
+    "load_failed": {
+      "chip": "Nicht geladen",
+      "text": "Der Code des Plugins hat einen Fehler, den sein Autor beheben muss.",
+      "title": "Das Plugin konnte nicht geladen werden"
+    },
+    "repair_failed": {
+      "chip": "Fehlende Pakete",
+      "text": "Beim Aktualisieren von dashAI konnten die Python-Pakete des Plugins nicht erneut installiert werden. Starte dashAI mit Internetverbindung neu oder installiere das Plugin neu.",
+      "title": "Seine Python-Pakete fehlen"
+    },
+    "restart_required": {
+      "chip": "Neustart ausstehend",
+      "text": "Seine Abhängigkeiten wurden aktualisiert. Starte dashAI neu, um das Plugin zu verwenden.",
+      "title": "dashAI muss neu gestartet werden"
+    },
+    "dependency_unavailable": {
+      "chip": "Anderes Plugin inaktiv",
+      "title": "Benötigt ein anderes Plugin",
+      "text": "Eines der benötigten Plugins ist nicht installiert, deaktiviert oder hat ein Problem. Prüfe es unter „Plugins, die es braucht“."
+    },
+    "dependency_version": {
+      "chip": "Andere Plugin-Version",
+      "title": "Benötigt eine andere Version eines Plugins",
+      "text": "Eines der benötigten Plugins hat eine Version außerhalb des verlangten Bereichs. Prüfe es unter „Plugins, die es braucht“."
+    }
+  },
+  "dialog": {
+    "installBlocked": "Der Store hat dieses Plugin aus Sicherheitsgründen zurückgezogen. Es wird blockiert installiert.",
+    "ackAuthor": "Ich verstehe das Risiko und vertraue {{author}}",
+    "ackLocal": "Ich verstehe das Risiko und vertraue der Herkunft dieser Datei",
+    "cannotInstall": "Dieses Plugin kann nicht installiert werden",
+    "drop": "Ziehe eine .zip-Datei oder den Ordner des Plugins hierher",
+    "failedTitle": "Der Vorgang wurde nicht abgeschlossen",
+    "fromGithub": "Installiert die neueste Veröffentlichung eines GitHub-Repositorys. Ist das Repository im Store veröffentlicht, wird das Plugin mit ihm verknüpft und erhält von dort Updates und Hinweise.",
+    "installTitle": "{{name}} installieren",
+    "loading": "Plugin wird geprüft…",
+    "localWarning": "Ein Plugin führt Code mit denselben Berechtigungen wie dashAI aus und kann auf Datensätze und Dateien zugreifen. Installiere nur Dateien bekannter Herkunft.",
+    "none": "Keine",
+    "or": "oder",
+    "pickTitle": "Entwicklungs-Plugin installieren",
+    "reinstallTitle": "{{name}} neu installieren",
+    "reviewTitle": "Prüfung der Datei",
+    "step": "Schritt {{step}} von 2",
+    "upToDate": "Du hast bereits die neueste Version.",
+    "updateTitle": "{{name}} aktualisieren",
+    "working": {
+      "install": "Wird installiert…",
+      "reinstall": "Wird neu installiert…",
+      "update": "Wird aktualisiert…"
+    },
+    "version": {
+      "sameRelease": "Es ist dieselbe Version, die du installiert hast. Du kannst sie trotzdem installieren.",
+      "olderUpdate": "Es ist eine ältere Version als die, die du installiert hast, daher ist kein Update möglich.",
+      "older": "Es ist eine ältere Version als die, die du installiert hast."
+    },
+    "inStore": "Dieses Plugin ist im Store: Updates und Hinweise kommen von dort.",
+    "replacesOther": "Ersetzt ein anderes Plugin mit dieser ID, installiert von {{location}}.",
+    "staysOff_one": "{{names}} bleibt deaktiviert; es wird aktiviert, wenn du {{name}} aktivierst.",
+    "staysOff_other": "{{names}} bleiben deaktiviert; sie werden aktiviert, wenn du {{name}} aktivierst.",
+    "breaks_one": "Mit dieser Version funktioniert {{names}} nicht mehr, weil es eine andere Version von {{name}} benötigt.",
+    "breaks_other": "Mit dieser Version funktionieren {{names}} nicht mehr, weil sie eine andere Version von {{name}} benötigen.",
+    "willEnable_one": "{{names}} wird aktiviert.",
+    "willEnable_other": "{{names}} werden aktiviert.",
+    "willInstall_one": "{{names}} wird ebenfalls aus dem Store installiert.",
+    "willInstall_other": "{{names}} werden ebenfalls aus dem Store installiert.",
+    "willInstallOlder": "{{name}} {{version}} wird ebenfalls aus dem Store installiert. Seine neueste Version erfordert ein dashAI-Update."
+  },
+  "link": {
+    "github": "Auf GitHub ansehen",
+    "issues": "Problem melden"
+  },
+  "allowBlocked": {
+    "title": "{{name}} trotzdem aktivieren?",
+    "text": "Der dashAI-Store hat es aus Sicherheitsgründen zurückgezogen. Ein Plugin führt Code mit denselben Berechtigungen wie dashAI aus: Aktiviere es nur, wenn du seiner Herkunft vertraust.",
+    "confirm": "Trotzdem aktivieren"
+  },
+  "uninstall": {
+    "text": "{{name}} wird deinstalliert. Seine Komponenten werden aus dashAI entfernt und seine Dateien gelöscht. Ihre Sitzungen, Durchläufe, Notebooks und Chats bleiben erhalten. Die, die seine Komponenten nutzen, können angesehen, aber erst nach einer Neuinstallation wieder ausgeführt werden.",
+    "title": "Deinstallation bestätigen"
+  },
+  "settings": {
+    "intro": "Globale Einstellungen des Plugins. Sie gelten für alle seine Komponenten, und der nächste Auftrag verwendet sie.",
+    "save": "Speichern",
+    "unsaved": "Es gibt ungespeicherte Änderungen",
+    "saved": "Die Einstellungen von {{name}} wurden gespeichert",
+    "inactiveTitle": "Das Plugin ist deaktiviert",
+    "inactiveText": "Aktiviere es, um seine Einstellungen zu ändern. Die gespeicherten Werte bleiben erhalten.",
+    "problemTitle": "Die Einstellungen sind nicht verfügbar",
+    "problemText": "Sie lassen sich ändern, sobald das Problem oben behoben ist. Die gespeicherten Werte bleiben erhalten."
   },
   "message": {
-    "pluginInstalled": "Plugin erfolgreich installiert",
-    "pluginUninstalled": "Plugin erfolgreich deinstalliert",
-    "pluginUpgraded": "Plugin erfolgreich aktualisiert"
+    "disabled": "{{name}} deaktiviert.",
+    "enabled": "{{name}} aktiviert.",
+    "install": "{{name}} installiert. Seine Komponenten sind jetzt verfügbar.",
+    "noUpdates": "Alle Plugins sind aktuell.",
+    "reinstall": "{{name}} neu installiert.",
+    "restartRequired": "Starte dashAI neu, um die Komponenten von {{name}} zu verwenden.",
+    "uninstalled": "{{name}} deinstalliert.",
+    "update": "{{name}} auf {{version}} aktualisiert.",
+    "updatesFound_one": "{{count}} Plugin hat eine neue Version.",
+    "updatesFound_other": "{{count}} Plugins haben eine neue Version.",
+    "checkOffline": "Keine Verbindung zu GitHub, um nach Aktualisierungen zu suchen. Prüfen Sie Ihre Internetverbindung.",
+    "checkFailed_one": "Für {{count}} Plugin konnte nicht nach Aktualisierungen gesucht werden.",
+    "checkFailed_other": "Für {{count}} Plugins konnte nicht nach Aktualisierungen gesucht werden.",
+    "storeCheckFailed": "Der Plugin-Store konnte nicht geprüft werden.",
+    "installWith": "{{name}} zusammen mit {{names}} installiert. Seine Komponenten sind jetzt verfügbar.",
+    "installedBefore_one": "{{names}} wurde installiert, aber {{name}} konnte nicht installiert werden.",
+    "installedBefore_other": "{{names}} wurden installiert, aber {{name}} konnte nicht installiert werden.",
+    "enabledWith": "{{name}} zusammen mit {{names}} aktiviert.",
+    "enableFailed": "{{dependency}} konnte nicht aktiviert werden. {{name}} bleibt unverändert."
+  },
+  "errorTitles": {
+    "preview_expired": "Die Prüfung ist abgelaufen",
+    "invalid_plugin": "Dieses Plugin kann nicht installiert werden",
+    "job_running": "Ein Job läuft",
+    "other_dashai": "Ein anderes dashAI ändert Plugins",
+    "rate_limited": "GitHub hat die Anfragen begrenzt",
+    "offline": "Keine Verbindung"
+  },
+  "errors": {
+    "absolute_own_import": "{{module}} importiert sein eigenes Modul {{name}} absolut. Verwende einen relativen Import: {{suggestion}}",
+    "cannot_update": "Dieses Plugin hat keine Quelle zum Aktualisieren. Lade die neue Version als .zip hoch.",
+    "class_not_defined": "Das Modul {{module}} definiert die Klasse {{class}} nicht.",
+    "dependency_conflict": "Die benötigten Python-Pakete sind nicht mit denen dieser dashAI-Version oder eines anderen installierten Plugins kompatibel.",
+    "dependency_install_failed": "Seine Python-Pakete konnten nicht installiert werden. Nichts wurde geändert. Prüfe die Internetverbindung und versuche es erneut.",
+    "digest_mismatch": "Der Download stimmt nicht mit dem überein, was der Store geprüft hat (anderer SHA-256), daher wurde nichts installiert. Passiert es erneut, hat der Autor die Veröffentlichung womöglich geändert.",
+    "fetch_failed": "Das Plugin konnte nicht heruntergeladen werden.",
+    "file_not_found": "Die Datei oder der Ordner wurde nicht gefunden.",
+    "forbidden_origin": "Plugins können nur aus dashAI verwaltet werden.",
+    "incompatible": "Dieses Plugin ist nicht mit dieser dashAI-Version kompatibel.",
+    "install_failed": "Der Vorgang konnte nicht abgeschlossen werden.",
+    "internal_error": "Ein unerwarteter Fehler ist aufgetreten.",
+    "invalid_archive": "Die Release-Datei konnte nicht geöffnet werden.",
+    "invalid_location": "Das ist keine gültige Adresse.",
+    "invalid_id": "Die ID „{{id}}“ ist ungültig. Verwende Kleinbuchstaben, Ziffern und einzelne Bindestriche (zum Beispiel „my-plugin“).",
+    "invalid_manifest": "Die manifest.json ist ungültig. Prüfe: {{fields}}.",
+    "invalid_plugin": "Dieses Plugin kann nicht installiert werden.",
+    "invalid_settings": "Einige Werte sind nicht mehr gültig (das Plugin hat sich vielleicht geändert). Die Einstellungen wurden neu gelesen.",
+    "invalid_zip": "Die Datei ist keine gültige .zip-Datei.",
+    "job_running": "Ein Training, eine Vorhersage oder ein anderer Job läuft, und Abhängigkeiten jetzt zu ändern könnte darin Versionen mischen. Nichts wurde geändert: versuche es erneut, wenn er fertig ist.",
+    "load_failed": "Sein Code konnte in dashAI nicht geladen werden.",
+    "manifest_not_found": "Das ist kein Plugin: im Stammverzeichnis fehlt die manifest.json.",
+    "missing_dependencies": "Seine Python-Pakete fehlen. Starte dashAI mit Internetverbindung neu oder installiere es neu.",
+    "module_not_found": "Das Modul {{module}} der Komponente {{component}} wurde nicht gefunden.",
+    "needs_newer_dashai": "Es benötigt dashAI {{required}} oder neuer, und dies ist {{current}}.",
+    "no_newer_version": "Version {{installed}} ist installiert, und das neueste Release ist {{latest}}.",
+    "no_release": "Das Repository {{repo}} hat keine Releases.",
+    "no_settings": "Dieses Plugin hat keine Einstellungen.",
+    "not_a_zip": "Es können nur .zip-Dateien hochgeladen werden.",
+    "not_found": "Das Repository {{repo}} wurde nicht gefunden. Private Repositorys werden nicht unterstützt.",
+    "not_installed": "Das Plugin {{id}} ist nicht installiert.",
+    "offline": "Keine Verbindung möglich. Prüfe die Internetverbindung und versuche es erneut.",
+    "other_dashai": "Ein anderes dashAI ist auf demselben Datenordner geöffnet und installiert oder entfernt ein Plugin. Nichts wurde geändert: versuche es erneut, wenn es fertig ist.",
+    "overwrites_other_package": "Eine seiner Abhängigkeiten ({{packages}}) würde Dateien von {{other}} überschreiben, das ein anderes installiertes Plugin verwendet. Nichts wurde installiert.",
+    "pip_unavailable": "dashAI kann auf diesem Computer keine Abhängigkeiten installieren, weil pip nicht verfügbar ist.",
+    "preview_expired": "Was du geprüft hast, wird nicht mehr aufbewahrt (es wurde bereits installiert oder es ist zu viel Zeit vergangen), daher wurde nichts installiert. Prüfe es erneut.",
+    "preview_mismatch": "Was du geprüft hast, ist ein anderes Plugin oder stammt von woanders, daher kann es dieses nicht aktualisieren. Es wurde nichts installiert.",
+    "rate_limited": "Das Anfragelimit, das GitHub ohne Token erlaubt, wurde erreicht. Um {{time}} sind wieder Anfragen möglich. Mit einem GitHub-Token in den Zugangsdaten steigt das Limit auf 5000 Anfragen pro Stunde.",
+    "rate_limited_later": "Das Anfragelimit, das GitHub ohne Token erlaubt, wurde erreicht. Mit einem GitHub-Token in den Zugangsdaten steigt das Limit auf 5000 Anfragen pro Stunde.",
+    "revoked": "Der Store hat diese Veröffentlichung aus Sicherheitsgründen zurückgezogen, daher wurde nichts installiert.",
+    "settings_unavailable": "Seine Einstellungen sind nicht verfügbar. Das Plugin muss aktiv sein und darf keine Probleme haben.",
+    "store_mismatch": "Der Download ist nicht das, was der Store geprüft hat, daher wurde nichts installiert.",
+    "syntax_error": "In {{module}} gibt es einen Syntaxfehler (Zeile {{line}}).",
+    "tag_not_found": "Das Release {{tag}} existiert nicht in {{repo}}.",
+    "too_big": "Die Datei überschreitet das Maximum von {{max_mb}} MB für ein Plugin. Ein Plugin enthält Code: Daten und Gewichte laden seine Komponenten bei der Verwendung herunter.",
+    "type_not_allowed": "Die Komponente {{component}} ist von einem Typ, den dashAI nicht unterstützt ({{type}}).",
+    "unsafe_zip": "Die .zip-Datei enthält Pfade außerhalb ihres Ordners und kann nicht installiert werden.",
+    "missing_plugin_dependency": "Benötigt das Plugin „{{id}}“, das weder installiert noch im Store veröffentlicht ist. Installiere es zuerst aus einer .zip-Datei oder von GitHub.",
+    "incompatible_plugin_dependency": "Benötigt das Plugin „{{id}}“. Es ist im Store, aber keine seiner Versionen funktioniert mit dieser dashAI-Version.",
+    "missing_plugin_dependency_unread": "Benötigt das Plugin „{{id}}“, das nicht installiert ist. Der Store konnte nicht danach durchsucht werden.",
+    "dependency_unavailable": "Benötigt {{name}}, das sich nicht aktivieren lässt ({{problem}}). Prüfe dieses Plugin unter Plugins.",
+    "dependency_inactive": "Benötigt das Plugin „{{id}}“, das nicht aktiv ist. Es wurde nichts installiert.",
+    "dependency_cycle": "Die Plugins {{ids, list}} benötigen sich gegenseitig, daher kann keines installiert werden.",
+    "plugin_dependency_version": "Benötigt das Plugin „{{id}}“ in Version {{required}}, installiert ist Version {{installed}}.",
+    "plugin_dependency_version_store": "Benötigt das Plugin „{{id}}“ in Version {{required}}, und der Store bietet keine in diesem Bereich an."
+  },
+  "store": {
+    "readFailed": "Der Plugin-Store konnte nicht gelesen werden. Prüfe deine Internetverbindung.",
+    "empty": "Der Store hat noch keine Plugins.",
+    "published": "Veröffentlicht",
+    "reading": "Der Plugin-Store wird gelesen…",
+    "readmeFailed": "Die README konnte nicht geladen werden. Prüfe deine Internetverbindung.",
+    "notice": {
+      "blocked": {
+        "title": "Vom Store blockiert",
+        "text": "dashAI lädt es nicht mehr, weil der Store es aus Sicherheitsgründen zurückgezogen hat. Du kannst es deinstallieren oder, wenn du seiner Herkunft vertraust, trotzdem aktivieren."
+      },
+      "allowedAnyway": {
+        "title": "Trotzdem aktiviert",
+        "text": "Der Store hat dieses Plugin aus Sicherheitsgründen blockiert, und du hast es trotzdem aktiviert. Wenn der Store es erneut blockiert, wird es wieder deaktiviert."
+      },
+      "removed": {
+        "title": "Aus dem Store zurückgezogen",
+        "text": "Es funktioniert weiter, erhält aber keine Updates mehr."
+      },
+      "installedOther": {
+        "title": "Du hast bereits ein anderes Plugin mit dieser ID installiert",
+        "text": "Wenn du dieses installierst, wird es ersetzt."
+      },
+      "requiresDashai": {
+        "title": "Erfordert eine neuere dashAI-Version",
+        "text": "Aktualisiere dashAI, um es zu installieren."
+      },
+      "olderOffered": {
+        "title": "Eine ältere Version wird angeboten",
+        "text": "{{version}} erfordert dashAI {{dashai}} oder neuer."
+      },
+      "newerNeedsDashai": {
+        "title": "Eine neue Version des Plugins ist verfügbar",
+        "text": "Aktualisiere dashAI auf {{dashai}} oder neuer, um {{version}} zu installieren."
+      }
+    },
+    "invalid": "Der Plugin-Store hat etwas geantwortet, das diese dashAI-Version nicht lesen kann.",
+    "unverified": "Die Signatur des Plugin-Stores konnte nicht überprüft werden, daher wurde der Download nicht verwendet.",
+    "rateLimited": "GitHub hat die Anfragen an den Plugin-Store begrenzt. Versuche es später erneut.",
+    "allInstalled": "Alle Plugins aus dem Store sind bereits installiert."
+  },
+  "dev": {
+    "question": "Entwickelst du ein Plugin?",
+    "hint": "Installiere es aus einer .zip-Datei oder über eine GitHub-URL."
+  },
+  "requires": {
+    "disabled": "Benötigt <plugin>{{name}}</plugin>, das deaktiviert ist.",
+    "uninstalled": "Benötigt <plugin>{{name}}</plugin>, das nicht installiert ist.",
+    "problem": "Benötigt <plugin>{{name}}</plugin>, das ein Problem hat.",
+    "disableTitle": "{{name}} deaktivieren?",
+    "disableText": "Diese Plugins benötigen es und funktionieren nicht mehr, bis du es wieder aktivierst:",
+    "uninstallText": "Diese Plugins benötigen es und funktionieren nicht mehr, bis du es wieder installierst:",
+    "enableTitle": "{{name}} aktivieren?",
+    "enableText_one": "Um {{name}} zu aktivieren, wird auch aktiviert:",
+    "enableText_other": "Um {{name}} zu aktivieren, werden auch aktiviert:",
+    "required": "Plugins, die es braucht",
+    "dependents": "Plugins, die es brauchen",
+    "state": {
+      "active": "Aktiv",
+      "disabled": "Deaktiviert",
+      "uninstalled": "Nicht installiert",
+      "unlisted": "Nicht installiert und nicht im Store",
+      "problem": "Hat ein Problem",
+      "installed": "Installiert",
+      "store": "Wird installiert",
+      "incompatible": "Keine kompatible Version",
+      "version": "Version außerhalb des Bereichs"
+    }
   }
 }

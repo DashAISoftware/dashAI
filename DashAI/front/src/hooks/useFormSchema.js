@@ -6,6 +6,7 @@ import useSchema from "./useSchema";
 /**
  * This hook is used to handle the formik schema of a model, it will initialize the formik schema with the default values of the model
  * @param {string} model - The model to get the schema from
+ * @param {object} formattedSchema - A schema already formatted (formattedModel), used instead of the model's
  * @param {object} initialValues - The initial values of the form
  * @param {object} formSubmitRef - The reference to the formik object
  * @param {function} setError - The function to set the error state of the form
@@ -14,6 +15,7 @@ import useSchema from "./useSchema";
 
 function useFormSchema({
   model,
+  formattedSchema,
   initialValues,
   formSubmitRef,
   setError,
@@ -21,6 +23,7 @@ function useFormSchema({
 }) {
   const { modelSchema, defaultValues, yupSchema, loading } = useSchema({
     modelName: model,
+    formattedSchema,
   });
 
   const { formValues, handleUpdateSchema } = useFormSchemaStore();

@@ -186,6 +186,9 @@ dvclive
 # ruff cache
 .ruff_cache
 
+# TypeScript incremental build info
+*.tsbuildinfo
+
 # MacOS
 *.DS_Store
 

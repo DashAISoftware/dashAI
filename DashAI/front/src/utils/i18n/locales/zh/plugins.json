@@ -1,34 +1,423 @@
 {
+  "title": "插件模块",
+  "subtitle": "扩展 dashAI 的组件：模型、转换器、指标、数据加载器等。",
   "button": {
+    "moreOptions": "更多选项",
+    "addToken": "添加令牌",
+    "cancel": "取消",
+    "checkUpdates": "检查更新",
+    "checkingUpdates": "正在检查…",
+    "chooseOther": "选择其他文件",
+    "clearFilters": "清除筛选",
+    "close": "关闭",
+    "hideDetails": "隐藏详情",
     "install": "安装",
-    "refresh": "刷新",
-    "return": "返回",
+    "devPlugin": "安装开发插件",
+    "installPlugin": "安装插件",
+    "reinstall": "重新安装",
+    "retry": "重试",
+    "review": "检查",
+    "selectFolder": "选择文件夹",
+    "selectZip": "选择 .zip",
+    "showDetails": "查看详情",
     "uninstall": "卸载",
-    "upgrade": "升级"
-  },
-  "error": {
-    "installingPlugin": "安装插件时出错。",
-    "obtainPluginDetails": "获取插件详情时出错。",
-    "obtainPlugins": "获取插件列表时出错。",
-    "updatePlugins": "更新插件时出错。",
-    "upgradingPlugin": "升级插件时出错。"
+    "uninstalling": "正在卸载…",
+    "update": "更新",
+    "updateTo": "更新到 {{version}}",
+    "viewRelease": "在 GitHub 上查看发布",
+    "installRelease": "安装此发布版本",
+    "installNamed": "安装 {{name}}",
+    "showMore": "显示更多",
+    "showLess": "显示更少",
+    "disable": "停用",
+    "enable": "启用"
   },
   "label": {
-    "browse": "浏览",
-    "details": "详情",
+    "allTags": "全部",
+    "count_one": "{{count}} 个插件",
+    "count_other": "{{count}} 个插件",
+    "disabled": "已停用",
+    "enabled": "已启用",
+    "gridView": "卡片视图",
     "installed": "已安装",
-    "latest": "最新",
-    "noPluginsToShow": "暂无插件（请尝试刷新）",
-    "oldest": "最旧",
-    "plugins": "{{label}} - 插件",
-    "tags": "标签",
-    "verified": "来自 dashAI 的已验证插件",
-    "version": "版本：{{version}}",
-    "versionInstalledLatestAvailable": "已安装版本：<1></1> | 最新可用版本：<3></3>"
+    "listView": "列表视图",
+    "newVersion": "{{version}} 可用",
+    "official": "dashAI 官方插件",
+    "officialBadge": "由 dashAI 发布",
+    "search": "搜索",
+    "searchPlaceholder": "插件或组件名称",
+    "sortBy": "排序方式",
+    "tags": "组件类型",
+    "toggleHelp": "停用不会删除任何内容。使用其组件的会话、运行和聊天可以查看，但在启用之前无法运行。",
+    "retryLoadHelp": "启用它以重新尝试加载。",
+    "updatesAvailable_one": "{{count}} 个插件更新可用",
+    "updatesAvailable_other": "{{count}} 个插件更新可用",
+    "explore": "探索",
+    "fromGithub": "来自 GitHub",
+    "pageRange": "第 {{from}}–{{to}} 个，共 {{count}} 个",
+    "perPage": "每页插件数："
+  },
+  "filter": {
+    "status": {
+      "all": "全部",
+      "disabled": "已停用",
+      "enabled": "已启用",
+      "updates": "有更新",
+      "warnings": "有警告"
+    },
+    "origin": {
+      "all": "全部来源",
+      "git": "GitHub",
+      "local": "本地"
+    }
+  },
+  "sort": {
+    "name": "名称",
+    "newest": "最新",
+    "oldest": "最旧"
+  },
+  "empty": {
+    "noMatches": "没有插件符合筛选条件。",
+    "text": "在“探索”中查找，或上传插件的 .zip 或文件夹，为 dashAI 添加模型、转换器、指标或数据加载器。",
+    "title": "尚未安装任何插件"
+  },
+  "tabs": {
+    "components": "组件",
+    "dependencies": "依赖",
+    "details": "详情",
+    "settings": "设置"
+  },
+  "detail": {
+    "file": "文件",
+    "id": "标识符",
+    "installation": "安装",
+    "installedAt": "安装时间",
+    "noReadme": "此插件没有 README.md。",
+    "notFound": "找不到此插件。",
+    "release": "发布",
+    "repository": "仓库",
+    "tag": "标签",
+    "updatedAt": "更新时间",
+    "version": "版本",
+    "signedBy": "签名者",
+    "author": "作者",
+    "authors": "作者",
+    "license": "许可证",
+    "trustLevel": "信任级别",
+    "path": "位置"
+  },
+  "trust": {
+    "github_attested": {
+      "label": "已验证",
+      "text": "GitHub 证明此文件由仓库的自动流程生成。dashAI 已确认它未被修改。",
+      "textBefore": "GitHub 证明此文件由仓库的自动流程生成。dashAI 会确认它未被修改。"
+    },
+    "github_source": {
+      "label": "部分验证",
+      "text": "该发布只包含源代码。与已验证的插件不同，没有由 GitHub 生成并检查的文件。",
+      "textBefore": "该发布只包含源代码。与已验证的插件不同，没有由 GitHub 生成并检查的文件。"
+    },
+    "github_asset": {
+      "label": "未验证",
+      "text": "该文件来自 GitHub 发布，但其生成方式未经证明。它可能包含仓库中没有的代码。",
+      "textBefore": "该文件来自 GitHub 发布，但其生成方式未经证明。它可能包含仓库中没有的代码。"
+    },
+    "local": {
+      "label": "本地",
+      "text": "它是从手动上传的文件安装的。dashAI 无法确认其作者，也无法验证它未被修改。",
+      "textBefore": "它将从手动上传的文件安装。dashAI 无法确认其作者，也无法验证它未被修改。"
+    },
+    "unknown": {
+      "label": "未知",
+      "text": "它是用较早版本的 dashAI 安装的，其来源未被记录。重新安装后即可知道其信任级别。",
+      "textBefore": "其来源未被记录。"
+    }
+  },
+  "tier": {
+    "attested": {
+      "label": "已验证",
+      "text": "其来源证明此文件由仓库的自动流程生成。dashAI 已确认它未被修改。",
+      "textBefore": "其来源证明此文件由仓库的自动流程生成。dashAI 会确认它未被修改。"
+    },
+    "source": {
+      "label": "部分验证",
+      "text": "该发布只包含源代码。与已验证的插件不同，没有由其来源生成并检查的文件。",
+      "textBefore": "该发布只包含源代码。与已验证的插件不同，没有由其来源生成并检查的文件。"
+    },
+    "unverified": {
+      "label": "未验证",
+      "text": "该文件来自一个发布，但其生成方式未经证明。它可能包含仓库中没有的代码。",
+      "textBefore": "该文件来自一个发布，但其生成方式未经证明。它可能包含仓库中没有的代码。"
+    },
+    "local": {
+      "label": "本地",
+      "text": "它是从手动上传的文件安装的。dashAI 无法确认其作者，也无法验证它未被修改。",
+      "textBefore": "它将从手动上传的文件安装。dashAI 无法确认其作者，也无法验证它未被修改。"
+    },
+    "unknown": {
+      "label": "未知",
+      "text": "其来源未被记录。",
+      "textBefore": "其来源未被记录。"
+    }
+  },
+  "problem": {
+    "blocked": {
+      "chip": "已屏蔽",
+      "title": "已被商店屏蔽"
+    },
+    "damaged": {
+      "chip": "已损坏",
+      "text": "无法读取插件自身的文件（manifest.json 或 .source）。请重新安装或卸载该插件。",
+      "title": "插件已损坏"
+    },
+    "incompatible": {
+      "chip": "不兼容",
+      "text": "安装与此 dashAI 版本兼容的插件版本后即可恢复使用。如果插件需要更新的 dashAI，更新 dashAI 后也可恢复。",
+      "title": "与此 dashAI 版本不兼容"
+    },
+    "load_failed": {
+      "chip": "未加载",
+      "text": "插件代码有错误，需要由作者修复。",
+      "title": "插件无法加载"
+    },
+    "repair_failed": {
+      "chip": "缺少包",
+      "text": "更新 dashAI 时，无法重新安装该插件的 Python 包。请联网重启 dashAI 或重新安装该插件。",
+      "title": "缺少其 Python 包"
+    },
+    "restart_required": {
+      "chip": "需要重启",
+      "text": "其依赖项已更新。要使用该插件，请重启 dashAI。",
+      "title": "需要重启 dashAI"
+    },
+    "dependency_unavailable": {
+      "chip": "另一插件未激活",
+      "title": "需要另一个插件",
+      "text": "它需要的某个插件未安装、已禁用或有问题。请在“它需要的插件”中查看。"
+    },
+    "dependency_version": {
+      "chip": "插件版本不符",
+      "title": "需要另一个插件的其他版本",
+      "text": "它需要的某个插件版本不在要求的范围内。请在“它需要的插件”中查看。"
+    }
+  },
+  "dialog": {
+    "installBlocked": "商店出于安全原因下架了此插件。它将以屏蔽状态安装。",
+    "ackAuthor": "我了解风险并信任 {{author}}",
+    "ackLocal": "我了解风险并信任此文件的来源",
+    "cannotInstall": "无法安装此插件",
+    "drop": "将 .zip 或插件文件夹拖到这里",
+    "failedTitle": "操作未完成",
+    "fromGithub": "安装 GitHub 仓库的最新发布版本。如果该仓库已在商店中发布，插件将与商店关联，并从商店接收更新和通知。",
+    "installTitle": "安装 {{name}}",
+    "loading": "正在检查插件…",
+    "localWarning": "插件以与 dashAI 相同的权限运行代码，并且可以访问数据集和文件。建议只安装来源已知的文件。",
+    "none": "无",
+    "or": "或",
+    "pickTitle": "安装开发插件",
+    "reinstallTitle": "重新安装 {{name}}",
+    "reviewTitle": "文件检查",
+    "step": "第 {{step}} 步，共 2 步",
+    "upToDate": "你已经是最新版本。",
+    "updateTitle": "更新 {{name}}",
+    "working": {
+      "install": "正在安装…",
+      "reinstall": "正在重新安装…",
+      "update": "正在更新…"
+    },
+    "version": {
+      "sameRelease": "这与你已安装的版本相同。你仍然可以安装它。",
+      "olderUpdate": "这是比你已安装版本更早的版本，因此无法更新。",
+      "older": "这是比你已安装版本更早的版本。"
+    },
+    "inStore": "此插件在商店中：其更新和通知将来自商店。",
+    "replacesOther": "将替换另一个具有相同 id 的插件，该插件安装自 {{location}}。",
+    "staysOff_one": "{{names}} 保持停用；启用 {{name}} 时会一并启用。",
+    "staysOff_other": "{{names}} 保持停用；启用 {{name}} 时会一并启用。",
+    "breaks_one": "安装此版本后，{{names}} 将停止工作，因为它需要 {{name}} 的其他版本。",
+    "breaks_other": "安装此版本后，{{names}} 将停止工作，因为它们需要 {{name}} 的其他版本。",
+    "willEnable_one": "将启用 {{names}}。",
+    "willEnable_other": "将启用 {{names}}。",
+    "willInstall_one": "还将从商店安装 {{names}}。",
+    "willInstall_other": "还将从商店安装 {{names}}。",
+    "willInstallOlder": "还将从商店安装 {{name}} {{version}}。其最新版本需要更新 dashAI。"
+  },
+  "link": {
+    "github": "在 GitHub 上查看",
+    "issues": "报告问题"
+  },
+  "allowBlocked": {
+    "title": "仍要启用 {{name}} 吗？",
+    "text": "dashAI 商店出于安全原因下架了它。插件以与 dashAI 相同的权限运行代码：仅在你信任其来源时启用。",
+    "confirm": "仍然启用"
+  },
+  "uninstall": {
+    "text": "{{name}} 将被卸载。其组件将从 dashAI 中移除，其文件将被删除。你的会话、运行、笔记本和聊天会被保留。使用其组件的内容可以查看，但在重新安装之前无法运行。",
+    "title": "确认卸载"
+  },
+  "settings": {
+    "intro": "插件的全局设置。适用于其所有组件，下一个运行的任务将使用这些设置。",
+    "save": "保存",
+    "unsaved": "有未保存的更改",
+    "saved": "已保存 {{name}} 的设置",
+    "inactiveTitle": "插件已停用",
+    "inactiveText": "启用插件后才能更改其设置。已保存的值会保留。",
+    "problemTitle": "设置不可用",
+    "problemText": "解决上方的问题后即可更改。已保存的值会保留。"
   },
   "message": {
-    "pluginInstalled": "插件安装成功",
-    "pluginUninstalled": "插件卸载成功",
-    "pluginUpgraded": "插件升级成功"
+    "disabled": "{{name}} 已停用。",
+    "enabled": "{{name}} 已启用。",
+    "install": "{{name}} 已安装。其组件现已可用。",
+    "noUpdates": "所有插件均为最新。",
+    "reinstall": "{{name}} 已重新安装。",
+    "restartRequired": "请重启 dashAI 以使用 {{name}} 的组件。",
+    "uninstalled": "{{name}} 已卸载。",
+    "update": "{{name}} 已更新到 {{version}}。",
+    "updatesFound_one": "有 {{count}} 个插件有新版本。",
+    "updatesFound_other": "有 {{count}} 个插件有新版本。",
+    "checkOffline": "无法连接到 GitHub 检查更新。请检查网络连接。",
+    "checkFailed_one": "无法检查 {{count}} 个插件的更新。",
+    "checkFailed_other": "无法检查 {{count}} 个插件的更新。",
+    "storeCheckFailed": "无法检查插件商店。",
+    "installWith": "已安装 {{name}} 及 {{names}}。其组件现已可用。",
+    "installedBefore_one": "{{names}} 已安装，但 {{name}} 无法安装。",
+    "installedBefore_other": "{{names}} 已安装，但 {{name}} 无法安装。",
+    "enabledWith": "已启用 {{name}} 及 {{names}}。",
+    "enableFailed": "无法启用 {{dependency}}。{{name}} 保持原样。"
+  },
+  "errorTitles": {
+    "preview_expired": "检查已过期",
+    "invalid_plugin": "无法安装此插件",
+    "job_running": "有任务正在运行",
+    "other_dashai": "另一个 dashAI 正在更改插件",
+    "rate_limited": "GitHub 限制了请求",
+    "offline": "无网络连接"
+  },
+  "errors": {
+    "absolute_own_import": "{{module}} 以绝对方式导入其自身的模块 {{name}}。请使用相对导入：{{suggestion}}",
+    "cannot_update": "此插件没有可更新的来源。请以 .zip 上传新版本。",
+    "class_not_defined": "模块 {{module}} 没有定义类 {{class}}。",
+    "dependency_conflict": "其所需的 Python 包与此 dashAI 版本或另一个已安装插件的包不兼容。",
+    "dependency_install_failed": "无法安装其 Python 包。没有任何更改。请检查网络连接后重试。",
+    "digest_mismatch": "下载的内容与商店审核的不一致（SHA-256 不同），因此未安装任何内容。如果再次出现，可能是作者更改了发布。",
+    "fetch_failed": "无法下载插件。",
+    "file_not_found": "未找到文件或文件夹。",
+    "forbidden_origin": "只能在 dashAI 中管理插件。",
+    "incompatible": "此插件与此 dashAI 版本不兼容。",
+    "install_failed": "无法完成操作。",
+    "internal_error": "发生了意外错误。",
+    "invalid_archive": "无法打开发布文件。",
+    "invalid_location": "这不是有效的地址。",
+    "invalid_id": "ID “{{id}}” 无效。请使用小写字母、数字和单个连字符（例如 “my-plugin”）。",
+    "invalid_manifest": "manifest.json 无效。请检查：{{fields}}。",
+    "invalid_plugin": "无法安装此插件。",
+    "invalid_settings": "部分值已不再有效（插件可能已更改）。已重新读取其设置。",
+    "invalid_zip": "该文件不是有效的 .zip。",
+    "job_running": "有训练、预测或其他任务正在运行，此时更改依赖可能会使其混用版本。没有任何更改：请在其结束后重试。",
+    "load_failed": "其代码无法在 dashAI 中加载。",
+    "manifest_not_found": "这不是插件：其根目录缺少 manifest.json。",
+    "missing_dependencies": "缺少其 Python 包。请在联网状态下重启 dashAI 或重新安装它。",
+    "module_not_found": "未找到组件 {{component}} 的模块 {{module}}。",
+    "needs_newer_dashai": "需要 dashAI {{required}} 或更新版本，而当前为 {{current}}。",
+    "no_newer_version": "已安装版本 {{installed}}，最新发布为 {{latest}}。",
+    "no_release": "仓库 {{repo}} 没有发布。",
+    "no_settings": "此插件没有设置。",
+    "not_a_zip": "只能上传 .zip 文件。",
+    "not_found": "未找到仓库 {{repo}}。不支持私有仓库。",
+    "not_installed": "插件 {{id}} 未安装。",
+    "offline": "无法连接。请检查网络连接后重试。",
+    "other_dashai": "另一个 dashAI 在同一数据文件夹上打开，正在安装或移除插件。没有任何更改：请在其完成后重试。",
+    "overwrites_other_package": "其一个依赖（{{packages}}）会覆盖另一个已安装插件所用的 {{other}} 的文件。未安装任何内容。",
+    "pip_unavailable": "由于 pip 不可用，dashAI 无法在此计算机上安装依赖。",
+    "preview_expired": "你检查的内容已不再保留（已安装，或时间过长），因此未安装任何内容。请重新检查。",
+    "preview_mismatch": "你检查的是另一个插件，或来自其他来源，因此无法更新此插件。未安装任何内容。",
+    "rate_limited": "已达到 GitHub 在无令牌时允许的请求上限。可在 {{time}} 再次请求。在凭据中添加 GitHub 令牌后，上限提高到每小时 5000 次请求。",
+    "rate_limited_later": "已达到 GitHub 在无令牌时允许的请求上限。在凭据中添加 GitHub 令牌后，上限提高到每小时 5000 次请求。",
+    "revoked": "商店出于安全原因撤回了此发布，因此未安装任何内容。",
+    "settings_unavailable": "其设置当前不可用。插件必须处于启用状态且没有问题。",
+    "store_mismatch": "下载的内容与商店审核的不一致，因此未安装任何内容。",
+    "syntax_error": "{{module}} 中有语法错误（第 {{line}} 行）。",
+    "tag_not_found": "{{repo}} 中不存在发布 {{tag}}。",
+    "too_big": "文件超过插件的 {{max_mb}} MB 上限。插件只包含代码：数据和权重由其组件在使用时下载。",
+    "type_not_allowed": "组件 {{component}} 的类型不受 dashAI 支持（{{type}}）。",
+    "unsafe_zip": "该 .zip 包含指向其文件夹之外的路径，无法安装。",
+    "missing_plugin_dependency": "需要插件“{{id}}”，但它既未安装也未在商店中发布。请先通过 .zip 或 GitHub 安装它。",
+    "incompatible_plugin_dependency": "需要插件“{{id}}”。商店中有它，但它的所有版本都无法在此 dashAI 版本上运行。",
+    "missing_plugin_dependency_unread": "需要插件“{{id}}”，但它未安装。无法查询商店来查找它。",
+    "dependency_unavailable": "需要 {{name}}，但它无法启用（{{problem}}）。请在“插件”中检查该插件。",
+    "dependency_inactive": "需要插件“{{id}}”，但它未处于活动状态。未安装任何内容。",
+    "dependency_cycle": "插件 {{ids, list}} 相互依赖，因此都无法安装。",
+    "plugin_dependency_version": "需要插件“{{id}}”的 {{required}} 版本，但已安装的是 {{installed}}。",
+    "plugin_dependency_version_store": "需要插件“{{id}}”的 {{required}} 版本，但商店没有符合该范围的版本。"
+  },
+  "store": {
+    "readFailed": "无法读取插件商店。请检查网络连接。",
+    "empty": "商店中还没有插件。",
+    "published": "发布时间",
+    "reading": "正在读取插件商店…",
+    "readmeFailed": "无法加载 README。请检查网络连接。",
+    "notice": {
+      "blocked": {
+        "title": "已被商店屏蔽",
+        "text": "商店出于安全原因下架了它，因此 dashAI 已停止加载它。你可以卸载它；如果你信任其来源，也可以仍然启用。"
+      },
+      "allowedAnyway": {
+        "title": "已仍然启用",
+        "text": "商店出于安全原因屏蔽了此插件，而你仍然启用了它。如果商店再次屏蔽它，它会再次被停用。"
+      },
+      "removed": {
+        "title": "已从商店下架",
+        "text": "它仍可使用，但将不再接收更新。"
+      },
+      "installedOther": {
+        "title": "已安装另一个使用此 id 的插件",
+        "text": "安装此插件会替换它。"
+      },
+      "requiresDashai": {
+        "title": "需要更新版本的 dashAI",
+        "text": "请更新 dashAI 后再安装。"
+      },
+      "olderOffered": {
+        "title": "提供的是较早的版本",
+        "text": "{{version}} 需要 dashAI {{dashai}} 或更高版本。"
+      },
+      "newerNeedsDashai": {
+        "title": "该插件有新版本",
+        "text": "要安装 {{version}}，请将 dashAI 更新到 {{dashai}} 或更高版本。"
+      }
+    },
+    "invalid": "插件商店返回的内容无法被此版本的 dashAI 读取。",
+    "unverified": "无法验证插件商店的签名，因此未使用下载的内容。",
+    "rateLimited": "GitHub 限制了对插件商店的请求。请稍后再试。",
+    "allInstalled": "商店中的所有插件均已安装。"
+  },
+  "dev": {
+    "question": "正在开发插件？",
+    "hint": "可通过 .zip 文件或 GitHub URL 安装。"
+  },
+  "requires": {
+    "disabled": "需要 <plugin>{{name}}</plugin>，但它已停用。",
+    "uninstalled": "需要 <plugin>{{name}}</plugin>，但它未安装。",
+    "problem": "需要 <plugin>{{name}}</plugin>，但它有问题。",
+    "disableTitle": "停用 {{name}}？",
+    "disableText": "以下插件需要它，在你重新启用它之前将无法运行：",
+    "uninstallText": "以下插件需要它，在你重新安装它之前将无法运行：",
+    "enableTitle": "启用 {{name}}？",
+    "enableText_one": "启用 {{name}} 时还将启用：",
+    "enableText_other": "启用 {{name}} 时还将启用：",
+    "required": "它需要的插件",
+    "dependents": "需要它的插件",
+    "state": {
+      "active": "活动",
+      "disabled": "已停用",
+      "uninstalled": "未安装",
+      "unlisted": "未安装，商店中也没有",
+      "problem": "有问题",
+      "installed": "已安装",
+      "store": "将会安装",
+      "incompatible": "无兼容版本",
+      "version": "版本超出范围"
+    }
   }
 }

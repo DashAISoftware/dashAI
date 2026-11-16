@@ -20,20 +20,34 @@ import HardwareMonitorButton from "./hardware/HardwareMonitorButton";
 import NavbarTourButton from "./tour/NavbarTourButton";
 import CredentialsButton from "./credentials/CredentialsButton";
 import UpdatesButton from "./updates/UpdatesButton";
+import { usePluginUpdates } from "../hooks/usePlugins";
+import CountBadge from "./shared/CountBadge";
+
+// A count next to a nav item (e.g. plugin updates), hidden when zero.
+const NavBadge = ({ page }) => (
+  <CountBadge count={page.badge} title={page.badgeTitle} />
+);
 
 function ResponsiveAppBar() {
   const theme = useTheme();
   const colorMode = React.useContext(ColorModeContext);
   const location = useLocation();
-  const { t } = useTranslation(["common"]);
+  const { t } = useTranslation(["common", "plugins"]);
 
   const [anchorElNav, setAnchorElNav] = React.useState(null);
+  // Newer releases of GitHub plugins, seen from any page.
+  const pluginUpdates = Object.keys(usePluginUpdates().updates).length;
 
   const pages = [
     { name: t("common:datasets"), to: "/app/data" },
     { name: t("common:models"), to: "/app/models" },
     { name: t("common:generative"), to: "/app/generative" },
-    { name: t("common:plugins"), to: "/app/plugins/browse" },
+    {
+      name: t("common:plugins"),
+      to: "/app/plugins",
+      badge: pluginUpdates,
+      badgeTitle: t("plugins:label.updatesAvailable", { count: pluginUpdates }),
+    },
   ];
 
   const isActive = (path) =>
@@ -144,6 +158,7 @@ function ResponsiveAppBar() {
                 <Typography sx={{ ...theme.typography.tabLabel }}>
                   {page.name}
                 </Typography>
+                <NavBadge page={page} />
               </MenuItem>
             ))}
           </Menu>
@@ -205,6 +220,7 @@ function ResponsiveAppBar() {
                 }}
               >
                 {page.name}
+                <NavBadge page={page} />
               </Box>
             );
           })}

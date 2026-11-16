@@ -188,7 +188,7 @@ function Home() {
     {
       title: t("common:plugins"),
       description: t("home:description.plugins"),
-      to: "/app/plugins/browse",
+      to: "/app/plugins",
       Icon: ExtensionIcon,
       accent: theme.palette.accent.coral,
       accentDim: theme.palette.accent.coralDim,

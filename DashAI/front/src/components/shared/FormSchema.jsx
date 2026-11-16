@@ -10,6 +10,7 @@ import FormSchemaRenderFields from "./FormSchemaRenderFields";
  * managing the values of all the subforms, and submitting the values of the parameters.
  * It acts as a central control point for the entire form.
  * @param {string} model string that describes a configurable object
+ * @param {object} formattedSchema a schema already formatted (formattedModel), instead of the model's
  * @param {object} initialValues default values of the parameters, obtained from parameterSchema
  * @param {function} onFormSubmit  function that submits the form, receives the parameter values as a key-value object.
  * @param {bool} autoSave if true, the form will be submitted automatically when a parameter changes
@@ -22,6 +23,7 @@ import FormSchemaRenderFields from "./FormSchemaRenderFields";
  */
 function FormSchema({
   model,
+  formattedSchema,
   initialValues,
   onFormSubmit,
   autoSave,
@@ -38,6 +40,7 @@ function FormSchema({
 }) {
   const { formik, modelSchema, loading, handleUpdateSchema } = useFormSchema({
     model,
+    formattedSchema,
     initialValues,
     formSubmitRef,
     setError,
@@ -82,6 +85,7 @@ function FormSchema({
 
 FormSchema.propTypes = {
   model: PropTypes.string,
+  formattedSchema: PropTypes.object,
   initialValues: PropTypes.object,
   onFormSubmit: PropTypes.func,
   autoSave: PropTypes.bool,

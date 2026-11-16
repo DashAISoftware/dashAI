@@ -57,13 +57,26 @@ function fetchSchema(modelName) {
   return promise;
 }
 
-export default function useSchema({ modelName = null } = {}) {
-  const [model, setModel] = useState(() => getCachedSchema(modelName));
+// `formattedSchema`: one already fetched and formatted (formattedModel), e.g. a
+// plugin's settings, used instead of asking for `modelName`'s. Taken as is from
+// the first render, so the form draws at once; not cached, no name identifies it.
+export default function useSchema({
+  modelName = null,
+  formattedSchema = null,
+} = {}) {
+  const [model, setModel] = useState(
+    () => formattedSchema ?? getCachedSchema(modelName),
+  );
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
 
   useEffect(() => {
     let cancelled = false;
+
+    if (formattedSchema) {
+      setModel(formattedSchema);
+      return undefined;
+    }
 
     const cached = getCachedSchema(modelName);
     if (cached) {
@@ -95,7 +108,7 @@ export default function useSchema({ modelName = null } = {}) {
     return () => {
       cancelled = true;
     };
-  }, [modelName, t]);
+  }, [modelName, formattedSchema, t]);
 
   const { schema, initialValues } = model
     ? generateYupSchema(model)

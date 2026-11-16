@@ -9,6 +9,9 @@ import ResponsiveAppBar from "./ResponsiveAppBar";
 // suites mock their api-bound children).
 jest.mock("./credentials/CredentialsButton", () => () => null);
 jest.mock("./updates/UpdatesButton", () => () => null);
+jest.mock("../hooks/usePlugins", () => ({
+  usePluginUpdates: () => ({ updates: {} }),
+}));
 
 describe("ResponsiveAppBar", () => {
   it("renders without crashing", () => {

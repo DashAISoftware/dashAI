@@ -31,6 +31,7 @@ import { DatasetsAndNotebooksProvider } from "./components/custom/contexts/Datas
 import { DatasetsProvider } from "./contexts/DatasetsContext";
 import { ModelsProvider } from "./components/models/ModelsContext";
 import { RAG_TASK_NAME } from "./api/rag";
+import { preloadInstalledPlugins } from "./hooks/usePlugins";
 
 /**
  * Scopes a RAG route to its own session list.
@@ -60,6 +61,8 @@ function DataSectionLayout() {
 }
 
 function App() {
+  // The Plugins view then opens with the list, without a blank moment.
+  React.useEffect(preloadInstalledPlugins, []);
   return (
     <TourRegistryProvider>
       <BrowserRouter
@@ -170,10 +173,7 @@ function App() {
                 />
                 <Route path="/app/plugins">
                   <Route index element={<PluginsPage />} />
-                  <Route path=":category">
-                    <Route index element={<PluginsPage />} />
-                    <Route path="details/:id" element={<PluginsDetails />} />
-                  </Route>
+                  <Route path=":pluginId" element={<PluginsDetails />} />
                 </Route>
               </Routes>
               <JobQueueWidget />
