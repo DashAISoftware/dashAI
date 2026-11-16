@@ -225,6 +225,45 @@ def test_a_search_over_the_nested_regressor_keeps_its_best_value(client, tmp_pat
     assert model.fitted_estimator().n_estimators == 7
 
 
+def test_the_nested_regressor_keeps_its_values_and_is_never_fitted(client):
+    # Built from the shape the run form sends, with values that are not the
+    # defaults: the fitted estimator carries them, and the DashAI regressor
+    # is left as it was, unfitted, because skforecast fits a clone.
+    from DashAI.back.models.model_factory import ModelFactory
+
+    registry = client.app.container["component_registry"]
+    nested = {
+        "component": "RandomForestRegression",
+        "params": {
+            "n_estimators": {"optimize": False, "fixed_value": 7},
+            "max_depth": {"optimize": False, "fixed_value": 3},
+            "random_state": 0,
+        },
+    }
+    params = {
+        "regressor": {
+            "properties": {
+                "component": "SklearnLikeRegressor",
+                "params": {"comp": nested},
+            }
+        },
+        "lags": 3,
+        "season_length": 12,
+    }
+    model = ModelFactory(registry[MODEL]["class"], params, None).model
+    regressor = model.regressor
+    before = {k: v for k, v in vars(regressor).items() if not k.startswith("_")}
+
+    model.fit(_monthly()["sales"].to_numpy())
+
+    fitted = model.fitted_estimator()
+    assert (fitted.n_estimators, fitted.max_depth) == (7, 3)
+    assert fitted is not regressor
+    after = {k: v for k, v in vars(regressor).items() if not k.startswith("_")}
+    assert after == before
+    assert not hasattr(regressor, "n_features_in_")
+
+
 def test_with_exogenous_columns_the_run_reads_them_and_forecasts_the_future(
     client, tmp_path
 ):
