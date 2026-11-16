@@ -238,6 +238,7 @@ class TestDefaultFunctionCallingLLM:
             "frequency_penalty": 0.1,
             "context_window": DEFAULT_FUNCTION_CALLING_LLM_CONTEXT_WINDOW,
             "device": "CPU",
+            "enable_thinking": False,
         }
         assert DEFAULT_FUNCTION_CALLING_LLM_CONTEXT_WINDOW == 10_000
         assert DEFAULT_RAG_LLM_MAX_TOKENS == 300
@@ -286,6 +287,7 @@ class TestDefaultFunctionCallingLLM:
             "frequency_penalty",
             "context_window",
             "device",
+            "enable_thinking",
         }
 
 

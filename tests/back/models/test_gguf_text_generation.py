@@ -9,9 +9,14 @@ from kink import di
 from llama_cpp import Llama as RealLlama
 from llama_cpp.llama_chat_format import Jinja2ChatFormatter
 
+from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
 from DashAI.back.dependencies.downloads.downloadable import HFDownloadableMixin
 from DashAI.back.initial_components import get_initial_components
 from DashAI.back.models.hugging_face import llama_utils
+from DashAI.back.models.hugging_face.gguf_text_generation_base import (
+    GGUFTextGenerationModel,
+    GGUFTextGenerationSchema,
+)
 from DashAI.back.models.hugging_face.llama_model import (
     Llama31_8BInstruct,
     Llama32_1BInstruct,
@@ -192,18 +197,25 @@ class _RaisingCloseLlama(_FakeLlama):
         raise RuntimeError("inner llama close exploded")
 
 
+def _template_kwargs_for(cls):
+    """Resolve a checkpoint's chat-template variables from its schema values."""
+    if not hasattr(cls, "_resolve_chat_template_kwargs"):
+        return {}
+    wrapper = cls.__new__(cls)
+    return wrapper._resolve_chat_template_kwargs(schema_placeholder_defaults(cls))
+
+
 def _wrapper_with_backend(cls, backend):
     """Build a model instance around ``backend`` without loading llama.cpp."""
     wrapper = cls.__new__(cls)
     wrapper.model = backend
+    wrapper._template_kwargs = _template_kwargs_for(cls)
     return wrapper
 
 
-#: Trimmed excerpt of the ``chat_template`` shipped in ``Qwen/Qwen3-8B``: the
-#: message loop and the generation prompt, including the ``enable_thinking``
-#: branch that appends an empty think block. Tool and reasoning branches are
-#: omitted because the tests only exercise the rendering path.
-QWEN3_STYLE_TEMPLATE = (
+#: Minimal template with the ``enable_thinking`` branch that Qwen3 ships; only
+#: the rendering path is exercised.
+THINKING_TEMPLATE = (
     "{%- for message in messages %}"
     "{{- '<|im_start|>' + message.role + '\\n' + message.content + '<|im_end|>\\n' }}"
     "{%- endfor %}"
@@ -223,7 +235,31 @@ PLAIN_CHATML_TEMPLATE = (
     "{%- if add_generation_prompt %}{{- '<|im_start|>assistant\\n' }}{%- endif %}"
 )
 
-_QWEN3_EOS_ID = 151645
+#: Template for the synthetic checkpoint below, using its own flag.
+TEST_FLAG_TEMPLATE = (
+    "{%- for message in messages %}"
+    "{{- '<|im_start|>' + message.role + '\\n' + message.content + '<|im_end|>\\n' }}"
+    "{%- endfor %}"
+    "{%- if add_generation_prompt %}"
+    "{{- '<|im_start|>assistant\\n' }}"
+    "{%- if test_flag %}{{- 'FLAG\\n' }}{%- endif %}"
+    "{%- endif %}"
+)
+
+
+class _TemplatedCheckpoint(GGUFTextGenerationModel):
+    """Synthetic GGUF checkpoint with its own chat-template variable."""
+
+    REPO_ID = "test/templated"
+    GGUF_PATTERN = "*.gguf"
+    DOWNLOAD_SIZE_BYTES = 1
+    SCHEMA = GGUFTextGenerationSchema
+
+    def _resolve_chat_template_kwargs(self, kwargs):
+        return {"test_flag": True}
+
+
+_EOS_ID = 151645
 _CHAT_TEMPLATE_KEY = "tokenizer.chat_template"
 _DEFAULT_CHAT_FORMAT = "chat_template.default"
 
@@ -234,7 +270,7 @@ def _chatml_formatter(template):
         template=template,
         eos_token="<|im_end|>",
         bos_token="",
-        stop_token_ids=[_QWEN3_EOS_ID],
+        stop_token_ids=[_EOS_ID],
     )
 
 
@@ -271,7 +307,7 @@ class _FakeLlamaShell:
         return {_DEFAULT_CHAT_FORMAT: handler}
 
     def token_eos(self):
-        return _QWEN3_EOS_ID
+        return _EOS_ID
 
     def token_bos(self):
         return -1
@@ -320,45 +356,12 @@ def _last_prompt(backend):
     return backend.rendered_prompts[-1]
 
 
-QWEN3_NO_THINK_PROMPT_TAIL = "<|im_start|>assistant\n<think>\n\n</think>\n\n"
+THINKING_PROMPT_TAIL = "<|im_start|>assistant\n<think>\n\n</think>\n\n"
 
 
-def test_qwen3_generation_renders_empty_think_block():
-    """Free-form generation on Qwen3 also gets ``enable_thinking=False``.
-
-    The flag is global for the checkpoint, so this is the documented effect:
-    every chat turn starts with an empty think block.
-    """
-    wrapper, backend = _chat_wrapper(Qwen3_8B, QWEN3_STYLE_TEMPLATE, "hello")
-    wrapper._install_chat_template_kwargs()
-
-    assert wrapper.generate([{"role": "user", "content": "hi"}]) == ["hello"]
-    assert _last_prompt(backend) == (
-        "<|im_start|>user\nhi<|im_end|>\n" + QWEN3_NO_THINK_PROMPT_TAIL
-    )
-
-
-def test_qwen3_function_call_renders_empty_think_block_and_constrains_output():
-    """The forced tool call uses the same template and a grammar-constrained call."""
-    wrapper, backend = _chat_wrapper(
-        Qwen3_8B, QWEN3_STYLE_TEMPLATE, '{"sufficient": true}'
-    )
-    wrapper._install_chat_template_kwargs()
-
-    result = wrapper.generate_function_call(
-        [{"role": "user", "content": "are the chunks enough?"}],
-        [{"name": "evaluate_retrieval", "parameters": {"type": "object"}}],
-    )
-
-    assert result.name == "evaluate_retrieval"
-    assert result.arguments == '{"sufficient": true}'
-    assert _last_prompt(backend).endswith(QWEN3_NO_THINK_PROMPT_TAIL)
-    assert backend.completion_calls[-1]["grammar"] is not None
-
-
-def test_qwen3_install_does_not_read_private_chat_handlers():
+def test_install_does_not_read_private_chat_handlers():
     """Composition uses the public chat handler and the GGUF template metadata."""
-    wrapper, backend = _chat_wrapper(Qwen3_8B, QWEN3_STYLE_TEMPLATE, "hello")
+    wrapper, backend = _chat_wrapper(_TemplatedCheckpoint, TEST_FLAG_TEMPLATE, "ok")
 
     wrapper._install_chat_template_kwargs()
 
@@ -366,9 +369,9 @@ def test_qwen3_install_does_not_read_private_chat_handlers():
     assert backend.chat_handler is not None
 
 
-def test_qwen3_install_is_idempotent():
-    """A second install keeps the same handler and does not render the block twice."""
-    wrapper, backend = _chat_wrapper(Qwen3_8B, QWEN3_STYLE_TEMPLATE, "hello")
+def test_install_is_idempotent():
+    """A second install keeps the same handler and renders the flag once."""
+    wrapper, backend = _chat_wrapper(_TemplatedCheckpoint, TEST_FLAG_TEMPLATE, "ok")
     wrapper._install_chat_template_kwargs()
     installed = backend.chat_handler
 
@@ -376,10 +379,10 @@ def test_qwen3_install_is_idempotent():
     wrapper.generate([{"role": "user", "content": "hi"}])
 
     assert backend.chat_handler is installed
-    assert _last_prompt(backend).count("<think>") == 1
+    assert _last_prompt(backend).count("FLAG") == 1
 
 
-def test_non_qwen3_checkpoints_keep_default_chat_handler_and_prompt():
+def test_checkpoints_without_template_variables_keep_default_chat_handler():
     """Checkpoints without template variables keep llama.cpp's own handler."""
     wrapper, backend = _chat_wrapper(Llama32_1BInstruct, PLAIN_CHATML_TEMPLATE, "hi")
 
@@ -393,10 +396,97 @@ def test_non_qwen3_checkpoints_keep_default_chat_handler_and_prompt():
     )
 
 
-def test_install_without_backend_fails_instead_of_skipping():
-    """A Qwen3 model with no backend must not silently report success."""
+def test_chat_template_kwargs_generalize_to_any_checkpoint():
+    """A synthetic checkpoint can supply its own template variable."""
+    wrapper, backend = _chat_wrapper(_TemplatedCheckpoint, TEST_FLAG_TEMPLATE, "ok")
+
+    wrapper._install_chat_template_kwargs()
+    wrapper.generate([{"role": "user", "content": "hi"}])
+
+    assert _last_prompt(backend).endswith("FLAG\n")
+
+
+def test_qwen3_disabled_thinking_renders_empty_block():
+    """Qwen3's schema default yields an empty think block in every chat turn."""
+    wrapper, backend = _chat_wrapper(Qwen3_8B, THINKING_TEMPLATE, "hello")
+    wrapper._install_chat_template_kwargs()
+
+    assert wrapper.generate([{"role": "user", "content": "hi"}]) == ["hello"]
+    assert _last_prompt(backend) == (
+        "<|im_start|>user\nhi<|im_end|>\n" + THINKING_PROMPT_TAIL
+    )
+
+
+def test_qwen3_function_call_renders_empty_think_block_and_constrains_output():
+    """The forced tool call uses the same template and a grammar-constrained call."""
+    wrapper, backend = _chat_wrapper(
+        Qwen3_8B, THINKING_TEMPLATE, '{"sufficient": true}'
+    )
+    wrapper._install_chat_template_kwargs()
+
+    result = wrapper.generate_function_call(
+        [{"role": "user", "content": "are the chunks enough?"}],
+        [{"name": "evaluate_retrieval", "parameters": {"type": "object"}}],
+    )
+
+    assert result.name == "evaluate_retrieval"
+    assert result.arguments == '{"sufficient": true}'
+    assert _last_prompt(backend).endswith(THINKING_PROMPT_TAIL)
+    assert backend.completion_calls[-1]["grammar"] is not None
+
+
+def test_qwen3_enable_thinking_true_restores_the_reasoning_prompt():
+    """Turning the parameter on removes the empty think block from the prompt."""
+    wrapper, backend = _chat_wrapper(Qwen3_8B, THINKING_TEMPLATE, "hello")
+    wrapper._template_kwargs = {"enable_thinking": True}
+
+    wrapper._install_chat_template_kwargs()
+    wrapper.generate([{"role": "user", "content": "hi"}])
+
+    assert not _last_prompt(backend).endswith(THINKING_PROMPT_TAIL)
+
+
+def test_qwen3_enable_thinking_is_a_schema_parameter():
+    """The reasoning toggle is a documented schema field, not a class constant."""
+    properties = Qwen3_8B.get_schema()["properties"]
+
+    assert properties["enable_thinking"]["placeholder"] is False
+
+
+def test_qwen3_schema_parameter_controls_the_template_variable():
+    """The schema value becomes the chat-template variable and leaves the kwargs."""
     wrapper = Qwen3_8B.__new__(Qwen3_8B)
+    enabled = {"enable_thinking": True}
+    disabled = {"enable_thinking": False}
+
+    assert wrapper._resolve_chat_template_kwargs(enabled) == {"enable_thinking": True}
+    assert enabled == {}
+    assert wrapper._resolve_chat_template_kwargs(disabled) == {"enable_thinking": False}
+    assert disabled == {}
+
+
+def test_qwen3_missing_enable_thinking_fails_loudly():
+    """A validated schema always supplies the field; bypassing it must fail."""
+    wrapper = Qwen3_8B.__new__(Qwen3_8B)
+
+    with pytest.raises(KeyError, match="enable_thinking"):
+        wrapper._resolve_chat_template_kwargs({})
+
+
+def test_install_without_resolved_schema_fails_instead_of_defaulting():
+    """An instance that skipped __init__ must not get an invented value."""
+    wrapper = _TemplatedCheckpoint.__new__(_TemplatedCheckpoint)
+    wrapper.model = _FakeLlamaShell(TEST_FLAG_TEMPLATE, "x")
+
+    with pytest.raises(RuntimeError, match="no resolved chat-template variables"):
+        wrapper._install_chat_template_kwargs()
+
+
+def test_install_without_backend_fails_instead_of_skipping():
+    """A checkpoint with template variables and no backend must fail."""
+    wrapper = _TemplatedCheckpoint.__new__(_TemplatedCheckpoint)
     wrapper.model = None
+    wrapper._template_kwargs = {"test_flag": True}
 
     with pytest.raises(RuntimeError, match="no llama.cpp backend"):
         wrapper._install_chat_template_kwargs()
@@ -404,8 +494,8 @@ def test_install_without_backend_fails_instead_of_skipping():
 
 def test_install_rejects_chat_format_that_cannot_carry_kwargs():
     """A named builtin format (not a GGUF Jinja template) cannot accept kwargs."""
-    backend = _FakeLlamaShell(QWEN3_STYLE_TEMPLATE, "x", chat_format="llama-2")
-    wrapper = _wrapper_with_backend(Qwen3_8B, backend)
+    backend = _FakeLlamaShell(TEST_FLAG_TEMPLATE, "x", chat_format="llama-2")
+    wrapper = _wrapper_with_backend(_TemplatedCheckpoint, backend)
 
     with pytest.raises(RuntimeError, match="chat_format"):
         wrapper._install_chat_template_kwargs()
@@ -415,27 +505,27 @@ def test_install_rejects_chat_format_that_cannot_carry_kwargs():
 def test_install_rejects_missing_chat_template():
     """Without the GGUF template there is nothing to render the variables into."""
     backend = _FakeLlamaShell(None, "x")
-    wrapper = _wrapper_with_backend(Qwen3_8B, backend)
+    wrapper = _wrapper_with_backend(_TemplatedCheckpoint, backend)
 
     with pytest.raises(RuntimeError, match="chat template"):
         wrapper._install_chat_template_kwargs()
 
 
 def test_install_rejects_template_that_ignores_kwargs():
-    """A template without an ``enable_thinking`` branch would silently ignore it."""
+    """A template without the declared variable would silently ignore it."""
     backend = _FakeLlamaShell(PLAIN_CHATML_TEMPLATE, "x")
-    wrapper = _wrapper_with_backend(Qwen3_8B, backend)
+    wrapper = _wrapper_with_backend(_TemplatedCheckpoint, backend)
 
-    with pytest.raises(RuntimeError, match="enable_thinking"):
+    with pytest.raises(RuntimeError, match="test_flag"):
         wrapper._install_chat_template_kwargs()
     assert backend.chat_handler is None
 
 
 def test_install_refuses_to_overwrite_custom_chat_handler():
     """A backend that already routes chats elsewhere is not silently rerouted."""
-    backend = _FakeLlamaShell(QWEN3_STYLE_TEMPLATE, "x")
+    backend = _FakeLlamaShell(TEST_FLAG_TEMPLATE, "x")
     backend.chat_handler = lambda **kwargs: None
-    wrapper = _wrapper_with_backend(Qwen3_8B, backend)
+    wrapper = _wrapper_with_backend(_TemplatedCheckpoint, backend)
 
     with pytest.raises(RuntimeError, match="custom chat handler"):
         wrapper._install_chat_template_kwargs()
@@ -445,10 +535,10 @@ def test_init_releases_backend_when_chat_template_setup_fails(
     component_root, monkeypatch
 ):
     """A setup error after the GGUF load closes the backend and reports the cause."""
-    cls = Qwen3_8B
+    cls = _TemplatedCheckpoint
     repo_dir = component_root / cls.__name__ / cls.REPO_ID.split("/")[-1]
     repo_dir.mkdir(parents=True)
-    (repo_dir / "Qwen3-8B-Q6_K.gguf").write_text("weights")
+    (repo_dir / "weights.gguf").write_text("weights")
     backend = _FakeLlamaShell(PLAIN_CHATML_TEMPLATE, "x")
     monkeypatch.setitem(
         sys.modules,
@@ -456,7 +546,7 @@ def test_init_releases_backend_when_chat_template_setup_fails(
         SimpleNamespace(Llama=lambda **kwargs: backend),
     )
 
-    with pytest.raises(RuntimeError, match="enable_thinking"):
+    with pytest.raises(RuntimeError, match="test_flag"):
         cls(
             device="CPU",
             context_window=512,

@@ -449,9 +449,12 @@ takes them as parameters):
 `Qwen3_8B` is the default function-calling LLM for the query-transformation
 stage and the agentic retrievers. The RAG defaults raise its context window to
 10 000 tokens and keep a low sampling temperature so the structured function
-calls fit in one pass. The checkpoint is loaded with its chat template's
-`enable_thinking=False` switch, so it emits the structured call rather than a
-reasoning trace.
+calls fit in one pass. Its `enable_thinking` parameter is off by default, so it
+emits the structured call rather than a reasoning trace; turn it on to restore
+reasoning output for any chat use of this checkpoint. The checkpoint is about
+6.73 GB on disk and needs roughly 8 GB of RAM for the default 10 000-token
+context, so it must be downloaded before the first RAG session that uses query
+transformation or an agentic retriever.
 
 `DeepSeekModel` (`hugging_face/deep_seek_model.py`) exists but is not registered
 in `get_initial_components()`, so it is not offered in the UI.
