@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "PluginInstallError",
+    "forget_plugin_modules",
     "get_available_plugins",
     "get_plugin_by_name_from_pypi",
     "get_plugins_from_pypi",
@@ -348,11 +349,11 @@ def uninstall_plugin(
     uninstalled_components: List[type] = set(available_plugins) - set(
         get_available_plugins()
     )
-    _forget_plugin_modules(uninstalled_components)
+    forget_plugin_modules(uninstalled_components)
     return uninstalled_components
 
 
-def _forget_plugin_modules(components: Iterable[type]) -> None:
+def forget_plugin_modules(components: Iterable[type]) -> None:
     """Drop the modules of uninstalled plugin components from ``sys.modules``.
 
     Python caches imported modules, so without this a plugin that is
