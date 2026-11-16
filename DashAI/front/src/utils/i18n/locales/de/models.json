@@ -458,5 +458,23 @@
       "modelTakesNoExogenous": "{{model}} verwendet keine exogenen Variablen: Es prognostiziert nur aus der Zeitreihe.",
       "exogenousSwitchedOff": "„Exogene Variablen verwenden“ ist aus: {{model}} prognostiziert ohne sie."
     }
+  },
+  "resolved": {
+    "seasonFromStep": "nach der {{frequency}} Frequenz",
+    "seasonFromFrequency": "nach der Frequenz {{freq}} der Reihe",
+    "lagsFromSeason": "eine Saison von {{season}}",
+    "lagsAtLeast": "das Minimum, {{minimum}}: die Saison ist {{season}}"
+  },
+  "frequencyStep": {
+    "Y": "jährlichen",
+    "Q": "vierteljährlichen",
+    "M": "monatlichen",
+    "SM": "halbmonatlichen",
+    "W": "wöchentlichen",
+    "D": "täglichen",
+    "B": "werktäglichen",
+    "h": "stündlichen",
+    "min": "minütlichen",
+    "s": "sekündlichen"
   }
 }
