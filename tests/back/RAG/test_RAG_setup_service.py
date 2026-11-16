@@ -23,7 +23,7 @@ from DashAI.back.dependencies.database.models import (
     RAGPipeline as PipelineDBModel,
 )
 from DashAI.back.models.lazy_llm import LazyLLM
-from DashAI.back.models.RAG.prompts.evaluation.default_retrieval_sufficiency_prompt import (  # noqa: E501
+from DashAI.back.models.RAG.prompts.evaluation.default_agentic_retriever_prompt import (  # noqa: E501
     TEMPLATES as SUFFICIENCY_TEMPLATES,
 )
 from DashAI.back.models.RAG.prompts.generation.default_RAG_generation_prompt import (
@@ -68,7 +68,7 @@ class CountingLLMSetupSchema(BaseSchema):
 
 
 class CountingLLMSetup(TextToTextGenerationTaskModel):
-    """Counting stub that also answers an LLM-evaluated retriever's verdict."""
+    """Counting stub that also answers an agentic retriever's verdict."""
 
     SCHEMA = CountingLLMSetupSchema
     SUPPORTS_FUNCTION_CALLING = True
@@ -84,7 +84,7 @@ class CountingLLMSetup(TextToTextGenerationTaskModel):
     def generate_function_call(self, messages, functions):
         """Return a sufficient retrieval verdict."""
         return FunctionCallResult(
-            "evaluate_retrieval_sufficiency",
+            "evaluate_agentic_retrieval",
             {"sufficient": True},
         )
 
@@ -105,8 +105,9 @@ def register_stub_llm_setup(client: TestClient) -> None:
 def _create_session(db, name: str, doc_ids: list[int]) -> int:
     """Create a RAG generative session in the DB and return its ID."""
     session = GenerativeSession(
-        task_name="RAGTask",
-        model_name="RAGPipeline",
+        task_name="TextToTextGenerationTask",
+        workflow_name="RAGWorkflow",
+        model_name="StubLLMSetup",
         parameters={
             "documents": doc_ids,
             "chunking_model": {
@@ -205,7 +206,7 @@ class TestSetupServiceBuildPipeline:
                 os.remove(path)
 
     def test_build_pipeline_defers_every_llm(self, client: TestClient):
-        """Assembly loads no LLM, including an LLM-evaluated retriever's."""
+        """Assembly loads no LLM, including an agentic retriever's."""
         tag = uuid.uuid4().hex[:8]
         suffix = f"_lazy_{tag}"
         doc_id = _create_test_document(client, suffix=suffix)
@@ -233,7 +234,7 @@ class TestSetupServiceBuildPipeline:
                         "params": {"chunk_size": 200, "chunk_overlap": 20},
                     },
                     retriever_model={
-                        "component": "LLMEvaluatedDepthRetriever",
+                        "component": "AgenticSingleRetriever",
                         "params": {
                             "children": [
                                 {
@@ -248,7 +249,7 @@ class TestSetupServiceBuildPipeline:
                                 "params": {"role": "retrieval"},
                             },
                             "prompt": {
-                                "component": "DefaultRetrievalSufficiencyPrompt",
+                                "component": "DefaultAgenticRetrieverPrompt",
                                 "params": {
                                     "language": "en",
                                     "template": SUFFICIENCY_TEMPLATES["en"],

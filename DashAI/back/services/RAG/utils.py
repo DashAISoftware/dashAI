@@ -41,6 +41,26 @@ def build_parameters_hash(params: dict[str, Any]) -> str:
     return hashlib.sha256(json.dumps(params, sort_keys=True).encode()).hexdigest()
 
 
+def build_prompt_hash(class_name: str, params: dict[str, Any]) -> str:
+    """Build the content-addressed hash that identifies a prompt row.
+
+    Unlike :func:`build_parameters_hash`, the digest also covers the prompt
+    class. Two prompt families can legitimately share the same parameters (for
+    example a rewriting and an expansion prompt using the same template text),
+    and the global UNIQUE on ``rag_prompt.parameters_hash`` must not conflate
+    them.
+
+    Args:
+        class_name: Registered prompt component name.
+        params: Prompt parameters, normalized before hashing.
+
+    Returns:
+        Hex digest of the SHA-256 hash.
+    """
+    payload = {"class_name": class_name, "parameters": normalize_params(params)}
+    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+
+
 def build_corpus_content_hash(chunks: Dict[int, Dict[int, Any]]) -> str:
     """Build a SHA-256 hash of a corpus' content, independent of database ids.
 

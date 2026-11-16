@@ -15,7 +15,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from DashAI.back.dependencies.database.models import Metric, Run
+from DashAI.back.dependencies.database.models import Metric, Run, RunPlot
 from DashAI.back.session_package.export import build_session_package
 from DashAI.back.session_package.load import import_session_package
 from DashAI.back.units.forecast_scope import forecasts_file
@@ -33,6 +33,11 @@ CUTS = {
     "test_origin": 45,
     "n_steps": 48,
 }
+
+
+def _views(client, run_id):
+    with client.app.container["session_factory"]() as db:
+        return {view for (view,) in db.query(RunPlot.view).filter_by(run_id=run_id)}
 
 
 @pytest.fixture(scope="module", name="run_id")
@@ -374,10 +379,6 @@ def test_coverage_as_the_goal_metric_fails_the_run(client, tmp_path):
                 "pruner": "None",
             },
             goal_metric="IntervalCoverage",
-            plot_history_path="",
-            plot_slice_path="",
-            plot_contour_path="",
-            plot_importance_path="",
         )
         db.add(run)
         db.commit()
@@ -439,6 +440,60 @@ def test_a_finished_run_without_its_file_has_no_forecasts(client, run_id, tmp_pa
 
     assert response.status_code == 404
     assert "has no forecasts" in response.text
+
+
+def test_a_run_without_a_search_has_no_hyperparameter_row(client, run_id):
+    assert "hyperparameter" not in _views(client, run_id)
+
+
+def test_a_forecasting_run_gets_a_forecasts_row(client, run_id):
+    assert _views(client, run_id) == {"forecasts"}
+
+
+def test_a_tuned_forecasting_run_gets_both_rows(client, tmp_path):
+    from DashAI.back.job.model_job import ModelJob
+
+    session_id = _session(client, tmp_path, _monthly())
+    searched = {
+        "season_length": {
+            "optimize": True,
+            "fixed_value": 12,
+            "lower_bound": 2,
+            "upper_bound": 12,
+        }
+    }
+    tuned = _create_run(
+        client,
+        session_id,
+        "SeasonalNaiveForecaster",
+        searched,
+        goal_metric="MAE",
+        optimizer="OptunaOptimizer",
+    )
+
+    ModelJob(run_id=tuned).run()
+
+    assert _views(client, tuned) == {"hyperparameter", "forecasts"}
+
+
+def test_a_single_origin_is_one_figure_without_a_selector():
+    from DashAI.back.evaluation.forecasts_plot import forecasts_artifacts
+
+    origin = {
+        "partition": "test",
+        "index": 0,
+        "dates": ["2023-01-01T00:00:00", "2023-02-01T00:00:00"],
+        "actual": [1.0, None],
+        "forecast": [1.5, 2.0],
+        "lower": {},
+        "upper": {},
+    }
+
+    [artifact] = forecasts_artifacts({"levels": [], "origins": [origin]})
+
+    assert artifact.type == "plotly"
+    names = [t["name"] for t in json.loads(artifact.payload)["data"]]
+    assert names == ["Actual", "Forecast"]
 
 
 def test_the_file_goes_with_the_run(client, tmp_path):
@@ -599,3 +654,204 @@ def test_a_session_package_carries_what_a_trained_run_recorded(
     with container["session_factory"]() as db:
         (imported,) = db.query(Run).filter(Run.model_session_id == result["session_id"])
         assert imported.exogenous == RECORDED
+
+
+def _tuned_run(client, tmp_path):
+    from DashAI.back.job.model_job import ModelJob
+
+    session_id = _session(client, tmp_path, _monthly())
+    searched = {
+        "season_length": {
+            "optimize": True,
+            "fixed_value": 12,
+            "lower_bound": 2,
+            "upper_bound": 12,
+        }
+    }
+    tuned = _create_run(
+        client,
+        session_id,
+        "SeasonalNaiveForecaster",
+        searched,
+        goal_metric="MAE",
+        optimizer="OptunaOptimizer",
+    )
+    ModelJob(run_id=tuned).run()
+    return tuned
+
+
+def _export(client, run_id, package):
+    from tests.back.api.test_session_package import _build
+
+    _build(client, _get(client, Run, run_id).model_session_id, [run_id], package)
+    return package
+
+
+def _imported_run(client, package):
+    from tests.back.api.test_session_package import _import
+
+    result = _import(client, package)
+    with client.app.container["session_factory"]() as db:
+        (imported,) = db.query(Run).filter(Run.model_session_id == result["session_id"])
+        return imported.id
+
+
+def _first_leaf(client, run_id, view):
+    body = client.get(f"/api/v1/run/{run_id}/plots/{view}").json()
+    first = body[0]
+    return first["groups"][0]["artifacts"][0] if first["type"] == "grouped" else first
+
+
+EDIT = {"data": [{"type": "scatter", "y": [3, 4]}], "layout": {"title": "edit"}}
+
+
+def test_a_package_carries_run_plots_and_their_edits(client, tmp_path):
+    from tests.back.api.test_session_package import _read
+
+    tuned = _tuned_run(client, tmp_path)
+    index = _first_leaf(client, tuned, "forecasts")["index"]
+    client.put(
+        f"/api/v1/run/{tuned}/plots/forecasts/override",
+        json={"index": index, "figure": EDIT},
+    )
+
+    package = _export(client, tuned, tmp_path / "plots.dashai")
+    _, manifest, _, _ = _read(package)
+    imported = _imported_run(client, package)
+
+    assert manifest["format_version"] == 3
+    assert _views(client, imported) == {"hyperparameter", "forecasts"}
+    leaf = _first_leaf(client, imported, "forecasts")
+    assert leaf["overridden"] is True
+    assert json.loads(leaf["payload"]) == EDIT
+
+
+def test_a_package_still_carries_the_legacy_hpo_plots(client, tmp_path):
+    from tests.back.api.test_session_package import _read
+
+    tuned = _tuned_run(client, tmp_path)
+
+    names, _, recipe, _ = _read(_export(client, tuned, tmp_path / "legacy.dashai"))
+
+    [entry] = recipe["runs"]
+    assert set(entry["plots"]) == {"plot_history_path", "plot_slice_path"}
+    assert all(path in names for path in entry["plots"].values())
+    assert {item["view"] for item in entry["run_plots"]} == {
+        "hyperparameter",
+        "forecasts",
+    }
+
+
+def test_an_old_package_without_run_plots_imports_its_hpo_plots(client, tmp_path):
+    from tests.back.api.test_session_package import _rewrite
+
+    tuned = _tuned_run(client, tmp_path)
+    package = _export(client, tuned, tmp_path / "new.dashai")
+
+    def strip(recipe):
+        for entry in recipe["runs"]:
+            entry.pop("run_plots", None)
+        return recipe
+
+    old = _rewrite(package, tmp_path / "old.dashai", recipe=strip)
+    imported = _imported_run(client, old)
+
+    assert _views(client, imported) == {"hyperparameter"}
+    body = client.get(f"/api/v1/run/{imported}/plots/hyperparameter").json()
+    assert [leaf["type"] for leaf in body] == ["plotly", "plotly"]
+
+
+def test_a_run_plot_missing_from_the_archive_is_skipped(client, tmp_path):
+    import zipfile
+
+    tuned = _tuned_run(client, tmp_path)
+    package = _export(client, tuned, tmp_path / "full.dashai")
+    broken = tmp_path / "broken.dashai"
+    with zipfile.ZipFile(package) as source, zipfile.ZipFile(broken, "w") as out:
+        for item in source.infolist():
+            if not item.filename.endswith("hyperparameter_plots.pickle"):
+                out.writestr(item, source.read(item.filename))
+
+    imported = _imported_run(client, broken)
+
+    assert _views(client, imported) == {"forecasts"}
+
+
+def test_an_imported_view_that_is_unknown_or_repeated_is_skipped(client, tmp_path):
+    from tests.back.api.test_session_package import _rewrite
+
+    tuned = _tuned_run(client, tmp_path)
+    package = _export(client, tuned, tmp_path / "views.dashai")
+
+    def tamper(recipe):
+        [entry] = recipe["runs"]
+        forecasts = next(i for i in entry["run_plots"] if i["view"] == "forecasts")
+        entry["run_plots"] += [
+            {**forecasts, "view": "../escaped"},
+            {**forecasts},
+        ]
+        return recipe
+
+    imported = _imported_run(
+        client, _rewrite(package, tmp_path / "t.dashai", recipe=tamper)
+    )
+
+    assert _views(client, imported) == {"hyperparameter", "forecasts"}
+    runs_path = Path(client.app.container["config"]["RUNS_PATH"])
+    assert not list(runs_path.parent.glob("escaped_plots_*"))
+
+
+def test_a_forecasts_plot_that_cannot_be_drawn_does_not_fail_the_training(
+    client, tmp_path, monkeypatch
+):
+    from DashAI.back.core.enums.status import RunStatus
+    from DashAI.back.evaluation import forecasts_plot
+
+    def broken(forecasts):
+        raise ValueError("cannot draw")
+
+    monkeypatch.setattr(forecasts_plot, "forecasts_artifacts", broken)
+    session_id = _session(client, tmp_path, _monthly())
+
+    run_id = _train(client, session_id, "NaiveForecaster")
+
+    assert _get(client, Run, run_id).status == RunStatus.FINISHED
+    assert "forecasts" not in _views(client, run_id)
+
+
+def test_a_grouped_hpo_plot_goes_to_the_legacy_entries_as_its_first_figure(
+    tmp_path,
+):
+    import pickle
+
+    from DashAI.back.core.artifacts import (
+        ArtifactGroup,
+        GroupedArtifacts,
+        PlotlyArtifact,
+    )
+    from DashAI.back.core.run_plots import write_run_plot_file
+    from DashAI.back.session_package.export import _legacy_plots
+
+    def figure(title):
+        return PlotlyArtifact(payload='{"data": [], "layout": {}}', title=title)
+
+    path = tmp_path / "hyperparameter_plots_1.pickle"
+    write_run_plot_file(
+        path,
+        [
+            figure("history"),
+            GroupedArtifacts(
+                title="Slice plot",
+                groups=[
+                    ArtifactGroup(title="a", artifacts=[figure("slice a")]),
+                    ArtifactGroup(title="b", artifacts=[figure("slice b")]),
+                ],
+            ),
+        ],
+    )
+
+    plots = _legacy_plots(path, tmp_path, "runs/0")
+
+    leaves = [pickle.loads((tmp_path / entry).read_bytes()) for entry in plots.values()]
+    assert [leaf["type"] for leaf in leaves] == ["plotly", "plotly"]
+    assert [leaf["title"] for leaf in leaves] == ["history", "slice a"]

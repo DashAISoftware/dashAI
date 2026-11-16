@@ -1,27 +1,27 @@
-from DashAI.back.models.RAG.prompts.evaluation.custom_llm_filter_prompt import (
-    CustomLLMFilterPrompt,
+from DashAI.back.models.RAG.prompts.evaluation.agentic_reranker_prompt import (
+    AgenticRerankerPrompt,
 )
-from DashAI.back.models.RAG.prompts.evaluation.custom_retrieval_sufficiency_prompt import (  # noqa: E501
-    CustomRetrievalSufficiencyPrompt,
+from DashAI.back.models.RAG.prompts.evaluation.agentic_retriever_prompt import (
+    AgenticRetrieverPrompt,
 )
-from DashAI.back.models.RAG.prompts.evaluation.default_llm_filter_prompt import (
-    DefaultLLMFilterPrompt,
+from DashAI.back.models.RAG.prompts.evaluation.custom_agentic_reranker_prompt import (
+    CustomAgenticRerankerPrompt,
 )
-from DashAI.back.models.RAG.prompts.evaluation.default_retrieval_sufficiency_prompt import (  # noqa: E501
-    DefaultRetrievalSufficiencyPrompt,
+from DashAI.back.models.RAG.prompts.evaluation.custom_agentic_retriever_prompt import (  # noqa: E501
+    CustomAgenticRetrieverPrompt,
 )
-from DashAI.back.models.RAG.prompts.evaluation.llm_filter_prompt import (
-    LLMFilterPrompt,
+from DashAI.back.models.RAG.prompts.evaluation.default_agentic_reranker_prompt import (
+    DefaultAgenticRerankerPrompt,
 )
-from DashAI.back.models.RAG.prompts.evaluation.retrieval_sufficiency_prompt import (
-    RetrievalSufficiencyPrompt,
+from DashAI.back.models.RAG.prompts.evaluation.default_agentic_retriever_prompt import (  # noqa: E501
+    DefaultAgenticRetrieverPrompt,
 )
 
 __all__ = [
-    "CustomLLMFilterPrompt",
-    "CustomRetrievalSufficiencyPrompt",
-    "DefaultLLMFilterPrompt",
-    "DefaultRetrievalSufficiencyPrompt",
-    "LLMFilterPrompt",
-    "RetrievalSufficiencyPrompt",
+    "AgenticRerankerPrompt",
+    "AgenticRetrieverPrompt",
+    "CustomAgenticRerankerPrompt",
+    "CustomAgenticRetrieverPrompt",
+    "DefaultAgenticRerankerPrompt",
+    "DefaultAgenticRetrieverPrompt",
 ]

@@ -534,6 +534,8 @@
     "failedToUpdate": "Das Dokument konnte nicht umbenannt werden",
     "nameExists": "Ein Dokument mit diesem Namen existiert bereits",
     "confirmDelete": "Möchten Sie das Dokument \"{{name}}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "cascadeWarning": "Die folgenden RAG-Sitzungen verwenden dieses Dokument ebenfalls und werden gelöscht: {{sessions}}.",
+    "cascadeConfirm": "Dieses Dokument wird von diesen RAG-Sitzungen verwendet, die ebenfalls gelöscht werden: {{sessions}}. Fortfahren?",
     "statusProcessing": "Wird verarbeitet...",
     "statusError": "Verarbeitung fehlgeschlagen",
     "contentSummary": "{{text}} Textelemente, {{image}} Bilder",

@@ -1,8 +1,8 @@
-"""Validation for the LLM-evaluated composite retrievers.
+"""Validation for the agentic composite retrievers.
 
 Single-responsibility service extracted from ``SessionValidationService``. It
 owns the structural and class checks for the nested ``llm_model`` and
-``prompt`` references of the LLM-evaluated retrievers and resolves their
+``prompt`` references of the agentic retrievers and resolves their
 schema defaults. Prompt-template validation is injected as a callable so this
 class never reaches into ``PromptService`` internals.
 """
@@ -15,14 +15,14 @@ from typing import Any, Callable, Dict, List
 
 from DashAI.back.core.schema_fields.defaults import resolve_component_defaults
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
-from DashAI.back.models.RAG.prompts.evaluation import RetrievalSufficiencyPrompt
+from DashAI.back.models.RAG.prompts.evaluation import AgenticRetrieverPrompt
 from DashAI.back.models.RAG.RAG_constants import (
-    LLM_EVALUATED_RETRIEVER_NAMES,
+    AGENTIC_RETRIEVER_NAMES,
     RAG_PARAM_RETRIEVER_MODEL,
 )
 from DashAI.back.models.RAG.RAG_defaults import (
-    DEFAULT_LLM_FILTER_PROMPT_COMPONENT,
-    DEFAULT_SUFFICIENCY_PROMPT_COMPONENT,
+    DEFAULT_AGENTIC_RERANKER_PROMPT_COMPONENT,
+    DEFAULT_AGENTIC_RETRIEVER_PROMPT_COMPONENT,
     merge_rag_llm_params,
     rag_llm_param_overrides,
 )
@@ -32,17 +32,21 @@ from DashAI.back.models.text_to_text_generation_model import (
 
 log = logging.getLogger(__name__)
 
-#: Default sufficiency prompts whose ``template`` may be injected from
+#: Default agentic retriever prompts whose ``template`` may be injected from
 #: ``metadata["templates"]`` before schema validation, exactly like the default
 #: generation and transformation prompts.
-DEFAULT_SUFFICIENCY_PROMPT_NAMES = frozenset({DEFAULT_SUFFICIENCY_PROMPT_COMPONENT})
+DEFAULT_AGENTIC_RETRIEVER_PROMPT_NAMES = frozenset(
+    {DEFAULT_AGENTIC_RETRIEVER_PROMPT_COMPONENT}
+)
 
-#: Default LLM filter prompts with the same blank-template tolerance.
-DEFAULT_FILTER_PROMPT_NAMES = frozenset({DEFAULT_LLM_FILTER_PROMPT_COMPONENT})
+#: Default agentic reranker prompts with the same blank-template tolerance.
+DEFAULT_AGENTIC_RERANKER_PROMPT_NAMES = frozenset(
+    {DEFAULT_AGENTIC_RERANKER_PROMPT_COMPONENT}
+)
 
-#: Every default LLM-evaluated prompt; used for blank-template tolerance.
-DEFAULT_LLM_PROMPT_NAMES = (
-    DEFAULT_SUFFICIENCY_PROMPT_NAMES | DEFAULT_FILTER_PROMPT_NAMES
+#: Every default agentic prompt; used for blank-template tolerance.
+DEFAULT_AGENTIC_PROMPT_NAMES = (
+    DEFAULT_AGENTIC_RETRIEVER_PROMPT_NAMES | DEFAULT_AGENTIC_RERANKER_PROMPT_NAMES
 )
 
 #: Nested retriever-parameter keys, hoisted to avoid magic strings.
@@ -51,7 +55,7 @@ _LLM_MODEL_KEY = "llm_model"
 
 
 class RetrieverEvaluationValidationService:
-    """Validates the nested refs of an LLM-evaluated composite retriever.
+    """Validates the nested refs of an agentic composite retriever.
 
     ``validate`` performs the full structural plus class check (prompt family
     and ``llm_model`` subclass enforcement, plus template validation through the
@@ -80,11 +84,11 @@ class RetrieverEvaluationValidationService:
         self._prompt_validator = prompt_validator
 
     def validate(self, retriever_ref: Dict[str, Any]) -> None:
-        """Validate an LLM-evaluated retriever's nested references.
+        """Validate an agentic retriever's nested references.
 
         The retriever must be a ``{component, params}`` dict with a registered
         outer component. Its nested ``prompt`` must be a component reference to
-        a :class:`RetrievalSufficiencyPrompt` (or the retriever's declared
+        a :class:`AgenticRetrieverPrompt` (or the retriever's declared
         ``EVALUATION_PROMPT_BASE``) and its nested ``llm_model`` a registered
         :class:`TextToTextGenerationTaskModel`. A caller-provided nested prompt
         template is validated here; default templates are injected later by the
@@ -119,7 +123,7 @@ class RetrieverEvaluationValidationService:
 
         self._validate_prompt(component_class, params, where)
         self._validate_llm(params, where)
-        log.debug("LLM-evaluated retriever enabled with %s", component_class.__name__)
+        log.debug("Agentic retriever enabled with %s", component_class.__name__)
 
     def apply_defaults(self, retriever_ref: Dict[str, Any]) -> None:
         """Fill the retriever's omitted nested params from their schemas.
@@ -162,10 +166,10 @@ class RetrieverEvaluationValidationService:
         retriever_ref["params"] = merged
 
     def validate_recursive(self, value: Any) -> None:
-        """Validate every LLM-evaluated retriever found in ``value``.
+        """Validate every agentic retriever found in ``value``.
 
         Mirrors :meth:`apply_defaults_recursive`: a composite can nest an
-        LLM-evaluated retriever as one of its children, so validating only the
+        agentic retriever as one of its children, so validating only the
         top-level ``retriever_model`` would let a malformed nested prompt or LLM
         family reach the retriever constructor instead of failing at save time.
 
@@ -178,14 +182,11 @@ class RetrieverEvaluationValidationService:
         Raises
         ------
         ValueError
-            If any nested LLM-evaluated reference is malformed.
+            If any nested agentic reference is malformed.
         """
         if isinstance(value, dict):
             component = value.get("component")
-            if (
-                isinstance(component, str)
-                and component in LLM_EVALUATED_RETRIEVER_NAMES
-            ):
+            if isinstance(component, str) and component in AGENTIC_RETRIEVER_NAMES:
                 self.validate(value)
             for child in value.values():
                 self.validate_recursive(child)
@@ -194,9 +195,9 @@ class RetrieverEvaluationValidationService:
                 self.validate_recursive(child)
 
     def apply_defaults_recursive(self, value: Any) -> None:
-        """Apply defaults to every LLM-evaluated retriever found in ``value``.
+        """Apply defaults to every agentic retriever found in ``value``.
 
-        A composite retriever can nest an LLM-evaluated retriever as one of its
+        A composite retriever can nest an agentic retriever as one of its
         children. Defaults must be resolved for those nested references too, so
         a persisted configuration stays complete instead of relying on the
         retriever constructor to fill the gaps at run time.
@@ -205,14 +206,11 @@ class RetrieverEvaluationValidationService:
         ----------
         value : Any
             A ``{component, params}`` reference, a params container, or a list
-            of either. Mutated in place when an LLM-evaluated ref is found.
+            of either. Mutated in place when an agentic ref is found.
         """
         if isinstance(value, dict):
             component = value.get("component")
-            if (
-                isinstance(component, str)
-                and component in LLM_EVALUATED_RETRIEVER_NAMES
-            ):
+            if isinstance(component, str) and component in AGENTIC_RETRIEVER_NAMES:
                 self.apply_defaults(value)
             for child in value.values():
                 self.apply_defaults_recursive(child)
@@ -302,7 +300,7 @@ class RetrieverEvaluationValidationService:
                 f"{type(prompt_name).__name__}."
             )
         prompt_base = getattr(
-            component_class, "EVALUATION_PROMPT_BASE", RetrievalSufficiencyPrompt
+            component_class, "EVALUATION_PROMPT_BASE", AgenticRetrieverPrompt
         )
         self._resolve_subclass(prompt_name, prompt_base, prompt_where)
 
@@ -364,10 +362,11 @@ class RetrieverEvaluationValidationService:
             )
 
     def _validate_nested_template(self, prompt_name: str, template: Any) -> None:
-        """Validate the nested LLM-evaluated prompt's ``template`` value.
+        """Validate the nested agentic prompt's ``template`` value.
 
-        Default sufficiency and filter prompts may omit or blank their template:
-        the language-driven template is injected later by the component-params
+        Default agentic retriever and reranker prompts may omit or blank their
+        template: the language-driven template is injected later by the
+        component-params
         pass (see ``SessionValidationService._validate_component_params``). Any
         other prompt must carry a non-blank string template with the required
         placeholders.
@@ -387,7 +386,7 @@ class RetrieverEvaluationValidationService:
             non-default prompt.
         """
         where = f"{RAG_PARAM_RETRIEVER_MODEL}.params.{_PROMPT_KEY}.params.template"
-        is_default = prompt_name in DEFAULT_LLM_PROMPT_NAMES
+        is_default = prompt_name in DEFAULT_AGENTIC_PROMPT_NAMES
         is_blank = template is None or (
             isinstance(template, str) and not template.strip()
         )
@@ -437,9 +436,9 @@ class RetrieverEvaluationValidationService:
 
 
 __all__: List[str] = [
-    "DEFAULT_FILTER_PROMPT_NAMES",
-    "DEFAULT_LLM_PROMPT_NAMES",
-    "DEFAULT_SUFFICIENCY_PROMPT_NAMES",
-    "LLM_EVALUATED_RETRIEVER_NAMES",
+    "DEFAULT_AGENTIC_RERANKER_PROMPT_NAMES",
+    "DEFAULT_AGENTIC_PROMPT_NAMES",
+    "DEFAULT_AGENTIC_RETRIEVER_PROMPT_NAMES",
+    "AGENTIC_RETRIEVER_NAMES",
     "RetrieverEvaluationValidationService",
 ]

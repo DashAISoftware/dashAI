@@ -7,7 +7,7 @@ from DashAI.back.dependencies.database.models import (
     GenerativeSession,
     GenerativeSessionParameterHistory,
 )
-from tests.back.RAG.conftest import TFIDF_PARAMS
+from tests.back.RAG.conftest import RAG_WORKFLOW_PAYLOAD, TFIDF_PARAMS
 
 
 def _mark_download_required_components_present(app) -> None:
@@ -218,13 +218,13 @@ def test_get_all_sessions(
 
 def test_update_generative_session_params_merges_and_logs_history(client: TestClient):
     """Test updating RAG parameters through the dedicated endpoint."""
-    # Create a prompt first so prompt_id resolution works.
+    # Create a prompt first so prompt_id resolution works. Built-in ``Default*``
+    # classes cannot be created from the library, so use the custom class.
     prompt_payload = {
-        "class_name": "DefaultRAGGenerationPrompt",
+        "class_name": "CustomRAGGenerationPrompt",
         "name": "Test Prompt",
         "parameters": {
-            "templates": {"en": "Q: {input}\nContext: {chunks}"},
-            "language": "en",
+            "template": "Q: {input}\nContext: {chunks}",
         },
     }
     prompt_resp = client.post("/api/v1/prompt/", json=prompt_payload)
@@ -233,8 +233,7 @@ def test_update_generative_session_params_merges_and_logs_history(client: TestCl
 
     # Create session via POST to trigger prompt_id resolution
     create_payload = {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "name": "rag-session-update-test",
         "parameters": {
             "chunking_model": {
@@ -296,7 +295,8 @@ def test_update_generative_session_params_merges_and_logs_history(client: TestCl
         "params": {"chunk_size": 256, "chunk_overlap": 40},
     }
     assert data["parameters"]["generation_model"] == generation_update
-    # prompt_id was resolved on CREATE → prompt present, prompt_id gone
+    # Prompts live in their own table and are injected on read: the resolved
+    # reference is present but the raw ``prompt_id`` is not persisted.
     assert "prompt_id" not in data["parameters"]
     assert "prompt" in data["parameters"]
 
@@ -307,7 +307,7 @@ def test_update_generative_session_params_merges_and_logs_history(client: TestCl
         assert updated_session.parameters["documents"] == []
         assert updated_session.parameters["generation_model"] == generation_update
         assert "prompt_id" not in updated_session.parameters
-        assert "prompt" in updated_session.parameters
+        assert "prompt" not in updated_session.parameters
 
         history_entries = (
             db.query(GenerativeSessionParameterHistory)
@@ -318,7 +318,7 @@ def test_update_generative_session_params_merges_and_logs_history(client: TestCl
         # One entry from CREATE, one from UPDATE
         assert len(history_entries) == 2
         assert "prompt_id" not in history_entries[1].parameters
-        assert "prompt" in history_entries[1].parameters
+        assert "prompt" not in history_entries[1].parameters
 
 
 def test_create_session_with_invalid_task(response_4):

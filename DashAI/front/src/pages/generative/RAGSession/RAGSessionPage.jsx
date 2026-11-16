@@ -13,7 +13,7 @@ import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
 import RAGConfigPanel from "../../../components/generative/RAG/RAGConfigPanel";
 import { getGenerativeSession } from "../../../api/generativeTask";
 import { getSessionIndexStatus, startSessionIndexing } from "../../../api/rag";
-import { RAG_TASK_NAME } from "../../../api/rag";
+import { RAG_WORKFLOW_NAME } from "../../../constants/generativeWorkflows";
 import { useGenerative } from "../../../components/generative/GenerativeContext";
 import { useTaskDisplayName } from "../../../hooks/generative/useTaskDisplayName";
 import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
@@ -41,13 +41,14 @@ export default function RAGSessionPage() {
     selectedSessionId,
     setSelectedSessionId,
     setSelectedTaskName,
+    setSelectedWorkflowName,
     setSelectedDisplayName,
     deleteSessionById,
     fetchSessions,
     setParamsVersion,
   } = useGenerative();
 
-  const ragTitle = useTaskDisplayName(RAG_TASK_NAME);
+  const ragTitle = useTaskDisplayName(RAG_WORKFLOW_NAME);
 
   const [notFound, setNotFound] = useState(false);
   const [indexStatus, setIndexStatus] = useState(null);
@@ -70,6 +71,7 @@ export default function RAGSessionPage() {
         if (cancelled || !session) return;
         setSelectedSessionId?.(sessionId);
         setSelectedTaskName?.(session.task_name);
+        setSelectedWorkflowName?.(session.workflow_name);
         setSelectedDisplayName?.(session.display_name ?? null);
       })
       .catch(() => {
@@ -83,6 +85,7 @@ export default function RAGSessionPage() {
     isValidId,
     setSelectedSessionId,
     setSelectedTaskName,
+    setSelectedWorkflowName,
     setSelectedDisplayName,
   ]);
 
@@ -152,8 +155,9 @@ export default function RAGSessionPage() {
 
   const handleConfigurationSaved = useCallback(() => {
     setParamsVersion?.((version) => version + 1);
+    fetchSessions?.();
     startIndexing();
-  }, [setParamsVersion, startIndexing]);
+  }, [setParamsVersion, fetchSessions, startIndexing]);
 
   const handleSessionRenamed = useCallback(() => {
     fetchSessions?.();

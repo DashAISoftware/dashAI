@@ -15,7 +15,7 @@ working.
 | `/app/generative/rag/sessions/:id` | `RAGSessionPage` | Documents, chat, configuration  |
 | `/app/generative/rag/new`          | redirect         | → `/app/generative/rag`         |
 | `/app/generative/rag/documents`    | redirect         | → `/app/generative/rag`         |
-| `/app/generative/rag/prompts`      | redirect         | → `/app/generative/rag`         |
+| `/app/generative/rag/prompts`      | `RAGPromptsPage` | Prompt library (create/delete)  |
 
 **The entry point is the creation form.** Picking RAG in the hub used to land on
 a menu whose only remaining card was "new session" — a leftover from when
@@ -28,8 +28,7 @@ lives in `components/generative/standaloneEntryPoints.js`; the backend decides
 *which* tasks are standalone, via each task's `metadata.entry_point`.
 
 The redirects exist because there is no catch-all route: without them a bookmark
-of `/rag/new` or of the removed documents and prompts pages would render a blank
-page.
+of `/rag/new` or of the removed documents page would render a blank page.
 
 ## The session view
 
@@ -145,20 +144,44 @@ and two columns are unreadable at this width.
 ## The prompt
 
 `components/generative/RAG/PromptEditor.jsx` edits the session's own template.
-There is no shared prompt library: `rag_prompt` rows are deduplicated by a hash
-of their parameters, so two sessions that chose the same template shared one
-row, and editing it rewrote the other session's prompt.
+The session still owns the text it sends: Save writes the whole draft, so a
+half-finished template never reaches the pipeline. The registry's built-in
+templates (`getDefaultPrompts`) seed the editor, and the "Saved prompts" select
+seeds it from a template stored in the prompt library.
 
-The registry's built-in templates (`getDefaultPrompts`) remain, but only to
-*seed* the template, and seeding is an explicit choice — the language select
-used to overwrite whatever the user had written as a side effect. Nothing is
-sent while typing; the panel's Save writes the whole draft.
+The prompt library is `/app/generative/rag/prompts` (`RAGPromptsPage`). It lists
+the user-created rows (`is_library=True`) and the built-in defaults
+(`is_library=False`, marked "Built-in" and read-only) from every prompt family:
+generation, query transformation and retrieval evaluation. Type
+and subtype selects filter the list (for example "Query transformation" +
+"Rewriting", or "Retrieval" + "Agentic reranker"). It shows the sessions using each
+one and supports create and delete. Deleting asks for confirmation; when
+sessions use the prompt, the warning names them because the delete cascades
+through `DELETE /api/v1/prompt/{id}?cascade_sessions=true`. Internal
+`pipeline_*` rows never appear and cannot be deleted from this page.
+
+The create dialog asks for a type, a subtype when the type has one, a name and
+a template. It has no "Start from" or "Seed language" controls, so it cannot
+look like it edits a built-in. The type/subtype pair selects the concrete
+`Custom*` prompt class, and placeholder validation is driven by that class's
+metadata. To reuse an existing template, the details panel offers "Copy
+template" (to the clipboard) and "Use as base" (opens a new prompt with the
+same type/subtype and template pre-filled).
 
 `HighlightedTextarea`, `PlaceholdersList` and `renderTemplateWithHighlights` are
 reused. The textarea keeps its highlight backdrop aligned by sharing one grid
 cell with the input, and leaves the native placeholder visible rather than
 drawing a second copy over it. A template missing `{chunks}` or `{input}` marks
 its tab and blocks Save.
+
+## Deleting a document
+
+The Data module's document confirmation reads `document.sessions` from
+`GET /api/v1/documents/`. When a RAG session uses the document, the warning
+names the sessions that will also be deleted; `useDocuments.deleteDocumentById`
+then calls `DELETE /api/v1/documents/{id}?cascade_sessions=true`. Without the
+cascade flag the backend still refuses with `409` and the same session list, so
+a stale page cannot delete dependent sessions silently.
 
 ## Sources and the retrieval trace
 
@@ -239,7 +262,7 @@ prompt editor's expanded view and the nested prompt dialog use the same shell.
 ### Prompt-typed schema fields
 
 Schemas that declare prompt properties — the LLM function-calling retrievers
-(`LLMFilterPrompt`, `RetrievalSufficiencyPrompt`) and the query transformers
+(`AgenticRerankerPrompt`, `AgenticRetrieverPrompt`) and the query transformers
 (`QueryTransformationPrompt` and its techniques) — are rendered by
 `components/generative/RAG/FormSchemaWithPrompts.jsx` instead of `FormSchema`.
 It is a drop-in alternative with the same props: it walks the schema in

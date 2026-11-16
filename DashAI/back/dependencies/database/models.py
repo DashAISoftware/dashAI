@@ -153,6 +153,9 @@ class DataDocument(Base):
     dataloader_params: Mapped[Optional[Dict[str, Any]]] = mapped_column(
         JSON, nullable=True
     )
+    converter_pipeline: Mapped[Optional[List[Dict[str, Any]]]] = mapped_column(
+        JSON, nullable=True
+    )
     content_counts: Mapped[Optional[Dict[str, int]]] = mapped_column(
         JSON, nullable=True
     )
@@ -271,10 +274,6 @@ class Run(Base):
     optimizer_name: Mapped[str] = mapped_column(String)
     optimizer_parameters: Mapped[JSON] = mapped_column(JSON)
     nested: Mapped[JSON] = mapped_column(JSON, nullable=True)
-    plot_history_path: Mapped[str] = mapped_column(String, nullable=True)
-    plot_slice_path: Mapped[str] = mapped_column(String, nullable=True)
-    plot_contour_path: Mapped[str] = mapped_column(String, nullable=True)
-    plot_importance_path: Mapped[str] = mapped_column(String, nullable=True)
     # goal metrics
     goal_metric: Mapped[str] = mapped_column(String)
     # artifacts
@@ -294,6 +293,7 @@ class Run(Base):
         "Prediction", cascade="all, delete-orphan", back_populates="run"
     )
     metrics = relationship("Metric", cascade="all, delete-orphan", back_populates="run")
+    plots = relationship("RunPlot", cascade="all, delete-orphan")
 
     def set_status_as_delivered(self) -> None:
         """Update the status of the run to delivered and set delivery_time to now."""
@@ -313,6 +313,26 @@ class Run(Base):
     def set_status_as_error(self) -> None:
         """Update the status of the run to error."""
         self.status = RunStatus.ERROR
+
+
+class RunPlot(Base):
+    __tablename__ = "run_plot"
+    """
+    The saved plots of one view of a run (``"hyperparameter"`` or
+    ``"forecasts"``): a pickled artifact list and the user's edits to it.
+    """
+    __table_args__ = (UniqueConstraint("run_id", "view", name="uq_run_plot_view"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int] = mapped_column(
+        ForeignKey("run.id", ondelete="CASCADE"), nullable=False
+    )
+    view: Mapped[str] = mapped_column(String, nullable=False)
+    artifacts_path: Mapped[str] = mapped_column(String, nullable=False)
+    plot_overrides: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    created: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now, nullable=True
+    )
 
 
 class Prediction(Base):
@@ -695,6 +715,9 @@ class GenerativeSession(Base):
     # model and parameters
     model_name: Mapped[str] = mapped_column(String)
     parameters: Mapped[JSON] = mapped_column(JSON)
+    workflow_name: Mapped[str] = mapped_column(
+        String, nullable=False, server_default="InferenceWorkflow"
+    )
     # metadata
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=True)
@@ -1032,6 +1055,12 @@ class GenerativeSessionParameterHistory(Base):
         nullable=False,
     )
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=False)
+    # Snapshot of every prompt slot binding at the time of the snapshot, keyed
+    # by slot path. Nullable because rows written before the prompt redesign
+    # stored prompts inside ``parameters`` and have no snapshot.
+    prompt_bindings: Mapped[Optional[dict[str, Any]]] = mapped_column(
+        JSON, nullable=True
+    )
     # Model active when this snapshot was taken. Nullable so pre-migration rows
     # remain valid; the parameters-history derivation only emits a model-change
     # event when two consecutive snapshots both carry a model name that differs.
@@ -1295,6 +1324,22 @@ class RAGPrompt(Base):
     name: Mapped[str] = mapped_column(String, nullable=True)
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
     parameters_hash: Mapped[str] = mapped_column(String, nullable=False)
+    #: Whether this row was created by a user from the prompt library. Rows
+    #: created by ``get_or_create`` for a session's pipeline, and the built-in
+    #: defaults, are internal and must not be deleted from the library UI.
+    is_library: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
+    #: Whether this row is a code-owned default. Defaults are immutable: the
+    #: service refuses to edit or delete them, and forks create custom rows.
+    is_default: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
+    #: Prompt this row was forked from, kept for lineage. Null for new prompts.
+    #: A soft reference on purpose: a self-referential FK makes SQLite batch
+    #: table rebuilds fail with a circular dependency, and deletion already
+    #: clears the column explicitly.
+    based_on_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
@@ -1311,7 +1356,35 @@ class RAGPrompt(Base):
 
     __table_args__ = (
         UniqueConstraint("parameters_hash", name="uq_rag_prompt_params_hash"),
+        # Prompt ids are referenced by session bindings and pipeline snapshots.
+        # Without AUTOINCREMENT, SQLite reuses the id of a deleted row, so a
+        # stale reference could silently resolve to an unrelated prompt.
+        {"sqlite_autoincrement": True},
     )
+
+
+class RAGSessionPrompt(Base):
+    """Table mapping each prompt slot of a RAG session to the prompt row it uses.
+
+    The pairs ``(session_id, slot_path)`` are the primary key: a slot holds one
+    prompt at a time, and reassigning it replaces the link. ``slot_path`` names
+    the pipeline location (for example ``generation`` or
+    ``query_transformation.prompt``), so a session can reference prompts that
+    live outside its top-level ``parameters.prompt`` entry.
+    """
+
+    __tablename__ = "rag_session_prompt"
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("generative_session.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    slot_path: Mapped[str] = mapped_column(String, primary_key=True)
+    prompt_id: Mapped[int] = mapped_column(
+        ForeignKey("rag_prompt.id", ondelete="RESTRICT"), nullable=False
+    )
+    #: Language selected on the binding. Only meaningful for default prompts,
+    #: whose parameters carry one template per language.
+    language: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 
 class RAGGenerationModel(Base):
@@ -1337,7 +1410,7 @@ class RAGGenerationModel(Base):
 class RAGRetrievalModel(Base):
     __tablename__ = "rag_retrieval_model"
     """
-    Table to store the LLM used by the LLM-evaluated composite retrievers to
+    Table to store the LLM used by the agentic composite retrievers to
     judge retrieval sufficiency. Kept separate from the generation model table:
     a retrieval-evaluation model is a distinct role and must be deduplicated on
     its own.
@@ -1369,7 +1442,7 @@ class RAGPipeline(Base):
         ForeignKey("rag_chunking_model.id", ondelete="CASCADE"), nullable=True
     )
     prompt_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("rag_prompt.id", ondelete="CASCADE"), nullable=True
+        ForeignKey("rag_prompt.id", ondelete="SET NULL"), nullable=True
     )
     generation_model_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("rag_generation_model.id", ondelete="CASCADE"), nullable=True

@@ -20,9 +20,16 @@ Coverage
 - Parameter change history tracking
 """
 
+import uuid
+
 from fastapi.testclient import TestClient
 
-from tests.back.RAG.conftest import BOW_PARAMS, TFIDF_PARAMS, _add_document_to_session
+from tests.back.RAG.conftest import (
+    BOW_PARAMS,
+    RAG_WORKFLOW_PAYLOAD,
+    TFIDF_PARAMS,
+    _add_document_to_session,
+)
 
 # ---------------------------------------------------------------------------
 # helpers
@@ -32,8 +39,7 @@ from tests.back.RAG.conftest import BOW_PARAMS, TFIDF_PARAMS, _add_document_to_s
 def _base_session_params() -> dict:
     """Return the minimal valid RAG session payload."""
     return {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "parameters": {
             "chunking_model": {
                 "component": "CharacterChunkModel",
@@ -769,3 +775,44 @@ class TestHistoryTracking:
             history[-1]["parameters"]["generation_model"]["params"]["temperature"]
             == 0.9
         )
+
+    def test_prompt_only_update_appears_in_the_diff(
+        self,
+        client: TestClient,
+    ):
+        """A prompt-only edit is visible in the derived diff.
+
+        History entries must be materialized from their own prompt snapshot;
+        using the session's current bindings would hide the change.
+        """
+        session = _create_session(client, "flow_history_prompt_diff")
+        session_id = session["id"]
+        template = (
+            f"Context: {{chunks}}\nUser: {{input}}\nprompt_diff_{uuid.uuid4().hex}"
+        )
+
+        put_resp = client.put(
+            f"/api/v1/generative-session/{session_id}/parameters",
+            json={
+                "prompt": {
+                    "component": "CustomRAGGenerationPrompt",
+                    "params": {"template": template},
+                }
+            },
+        )
+        assert put_resp.status_code == 200, put_resp.text
+
+        diff_resp = client.get(
+            f"/api/v1/generative-session/parameters-history/{session_id}"
+        )
+        assert diff_resp.status_code == 200, diff_resp.text
+        events = diff_resp.json()
+
+        prompt_changes = [
+            change
+            for event in events
+            for change in event["changes"]
+            if change["parameter"] == "prompt"
+        ]
+        assert prompt_changes, "A prompt-only edit must produce a prompt change"
+        assert prompt_changes[-1]["newValue"]["params"]["template"] == template

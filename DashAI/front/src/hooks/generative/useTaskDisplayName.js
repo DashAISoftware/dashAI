@@ -1,17 +1,19 @@
 import { useGenerative } from "../../components/generative/GenerativeContext";
 
 /**
- * The friendly, localized name of a generative task.
+ * The friendly, localized name of a generative task or workflow.
  *
- * Task names come from the backend already translated, so a view scoped to one
- * task can label itself without carrying a string of its own. Falls back to the
- * task name while the task list is still loading.
+ * Names come from the backend already translated, so a view scoped to one
+ * workflow can label itself without carrying a string of its own. Falls back
+ * to the given name while the lists are still loading.
  *
- * @param {string} taskName - The task's registry name (e.g. "RAGTask").
- * @returns {string} The task's display name, or the given name as a fallback.
+ * @param {string} taskName - A task or workflow registry name (e.g. "RAGWorkflow").
+ * @returns {string} Its display name, or the given name as a fallback.
  */
 export function useTaskDisplayName(taskName) {
-  const { tasks } = useGenerative() ?? {};
-  const task = (tasks ?? []).find((candidate) => candidate.name === taskName);
-  return task?.display_name || taskName;
+  const { tasks, workflows } = useGenerative() ?? {};
+  const component = [...(tasks ?? []), ...(workflows ?? [])].find(
+    (candidate) => candidate.name === taskName,
+  );
+  return component?.display_name || taskName;
 }

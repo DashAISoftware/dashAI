@@ -2,7 +2,7 @@
 
 The RAG pipeline is synchronous and runs in one thread. It exposes its reporter
 through a :class:`contextvars.ContextVar` so that deeply nested collaborators
-(query transformers, LLM-evaluated retrievers) can publish short user-facing
+(query transformers, agentic retrievers) can publish short user-facing
 status messages without threading a reporter parameter through every call.
 
 This is deliberately a *context-local, single-threaded* channel: the context

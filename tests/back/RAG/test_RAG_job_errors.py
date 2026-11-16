@@ -25,6 +25,7 @@ from DashAI.back.job.RAG_job import RAGJob
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
+from tests.back.RAG.conftest import rag_session_columns
 from tests.back.RAG.test_RAG_job_completes_flow import (
     DOC_TEXT,
     _create_test_document,
@@ -81,9 +82,7 @@ def _run_failing_turn(client: TestClient, edit_parameters) -> list:
             f.write(DOC_TEXT)
         with session_factory() as db:
             session = GenerativeSession(
-                task_name="RAGTask",
-                model_name="RAGPipeline",
-                parameters=parameters,
+                **rag_session_columns(parameters),
                 name=f"job_errors_{run_tag}",
                 description=None,
             )

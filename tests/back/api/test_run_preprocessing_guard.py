@@ -65,10 +65,6 @@ def test_run_creation_is_rejected_while_preprocessing_is_pending(
             },
             "goal_metric": "",
             "description": "Should be rejected",
-            "plot_history_path": "path/to/history.png",
-            "plot_slice_path": "path/to/slice.png",
-            "plot_contour_path": "path/to/contour.png",
-            "plot_importance_path": "path/to/importance.png",
         },
     )
     assert response.status_code == 409, response.text
@@ -137,10 +133,6 @@ def test_run_creation_surfaces_the_preprocessing_error_when_failed(
             },
             "goal_metric": "",
             "description": "Should be rejected",
-            "plot_history_path": "path/to/history.png",
-            "plot_slice_path": "path/to/slice.png",
-            "plot_contour_path": "path/to/contour.png",
-            "plot_importance_path": "path/to/importance.png",
         },
     )
     assert response.status_code == 409, response.text

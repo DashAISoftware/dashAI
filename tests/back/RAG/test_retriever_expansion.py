@@ -29,14 +29,14 @@ from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.exceptions import RAGRetrieverError
 from DashAI.back.models.RAG.RAG_pipeline import _chunk_label, merge_round_robin
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_depth_retriever import (
-    LLMEvaluatedDepthRetrieverSchema,
+from DashAI.back.models.RAG.retrievers.composite.agentic_ensemble_retriever import (  # noqa: E501
+    AgenticEnsembleRetrieverSchema,
 )
-from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_ensemble_retriever import (  # noqa: E501
-    LLMEvaluatedEnsembleRetrieverSchema,
+from DashAI.back.models.RAG.retrievers.composite.agentic_reranker_retriever import (
+    AgenticRerankerRetrieverSchema,
 )
-from DashAI.back.models.RAG.retrievers.composite.llm_filter_retriever import (
-    LLMFilterRetrieverSchema,
+from DashAI.back.models.RAG.retrievers.composite.agentic_single_retriever import (
+    AgenticSingleRetrieverSchema,
 )
 from DashAI.back.models.RAG.retrievers.composite.mmr_reranker_retriever import (
     MMRRerankerRetrieverSchema,
@@ -666,9 +666,9 @@ EXPANSION_SCHEMAS = [
     BM25RetrieverSchema,
     TFIDFRetrieverSchema,
     SentenceTransformerCrossEncoderRetrieverSchema,
-    LLMFilterRetrieverSchema,
-    LLMEvaluatedDepthRetrieverSchema,
-    LLMEvaluatedEnsembleRetrieverSchema,
+    AgenticRerankerRetrieverSchema,
+    AgenticSingleRetrieverSchema,
+    AgenticEnsembleRetrieverSchema,
     MMRRerankerRetrieverSchema,
     ParallelRetrieverSchema,
     SequentialRetrieverSchema,

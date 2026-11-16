@@ -534,6 +534,8 @@
     "failedToUpdate": "Could not rename the document",
     "nameExists": "A document with this name already exists",
     "confirmDelete": "Are you sure you want to delete the document \"{{name}}\"? This action cannot be undone.",
+    "cascadeWarning": "The following RAG sessions also use this document and will be deleted: {{sessions}}.",
+    "cascadeConfirm": "This document is used by these RAG sessions, which will also be deleted: {{sessions}}. Continue?",
     "statusProcessing": "Parsing...",
     "statusError": "Parsing failed",
     "contentSummary": "{{text}} text items, {{image}} images",

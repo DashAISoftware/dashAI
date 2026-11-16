@@ -301,7 +301,7 @@ def _own_chunk_cap(params: Dict[str, Any]) -> Optional[int]:
     """Return the cap a retriever declares for its own output, if any.
 
     ``top_k`` caps the chunks a reranker or composite returns and ``max_chunks``
-    caps an LLM-evaluated pool. A node declaring neither is bounded by its
+    caps an agentic pool. A node declaring neither is bounded by its
     children instead.
 
     Parameters
@@ -326,7 +326,7 @@ def _own_chunk_cap(params: Dict[str, Any]) -> Optional[int]:
 def effective_chunk_count(component: str, params: Dict[str, Any]) -> int:
     """Return how many chunks a retriever config actually puts in the prompt.
 
-    A retriever's own ``top_k`` (or an LLM-evaluated retriever's ``max_chunks``)
+    A retriever's own ``top_k`` (or an agentic retriever's ``max_chunks``)
     caps how many units it returns, but each unit may itself be an expanded
     window produced below it, so a capped parent is priced with the widest
     window in its subtree. A composite without a cap adds up its children's

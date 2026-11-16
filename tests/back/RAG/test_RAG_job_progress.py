@@ -36,7 +36,7 @@ from DashAI.back.job import RAG_job as rag_job_module
 from DashAI.back.job.base_job import JobError
 from DashAI.back.job.generative_job import GenerativeJob
 from DashAI.back.job.RAG_job import RAGJob, _make_progress_reporter
-from DashAI.back.models.RAG.prompts.evaluation.default_retrieval_sufficiency_prompt import (  # noqa: E501
+from DashAI.back.models.RAG.prompts.evaluation.default_agentic_retriever_prompt import (  # noqa: E501
     TEMPLATES as SUFFICIENCY_TEMPLATES,
 )
 from DashAI.back.models.RAG.prompts.generation.default_RAG_generation_prompt import (
@@ -53,6 +53,7 @@ from tests.back.RAG.conftest import (
     RAG_E2E_DOC_TEXT,
     _create_test_document,
     bm25_retriever_params,
+    rag_session_columns,
     write_test_doc_file,
 )
 
@@ -153,7 +154,7 @@ class NarrativeVerdictLLM(TextToTextGenerationTaskModel):
     def generate_function_call(self, messages, functions):
         """Return a sufficient function-call verdict with narrative."""
         return FunctionCallResult(
-            "evaluate_retrieval_sufficiency",
+            "evaluate_agentic_retrieval",
             {
                 "sufficient": True,
                 "message": RETRIEVAL_MESSAGE,
@@ -256,9 +257,7 @@ def _create_session_process(
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
         session = GenerativeSession(
-            task_name="RAGTask",
-            model_name="RAGPipeline",
-            parameters=session_params,
+            **rag_session_columns(session_params),
             name=f"job_progress_{tag}",
             description=None,
         )
@@ -385,7 +384,7 @@ class TestProgressWithTransformation:
 
 
 # ===================================================================
-# LLM-evaluated retriever narrative
+# agentic retriever narrative
 # ===================================================================
 
 
@@ -399,7 +398,7 @@ class TestRetrieverNarrativeProgress:
         try:
             params = _session_params([doc_id], False)
             params["retriever_model"] = {
-                "component": "LLMEvaluatedDepthRetriever",
+                "component": "AgenticSingleRetriever",
                 "params": {
                     "children": [
                         {
@@ -410,7 +409,7 @@ class TestRetrieverNarrativeProgress:
                     "max_iters": 2,
                     "max_chunks": 5,
                     "prompt": {
-                        "component": "DefaultRetrievalSufficiencyPrompt",
+                        "component": "DefaultAgenticRetrieverPrompt",
                         "params": {
                             "language": "en",
                             "template": SUFFICIENCY_TEMPLATES["en"],
@@ -426,19 +425,17 @@ class TestRetrieverNarrativeProgress:
                 client, params, "Retriever narrative"
             )
 
-            from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_retriever import (  # noqa: E501
-                LLMEvaluatedRetriever,
+            from DashAI.back.models.RAG.retrievers.composite.agentic_retriever import (  # noqa: E501
+                AgenticRetriever,
             )
 
-            original = LLMEvaluatedRetriever._report_verdict_progress
+            original = AgenticRetriever._report_verdict_progress
 
             def wrapped(self, verdict):
                 original(self, verdict)
                 _record_progress()
 
-            monkeypatch.setattr(
-                LLMEvaluatedRetriever, "_report_verdict_progress", wrapped
-            )
+            monkeypatch.setattr(AgenticRetriever, "_report_verdict_progress", wrapped)
             _run_with_capture(client, process_id, monkeypatch)
 
             assert _PROGRESS_CAPTURE == [

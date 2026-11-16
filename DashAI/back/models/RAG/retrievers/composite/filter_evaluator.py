@@ -1,4 +1,4 @@
-"""Prompt + LLM collaborator for the LLM filter retriever.
+"""Prompt + LLM collaborator for the agentic reranker retriever.
 
 ``FilterEvaluator`` is the single place that turns structured candidate chunks
 into a prompt and parses the model's function-calling selection. The shared

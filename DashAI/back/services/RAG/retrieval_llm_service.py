@@ -1,6 +1,6 @@
 """Lookup-or-create service for the retrieval-evaluation LLM.
 
-The LLM-evaluated composite retrievers judge whether a set of retrieved chunks
+The agentic composite retrievers judge whether a set of retrieved chunks
 is sufficient and, when it is not, which retrievers to consult next. That is a
 distinct role from answer generation, so its records live in their own table
 (``rag_retrieval_model``). The lookup rules are shared verbatim with

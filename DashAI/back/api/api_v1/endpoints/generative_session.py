@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type, Union
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from kink import di
@@ -12,21 +12,20 @@ from DashAI.back.api.api_v1.schemas.generative_session_params import (
 )
 from DashAI.back.core.utils import localize
 from DashAI.back.dependencies.database.models import (
-    GenerativeProcess,
     GenerativeSession,
     GenerativeSessionParameterHistory,
-    ProcessData,
 )
 from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
-from DashAI.back.models.RAG.exceptions.base import RAGWorkflowError
-from DashAI.back.services.RAG.cleanup_service import CleanupService
-from DashAI.back.services.RAG.index_job_service import cancel_live_index_job
-from DashAI.back.services.RAG.session_validation_service import (
-    SessionValidationService,
+from DashAI.back.services.workflows import (
+    WorkflowConflictError,
+    WorkflowSessionError,
+    WorkflowSessionService,
+    WorkflowStorageError,
+    session_service_for,
 )
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
-from DashAI.back.tasks.RAG_task import RAGTask
+from DashAI.back.workflows import INFERENCE_WORKFLOW_NAME, BaseGenerativeWorkflow
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -38,71 +37,410 @@ router = APIRouter()
 log = logging.getLogger(__name__)
 
 
+def _workflow_class(
+    workflow_name: str, component_registry: "ComponentRegistry"
+) -> Type[BaseGenerativeWorkflow]:
+    """Resolve a registered generative workflow for a new session.
+
+    Parameters
+    ----------
+    workflow_name : str
+        Name sent by the client.
+    component_registry : ComponentRegistry
+        Registry holding the workflows.
+
+    Returns
+    -------
+    Type[BaseGenerativeWorkflow]
+        The workflow class.
+
+    Raises
+    ------
+    HTTPException
+        400 when no generative workflow has that name.
+    """
+    if (
+        workflow_name not in component_registry
+        or component_registry[workflow_name]["type"] != BaseGenerativeWorkflow.TYPE
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Workflow {workflow_name} is not registered.",
+        )
+    return component_registry[workflow_name]["class"]
+
+
+def _session_workflow(
+    session: GenerativeSession, component_registry: "ComponentRegistry"
+) -> Type[BaseGenerativeWorkflow]:
+    """Resolve the workflow of a stored session.
+
+    Parameters
+    ----------
+    session : GenerativeSession
+        The stored session.
+    component_registry : ComponentRegistry
+        Registry holding the workflows.
+
+    Returns
+    -------
+    Type[BaseGenerativeWorkflow]
+        The workflow class.
+
+    Raises
+    ------
+    HTTPException
+        404 when the session's workflow is not registered.
+    """
+    if session.workflow_name not in component_registry:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=(
+                f"Workflow '{session.workflow_name}' is not registered"
+                " in the component registry."
+            ),
+        )
+    return component_registry[session.workflow_name]["class"]
+
+
+def _check_model_fits_task(
+    model_name: str, task_name: str, component_registry: "ComponentRegistry"
+) -> None:
+    """Refuse a model that is not a model of the task.
+
+    Parameters
+    ----------
+    model_name : str
+        Model component name.
+    task_name : str
+        Task component name.
+    component_registry : ComponentRegistry
+        Registry holding the task to model relation.
+
+    Raises
+    ------
+    HTTPException
+        400 when the model is not related to the task.
+    """
+    related = {
+        component["name"]
+        for component in component_registry.get_related_components(task_name)
+    }
+    if model_name not in related:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Model {model_name} is not a model of task {task_name}.",
+        )
+
+
+def _display_name(
+    workflow_name: str,
+    task_name: str,
+    component_registry: "ComponentRegistry",
+    accept_language: Union[str, None],
+) -> str:
+    """Return the name a session is shown under.
+
+    Inference sessions are shown under their task; every other workflow names
+    its own sessions.
+
+    Parameters
+    ----------
+    workflow_name : str
+        The session's workflow.
+    task_name : str
+        The session's task.
+    component_registry : ComponentRegistry
+        Registry holding both.
+    accept_language : Union[str, None]
+        Client language.
+
+    Returns
+    -------
+    str
+        The localized display name.
+    """
+    owner = task_name if workflow_name == INFERENCE_WORKFLOW_NAME else workflow_name
+    return localize(component_registry[owner]["display_name"], accept_language)
+
+
+def _workflow_tasks(
+    workflow_name: str, component_registry: "ComponentRegistry"
+) -> list:
+    """Return the generative tasks a workflow runs.
+
+    Parameters
+    ----------
+    workflow_name : str
+        The workflow.
+    component_registry : ComponentRegistry
+        Registry holding the workflow's compatible components.
+
+    Returns
+    -------
+    list
+        Names of the related components of type ``GenerativeTask``.
+    """
+    return [
+        component["name"]
+        for component in component_registry.get_related_components(workflow_name)
+        if component["type"] == BaseGenerativeTask.TYPE
+    ]
+
+
+def _session_payload(
+    session: GenerativeSession,
+    *,
+    parameters: Dict[str, Any],
+    prompts: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Serialize one session from already resolved parts.
+
+    The caller resolves the parameters and prompts, so the same serializer
+    runs before a commit and degrades gracefully when a stored prompt is
+    unusable.
+
+    Parameters
+    ----------
+    session : GenerativeSession
+        The session.
+    parameters : Dict[str, Any]
+        Parameters to send, prompts included.
+    prompts : Optional[Dict[str, Any]]
+        Prompt bindings; left out of the payload when ``None``.
+
+    Returns
+    -------
+    Dict[str, Any]
+        The session payload.
+    """
+    payload = {
+        "id": session.id,
+        "task_name": session.task_name,
+        "model_name": session.model_name,
+        "workflow_name": session.workflow_name,
+        "parameters": parameters,
+        "name": session.name,
+        "description": session.description,
+        "created": session.created,
+        "last_modified": session.last_modified,
+        "index_job_id": session.index_job_id,
+        "needs_reindex": session.needs_reindex,
+    }
+    if prompts is not None:
+        payload["prompts"] = prompts
+    return payload
+
+
+def _session_snapshot(
+    session: GenerativeSession, service: WorkflowSessionService
+) -> Dict[str, Any]:
+    """Serialize a stored session as its workflow shows it to the client.
+
+    Parameters
+    ----------
+    session : GenerativeSession
+        The stored session.
+    service : WorkflowSessionService
+        The session's workflow service.
+
+    Returns
+    -------
+    Dict[str, Any]
+        The session payload.
+
+    Raises
+    ------
+    WorkflowConflictError
+        When the session's stored prompts cannot be resolved.
+    """
+    parameters, prompts = service.read_parameters(session)
+    return _session_payload(session, parameters=parameters, prompts=prompts)
+
+
+def _parameters_response(
+    session_id: int,
+    parameters: Dict[str, Any],
+    prompts: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Build the answer to a parameter update.
+
+    Parameters
+    ----------
+    session_id : int
+        The session id.
+    parameters : Dict[str, Any]
+        Parameters to send, prompts included.
+    prompts : Optional[Dict[str, Any]]
+        Prompt bindings; left out when ``None``.
+
+    Returns
+    -------
+    Dict[str, Any]
+        The response body.
+    """
+    response = {"id": session_id, "parameters": parameters}
+    if prompts is not None:
+        response["prompts"] = prompts
+    return response
+
+
+def _split_parameters_body(
+    body: Dict[str, Any],
+) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
+    """Split a parameter update body into parameters and a prompts map.
+
+    The body is either the bare partial parameters, a wrapper with
+    ``parameters`` and ``prompts``, or bare parameters next to ``prompts``.
+
+    Parameters
+    ----------
+    body : Dict[str, Any]
+        The request body.
+
+    Returns
+    -------
+    Tuple[Dict[str, Any], Optional[Dict[str, Any]]]
+        The partial parameters and the prompts map, if any.
+
+    Raises
+    ------
+    HTTPException
+        400 when ``parameters`` or ``prompts`` is not an object.
+    """
+    body = dict(body)
+    prompts = None
+    if "parameters" in body and not isinstance(body["parameters"], dict):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="'parameters' must be an object of session parameters.",
+        )
+    if isinstance(body.get("parameters"), dict):
+        prompts = body.get("prompts")
+        body = dict(body["parameters"])
+    elif "prompts" in body:
+        prompts = body.pop("prompts")
+    if prompts is not None and not isinstance(prompts, dict):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="'prompts' must be an object keyed by prompt slot path.",
+        )
+    return body, prompts
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def upload_generative_session(
     params: GenerativeSessionParams,
     accept_language: str | None = Header(default=None),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    job_queue: Any = Depends(lambda: di["job_queue"]),
 ):
-    """Create a new generative session and log the initial parameters in the history."""
+    """Create a generative session and log its initial parameters.
+
+    The task must be one the workflow runs (it may be left out when the
+    workflow runs only one). The workflow's session service completes the
+    parameters, may name the model from them, and validates them. Without
+    ``workflow_name`` the session runs ``InferenceWorkflow``. The session row,
+    what the workflow keeps outside it (prompt bindings, say) and the first
+    history entry are committed together.
+    """
 
     with session_factory() as db:
         try:
-            # Check if the model is registered
-            if params.model_name not in component_registry:
+            workflow_class = _workflow_class(
+                params.workflow_name or INFERENCE_WORKFLOW_NAME, component_registry
+            )
+            workflow_name = workflow_class.__name__
+
+            workflow_tasks = _workflow_tasks(workflow_name, component_registry)
+            task_name = params.task_name
+            if task_name is None and len(workflow_tasks) == 1:
+                task_name = workflow_tasks[0]
+            if task_name is None:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Model {params.model_name} is not registered.",
+                    detail=f"Workflow {workflow_name} needs a task_name.",
                 )
-            model_class = component_registry[params.model_name]["class"]
+
+            service = session_service_for(
+                workflow_name, db, component_registry, job_queue
+            )
+            try:
+                parameters = service.prepare_parameters(
+                    params.parameters, accept_language, params.prompts
+                )
+            except WorkflowSessionError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=str(e),
+                ) from e
+
+            model_name = service.model_name_from(parameters) or params.model_name
+            if model_name is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Workflow {workflow_name} needs a model_name.",
+                )
+            if params.model_name is not None and params.model_name != model_name:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Model {params.model_name} is not the model the "
+                        f"session parameters name, {model_name}."
+                    ),
+                )
+
+            # Check if the model is registered
+            if model_name not in component_registry:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Model {model_name} is not registered.",
+                )
+            model_class = component_registry[model_name]["class"]
 
             # Guard: model requires download but has not been downloaded -> 409.
             # Reconcile against the filesystem so a model downloaded after startup
             # (in the worker process) is recognised without an API restart.
             if getattr(
                 model_class, "REQUIRES_DOWNLOAD", False
-            ) and not component_registry.refresh_download_status(params.model_name):
+            ) and not component_registry.refresh_download_status(model_name):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail=(
-                        f"Model {params.model_name} must be downloaded before use."
-                    ),
+                    detail=(f"Model {model_name} must be downloaded before use."),
                 )
 
             # Check if the model is a subclass of GenerativeModel
             if not issubclass(model_class, BaseGenerativeModel):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Model {params.model_name} is not a valid "
-                    f"generative model.",
+                    detail=f"Model {model_name} is not a valid generative model.",
                 )
 
             # Check if the task is registered
-            if params.task_name not in component_registry:
+            if task_name not in component_registry:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Task {params.task_name} is not registered.",
+                    detail=f"Task {task_name} is not registered.",
                 )
-            task_class = component_registry[params.task_name]["class"]
+            task_class = component_registry[task_name]["class"]
 
-            # RAG: validate and normalise RAG-specific parameters, filling in
-            # the components the caller did not choose.
-            if task_class == RAGTask:
-                try:
-                    params.parameters = SessionValidationService(
-                        db, component_registry
-                    ).prepare_RAG_params(params.parameters, accept_language)
-                except (ValueError, RAGWorkflowError) as e:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=str(e),
-                    ) from e
+            if task_name not in workflow_tasks:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Workflow {workflow_name} does not run task {task_name}; "
+                        f"it runs {', '.join(workflow_tasks)}."
+                    ),
+                )
+
+            _check_model_fits_task(model_name, task_name, component_registry)
 
             # A parameter may select another component that itself needs
             # downloading; block until every nested one is present. Runs after
-            # the RAG defaults are applied so it sees the final configuration.
-            nested_missing = missing_downloads(params.parameters, component_registry)
+            # the workflow completed the parameters so it sees the final
+            # configuration.
+            nested_missing = missing_downloads(parameters, component_registry)
             if nested_missing:
                 names = ", ".join(m["name"] for m in nested_missing)
                 raise HTTPException(
@@ -114,25 +452,27 @@ async def upload_generative_session(
 
             # Validate schema
             try:
-                model_class.SCHEMA.model_validate(params.parameters)
+                service.check_parameters(model_class, parameters)
             except ValueError as e:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Invalid parameters for model {params.model_name}: {e}",
+                    detail=f"Invalid parameters for model {model_name}: {e}",
                 ) from e
 
             # Check if the task is a subclass of BaseGenerativeTask
             if not issubclass(task_class, BaseGenerativeTask):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Task {params.task_name} is not a valid generative task.",
+                    detail=f"Task {task_name} is not a valid generative task.",
                 )
 
+            stored_parameters = service.stored_parameters(parameters)
             now = datetime.now()
             session = GenerativeSession(
-                model_name=params.model_name,
-                task_name=params.task_name,
-                parameters=params.parameters,
+                model_name=model_name,
+                task_name=task_name,
+                workflow_name=workflow_name,
+                parameters=stored_parameters,
                 name=params.name,
                 description=params.description,
                 created=now,
@@ -140,7 +480,7 @@ async def upload_generative_session(
             )
             db.add(session)
             try:
-                db.commit()
+                db.flush()
             except exc.IntegrityError as e:
                 db.rollback()
                 raise HTTPException(
@@ -149,33 +489,56 @@ async def upload_generative_session(
                         f"Generative session with name '{params.name}' already exists."
                     ),
                 ) from e
-            db.refresh(session)
+
+            prompt_snapshot = service.bind_new_session(
+                session, parameters, params.prompts
+            )
+            client_parameters = service.client_parameters(session, stored_parameters)
 
             session_params_entry = GenerativeSessionParameterHistory(
                 session_id=session.id,
-                parameters=session.parameters,
+                parameters=stored_parameters,
+                prompt_bindings=prompt_snapshot,
                 model_name=session.model_name,
                 modified_at=datetime.now(),
             )
             db.add(session_params_entry)
             db.commit()
+            db.refresh(session)
 
-            return {
-                "id": session.id,
-                "model_name": session.model_name,
-                "task_name": session.task_name,
-                "parameters": session.parameters,
-                "name": session.name,
-                "description": session.description,
-                "created": session.created,
-                "last_modified": session.last_modified,
-                # Localized here so the client never receives a language object.
-                "display_name": localize(
-                    component_registry[session.task_name]["display_name"],
-                    accept_language,
-                ),
-            }
+            response = _session_payload(
+                session, parameters=client_parameters, prompts=prompt_snapshot
+            )
+            # Localized here so the client never receives a language object.
+            response["display_name"] = _display_name(
+                session.workflow_name,
+                session.task_name,
+                component_registry,
+                accept_language,
+            )
+            return response
+        except HTTPException:
+            db.rollback()
+            raise
+        except WorkflowConflictError as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(e)
+            ) from e
+        except WorkflowStorageError as e:
+            db.rollback()
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+        except (ValueError, LookupError) as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            ) from e
         except exc.SQLAlchemyError as e:
+            db.rollback()
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -187,6 +550,7 @@ async def upload_generative_session(
 async def get_generative_session(
     session_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Get a generative session by its ID.
 
@@ -197,6 +561,8 @@ async def get_generative_session(
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    component_registry : ComponentRegistry
+        Registry used to resolve the session's prompts.
 
     Returns
     -------
@@ -218,7 +584,16 @@ async def get_generative_session(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=(f"Generative session {session_id} does not exist in DB."),
                 )
-            return session
+            return _session_snapshot(
+                session,
+                session_service_for(session.workflow_name, db, component_registry),
+            )
+        except WorkflowConflictError as e:
+            # The stored prompts are unusable (an unreadable default, a row
+            # deleted under the session): a state conflict, not a server fault.
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(e)
+            ) from e
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
@@ -230,25 +605,33 @@ async def get_generative_session(
 @router.get("/", status_code=status.HTTP_200_OK)
 async def get_all_generative_sessions(
     task_name: Union[str, None] = None,
+    workflow_name: Union[str, None] = None,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Get all generative sessions ordered by creation date.
 
     Parameters
     ----------
     task_name : str | None
-        If given, return only sessions of that generative task. A view scoped to
-        one task (the RAG entry point, say) uses this; the shared session list
-        asks for everything and groups the result by task.
+        If given, return only sessions of that generative task.
+    workflow_name : str | None
+        If given, return only sessions run by that workflow. A view scoped to
+        one workflow (the RAG entry point, say) uses this; the shared session
+        list asks for everything and groups the result.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    component_registry : ComponentRegistry
+        Registry used to resolve each session's prompts.
 
     Returns
     -------
     list
         A list of dictionaries with the matching generative sessions, ordered by
-        creation date.
+        creation date. A session whose stored prompts cannot be resolved is
+        returned with its stored ``parameters`` and a ``prompt_error`` field
+        instead of failing the whole list.
 
     Raises
     ------
@@ -261,6 +644,8 @@ async def get_all_generative_sessions(
             query = db.query(GenerativeSession)
             if task_name is not None:
                 query = query.filter(GenerativeSession.task_name == task_name)
+            if workflow_name is not None:
+                query = query.filter(GenerativeSession.workflow_name == workflow_name)
             sessions = query.order_by(GenerativeSession.created.asc()).all()
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -269,29 +654,40 @@ async def get_all_generative_sessions(
                 detail="Internal database error",
             ) from e
 
-        session_list = []
+        payloads = []
         for session in sessions:
-            session_list.append(
-                {
-                    "id": session.id,
-                    "task_name": session.task_name,
-                    "model_name": session.model_name,
-                    "parameters": session.parameters,
-                    "name": session.name,
-                    "description": session.description,
-                    "created": session.created,
-                    "last_modified": session.last_modified,
-                }
-            )
-        return session_list
+            service = session_service_for(session.workflow_name, db, component_registry)
+            try:
+                payloads.append(_session_snapshot(session, service))
+            except (WorkflowConflictError, LookupError) as e:
+                # One session whose stored prompt became unreadable must not
+                # hide every other session; it is listed with the reason.
+                log.warning(
+                    "Could not resolve the prompts of session %s: %s",
+                    session.id,
+                    e,
+                )
+                payload = _session_payload(
+                    session,
+                    parameters=dict(session.parameters or {}),
+                    prompts={},
+                )
+                payload["prompt_error"] = str(e)
+                payloads.append(payload)
+        return payloads
 
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_generative_sessions(
     params: GenerativeSessionBulkDeleteParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    job_queue: Any = Depends(lambda: di["job_queue"]),
 ):
     """Delete multiple generative sessions, in a single transaction.
+
+    Each session's workflow deletes the session with every row it owns inside
+    that transaction.
 
     Parameters
     ----------
@@ -302,6 +698,10 @@ async def delete_generative_sessions(
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    component_registry : ComponentRegistry
+        Registry resolving each session's workflow.
+    job_queue : Any
+        Job queue, for workflows that run background jobs.
 
     Raises
     ------
@@ -315,42 +715,9 @@ async def delete_generative_sessions(
                 session = db.get(GenerativeSession, session_id)
                 if not session:
                     continue
-
-                CleanupService(db).invalidate_session_artifacts(
-                    session_id, commit=False
-                )
-
-                # Delete all the processes associated with the session
-                processes = (
-                    db.query(GenerativeProcess)
-                    .filter(GenerativeProcess.session_id == session_id)
-                    .all()
-                )
-                # Delete all the process data associated with the processes
-                for process in processes:
-                    process_data = (
-                        db.query(ProcessData)
-                        .filter(ProcessData.process_id == process.id)
-                        .all()
-                    )
-                    for data in process_data:
-                        db.delete(data)
-                # Delete the processes
-                for process in processes:
-                    db.delete(process)
-
-                # Delete the session parameter history entries
-                parameters_history = (
-                    db.query(GenerativeSessionParameterHistory)
-                    .filter(GenerativeSessionParameterHistory.session_id == session_id)
-                    .all()
-                )
-                for entry in parameters_history:
-                    db.delete(entry)
-
-                # Finally, delete the session itself
-                db.delete(session)
-
+                session_service_for(
+                    session.workflow_name, db, component_registry, job_queue
+                ).delete(session)
             db.commit()
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -365,7 +732,6 @@ async def delete_generative_sessions(
                 detail="Internal server error",
             ) from e
         finally:
-            db.rollback()
             db.close()
 
 
@@ -373,8 +739,13 @@ async def delete_generative_sessions(
 async def delete_generative_session(
     session_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    job_queue: Any = Depends(lambda: di["job_queue"]),
 ):
     """Delete a generative session by its ID.
+
+    The session's workflow deletes the session with every row it owns, in one
+    transaction.
 
     Parameters
     ----------
@@ -383,6 +754,10 @@ async def delete_generative_session(
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    component_registry : ComponentRegistry
+        Registry resolving the session's workflow.
+    job_queue : Any
+        Job queue, for workflows that run background jobs.
 
     Raises
     ------
@@ -400,44 +775,9 @@ async def delete_generative_session(
                     detail=f"Generative session {session_id} does not exist in DB.",
                 )
 
-            old_parameters = dict(session.parameters or {})
-
-            # Stop any index still running for a session that is going away.
-            cancel_live_index_job(session, di["job_queue"])
-
-            # Delete all the processes associated with the session
-            processes = (
-                db.query(GenerativeProcess)
-                .filter(GenerativeProcess.session_id == session_id)
-                .all()
-            )
-            # Delete all the process data associated with the processes
-            for process in processes:
-                process_data = (
-                    db.query(ProcessData)
-                    .filter(ProcessData.process_id == process.id)
-                    .all()
-                )
-                for data in process_data:
-                    db.delete(data)
-            # Delete the processes
-            for process in processes:
-                db.delete(process)
-
-            CleanupService(db).invalidate_session_artifacts(session_id, commit=False)
-
-            # Delete the session parameter history entries
-            parameters_history = (
-                db.query(GenerativeSessionParameterHistory)
-                .filter(GenerativeSessionParameterHistory.session_id == session_id)
-                .all()
-            )
-            for entry in parameters_history:
-                db.delete(entry)
-            # Finally, delete the session itself
-            db.delete(session)
-
-            CleanupService(db).cleanup_orphaned_resources(session_id, old_parameters)
+            session_service_for(
+                session.workflow_name, db, component_registry, job_queue
+            ).delete(session)
             db.commit()
         except HTTPException:
             raise
@@ -508,6 +848,18 @@ async def update_generative_session(
                     detail="Generative session not found",
                 )
 
+            service = session_service_for(session.workflow_name, db, component_registry)
+            if model_name is not None and model_name != session.model_name:
+                _session_workflow(session, component_registry)
+                if service.model_name_from(session.parameters) is not None:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            f"The model of a {session.workflow_name} session is "
+                            "named in its parameters; change them instead."
+                        ),
+                    )
+
             # Validate name if provided
             if name is not None:
                 if not name or not name.strip():
@@ -576,10 +928,13 @@ async def update_generative_session(
 
                 session.model_name = model_name
                 session.parameters = new_parameters
+                # Every history entry owns the prompts active when it was
+                # written, so a later prompt edit cannot rewrite its diff.
                 db.add(
                     GenerativeSessionParameterHistory(
                         session_id=session.id,
                         parameters=new_parameters,
+                        prompt_bindings=service.snapshot_prompts(session),
                         model_name=model_name,
                         modified_at=datetime.now(),
                     )
@@ -589,7 +944,7 @@ async def update_generative_session(
                 session.last_modified = datetime.now()
                 db.commit()
                 db.refresh(session)
-                return session
+                return _session_snapshot(session, service)
             else:
                 raise HTTPException(
                     status_code=status.HTTP_304_NOT_MODIFIED,
@@ -597,6 +952,11 @@ async def update_generative_session(
                 )
         except HTTPException:
             raise
+        except WorkflowConflictError as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(e)
+            ) from e
         except exc.IntegrityError as e:
             db.rollback()
             raise HTTPException(
@@ -615,10 +975,44 @@ async def update_generative_session(
 @router.put("/{session_id}/parameters", status_code=status.HTTP_200_OK)
 async def update_generative_session_params(
     session_id: int,
-    new_params: dict,
+    new_params: Dict[str, Any],
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    job_queue: Any = Depends(lambda: di["job_queue"]),
 ):
+    """Merge a partial parameter update into a session and log it.
+
+    The session's workflow validates the update, runs its side effects and,
+    when its model is one of the parameters, the session model follows it. An
+    update that changes nothing records no history entry.
+
+    Parameters
+    ----------
+    session_id : int
+        The ID of the generative session to update.
+    new_params : Dict[str, Any]
+        Partial parameters to merge over the stored ones, or a wrapper with
+        ``parameters`` and a ``prompts`` slot path map.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+    component_registry : ComponentRegistry
+        Registry resolving the session's task, workflow and models.
+    job_queue : Any
+        Job queue, for workflows that run background jobs.
+
+    Returns
+    -------
+    dict
+        The session id, its merged parameters and, for a workflow with
+        prompts, its prompt bindings.
+
+    Raises
+    ------
+    HTTPException
+        404 if the session, its task or its workflow is unknown, 400 if the
+        update is invalid, 409 if a selected component is not downloaded or a
+        prompt conflicts with a stored one.
+    """
     with session_factory() as db:
         try:
             session = db.get(GenerativeSession, session_id)
@@ -628,58 +1022,73 @@ async def update_generative_session_params(
                     detail=f"Generative session {session_id} does not exist in DB.",
                 )
 
-            old_parameters = dict(session.parameters or {})
-            try:
-                task_class = component_registry[session.task_name]["class"]
-            except KeyError as e:
+            if session.task_name not in component_registry:
                 raise HTTPException(
                     status_code=404,
                     detail=(
                         f"Task '{session.task_name}' is not registered"
                         " in the component registry."
                     ),
+                )
+            _session_workflow(session, component_registry)
+            service = session_service_for(
+                session.workflow_name, db, component_registry, job_queue
+            )
+
+            body, body_prompts = _split_parameters_body(new_params)
+            try:
+                normalized = service.validate_update(session, body, body_prompts)
+            except WorkflowSessionError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
                 ) from e
 
-            # ── RAG-specific validation of new_params ──
-            if task_class is not None and task_class == RAGTask:
-                try:
-                    normalized = SessionValidationService(
-                        db, component_registry
-                    ).validate_update_payload(new_params)
-                except (ValueError, RAGWorkflowError) as e:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-                    ) from e
-
-                nested_missing = missing_downloads(normalized, component_registry)
-                if nested_missing:
-                    names = ", ".join(m["name"] for m in nested_missing)
-                    raise HTTPException(
-                        status_code=status.HTTP_409_CONFLICT,
-                        detail=(
-                            f"These components must be downloaded before use: {names}."
-                        ),
-                    )
-
-                # Merge validated new params into old params
-                updated_parameters = {**old_parameters, **normalized}
-
-                # A running index writes the very rows the cleanup below
-                # deletes, so it has to be stopped before, not after.
-                cancel_live_index_job(session, di["job_queue"])
-
-                # Cleanup orphaned RAG resources
-                CleanupService(db).cleanup_orphaned_resources(
-                    session_id, old_parameters, updated_parameters
+            nested_missing = missing_downloads(normalized, component_registry)
+            if nested_missing:
+                names = ", ".join(m["name"] for m in nested_missing)
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        f"These components must be downloaded before use: {names}."
+                    ),
                 )
-            else:
-                # Non-RAG update: simple merge without RAG validation
-                updated_parameters = {**old_parameters, **new_params}
+
+            old_parameters = service.stored_parameters(dict(session.parameters or {}))
+            updated_parameters = {
+                **old_parameters,
+                **service.stored_parameters(normalized),
+            }
+
+            # A save that changes neither the configuration nor anything the
+            # workflow keeps outside it adds no history row.
+            if service.is_unchanged(
+                session, old_parameters, updated_parameters, normalized, body_prompts
+            ):
+                return _parameters_response(
+                    session.id,
+                    service.client_parameters(session, old_parameters),
+                    service.snapshot_prompts(session),
+                )
+
+            model_name = session.model_name
+            derived_model = service.model_name_from(updated_parameters)
+            if derived_model is not None and derived_model != model_name:
+                _check_model_fits_task(
+                    derived_model, session.task_name, component_registry
+                )
+                model_name = derived_model
+
+            prompt_snapshot = service.apply_update(
+                session, old_parameters, updated_parameters, normalized, body_prompts
+            )
+            client_parameters = service.client_parameters(session, updated_parameters)
+            session.model_name = model_name
 
             # ── Persist ──
             session_params_entry = GenerativeSessionParameterHistory(
                 session_id=session.id,
                 parameters=updated_parameters,
+                prompt_bindings=prompt_snapshot,
                 model_name=session.model_name,
                 modified_at=datetime.now(),
             )
@@ -690,9 +1099,27 @@ async def update_generative_session_params(
             db.commit()
             db.refresh(session)
 
-            return {"id": session.id, "parameters": session.parameters}
+            return _parameters_response(session.id, client_parameters, prompt_snapshot)
         except HTTPException:
+            db.rollback()
             raise
+        except WorkflowConflictError as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(e)
+            ) from e
+        except WorkflowStorageError as e:
+            db.rollback()
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+        except (ValueError, LookupError) as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            ) from e
         except exc.SQLAlchemyError as e:
             db.rollback()
             log.exception(e)
@@ -706,6 +1133,7 @@ async def update_generative_session_params(
 async def get_generative_session_parameters_history(
     session_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """
     Get all parameter history entries for a generative session.
@@ -716,6 +1144,8 @@ async def get_generative_session_parameters_history(
         The ID of the generative session to retrieve the parameter history for.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
+    component_registry : ComponentRegistry
+        Registry used to resolve the prompts each entry recorded.
 
     Returns
     -------
@@ -746,18 +1176,23 @@ async def get_generative_session_parameters_history(
                 .all()
             )
 
-            # Convert the objects to dictionaries (explicit loop for clarity)
+            service = session_service_for(session.workflow_name, db, component_registry)
             history_list = []
             for entry in parameters_history:
                 history_list.append(
                     {
                         "id": entry.id,
                         "session_id": entry.session_id,
-                        "parameters": entry.parameters,
+                        "parameters": service.history_parameters(session, entry),
+                        "prompt_bindings": getattr(entry, "prompt_bindings", None),
                         "modified_at": entry.modified_at,
                     }
                 )
             return history_list
+        except WorkflowConflictError as e:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(e)
+            ) from e
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
@@ -770,6 +1205,7 @@ async def get_generative_session_parameters_history(
 async def get_parameter_history_entry(
     session_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """
     Get history entry for a generative session by its ID.
@@ -781,6 +1217,8 @@ async def get_parameter_history_entry(
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    component_registry : ComponentRegistry
+        Registry used to resolve the session's workflow and recorded prompts.
 
     Returns
     -------
@@ -812,16 +1250,29 @@ async def get_parameter_history_entry(
                 .all()
             )
 
-            parameters_history = [p.__dict__ for p in parameters_history]
-            if not parameters_history:
+            service = session_service_for(session.workflow_name, db, component_registry)
+            entries = [
+                {
+                    "id": entry.id,
+                    "parameters": service.history_parameters(session, entry),
+                    "model_name": getattr(entry, "model_name", None),
+                    "modified_at": entry.modified_at,
+                }
+                for entry in parameters_history
+            ]
+            if not entries:
                 return []
 
-            events = []
-            prev_params = parameters_history[0]["parameters"]
-            prev_model = parameters_history[0].get("model_name")
+            model_is_a_parameter = (
+                service.model_name_from(session.parameters) is not None
+            )
 
-            for i in range(1, len(parameters_history)):
-                curr = parameters_history[i]
+            events = []
+            prev_params = entries[0]["parameters"]
+            prev_model = entries[0].get("model_name")
+
+            for i in range(1, len(entries)):
+                curr = entries[i]
                 curr_params = curr["parameters"]
                 curr_model = curr.get("model_name")
                 changes = []
@@ -829,7 +1280,12 @@ async def get_parameter_history_entry(
                 # A model switch resets parameters to the new model's own
                 # values, so the raw parameter diff would be noise; report only
                 # the model change for that entry.
-                if curr_model and prev_model and curr_model != prev_model:
+                if (
+                    not model_is_a_parameter
+                    and curr_model
+                    and prev_model
+                    and curr_model != prev_model
+                ):
                     changes.append(
                         {
                             "parameter": "model",
@@ -862,6 +1318,10 @@ async def get_parameter_history_entry(
 
             return events
 
+        except WorkflowConflictError as e:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(e)
+            ) from e
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(

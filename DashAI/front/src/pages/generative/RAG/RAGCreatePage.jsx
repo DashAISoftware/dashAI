@@ -4,12 +4,14 @@ import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import {
   Box,
+  Button,
   CircularProgress,
   Stack,
   TextField,
   Typography,
   useMediaQuery,
 } from "@mui/material";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import ModuleContainer from "../../../components/layout/ModuleContainer";
 import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../../components/threeSectionLayout/panels/CenterPanel";
@@ -23,12 +25,8 @@ import {
   useCredentialStatuses,
   getComponentCredentialState,
 } from "../../../components/credentials/credentialStatus";
-import {
-  RAG_MODEL_NAME,
-  RAG_TASK_NAME,
-  createRAGSession,
-  getGeneratorComponents,
-} from "../../../api/rag";
+import { createRAGSession, getGeneratorComponents } from "../../../api/rag";
+import { RAG_WORKFLOW_NAME } from "../../../constants/generativeWorkflows";
 import { useGenerative } from "../../../components/generative/GenerativeContext";
 import { useTaskDisplayName } from "../../../hooks/generative/useTaskDisplayName";
 import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
@@ -59,7 +57,7 @@ export default function RAGCreatePage() {
   const threePanelLayout = useThreePanelLayout({ storageKey: "rag" });
   const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const { sessions, setSessions, deleteSessionById } = useGenerative();
-  const ragTitle = useTaskDisplayName(RAG_TASK_NAME);
+  const ragTitle = useTaskDisplayName(RAG_WORKFLOW_NAME);
 
   const [name, setName] = useState("");
   const [isNameTouched, setIsNameTouched] = useState(false);
@@ -165,8 +163,6 @@ export default function RAGCreatePage() {
       const created = await createRAGSession({
         name: name.trim(),
         description: "",
-        task_name: RAG_TASK_NAME,
-        model_name: RAG_MODEL_NAME,
         parameters: {
           generation_model: { component: selectedModel.name, params: {} },
         },
@@ -298,6 +294,16 @@ export default function RAGCreatePage() {
                 nextLabel={t("generative:button.createSession")}
                 loading={submitting}
                 variant="save"
+                leftContent={
+                  <Button
+                    variant="text"
+                    startIcon={<MenuBookIcon />}
+                    onClick={() => navigate("/app/generative/rag/prompts")}
+                    disabled={submitting}
+                  >
+                    {t("generative:rag.prompt.library.title")}
+                  </Button>
+                }
               />
             </Box>
           </CenterPanel>

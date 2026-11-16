@@ -18,7 +18,7 @@ every unit that inherited it.
 """
 
 import logging
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -343,7 +343,7 @@ class ModelFitScopeMixin:
         run_id,
         artifact_prefix,
         objective,
-    ) -> Tuple[object, dict, List[Optional[str]]]:
+    ) -> Tuple[object, dict, Optional[str]]:
         """Run the hyperparameter search and report what it produced.
 
         Parameters
@@ -370,16 +370,13 @@ class ModelFitScopeMixin:
         -------
         tuple
             The fitted model, the parameter tree with the best values in it,
-            and the paths of the plots the search produced, one slot per plot
-            the optimizer lists. A slot is ``None`` where the optimizer
-            reported that the plot does not apply to this search.
+            and the path of the one file holding the plots the search
+            produced, or ``None`` when it produced none. A plot the optimizer
+            reported as not applying to this search is left out.
         """
-        import os
-        import pickle
-
         from kink import di
 
-        from DashAI.back.core.artifacts import normalize_artifacts
+        from DashAI.back.core.run_plots import run_plot_file, write_run_plot_file
 
         # Memoized: validate() resolved these already, and resolving again
         # here would be the same lookup.
@@ -395,31 +392,21 @@ class ModelFitScopeMixin:
 
         config = di["config"]
         trials = optimizer.get_trials_values()
-        plot_filenames, plots = optimizer.create_plots(
+        _, plots = optimizer.create_plots(
             trials,
             run_id,
             n_params=len(optimizable_parameters),
             goal_metric=goal_metric,
             artifact_prefix=artifact_prefix,
         )
+        plots = [plot for plot in plots if plot is not None]
+        if not plots:
+            return model, best_parameters, None
 
-        # A plot the optimizer skipped keeps its slot rather than letting the
-        # ones after it slide forward: the caller writes these paths into four
-        # fixed columns of the run, by position. The contour plot is the one
-        # that gets skipped, when fewer than two searched parameters are
-        # numeric, and normalizing its None would pickle the text "None" into
-        # the contour slot, a file that exists and holds no plot.
-        filled = [index for index, plot in enumerate(plots) if plot is not None]
-        normalized_plots = normalize_artifacts([plots[index] for index in filled])
-
-        plot_paths: List[Optional[str]] = [None] * len(plots)
-        for index, plot in zip(filled, normalized_plots, strict=True):
-            plot_path = os.path.join(config["RUNS_PATH"], plot_filenames[index])
-            with open(plot_path, "wb") as file:
-                pickle.dump(plot, file)
-            plot_paths[index] = plot_path
-
-        return model, best_parameters, plot_paths
+        tag = artifact_prefix if artifact_prefix is not None else run_id
+        path = run_plot_file(config["RUNS_PATH"], "hyperparameter", str(tag))
+        write_run_plot_file(path, plots)
+        return model, best_parameters, str(path)
 
     @staticmethod
     def _assert_model_keeps_its_runtime_state(model) -> None:

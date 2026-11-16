@@ -25,6 +25,7 @@ from DashAI.back.models.RAG.RAG_constants import (
     RAG_PARAM_RETRIEVER_MODEL,
 )
 from DashAI.back.services.RAG import chunking_presets, retriever_presets
+from DashAI.back.services.RAG.prompt_service import PromptService
 from DashAI.back.services.RAG.session_defaults_service import (
     RAG_CONTEXT_WINDOW,
     RAG_MAX_TOKENS,
@@ -116,7 +117,9 @@ class SessionConfigurationService:
         if session is None:
             raise ValueError(f"Generative session {session_id} does not exist.")
 
-        parameters = dict(session.parameters or {})
+        parameters = PromptService(
+            self._db, self._registry
+        ).materialize_session_parameters(session.id, dict(session.parameters or {}))
         chunking = parameters.get(RAG_PARAM_CHUNKING_MODEL) or {}
         retriever = parameters.get(RAG_PARAM_RETRIEVER_MODEL) or {}
         prompt = parameters.get(RAG_PARAM_PROMPT) or {}

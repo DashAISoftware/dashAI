@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 class HoldoutSplitterSchema(BaseSchema):
     train: schema_field(
         float_field(ge=0, le=1),
+        step=0.1,
         placeholder=0.6,
         description=MultilingualString(
             en="Proportion of the dataset assigned to the training partition.",
@@ -43,6 +44,7 @@ class HoldoutSplitterSchema(BaseSchema):
     )  # type: ignore
     test: schema_field(
         float_field(ge=0, le=1),
+        step=0.1,
         placeholder=0.2,
         description=MultilingualString(
             en="Proportion of the dataset assigned to the test partition.",
@@ -57,6 +59,7 @@ class HoldoutSplitterSchema(BaseSchema):
     )  # type: ignore
     validation: schema_field(
         float_field(ge=0, le=1),
+        step=0.1,
         placeholder=0.2,
         description=MultilingualString(
             en="Proportion of the dataset assigned to the validation partition.",

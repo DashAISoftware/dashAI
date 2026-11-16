@@ -128,6 +128,8 @@ class DefaultQueryExpansionPrompt(QueryExpansionPrompt):
     """Default prompt template for expanding a query into several queries."""
 
     SCHEMA = DefaultQueryExpansionPromptSchema
+    #: Registered component used when a user forks this default.
+    CUSTOM_CLASS: str = "CustomQueryExpansionPrompt"
     DESCRIPTION: str = MultilingualString(
         en="Default prompt template for expanding a query into several search queries.",
         es="Plantilla de prompt predeterminada para expandir una consulta en"

@@ -16,10 +16,6 @@ RUN_PARAMS = {
     "optimizer_parameters": {"n_trials": 10, "sampler": "TPESampler", "pruner": "None"},
     "goal_metric": "",
     "description": "",
-    "plot_history_path": "",
-    "plot_slice_path": "",
-    "plot_contour_path": "",
-    "plot_importance_path": "",
 }
 
 

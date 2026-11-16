@@ -8,7 +8,6 @@ import Box from "@mui/material/Box";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "../GenerativeContext";
-import { RAG_TASK_NAME } from "../../../api/rag";
 
 /** Root of the RAG entry point, in the canonical lowercase form. */
 const RAG_ROOT = "/app/generative/rag";
@@ -67,6 +66,17 @@ function RAGBreadcrumbs({ sessionName }) {
         { label: sessionName, path: null, current: true, isSession: true },
       ];
 
+    if (path === `${RAG_ROOT}/prompts`) {
+      return [
+        ...base,
+        {
+          label: t("generative:rag.breadcrumbs.prompts"),
+          path: null,
+          current: true,
+        },
+      ];
+    }
+
     // The RAG root is the creation form, so it is the end of the trail.
     base[1] = { ...base[1], path: null, current: true };
     return base;
@@ -86,7 +96,6 @@ function RAGBreadcrumbs({ sessionName }) {
     }
     if (path === RAG_ROOT) {
       setSelectedSessionId?.(null);
-      setSelectedTaskName?.(RAG_TASK_NAME);
       setSelectedDisplayName?.(null);
       setStepIndex?.(0);
     }

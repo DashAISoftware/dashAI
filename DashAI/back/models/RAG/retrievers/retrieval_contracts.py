@@ -33,7 +33,7 @@ CALL_RETRIEVERS_KEY = "call_retrievers"
 REQUEST_CHUNKS_KEY = "request_specific_chunks"
 DISCARD_KEY = "discard_specific_chunks"
 
-#: Canonical LLM filter selection field name.
+#: Canonical agentic reranker selection field name.
 SELECTED_CHUNKS_KEY = "selected_chunks"
 
 #: Key carrying the human-readable operations dropped while evaluating.

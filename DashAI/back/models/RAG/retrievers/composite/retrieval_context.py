@@ -1,4 +1,4 @@
-"""Document and corpus knowledge shared by the LLM-evaluated retrievers.
+"""Document and corpus knowledge shared by the agentic retrievers.
 
 ``RetrievalContext`` is the single owner of "which chunks exist and which
 documents they belong to". It never formats text: prompt rendering belongs to

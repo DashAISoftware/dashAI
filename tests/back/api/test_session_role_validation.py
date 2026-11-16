@@ -118,6 +118,32 @@ def test_a_required_role_left_empty_is_refused(client: TestClient, dataset_1):
     )
 
 
+NO_INPUT_ERROR = (
+    "TabularClassificationTask needs at least one input column: give one to features."
+)
+
+
+def test_a_session_without_input_columns_is_refused(client: TestClient, dataset_1):
+    """Features may be any number, but the model needs something to read."""
+    response = _post(
+        client,
+        dataset_1.id,
+        "no features",
+        {"features": [], "target": _raw("Species")},
+    )
+
+    assert response.status_code == 422, response.text
+    assert response.json()["detail"] == NO_INPUT_ERROR
+
+
+def test_validation_refuses_a_selection_without_input_columns(
+    client: TestClient, dataset_1
+):
+    assert _validate(
+        client, dataset_1.id, {"features": [], "target": _raw("Species")}
+    ) == {"dataset_status": "invalid", "error": NO_INPUT_ERROR}
+
+
 def test_a_protected_role_takes_no_converter_output(client: TestClient, dataset_1):
     response = _post(
         client,

@@ -26,6 +26,7 @@ import DocumentPreviewModal from "./DocumentPreviewModal";
 import AddFromDataDialog from "./AddFromDataDialog";
 import RAGDocumentUpload from "./RAGDocumentUpload";
 import { getApiErrorMessage } from "../../../utils/apiError";
+import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 import {
   attachSessionDocuments,
   detachSessionDocument,
@@ -60,6 +61,7 @@ export default function DocumentsBar({
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const { fetchFolders } = useDatasetsAndNotebooks() ?? {};
 
   const [documents, setDocuments] = useState([]);
   const [status, setStatus] = useState(LOAD_STATUS.LOADING);
@@ -132,9 +134,17 @@ export default function DocumentsBar({
           { variant: "error" },
         );
         return false;
+      } finally {
+        // A batch upload creates its Data folder before the jobs finish; the
+        // app-level folder list has to learn about it for "Add from Data".
+        try {
+          await fetchFolders?.();
+        } catch {
+          // Best effort: the Data module refreshes folders when it mounts.
+        }
       }
     },
-    [sessionId, enqueueSnackbar, t, onDocumentChange],
+    [sessionId, enqueueSnackbar, t, onDocumentChange, fetchFolders],
   );
 
   const handleConfirmDetach = async () => {

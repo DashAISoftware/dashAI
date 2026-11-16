@@ -33,10 +33,6 @@ def _run(client: TestClient, session_id, model, goal_metric, optimizer):
             **optimizer,
             "goal_metric": goal_metric,
             "description": "",
-            "plot_history_path": "",
-            "plot_slice_path": "",
-            "plot_contour_path": "",
-            "plot_importance_path": "",
         },
     )
 
