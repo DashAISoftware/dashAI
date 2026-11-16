@@ -283,6 +283,84 @@
       "configureTitle": "Configure Generator Model (LLM)",
       "modelLabel": "Generator Model"
     },
+    "help": {
+      "button": "About this section",
+      "title": "About {{section}}",
+      "component": "Component",
+      "howItWorks": "How it works",
+      "recommendations": "Recommendations",
+      "dismiss": "Got it",
+      "unsaved": "This section has unsaved changes. This explanation describes the saved configuration; save your changes to update it.",
+      "parameters": "Main parameters",
+      "noParameters": "This stage has no parameters until it is configured.",
+      "noDescription": "This parameter has no description in the component schema.",
+      "parameterHelp": {
+        "chunk_size": "Length of each passage. Smaller values improve precision; larger values preserve more context.",
+        "chunk_overlap": "Text repeated between consecutive passages. Keep it below the chunk size so no sentence is skipped.",
+        "top_k": "Number of passages retrieved and sent to the model. Higher values add evidence but spend context and can add noise.",
+        "temperature": "Randomness of the generated text. Low values keep answers faithful to the sources; higher values make them more varied.",
+        "max_tokens": "Maximum number of new tokens the model may generate for the answer. It is only the answer budget: the prompt and the retrieved passages also consume the context window, so the sum of all three must fit within it.",
+        "context_window": "Total tokens the model can process at once, including the prompt, the retrieved passages and the answer.",
+        "template": "Instructions and placeholders that tell the model how to use the question and the retrieved passages.",
+        "language": "Language expected in the answer and in the prompt wording.",
+        "history_window": "Number of previous conversation messages the transformer may use to interpret the current question. A larger window clarifies follow-ups but costs tokens and can carry stale context.",
+        "n_queries": "How many alternative search queries the expander generates per question. More variants improve recall but increase retrieval cost and noise.",
+        "max_subqueries": "Maximum number of sub-questions the decomposer may produce. Leave it empty for no limit; higher values cover complex questions but multiply retrieval calls.",
+        "enable_retrieve_then_expand": "After retrieving the best chunks, also include their neighboring chunks so the model sees the complete passage.",
+        "expand_window": "Total number of chunks in the expanded window, including the retrieved chunk. Odd values center the window on the retrieved chunk; even values keep the extra chunk after it.",
+        "prompt": "Prompt template that instructs the model controlling this stage.",
+        "llm_model": "Language model used by this stage for its internal reasoning or rewriting.",
+        "device": "Device where the model runs. Use CPU if no GPU is available or the model is small; use a GPU when available to speed up inference, provided the model and its drivers are compatible."
+      },
+      "sections": {
+        "chunking_model": {
+          "what": "Chunking splits every document into smaller passages before indexing. The retriever searches those passages and the model answers from the ones it receives, so the chunk size decides how much text arrives with each source.",
+          "recommendations": [
+            "Choose the chunk size by content: small chunks (around 250 characters) suit FAQs and precise lookups; paragraph-length chunks (around 500) suit general prose; page or section chunks (2000-4000) suit long reports where each answer needs broad context.",
+            "Trade-off: smaller chunks improve retrieval precision and spend less context, but can split ideas; larger chunks preserve context but consume more of the model window and may bury the relevant sentence.",
+            "Keep overlap at 10-20% of the chunk size: it protects sentences that cross a boundary, but excessive overlap duplicates text, inflates the index and spends context.",
+            "Choose the unit by content and budget: characters behave predictably across languages; tokens match the model's real budget, so prefer tokens when the context window is tight. Re-index after any change."
+          ]
+        },
+        "query_transformation": {
+          "what": "An optional stage that rewrites the user's question before retrieval. It can clarify vague questions, produce several search variants, or split a complex question into simpler parts.",
+          "disabled": "This stage is currently off. Enable it in the section to choose a technique and configure its prompt and model.",
+          "recommendations": [
+            "Rewrite when the question depends on the conversation or is incomplete: for example, 'how many layers does it have?' becomes a standalone question. It adds one model call, so leave it off for self-contained questions.",
+            "Expand when the wording may not match the documents (synonyms, jargon, very short queries): it generates several search variants and improves recall, at the cost of more retrieval calls and possible noise.",
+            "Decompose when the question has several parts that need evidence from different passages: it splits them into sub-queries, but multiplies retrieval calls and can lose the relationship between parts.",
+            "Rewriting preserves intent best, expansion improves coverage, and decomposition handles complexity. Review the transformation prompt and language: a rewrite that changes the intent retrieves the wrong passages."
+          ]
+        },
+        "retriever_model": {
+          "what": "Retrieval ranks the indexed chunks against the question and returns the top ones. Those chunks are the only evidence the generator can use, so this stage decides what the answer can be based on.",
+          "recommendations": [
+            "Keyword retrievers (BM25, TF-IDF) are better for exact names, codes and rare terms; dense retrievers are better for paraphrases and synonyms. Sparse methods are faster and cheaper, while dense methods need an embedding model and more memory.",
+            "Top-k trades coverage for precision: 5-10 is a good starting range for focused answers; raise it for broad or comparative questions, accepting more noise and context use.",
+            "Composite retrievers (parallel, sequential, reranked) combine strengths but multiply cost and latency. Use them when one retriever clearly misses evidence, not as a default.",
+            "Retrieve-then-expand restores surrounding context and reduces fragmented answers, but consumes more context budget. Use it when chunks are small; skip it when chunks already contain complete sections."
+          ]
+        },
+        "generation_model": {
+          "what": "The generation model writes the final answer from the retrieved chunks and the prompt template. Its context window and output limits determine how much evidence fits and how long the answer can be.",
+          "recommendations": [
+            "Choose by deployment: small local models (around 1-3B parameters) are fast and private but weaker at complex reasoning; larger local or external models improve quality but need more memory, time or API cost.",
+            "Temperature trades faithfulness for variety: 0-0.3 for factual, document-grounded answers; 0.7-1.0 only for brainstorming or creative wording.",
+            "Max tokens and context window trade answer length and evidence for memory: larger windows fit more chunks but slow generation and can exceed RAM or VRAM.",
+            "Local models need a download and suitable hardware; external providers need credentials and may receive your documents. Choose the option that matches your privacy and latency constraints."
+          ]
+        },
+        "prompt": {
+          "what": "The prompt template tells the model how to use the retrieved passages. Placeholders such as {input} and {chunks} are replaced at run time, and the wording and order of the instructions strongly shape the answer.",
+          "recommendations": [
+            "Keep the required placeholders: {input} and {chunks} are the question and the evidence. Removing them makes the model answer blindly.",
+            "Choose the prompt style by task: a concise 'answer only from the passages' prompt improves faithfulness; a more conversational prompt improves readability but can add unsupported details.",
+            "Instruct what to do when the answer is missing: refusing explicitly reduces invented answers, while guessing increases coverage but risks hallucinations.",
+            "Short, specific instructions are easier to follow and cheaper in tokens; long lists can encode more rules but dilute the important ones and consume context."
+          ]
+        }
+      }
+    },
     "index": {
       "chunkCount_one": "{{count}} chunk",
       "chunkCount_other": "{{count}} chunks",
