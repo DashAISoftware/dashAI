@@ -27,6 +27,28 @@ from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
 ChunkKey = Tuple[int, int]
 
 
+def chunk_key(chunk: Chunk) -> ChunkKey:
+    """Return the canonical pool identity ``(document_id, document_position)``.
+
+    This is the **single** definition of chunk identity for the agentic
+    retrievers: the pool's own bookkeeping, the per-child contributed-identity
+    tracking and the evaluator's known-key construction all resolve chunks
+    through it, so a chunk seen again as an equal-content instance is recognised
+    as the same chunk everywhere.
+
+    Parameters
+    ----------
+    chunk : Chunk
+        Chunk to identify.
+
+    Returns
+    -------
+    ChunkKey
+        The identity used by the pool and by every identity-tracking caller.
+    """
+    return (chunk.document_id, chunk.document_position)
+
+
 class RetrievalPool:
     """Ordered, requestable and discardable chunk pool.
 
@@ -62,7 +84,7 @@ class RetrievalPool:
         ChunkKey
             ``(document_id, document_position)``.
         """
-        return (chunk.document_id, chunk.document_position)
+        return chunk_key(chunk)
 
     def _remember(self, chunk: Chunk) -> None:
         """Add ``chunk`` the first time it is seen, preserving insertion order.

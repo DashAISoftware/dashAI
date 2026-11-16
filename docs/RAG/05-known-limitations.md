@@ -139,6 +139,34 @@
   clear the prompt template (or reselect the default agentic retriever prompt)
   to receive it.
 
+- **Sessions created before the additional-chunk semantics keep their stored
+  prompt template.** `call_retrievers` now means "fetch this many *additional*
+  chunks from that retriever", not an absolute `top_k`; the default template
+  states it, but a session that stored the older wording (or a forked
+  `CustomAgenticRetrieverPrompt` with its own text) still asks the model for an
+  absolute size. The retriever always interprets every value as an
+  additional-chunk count and never migrates or rewrites stored templates, so
+  such a session simply over- or under-fetches relative to what the model
+  intended. Clear the prompt template (or reselect the default agentic retriever
+  prompt) to adopt the new instructions.
+
+- **An agentic child can contribute fewer chunks than requested.** The
+  cumulative size is a hint: a child with a shorter usable prefix, or one that
+  returns only identities the retriever already pooled, adds nothing that round.
+  The trace records the real pool growth (`added: 0`), and the retriever neither
+  retries nor fabricates chunks; `max_iters` bounds how long it keeps asking. An
+  ensemble additionally clamps each per-child request to the slots the round can
+  still fill, so a later child in the same round is never over-fetched. When a
+  child over-returns or reorders its results, only the highest-ranked unseen
+   identities of its response enter the pool, never the tail.
+
+- **Discarding may not free a slot when the child over-returns.** The retrieval
+  pool keeps returned chunks beyond its visible `max_chunks` prefix; discarding
+  a visible chunk can expose one of those stored chunks instead of reducing the
+  pool size. A later verdict that also calls a retriever can therefore be
+  rejected for lack of capacity. Keep the child's configured result count at or
+  below the agentic retriever's `max_chunks` when relying on discard-and-refill.
+
 - **`prompt` and `llm_model` refs are mandatory.** A transformer is built only
   from an explicit prompt component and an explicit text-to-text model
   reference; neither has an implicit default.
