@@ -285,6 +285,84 @@
       "configureTitle": "Configurar modelo gerador (LLM)",
       "modelLabel": "Modelo gerador"
     },
+    "help": {
+      "button": "Sobre esta seção",
+      "title": "Sobre {{section}}",
+      "component": "Componente",
+      "howItWorks": "Como funciona",
+      "recommendations": "Recomendações",
+      "dismiss": "Entendi",
+      "unsaved": "Esta seção tem alterações não salvas. Esta explicação descreve a configuração salva; salve as alterações para atualizá-la.",
+      "parameters": "Parâmetros principais",
+      "noParameters": "Esta etapa não tem parâmetros até ser configurada.",
+      "noDescription": "Este parâmetro não tem descrição no esquema do componente.",
+      "parameterHelp": {
+        "chunk_size": "Comprimento de cada passagem. Valores menores melhoram a precisão; valores maiores preservam mais contexto.",
+        "chunk_overlap": "Texto repetido entre passagens consecutivas. Mantenha-o abaixo do tamanho do fragmento para não perder frases.",
+        "top_k": "Número de passagens recuperadas e enviadas ao modelo. Valores altos acrescentam evidência, mas consomem contexto e podem adicionar ruído.",
+        "temperature": "Aleatoriedade do texto gerado. Valores baixos mantêm a fidelidade às fontes; valores altos tornam a resposta mais variada.",
+        "max_tokens": "Comprimento máximo da resposta gerada. É apenas o orçamento da resposta: o prompt e as passagens recuperadas também ocupam a janela de contexto, então a soma dos três deve caber nela.",
+        "context_window": "Total de tokens que o modelo pode processar de uma vez, incluindo o prompt, as passagens recuperadas e a resposta.",
+        "template": "Instruções e marcadores que dizem ao modelo como usar a pergunta e as passagens recuperadas.",
+        "language": "Idioma esperado na resposta e na redação do prompt.",
+        "history_window": "Número de mensagens anteriores da conversa que a transformação pode usar para interpretar a pergunta atual. Uma janela maior esclarece perguntas de acompanhamento, mas consome tokens e pode carregar contexto desatualizado.",
+        "n_queries": "Quantas consultas de busca alternativas o expansor gera por pergunta. Mais variantes melhoram a cobertura, mas aumentam o custo e o ruído da recuperação.",
+        "max_subqueries": "Número máximo de subperguntas que o decompositor pode produzir. Deixe vazio para não limitar; valores altos cobrem perguntas complexas, mas multiplicam as chamadas de recuperação.",
+        "enable_retrieve_then_expand": "Depois de recuperar os melhores fragmentos, inclua também seus fragmentos vizinhos para que o modelo veja a passagem completa.",
+        "expand_window": "Número total de fragmentos na janela expandida, incluindo o fragmento recuperado. Valores ímpares centralizam a janela no fragmento recuperado; valores pares deixam o fragmento extra depois dele.",
+        "prompt": "Modelo de prompt que instrui o modelo que controla esta etapa.",
+        "llm_model": "Modelo de linguagem usado por esta etapa para seu raciocínio ou reescrita interna.",
+        "device": "Dispositivo onde o modelo é executado. Use CPU se não houver GPU ou se o modelo for pequeno; use uma GPU quando disponível para acelerar a inferência, desde que o modelo e os drivers sejam compatíveis."
+      },
+      "sections": {
+        "chunking_model": {
+          "what": "A fragmentação divide cada documento em passagens menores antes da indexação. O recuperador procura nessas passagens e o modelo responde a partir das que recebe, então o tamanho do fragmento decide quanto texto chega com cada fonte.",
+          "recommendations": [
+            "Escolha o tamanho do fragmento pelo conteúdo: fragmentos pequenos (cerca de 250 caracteres) servem para perguntas frequentes e buscas precisas; fragmentos do tamanho de um parágrafo (cerca de 500) servem para prosa geral; fragmentos de página ou seção (2000-4000) servem para relatórios longos em que cada resposta precisa de contexto amplo.",
+            "Compromisso: fragmentos menores melhoram a precisão da recuperação e consomem menos contexto, mas podem dividir ideias; fragmentos maiores preservam o contexto, mas ocupam mais da janela do modelo e podem enterrar a frase relevante.",
+            "Mantenha a sobreposição em torno de 10-20% do tamanho do fragmento: ela protege frases que cruzam uma fronteira, mas sobreposição excessiva duplica texto, infla o índice e consome contexto.",
+            "Escolha a unidade pelo conteúdo e pelo orçamento: caracteres se comportam de forma previsível entre idiomas; tokens correspondem ao orçamento real do modelo, então prefira tokens quando a janela de contexto estiver apertada. Reindexe após qualquer alteração."
+          ]
+        },
+        "query_transformation": {
+          "what": "Etapa opcional que reescreve a pergunta do usuário antes da recuperação. Pode esclarecer perguntas vagas, gerar várias variantes de busca ou dividir uma pergunta complexa em partes mais simples.",
+          "disabled": "Esta etapa está desativada. Ative-a na seção para escolher uma técnica e configurar seu prompt e modelo.",
+          "recommendations": [
+            "Reescreva quando a pergunta depender da conversa ou estiver incompleta: por exemplo, 'quantas camadas ele tem?' passa a ser uma pergunta autônoma. Acrescenta uma chamada ao modelo, então deixe-a desativada para perguntas autossuficientes.",
+            "Expanda quando a redação puder não coincidir com os documentos (sinônimos, jargão, consultas muito curtas): gera várias variantes de busca e melhora a cobertura, ao custo de mais chamadas de recuperação e possível ruído.",
+            "Decomponha quando a pergunta tiver várias partes que precisam de evidências de passagens diferentes: separa-as em subconsultas, mas multiplica as chamadas de recuperação e pode perder a relação entre as partes.",
+            "A reescrita preserva melhor a intenção, a expansão melhora a cobertura e a decomposição lida com a complexidade. Revise o prompt e o idioma da transformação: uma reescrita que muda a intenção recuperará passagens erradas."
+          ]
+        },
+        "retriever_model": {
+          "what": "A recuperação ordena os fragmentos indexados em relação à pergunta e devolve os melhores. Esses fragmentos são a única evidência que o gerador pode usar, então esta etapa decide em que a resposta pode basear-se.",
+          "recommendations": [
+            "Recuperadores por palavras-chave (BM25, TF-IDF) são melhores para nomes exatos, códigos e termos raros; recuperadores densos são melhores para paráfrases e sinônimos. Métodos esparsos são mais rápidos e baratos, enquanto os densos exigem um modelo de embeddings e mais memória.",
+            "O top-k troca cobertura por precisão: 5-10 é uma boa faixa inicial para respostas focadas; aumente para perguntas amplas ou comparativas, aceitando mais ruído e consumo de contexto.",
+            "Recuperadores compostos (paralelos, sequenciais, com reranking) combinam vantagens mas multiplicam custo e latência. Use-os quando um único recuperador claramente deixar de encontrar evidências, não como padrão.",
+            "Recuperar e expandir restaura o contexto próximo e reduz respostas fragmentadas, mas consome mais orçamento de contexto. Use quando os fragmentos forem pequenos; dispense quando já contiverem seções completas."
+          ]
+        },
+        "generation_model": {
+          "what": "O modelo gerador escreve a resposta final a partir dos fragmentos recuperados e do modelo de prompt. Sua janela de contexto e seus limites de saída determinam quanta evidência cabe e quanto a resposta pode se estender.",
+          "recommendations": [
+            "Escolha pelo tipo de implantação: modelos locais pequenos (cerca de 1-3B de parâmetros) são rápidos e privados, mas mais fracos em raciocínio complexo; modelos locais maiores ou externos melhoram a qualidade, mas exigem mais memória, tempo ou custo de API.",
+            "A temperatura troca fidelidade por variedade: 0-0,3 para respostas factuais baseadas em documentos; 0,7-1,0 apenas para brainstorming ou redação criativa.",
+            "Os tokens máximos e a janela de contexto trocam comprimento da resposta e evidência por memória: janelas maiores acomodam mais fragmentos, mas tornam a geração mais lenta e podem exceder a RAM ou a VRAM.",
+            "Modelos locais exigem download e hardware adequado; provedores externos exigem credenciais e podem receber seus documentos. Escolha a opção que corresponde às suas restrições de privacidade e latência."
+          ]
+        },
+        "prompt": {
+          "what": "O modelo de prompt diz ao modelo como usar as passagens recuperadas. Marcadores como {input} e {chunks} são substituídos em tempo de execução, e a redação e a ordem das instruções influenciam fortemente a resposta.",
+          "recommendations": [
+            "Mantenha os marcadores obrigatórios: {input} e {chunks} são a pergunta e a evidência. Removê-los faz o modelo responder às cegas.",
+            "Escolha o estilo do prompt pela tarefa: um prompt conciso de 'responda apenas com as passagens' melhora a fidelidade; um prompt mais conversacional melhora a legibilidade, mas pode acrescentar detalhes sem respaldo.",
+            "Indique o que fazer quando falta a resposta: recusar explicitamente reduz respostas inventadas, enquanto adivinhar aumenta a cobertura mas arrisca alucinações.",
+            "Instruções curtas e específicas são mais fáceis de seguir e custam menos tokens; listas longas podem codificar mais regras, mas diluem as importantes e consomem contexto."
+          ]
+        }
+      }
+    },
     "index": {
       "chunkCount_one": "{{count}} fragmento",
       "chunkCount_other": "{{count}} fragmentos",
