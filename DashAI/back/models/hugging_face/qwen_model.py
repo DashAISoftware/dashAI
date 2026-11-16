@@ -1,12 +1,48 @@
 """Qwen GGUF checkpoint subclasses for DashAI."""
 
-from typing import Any, ClassVar, Dict
+from typing import Any, Dict
 
+from DashAI.back.core.schema_fields import bool_field, schema_field
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.hugging_face.gguf_text_generation_base import (
     GGUFTextGenerationModel,
     GGUFTextGenerationSchema,
 )
+
+
+class Qwen3GGUFTextGenerationSchema(GGUFTextGenerationSchema):
+    """Qwen3 GGUF schema, adding the optional reasoning toggle."""
+
+    enable_thinking: schema_field(
+        bool_field(),
+        False,
+        description=MultilingualString(
+            en=(
+                "Emit a reasoning trace before the answer. It is off by default "
+                "so RAG function calls stay within their token budget."
+            ),
+            es=(
+                "Emitir un razonamiento antes de la respuesta. Está desactivado "
+                "por defecto para que las llamadas RAG quepan en su presupuesto."
+            ),
+            pt=(
+                "Emitir um raciocínio antes da resposta. Fica desativado por "
+                "padrão para que as chamadas RAG caibam no orçamento de tokens."
+            ),
+            de=(
+                "Vor der Antwort einen Denkverlauf ausgeben. Standardmäßig aus, "
+                "damit RAG-Aufrufe im Token-Budget bleiben."
+            ),
+            zh="在回答前输出推理过程。默认关闭，以便 RAG 函数调用不超过词元预算。",
+        ),
+        alias=MultilingualString(
+            en="Enable thinking",
+            es="Activar razonamiento",
+            pt="Ativar raciocínio",
+            de="Denken aktivieren",
+            zh="启用思考",
+        ),
+    )  # type: ignore
 
 
 class Qwen25_05BInstruct(GGUFTextGenerationModel):  # noqa: N801
@@ -242,12 +278,11 @@ class Qwen3_8B(GGUFTextGenerationModel):  # noqa: N801
     checkpoint offers higher weight precision than smaller quantizations, at
     the cost of a larger download and runtime memory requirement.
 
-    The checkpoint is configured with ``enable_thinking=False`` because DashAI
-    uses it as the RAG function-calling model. The Qwen3 chat template then
-    appends an empty think block to every assistant prompt, so the model does
-    not emit a reasoning trace before its answer or its tool call. The setting
-    is checkpoint-wide: free-form generation with this model is affected too,
-    and it answers without a reasoning trace.
+    The checkpoint exposes an ``enable_thinking`` schema parameter, off by
+    default because DashAI uses it as the RAG function-calling model. When off,
+    the Qwen3 chat template appends an empty think block, so the model answers
+    or emits its tool call without a reasoning trace. Turning it on restores the
+    template's normal reasoning output for any chat use of this checkpoint.
 
     References
     ----------
@@ -259,12 +294,7 @@ class Qwen3_8B(GGUFTextGenerationModel):  # noqa: N801
     REPO_ID = "Qwen/Qwen3-8B-GGUF"
     GGUF_PATTERN = "Qwen3-8B-Q6_K.gguf"
     DOWNLOAD_SIZE_BYTES = 6_725_899_040
-    SCHEMA = GGUFTextGenerationSchema
-    # With ``enable_thinking`` False, the Qwen3 template adds an empty
-    # ``<think></think>`` block to every assistant prompt. The flag is global
-    # for this checkpoint, so free-form generation is affected as well as the
-    # RAG function calls.
-    CHAT_TEMPLATE_KWARGS: ClassVar[Dict[str, Any]] = {"enable_thinking": False}
+    SCHEMA = Qwen3GGUFTextGenerationSchema
     COLOR: str = "#2e7d32"
     DISPLAY_NAME = MultilingualString(
         en="Qwen3 8B Q6_K",
@@ -278,30 +308,58 @@ class Qwen3_8B(GGUFTextGenerationModel):  # noqa: N801
             "Qwen3 8B is an 8B-parameter language model from Qwen, loaded from "
             "the Q6_K GGUF checkpoint. This higher-precision quantization uses "
             "about 6.73 GB for the model file and requires additional memory for "
-            "inference. Model available at https://huggingface.co/Qwen/Qwen3-8B-GGUF."
+            "inference. Reasoning output is controlled by the Enable thinking "
+            "parameter and is off by default. Model available at "
+            "https://huggingface.co/Qwen/Qwen3-8B-GGUF."
         ),
         es=(
             "Qwen3 8B es un modelo de lenguaje de 8B parámetros de Qwen, cargado "
             "desde el checkpoint GGUF Q6_K. Esta cuantización de mayor precisión "
             "ocupa unos 6,73 GB en el archivo del modelo y requiere memoria "
-            "adicional para la inferencia. Disponible en "
-            "https://huggingface.co/Qwen/Qwen3-8B-GGUF."
+            "adicional para la inferencia. El razonamiento se controla con el "
+            "parámetro «Activar razonamiento» y está desactivado por defecto. "
+            "Disponible en https://huggingface.co/Qwen/Qwen3-8B-GGUF."
         ),
         pt=(
             "Qwen3 8B é um modelo de linguagem de 8B parâmetros da Qwen, carregado "
             "a partir do checkpoint GGUF Q6_K. Esta quantização de maior precisão "
             "ocupa cerca de 6,73 GB no arquivo do modelo e requer memória adicional "
-            "para inferência. Disponível em https://huggingface.co/Qwen/Qwen3-8B-GGUF."
+            "para inferência. O raciocínio é controlado pelo parâmetro "
+            "«Ativar raciocínio» e fica desativado por padrão. Disponível em "
+            "https://huggingface.co/Qwen/Qwen3-8B-GGUF."
         ),
         de=(
             "Qwen3 8B ist ein 8B-Sprachmodell von Qwen, geladen aus dem "
             "Q6_K-GGUF-Checkpoint. Diese höherpräzise Quantisierung benötigt etwa "
             "6,73 GB für die Modelldatei sowie zusätzlichen Speicher für die "
-            "Inferenz. Verfügbar unter https://huggingface.co/Qwen/Qwen3-8B-GGUF."
+            "Inferenz. Die Denk-Ausgabe lässt sich über den Parameter "
+            "„Denken aktivieren“ steuern und ist standardmäßig aus. Verfügbar unter "
+            "https://huggingface.co/Qwen/Qwen3-8B-GGUF."
         ),
         zh=(
             "Qwen3 8B 是 Qwen 推出的 80 亿参数语言模型，使用 Q6_K GGUF 检查点。"
             "这种精度较高的量化模型文件约占 6.73 GB，推理时还需要额外内存。"
+            "思考输出由“启用思考”参数控制，默认关闭。"
             "模型地址：https://huggingface.co/Qwen/Qwen3-8B-GGUF。"
         ),
     )
+
+    def _resolve_chat_template_kwargs(self, kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        """Map the ``enable_thinking`` schema parameter to a template variable.
+
+        Parameters
+        ----------
+        kwargs : Dict[str, Any]
+            Validated model parameters not consumed by the base class.
+
+        Returns
+        -------
+        Dict[str, Any]
+            The Qwen3 chat-template variable controlling the think block.
+
+        Raises
+        ------
+        KeyError
+            If the validated schema did not provide ``enable_thinking``.
+        """
+        return {"enable_thinking": kwargs.pop("enable_thinking")}
