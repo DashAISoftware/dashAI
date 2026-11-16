@@ -156,8 +156,23 @@ def test_the_season_follows_the_frequency(freq, season):
         ("SME", 24),
         ("BMS", 12),
         ("QS", 4),
+        # A fixed step counts in its largest whole unit before the multiple
+        # divides the cycle: 24 hours are a day, 7 days a week.
+        ("24h", 7),
+        ("60min", 24),
+        ("1440min", 7),
+        ("7D", 52),
+        ("14D", 26),
+        ("48h", 1),
+        ("120min", 12),
+        ("90min", 1),
+        ("3600s", 24),
+        # Seconds repeat every minute.
+        ("s", 60),
+        ("30s", 2),
         # A step the table does not know assumes no season.
         ("ms", 1),
+        ("1500ms", 1),
     ],
 )
 def test_the_season_divides_the_cycle_by_the_step(freq, season):

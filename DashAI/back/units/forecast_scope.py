@@ -6,7 +6,7 @@ parses each unit's own source (ATOMIZING_JOBS §9).
 """
 
 import math
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 from DashAI.back.core.schema_fields import component_field, schema_field
 from DashAI.back.core.utils import MultilingualString
@@ -37,8 +37,9 @@ def forecasts_file(runs_path, artifact_prefix: str):
 
 
 #: Steps in one cycle of each base step: a day repeats weekly, an hour daily,
-#: a month yearly. "SM" is the semi-month (twice a month) and "B" the
-#: business day (five a week). A step that is not here has no season (1).
+#: a month yearly, a second every minute. "SM" is the semi-month (twice a
+#: month) and "B" the business day (five a week). A step that is not here has
+#: no season (1).
 SEASON_BY_STEP = {
     "Y": 1,
     "Q": 4,
@@ -49,7 +50,40 @@ SEASON_BY_STEP = {
     "B": 5,
     "h": 24,
     "min": 60,
+    "s": 60,
 }
+
+#: The units a fixed step is counted in, from the largest: a step is read in
+#: the first one that divides it whole.
+WHOLE_UNITS = (("W", "7D"), ("D", "1D"), ("h", "1h"), ("min", "1min"), ("s", "1s"))
+
+
+def _whole_step(offset) -> Tuple[str, int]:
+    """A pandas offset as its rule code and multiple, in its largest unit.
+
+    A fixed step can be spelled in a smaller unit than it spans: 24 hours are
+    a day, 60 minutes an hour and 7 days a week. Read in the largest unit that
+    divides it whole, the multiple then divides that unit's cycle. Calendar
+    steps (months, business days, anchored weeks) are left as they are.
+
+    Parameters
+    ----------
+    offset : pandas.DateOffset
+        The offset of the grid's frequency.
+
+    Returns
+    -------
+    tuple of (str, int)
+        The rule code and its multiple.
+    """
+    import pandas as pd
+
+    if isinstance(offset, pd.offsets.Tick):
+        for name, unit in WHOLE_UNITS:
+            size = pd.Timedelta(unit).value
+            if offset.nanos % size == 0:
+                return name, offset.nanos // size
+    return offset.name, offset.n
 
 
 def _base_step(rule_code: str) -> str:
@@ -83,10 +117,11 @@ def _base_step(rule_code: str) -> str:
 def season_length_for(freq: str) -> int:
     """The season a frequency usually implies: 12 for months, 7 for days.
 
-    A multiple of the step divides its cycle when it can: every 2 hours is 12
-    steps a day, every 15 minutes 4 an hour. When it cannot, as every 3 days in
-    a 7-day week, no season is assumed. Neither is one for a step the table
-    does not know.
+    A fixed step is first read in its largest whole unit (``_whole_step``):
+    every 24 hours is daily, every 7 days weekly. A multiple of the step then
+    divides its cycle when it can: every 2 hours is 12 steps a day, every 15
+    minutes 4 an hour. When it cannot, as every 3 days in a 7-day week, no
+    season is assumed. Neither is one for a step the table does not know.
 
     Parameters
     ----------
@@ -100,11 +135,11 @@ def season_length_for(freq: str) -> int:
     """
     import pandas as pd
 
-    offset = pd.tseries.frequencies.to_offset(freq)
-    cycle = SEASON_BY_STEP.get(_base_step(offset.name), 1)
-    if offset.n < 1 or cycle % offset.n:
+    step, n = _whole_step(pd.tseries.frequencies.to_offset(freq))
+    cycle = SEASON_BY_STEP.get(_base_step(step), 1)
+    if n < 1 or cycle % n:
         return 1
-    return cycle // offset.n
+    return cycle // n
 
 
 def with_season_from_grid(parameters: Dict[str, Any], freq: str) -> Dict[str, Any]:
