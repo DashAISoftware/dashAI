@@ -10,7 +10,7 @@ them.
 
 from typing import Any, Dict
 
-__all__ = ["resolve_component_defaults"]
+__all__ = ["resolve_component_defaults", "resolve_schema_defaults"]
 
 
 def resolve_component_defaults(component_name: str, registry) -> Dict[str, Any]:
@@ -35,9 +35,21 @@ def resolve_component_defaults(component_name: str, registry) -> Dict[str, Any]:
     """
     if component_name not in registry:
         return {}
-    schema = registry[component_name]["schema"] or {}
+    return resolve_schema_defaults(registry[component_name]["schema"] or {}, registry)
+
+
+def resolve_schema_defaults(
+    schema: Dict[str, Any], registry, only_placeholders: bool = False
+) -> Dict[str, Any]:
+    """Resolve a JSON schema's placeholders into a params dict.
+
+    ``only_placeholders`` leaves out the fields without one instead of giving
+    them ``None``.
+    """
     params: Dict[str, Any] = {}
     for key, prop in schema.get("properties", {}).items():
+        if only_placeholders and "placeholder" not in prop:
+            continue
         placeholder = prop.get("placeholder")
         if isinstance(placeholder, dict) and "component" in placeholder:
             params[key] = {

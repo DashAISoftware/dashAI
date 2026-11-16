@@ -5,7 +5,7 @@ from importlib import import_module
 from pathlib import Path
 
 from beartype import beartype
-from beartype.typing import Any, Dict, FrozenSet, List, Type
+from beartype.typing import Any, Dict, FrozenSet, List, Optional, Type
 
 from DashAI.back.dependencies.registry.component_registry import (
     _NAMESPACE,
@@ -199,6 +199,27 @@ class PluginLoader:
 
     @classmethod
     @beartype
+    def settings_class(cls, manifest: PluginManifest) -> Optional[Type]:
+        """The manifest's ``settings`` class or None, from ``sys.modules`` if loaded."""
+        if manifest.settings is None:
+            return None
+        return cls._resolve_class(_package(manifest.id), manifest.settings)
+
+    @classmethod
+    @beartype
+    def _check_settings(cls, manifest: PluginManifest, registry: ComponentRegistry):
+        # Circular import with plugins/settings.py
+        from DashAI.back.plugins.settings import problem
+
+        settings = cls.settings_class(manifest)
+        if settings is None:
+            return
+        reason = problem(settings, manifest.id, registry)
+        if reason:
+            raise PluginLoadError(f"Settings '{manifest.settings}': {reason}")
+
+    @classmethod
+    @beartype
     def load(
         cls, manifest: PluginManifest, plugin_dir: Path, registry: ComponentRegistry
     ) -> List[Type]:
@@ -209,6 +230,7 @@ class PluginLoader:
                 cls._checked_class(package, component, registry)
                 for component in manifest.components
             ]
+            cls._check_settings(manifest, registry)
             cls._register_all(resolved, registry)
         except BaseException:
             for name in _modules(package):
