@@ -531,6 +531,14 @@ def test_the_lags_default_to_a_season_and_at_least_three(lags, season_length, ex
     assert model.resolved_lags() == expected
 
 
+def test_a_season_left_empty_without_the_unit_is_a_wiring_error():
+    # The unit that builds the model fills an empty season from the
+    # frequency; a None that reaches the model skipped it, and would give 3
+    # lags without a word.
+    with pytest.raises(ValueError, match="season_length is None"):
+        RecursiveRegressionForecaster(season_length=None)
+
+
 def test_the_reduction_model_regresses_on_the_lags():
     # y[t] = 0.5 y[t-1] + 2, exactly: a linear regression on one lag finds it.
     series = [10.0]

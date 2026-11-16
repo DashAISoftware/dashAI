@@ -367,12 +367,22 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
         ------
         TypeError
             If the regressor is not one of the scikit-learn regressors.
+        ValueError
+            If ``season_length`` is None: the unit that builds the model fills
+            an empty season from the frequency, so a None here is a wiring
+            error, not a request for the default lags.
         """
         from DashAI.back.models.scikit_learn.sklearn_like_regressor import (
             SklearnLikeRegressor,
         )
 
         super().__init__(**kwargs)
+        if season_length is None:
+            raise ValueError(
+                "season_length is None: the unit that builds the model reads an "
+                "empty season from the series' frequency, so the model should "
+                "never receive None."
+            )
         if regressor is None:
             from DashAI.back.models.scikit_learn.linear_regression import (
                 LinearRegression,
@@ -396,13 +406,13 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
         """The lags each prediction reads: ``lags``, or one season, at least 3."""
         if self.lags is not None:
             return int(self.lags)
-        return max(int(self.season_length or 1), MIN_DEFAULT_LAGS)
+        return max(int(self.season_length), MIN_DEFAULT_LAGS)
 
     def _lags_source(self) -> str:
         """Where the lags came from, for a message: empty when given."""
         if self.lags is not None:
             return ""
-        if int(self.season_length or 1) < MIN_DEFAULT_LAGS:
+        if int(self.season_length) < MIN_DEFAULT_LAGS:
             return " (the fewest the default gives, as Lags is left empty)"
         return " (one season, as Lags is left empty)"
 
