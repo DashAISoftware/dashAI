@@ -31,6 +31,57 @@ RANDOM_STATE = 123
 MIN_DEFAULT_LAGS = 3
 
 
+def estimator_class(regressor: Any) -> type:
+    """The scikit-learn compatible class a DashAI regressor is built on.
+
+    The one check of the regressor, made when the model is built. The class
+    is the first in the regressor's ``__mro__`` that is a concrete
+    scikit-learn regressor (``BaseEstimator`` and ``RegressorMixin``) and lies
+    outside DashAI: neither defined in the ``DashAI`` package nor a DashAI
+    model. The second condition is what passes over a plugin's wrapper, which
+    lives outside the package but, like every DashAI model, takes
+    ``**kwargs`` that ``get_params`` cannot read. The class need not come
+    from scikit-learn itself.
+
+    Parameters
+    ----------
+    regressor : object
+        A DashAI regressor, as ``ModelFactory`` builds it from the nested form.
+
+    Returns
+    -------
+    type
+        The class ``sklearn_estimator`` instantiates.
+
+    Raises
+    ------
+    TypeError
+        If no such class is among the regressor's classes: a torch model such
+        as ``MLPRegression``, or a classifier.
+    """
+    import inspect
+
+    from sklearn.base import BaseEstimator, RegressorMixin
+
+    from DashAI.back.models.base_model import BaseModel
+
+    for cls in type(regressor).__mro__:
+        if (
+            issubclass(cls, BaseEstimator)
+            and issubclass(cls, RegressorMixin)
+            and not issubclass(cls, BaseModel)
+            and cls.__module__.split(".")[0] != "DashAI"
+            and not inspect.isabstract(cls)
+        ):
+            return cls
+    raise TypeError(
+        f"{type(regressor).__name__} is not a scikit-learn regressor: the "
+        "reduction model regresses on the lags with a regressor built on a "
+        "scikit-learn compatible estimator (BaseEstimator and RegressorMixin), "
+        "as the SklearnLikeRegressor models are."
+    )
+
+
 def sklearn_estimator(regressor: Any):
     """The plain scikit-learn estimator inside a DashAI regressor.
 
@@ -39,8 +90,9 @@ def sklearn_estimator(regressor: Any):
     ``**kwargs``, which scikit-learn's ``_get_param_names`` cannot read, so
     ``get_params`` is empty and the clone silently falls back to the defaults:
     a forest configured with 7 trees would be fitted with 100. The estimator
-    built here is the regressor's own scikit-learn class, instantiated with
-    the values the regressor holds, so a clone of it keeps them.
+    built here is the regressor's own scikit-learn compatible class
+    (``estimator_class``), instantiated with the values the regressor holds,
+    so a clone of it keeps them.
 
     It is built on every fit rather than once, so it sees the values a search
     sets on the nested regressor for each trial.
@@ -48,38 +100,22 @@ def sklearn_estimator(regressor: Any):
     Parameters
     ----------
     regressor : object
-        A DashAI regressor that is also a scikit-learn estimator, as the
-        ``SklearnLikeRegressor`` models are. It is not modified.
+        A DashAI regressor built on a scikit-learn compatible estimator, as
+        the ``SklearnLikeRegressor`` models are. It is not modified.
 
     Returns
     -------
     sklearn.base.RegressorMixin
-        An unfitted scikit-learn regressor with the same hyperparameters.
+        An unfitted regressor with the same hyperparameters.
 
     Raises
     ------
     TypeError
-        If no concrete scikit-learn regressor is among the regressor's
-        classes: a torch model such as ``MLPRegression``, or a classifier.
+        As ``estimator_class``, for a regressor that is not built on one.
     """
-    import inspect
-
-    from sklearn.base import RegressorMixin
-
-    for cls in type(regressor).__mro__:
-        if (
-            cls.__module__.split(".")[0] == "sklearn"
-            and cls is not RegressorMixin
-            and issubclass(cls, RegressorMixin)
-            and not inspect.isabstract(cls)
-        ):
-            names = cls._get_param_names()
-            return cls(**{name: getattr(regressor, name) for name in names})
-    raise TypeError(
-        f"{type(regressor).__name__} is not a scikit-learn regressor: the "
-        "reduction model regresses on the lags with one of the "
-        "SklearnLikeRegressor models."
-    )
+    cls = estimator_class(regressor)
+    names = cls._get_param_names()
+    return cls(**{name: getattr(regressor, name) for name in names})
 
 
 class RecursiveRegressionForecasterSchema(BaseSchema):
@@ -350,9 +386,11 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
 
         Parameters
         ----------
-        regressor : SklearnLikeRegressor, optional
+        regressor : object, optional
             The DashAI regressor, as ``ModelFactory`` builds it from the nested
-            form. None gives a ``LinearRegression`` with its defaults.
+            form, built on a scikit-learn compatible estimator
+            (``estimator_class``). None gives a ``LinearRegression`` with its
+            defaults.
         lags : int, optional
             How many past values each prediction reads. None means one
             season, and at least ``MIN_DEFAULT_LAGS``.
@@ -366,16 +404,13 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
         Raises
         ------
         TypeError
-            If the regressor is not one of the scikit-learn regressors.
+            If the regressor is not built on a scikit-learn compatible
+            estimator (``estimator_class``, the one check of the regressor).
         ValueError
             If ``season_length`` is None: the unit that builds the model fills
             an empty season from the frequency, so a None here is a wiring
             error, not a request for the default lags.
         """
-        from DashAI.back.models.scikit_learn.sklearn_like_regressor import (
-            SklearnLikeRegressor,
-        )
-
         super().__init__(**kwargs)
         if season_length is None:
             raise ValueError(
@@ -389,18 +424,14 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
             )
 
             regressor = LinearRegression()
-        if not isinstance(regressor, SklearnLikeRegressor):
-            raise TypeError(
-                f"{type(regressor).__name__} is not a scikit-learn regressor: "
-                "the reduction model regresses on the lags with one of the "
-                "SklearnLikeRegressor models."
-            )
+        # Checked when built, not when fitted: in a search, a fit's error
+        # becomes a trial that could not be fitted (D-a, §8.2).
+        estimator_class(regressor)
         self.regressor = regressor
         self.lags = lags
         self.season_length = season_length
         self.differentiation = differentiation
         self._forecaster = None
-        self._train_length = 0
 
     def resolved_lags(self) -> int:
         """The lags each prediction reads: ``lags``, or one season, at least 3."""
@@ -489,7 +520,6 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
                 f"{lags} lags failed: {error}"
             ) from error
         self._forecaster = forecaster
-        self._train_length = len(y)
 
     def _forecast(self, h: int, x_future: Optional[Any]) -> "np.ndarray":
         """Forecast the next ``h`` steps, one at a time.
@@ -508,7 +538,8 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
         """
         return self._forecaster.predict(
             steps=h,
-            exog=self._exog(x_future, self._train_length),
+            # The base counts the steps of the last fit.
+            exog=self._exog(x_future, self._n_obs),
             suppress_warnings=True,
         ).to_numpy()
 
@@ -525,7 +556,7 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
 
         paths = self._forecaster.predict_bootstrapping(
             steps=h,
-            exog=self._exog(x_future, self._train_length),
+            exog=self._exog(x_future, self._n_obs),
             n_boot=N_BOOT,
             random_state=RANDOM_STATE,
             use_in_sample_residuals=True,

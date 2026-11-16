@@ -712,6 +712,51 @@ def test_the_reduction_intervals_widen_along_the_horizon():
     assert width[-1] > width[0]
 
 
+def _plugin_regression(**params):
+    """A DashAI regressor over a scikit-learn compatible class from elsewhere.
+
+    The shape a plugin would give one: the DashAI wrapper lives outside the
+    DashAI package, and so does the estimator it wraps.
+    """
+    from sklearn.base import BaseEstimator, RegressorMixin
+
+    from DashAI.back.models.regression_model import RegressionModel
+    from DashAI.back.models.scikit_learn.sklearn_like_regressor import (
+        SklearnLikeRegressor,
+    )
+
+    class ThirdPartyMean(RegressorMixin, BaseEstimator):
+        def __init__(self, shift=0.0):
+            self.shift = shift
+
+        # scikit-learn's names: skforecast passes ``X`` by keyword.
+        def fit(self, X, y):  # noqa: N803
+            self.mean_ = float(np.mean(y))
+            return self
+
+        def predict(self, X):  # noqa: N803
+            return np.full(len(X), self.mean_ + self.shift)
+
+    class PluginRegression(RegressionModel, SklearnLikeRegressor, ThirdPartyMean):
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+
+    return PluginRegression(**params), ThirdPartyMean
+
+
+def test_a_scikit_learn_compatible_regressor_from_outside_dashai_is_taken():
+    regressor, estimator_class = _plugin_regression(shift=2.0)
+
+    model = RecursiveRegressionForecaster(regressor, lags=1, season_length=1)
+    forecast = model.fit(np.ones(10)).predict(1)
+
+    # The estimator is the plugin's own class, not its DashAI wrapper, whose
+    # ``**kwargs`` would hide the shift from ``get_params``.
+    assert type(model.fitted_estimator()) is estimator_class
+    assert model.fitted_estimator().shift == 2.0
+    assert forecast.point == pytest.approx([3.0])
+
+
 def test_a_regressor_that_is_not_scikit_learn_is_refused_when_built():
     from DashAI.back.models.scikit_learn.mlp_regression import MLPRegression
 
