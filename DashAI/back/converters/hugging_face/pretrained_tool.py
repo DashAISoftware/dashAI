@@ -20,14 +20,23 @@ def device_field() -> Any:
         enum_field(DEVICE_ENUM),
         DEVICE_PLACEHOLDER,
         description=MultilingualString(
-            en="Device the model runs on. A GPU is much faster than the CPU.",
-            es="Dispositivo en el que corre el modelo. Una GPU es mucho más "
-            "rápida que la CPU.",
-            pt="Dispositivo em que o modelo roda. Uma GPU é muito mais rápida "
-            "que a CPU.",
-            de="Gerät, auf dem das Modell läuft. Eine GPU ist viel schneller "
-            "als die CPU.",
-            zh="运行模型的设备。GPU 比 CPU 快得多。",
+            en=(
+                "Device the model runs on. GPU choices appear when PyTorch is "
+                "installed with CUDA support."
+            ),
+            es=(
+                "Dispositivo en el que corre el modelo. Las GPU aparecen si "
+                "PyTorch está instalado con soporte CUDA."
+            ),
+            pt=(
+                "Dispositivo em que o modelo roda. As GPUs aparecem quando o "
+                "PyTorch está instalado com suporte a CUDA."
+            ),
+            de=(
+                "Gerät, auf dem das Modell läuft. GPUs werden angezeigt, wenn "
+                "PyTorch mit CUDA-Unterstützung installiert ist."
+            ),
+            zh="模型运行的设备。只有安装了支持 CUDA 的 PyTorch 才会显示 GPU。",
         ),
         alias=MultilingualString(
             en="Device",
@@ -37,6 +46,10 @@ def device_field() -> Any:
             zh="设备",
         ),
     )
+
+
+TORCH_DEVICE_CPU = "cpu"
+TORCH_DEVICE_CUDA_PREFIX = "cuda"
 
 
 def torch_device(label: Optional[str]) -> str:
@@ -53,7 +66,9 @@ def torch_device(label: Optional[str]) -> str:
         ``"cuda:<index>"`` or ``"cpu"``.
     """
     index = DEVICE_TO_IDX.get(label or "CPU", -1)
-    return f"cuda:{index}" if index >= 0 else "cpu"
+    if index >= 0:
+        return f"{TORCH_DEVICE_CUDA_PREFIX}:{index}"
+    return TORCH_DEVICE_CPU
 
 
 def batches(values: Sequence[Any], size: int) -> Iterator[List[Any]]:
