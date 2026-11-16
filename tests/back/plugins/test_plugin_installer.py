@@ -1,465 +1,292 @@
-import json
-import os
-import pathlib
-import subprocess
+"""PluginInstaller install, update, toggle, trust, retired and needed plugins."""
+
 import sys
-from typing import Iterable, Tuple
-from unittest.mock import Mock, patch
+from pathlib import Path
 
 import pytest
+from plugin_helpers import URL, module, save_store
 
-from DashAI.back.plugins import installer
-from DashAI.back.plugins.installer import (
-    PluginInstallError,
-    canonical_name,
-    install_requirement,
-    pip_command,
-    read_ledger,
-    resolve_missing_distributions,
-    uninstall_requirement,
+from DashAI.back.core.enums.plugin_source import PluginSource
+from DashAI.back.plugins.loader import PluginLoader
+from DashAI.back.plugins.plugin_installer import InstalledPlugin, PluginInstallError
+from DashAI.back.plugins.store.store import PluginStore
+
+USER = "from dashai_plugins.pdep_base.mod import Base\n\nclass User(Base):\n    pass\n"
+
+
+def _release(env, plugin_id="my-plugin", version="2.0.0", **kwargs):
+    """The release GitHub serves from now on."""
+    env.github.folder = Path(env.plugin(plugin_id, version, **kwargs))
+
+
+def _break_manifest(env, plugin_id="my-plugin"):
+    manifest = env.storage.plugin_dir(plugin_id) / "manifest.json"
+    manifest.write_text("{not json", encoding="utf-8")
+
+
+def _retire(env, *removed):
+    """The store's copy, as if just read, retiring ``removed``."""
+    env.installer.store = env.installer.store or PluginStore(env.storage)
+    save_store(env.storage, removed=removed)
+    return env.installer.apply_removed()
+
+
+@pytest.mark.parametrize(
+    ("source", "used_asset", "level"),
+    [
+        (PluginSource.LOCAL, False, "local"),
+        (PluginSource.GIT, True, "github_asset"),
+        (PluginSource.GIT, False, "github_source"),  # the repo's code at its commit
+    ],
 )
+def test_install_stores_registers_and_records_its_trust_level(
+    env, source, used_asset, level
+):
+    folder = env.plugin("my-plugin", cls="Mine")
+    env.github.folder, env.github.used_asset = Path(folder), used_asset
+
+    installed = env.installer.install(
+        source, folder if source is PluginSource.LOCAL else URL
+    )
+
+    assert isinstance(installed, InstalledPlugin)
+    assert (installed.id, installed.trust_level) == ("my-plugin", level)
+    assert [component.__name__ for component in installed.components] == ["Mine"]
+    assert "Mine" in env.registry
+    assert env.storage.read_source("my-plugin").trust_level == level
 
 
-@pytest.fixture(autouse=True)
-def _restore_import_state():
-    original_path = list(sys.path)
-    original_pythonpath = os.environ.get("PYTHONPATH")
-    yield
-    sys.path[:] = original_path
-    if original_pythonpath is None:
-        os.environ.pop("PYTHONPATH", None)
-    else:
-        os.environ["PYTHONPATH"] = original_pythonpath
+def test_a_reinstall_replaces_the_previous_version_and_drops_its_components(env):
+    both = [{"class": f"mod:{c}", "type": "Converter"} for c in ("CompA", "CompB")]
+    code = module("CompA") + "class CompB(Base):\n    pass\n"
+    env.install("multi", module=code, components=both)
+
+    result = env.install("multi", "2.0.0", cls="CompA")
+
+    assert result.version == "2.0.0"
+    assert "CompA" in env.registry  # replaced in place by the v2 class
+    assert "CompB" not in env.registry  # dropped, not left as an orphan
 
 
-INTERPRETER_DIR = f"py{sys.version_info.major}.{sys.version_info.minor}"
+def test_a_reinstall_with_a_broken_manifest_keeps_the_previous_version(env):
+    env.install("my-plugin", cls="Mine")
+    broken = env.tmp / "broken"
+    broken.mkdir()
+    (broken / "manifest.json").write_text("{ not valid json", encoding="utf-8")
+
+    with pytest.raises(PluginInstallError, match="Invalid manifest"):
+        env.installer.install(PluginSource.LOCAL, str(broken))
+
+    assert env.storage.is_installed("my-plugin")
+    assert "Mine" in env.registry
+
+
+@pytest.mark.parametrize("latest", ["1.0.0", "0.9.0"])
+def test_update_never_reinstalls_nor_downgrades(env, latest):
+    env.install_git()
+    _release(env, version=latest)
+
+    with pytest.raises(PluginInstallError, match="No newer version"):
+        env.update()
+
+    assert env.installer._manifest_or_none("my-plugin").version == "1.0.0"
+
+
+def test_update_installs_the_reviewed_copy_even_if_the_release_changed(env):
+    env.install_git()
+    _release(env, cls="V2")
+    preview = env.installer.validate(PluginSource.GIT, URL)
+    _release(env, version="3.0.0")  # the author replaces the release after the review
+
+    env.installer.update("my-plugin", preview=preview.preview)
+
+    assert env.installer._manifest_or_none("my-plugin").version == "2.0.0"
+    assert "V2" in env.registry
+
+
+def test_validate_asks_to_acknowledge_going_down_a_tier(env):
+    env.github.used_asset = env.github.attested = True
+    env.install_git()
+    env.github.used_asset = env.github.attested = False  # source code only
+
+    result = env.installer.validate(PluginSource.GIT, URL)
+
+    assert result.trust_level == "github_source"
+    assert result.needs_ack  # github_source alone would not ask
+
+
+def test_install_of_another_plugin_works_with_a_broken_manifest_on_disk(env):
+    env.install("my-plugin")
+    _break_manifest(env)
+
+    env.install("other-plugin", cls="Other")
+
+    assert env.storage.is_installed("other-plugin")
+    assert "Other" in env.registry
+
+
+def test_reinstall_over_a_manifest_broken_while_loaded(env):
+    source = env.plugin("my-plugin")
+    env.installer.install(PluginSource.LOCAL, source)
+    _break_manifest(env)
+
+    assert env.installer.validate(PluginSource.LOCAL, source).is_valid
+    env.installer.install(PluginSource.LOCAL, source)
+    assert env.installer._manifest_or_none("my-plugin").version == "1.0.0"
+
+
+@pytest.mark.parametrize(
+    ("operation", "args"),
+    [("enable", ()), ("disable", ()), ("uninstall", ()), ("update", ("token",))],
+)
+def test_an_operation_on_a_plugin_not_installed_is_refused(env, operation, args):
+    with pytest.raises(PluginInstallError) as refused:
+        getattr(env.installer, operation)("nowhere", *args)
+
+    assert (refused.value.code, refused.value.params) == (
+        "not_installed",
+        {"id": "nowhere"},
+    )
+
+
+def test_disable_unregisters_keeping_the_files_and_enable_registers_again(env):
+    env.install("my-plugin", cls="Mine")
+
+    env.installer.disable("my-plugin")
+    assert "Mine" not in env.registry
+    assert env.storage.is_installed("my-plugin")
+    assert env.storage.is_enabled("my-plugin") is False
+
+    env.installer.enable("my-plugin")
+    assert "Mine" in env.registry
+    assert env.storage.is_enabled("my-plugin") is True
+
+
+def test_enable_loads_a_plugin_that_is_enabled_but_not_loaded(env):
+    env.install("my-plugin", cls="Mine")
+    PluginLoader.unload(env.installer._manifest_or_none("my-plugin"), env.registry)
+
+    env.installer.enable("my-plugin")
+
+    assert "Mine" in env.registry
+
+
+CRITICAL = {"id": "my-plugin", "repo": "Owner/Repo", "type": "critical"}
 
 
 @pytest.fixture
-def plugins_dir(tmp_path, monkeypatch) -> pathlib.Path:
-    monkeypatch.setenv("DASHAI_LOCAL_PATH", str(tmp_path))
-    directory = tmp_path / "plugins" / INTERPRETER_DIR
-    directory.mkdir(parents=True)
-    return directory
+def retired(env):
+    """my-plugin installed from GitHub, then retired by the store as malicious."""
+    env.install_git(cls="Mine")
+    assert _retire(env, {**CRITICAL, "date": "d1"})  # it blocked one
+    return env
 
 
-def _completed(returncode: int = 0, stdout: str = "", stderr: str = ""):
-    return subprocess.CompletedProcess(
-        args=["pip"], returncode=returncode, stdout=stdout, stderr=stderr
+def test_a_plugin_the_store_retires_as_malicious_is_blocked(retired):
+    assert "Mine" not in retired.registry
+    assert retired.installer.validate(PluginSource.GIT, URL).removed == "critical"
+    with pytest.raises(PluginInstallError) as refused:
+        retired.installer.enable("my-plugin")
+    assert refused.value.code == "blocked"
+
+
+def test_a_new_retirement_blocks_it_again_and_installing_runs_no_code(retired):
+    retired.installer.enable("my-plugin", allow_blocked=True)  # the user confirmed
+    assert not retired.installer.apply_removed()  # the same entry, still allowed
+    assert "Mine" in retired.registry
+
+    _retire(retired, {**CRITICAL, "date": "d2"})
+    assert "Mine" not in retired.registry
+    retired.installer.install(PluginSource.GIT, URL)
+
+    assert retired.storage.is_blocked("my-plugin")
+    assert "Mine" not in retired.registry
+
+
+def test_a_plugin_out_of_the_retired_list_comes_back_by_itself(retired):
+    assert _retire(retired)
+
+    assert not retired.storage.is_blocked("my-plugin")
+    assert "Mine" in retired.registry
+
+
+def _user(env, version="1.0.0", needs=("dep-base",)):
+    return env.install(
+        "dep-user", version, module=USER, cls="User", plugin_dependencies=list(needs)
     )
 
 
-def _report(*distributions: Tuple[str, str, str]) -> dict:
-    return {
-        "version": "1",
-        "install": [
-            {
-                "metadata": {"name": name, "version": version},
-                "download_info": {"url": url},
-            }
-            for name, version, url in distributions
-        ],
-    }
+@pytest.fixture
+def base_and_user(env):
+    """dep-base from GitHub (the store can retire it), dep-user from a folder."""
+    env.install_git("dep-base")
+    _user(env)
+    assert "dep-user:User" in env.registry
+    return env
 
 
-def _write_fake_distribution(
-    directory: pathlib.Path,
-    name: str,
-    version: str = "1.0.0",
-    files: Iterable[str] = ("dummy_pkg/__init__.py",),
-    extra_record_lines: Iterable[str] = (),
-) -> pathlib.Path:
-    dist_info = directory / f"{name.replace('-', '_')}-{version}.dist-info"
-    dist_info.mkdir(parents=True)
-    records = []
-    for relative in files:
-        target = directory / relative
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text("", encoding="utf-8")
-        records.append(f"{relative},sha256=x,0")
-    records.extend(extra_record_lines)
-    records.append(f"{dist_info.name}/METADATA,sha256=x,0")
-    records.append(f"{dist_info.name}/RECORD,,")
-    (dist_info / "RECORD").write_text("\n".join(records), encoding="utf-8")
-    (dist_info / "METADATA").write_text(
-        f"Name: {name}\nVersion: {version}\n", encoding="utf-8"
-    )
-    return dist_info
-
-
-@pytest.mark.parametrize(
-    ("raw", "expected"),
-    [
-        ("DashAI-Frankenstein", "dashai-frankenstein"),
-        ("dashai_frankenstein", "dashai-frankenstein"),
-        ("dashai.frankenstein", "dashai-frankenstein"),
-        ("  DashAI__Plugin  ", "dashai-plugin"),
-    ],
-)
-def test_canonical_name(raw, expected):
-    assert canonical_name(raw) == expected
-
-
-def test_pip_command_targets_the_interpreter_running_dashai():
-    assert pip_command() == [sys.executable, "-m", "pip"]
-
-
-def test_pip_command_fails_when_pip_is_missing():
-    with patch("importlib.util.find_spec", return_value=None):  # noqa: SIM117
-        with pytest.raises(PluginInstallError, match="pip is not available"):
-            pip_command()
-
-
-def test_pip_environment_exposes_the_plugins_directory(plugins_dir, monkeypatch):
-    monkeypatch.setenv("PYTHONPATH", "/elsewhere")
-    monkeypatch.setenv("PIP_USER", "1")
-    monkeypatch.setenv("PIP_TARGET", "/somewhere")
-
-    environment = installer._pip_environment(plugins_dir)
-
-    assert environment["PYTHONPATH"].split(os.pathsep) == [
-        str(plugins_dir),
-        "/elsewhere",
-    ]
-    assert environment["PIP_USER"] == "0"
-    assert environment["PIP_REQUIRE_VIRTUALENV"] == "0"
-    assert "PIP_TARGET" not in environment
-
-
-def test_run_pip_raises_with_the_error_lines(plugins_dir):
-    failure = _completed(returncode=1, stderr="noise\nERROR: no such package\n")
-
-    with patch("subprocess.run", return_value=failure):  # noqa: SIM117
-        with pytest.raises(PluginInstallError, match="ERROR: no such package"):
-            installer._run_pip(["install", "nope"], plugins_dir)
-
-
-PIP_CRASH_STDERR = "\n".join(
-    [
-        "ERROR: Exception:",
-        "Traceback (most recent call last):",
-        '  File "pip/_vendor/distlib/resources.py", line 346, in finder',
-        "    raise DistlibException(...)",
-        "DistlibException: Unable to locate finder for 'pip._vendor.distlib'",
-    ]
-)
-
-
-def test_run_pip_keeps_the_traceback_after_an_error_line(plugins_dir):
-    """pip reports a crash as an ERROR line plus the traceback explaining it."""
-    failure = _completed(
-        returncode=2,
-        stdout="Collecting dashai-plugin",
-        stderr=PIP_CRASH_STDERR,
-    )
-
-    with patch("subprocess.run", return_value=failure):  # noqa: SIM117
-        with pytest.raises(PluginInstallError) as error_info:
-            installer._run_pip(["install", "dashai-plugin"], plugins_dir)
-
-    message = str(error_info.value)
-    assert message.startswith("ERROR: Exception:")
-    assert "Unable to locate finder" in message
-    assert "Traceback (most recent call last):" in message
-
-
-def test_run_pip_caps_the_reported_output(plugins_dir):
-    noise = "\n".join(f"line {index}" for index in range(200))
-    failure = _completed(returncode=2, stderr=f"ERROR: boom\n{noise}")
-
-    with patch("subprocess.run", return_value=failure):  # noqa: SIM117
-        with pytest.raises(PluginInstallError) as error_info:
-            installer._run_pip(["install", "dashai-plugin"], plugins_dir)
-
-    reported = str(error_info.value).splitlines()
-    assert len(reported) == installer._PIP_ERROR_CONTEXT_LINES
-
-
-def test_run_pip_reports_a_silent_failure(plugins_dir):
-    with (
-        patch("subprocess.run", return_value=_completed(returncode=9)),
-        pytest.raises(PluginInstallError, match="pip exited with code 9"),
-    ):
-        installer._run_pip(["install", "dashai-plugin"], plugins_dir)
-
-
-def test_run_pip_falls_back_to_the_output_tail(plugins_dir):
-    failure = _completed(returncode=2, stderr="something went wrong")
-
-    with patch("subprocess.run", return_value=failure):  # noqa: SIM117
-        with pytest.raises(PluginInstallError, match="something went wrong"):
-            installer._run_pip(["install", "nope"], plugins_dir)
-
-
-def test_resolve_missing_distributions_reads_the_pip_report(plugins_dir):
-    report = _report(
-        ("DashAI_Frankenstein", "1.2.0", "https://files/dashai_frankenstein.whl"),
-        ("frankenstein-transformer", "1.1.0", "https://files/transformer.whl"),
-    )
-
-    def fake_run_pip(arguments, directory):
-        pathlib.Path(arguments[arguments.index("--report") + 1]).write_text(
-            json.dumps(report), encoding="utf-8"
-        )
-        return _completed()
-
-    with patch.object(installer, "_run_pip", side_effect=fake_run_pip) as run_pip:
-        distributions = resolve_missing_distributions(
-            "dashai-frankenstein", plugins_dir
-        )
-
-    arguments = run_pip.call_args.args[0]
-    assert arguments[:2] == ["install", "--dry-run"]
-    assert "--target" not in arguments
-    assert arguments[-1] == "dashai-frankenstein"
-    assert distributions == [
-        {
-            "name": "dashai-frankenstein",
-            "version": "1.2.0",
-            "url": "https://files/dashai_frankenstein.whl",
-        },
-        {
-            "name": "frankenstein-transformer",
-            "version": "1.1.0",
-            "url": "https://files/transformer.whl",
-        },
-    ]
-
-
-def test_resolve_missing_distributions_ignores_incomplete_entries(plugins_dir):
-    report = {"install": [{"metadata": {"name": "broken"}}, {"download_info": {}}]}
-
-    def fake_run_pip(arguments, directory):
-        pathlib.Path(arguments[arguments.index("--report") + 1]).write_text(
-            json.dumps(report), encoding="utf-8"
-        )
-        return _completed()
-
-    with patch.object(installer, "_run_pip", side_effect=fake_run_pip):
-        assert resolve_missing_distributions("broken", plugins_dir) == []
-
-
-def test_install_requirement_only_installs_the_missing_distributions(plugins_dir):
-    distributions = [
-        {"name": "dashai-plugin", "version": "1.0", "url": "https://files/plugin.whl"},
-        {"name": "extra-dep", "version": "2.0", "url": "https://files/extra.whl"},
-    ]
-
-    with (
-        patch.object(
-            installer, "resolve_missing_distributions", return_value=distributions
-        ),
-        patch.object(installer, "_run_pip", return_value=_completed()) as run_pip,
-    ):
-        installed = install_requirement("DashAI-Plugin")
-
-    assert installed == ["dashai-plugin", "extra-dep"]
-    arguments = run_pip.call_args.args[0]
-    assert "--no-deps" in arguments
-    assert arguments[arguments.index("--target") + 1] == str(plugins_dir)
-    assert arguments[-2:] == ["https://files/plugin.whl", "https://files/extra.whl"]
-    assert read_ledger(plugins_dir) == {"dashai-plugin": ["dashai-plugin", "extra-dep"]}
-
-
-def test_install_requirement_is_a_no_op_when_already_satisfied(plugins_dir):
-    with (
-        patch.object(installer, "resolve_missing_distributions", return_value=[]),
-        patch.object(installer, "_run_pip") as run_pip,
-    ):
-        assert install_requirement("dashai-plugin") == []
-
-    run_pip.assert_not_called()
-
-
-def test_uninstall_requirement_removes_the_recorded_files(plugins_dir):
-    _write_fake_distribution(
-        plugins_dir, "dashai-plugin", files=("dashai_plugin/__init__.py",)
-    )
-    installer._write_ledger(plugins_dir, {"dashai-plugin": ["dashai-plugin"]})
-
-    removed = uninstall_requirement("DashAI-Plugin")
-
-    assert removed == ["dashai-plugin"]
-    assert not (plugins_dir / "dashai_plugin").exists()
-    assert list(plugins_dir.glob("*.dist-info")) == []
-    assert read_ledger(plugins_dir) == {}
-
-
-def test_uninstall_requirement_keeps_dependencies_other_plugins_need(plugins_dir):
-    _write_fake_distribution(
-        plugins_dir, "dashai-plugin", files=("dashai_plugin/__init__.py",)
-    )
-    _write_fake_distribution(plugins_dir, "shared-dep", files=("shared_dep/core.py",))
-    installer._write_ledger(
-        plugins_dir,
-        {
-            "dashai-plugin": ["dashai-plugin", "shared-dep"],
-            "dashai-other": ["shared-dep"],
-        },
-    )
-
-    removed = uninstall_requirement("dashai-plugin")
-
-    assert removed == ["dashai-plugin"]
-    assert (plugins_dir / "shared_dep" / "core.py").exists()
-    assert read_ledger(plugins_dir) == {"dashai-other": ["shared-dep"]}
-
-
-def test_uninstall_requirement_ignores_records_outside_the_plugins_directory(
-    plugins_dir,
+@pytest.mark.parametrize("operation", ["disable", "uninstall", "block"])
+def test_a_plugin_stops_with_the_one_it_needs_and_keeps_its_choice(
+    base_and_user, operation
 ):
-    escapee = plugins_dir.parent / "escapee.txt"
-    escapee.write_text("keep me", encoding="utf-8")
-    _write_fake_distribution(
-        plugins_dir,
-        "dashai-plugin",
-        files=("dashai_plugin/__init__.py",),
-        extra_record_lines=("../escapee.txt,sha256=x,0",),
-    )
-    installer._write_ledger(plugins_dir, {"dashai-plugin": ["dashai-plugin"]})
+    env = base_and_user
 
-    uninstall_requirement("dashai-plugin")
+    if operation == "block":
+        retired = {"id": "dep-base", "repo": "owner/repo", "type": "critical"}
+        _retire(env, {**retired, "date": "d1"})
+    else:
+        getattr(env.installer, operation)("dep-base")
 
-    assert escapee.exists()
+    assert "dep-user:User" not in env.registry
+    assert env.storage.is_enabled("dep-user")  # its .disabled is the user's alone
 
 
-def test_uninstall_requirement_removes_console_scripts(plugins_dir):
-    """Wheels record scripts as ../../bin/name, which --target puts in bin/."""
-    script = plugins_dir / "bin" / "plugin-cli.exe"
-    script.parent.mkdir(parents=True)
-    script.write_text("", encoding="utf-8")
-    _write_fake_distribution(
-        plugins_dir,
-        "dashai-plugin",
-        files=("dashai_plugin/__init__.py",),
-        extra_record_lines=("../../bin/plugin-cli.exe,sha256=x,0",),
-    )
-    installer._write_ledger(plugins_dir, {"dashai-plugin": ["dashai-plugin"]})
+def test_updating_the_base_reloads_its_dependent_against_the_new_class(base_and_user):
+    env = base_and_user
+    _release(env, "dep-base", module=module("C_dep_base") + "V = 2\n")
 
-    uninstall_requirement("dashai-plugin")
+    env.update("dep-base")
 
-    assert not script.exists()
+    new_base = sys.modules["dashai_plugins.pdep_base.mod"].Base
+    assert issubclass(env.registry["dep-user:User"]["class"], new_base)
 
 
-@pytest.mark.parametrize(
-    ("relative", "expected"),
-    [
-        ("dashai_plugin/__init__.py", "dashai_plugin/__init__.py"),
-        ("../../bin/plugin-cli.exe", "bin/plugin-cli.exe"),
-        (r"..\..\Scripts\plugin.exe", "Scripts/plugin.exe"),
-    ],
-)
-def test_resolve_record_entry_stays_inside_the_plugins_directory(
-    plugins_dir, relative, expected
+def test_installing_a_plugin_whose_dependency_is_off_changes_nothing(env):
+    env.install("dep-base")
+    env.installer.disable("dep-base")
+
+    with pytest.raises(PluginInstallError) as refused:
+        _user(env)
+
+    assert refused.value.code == "dependency_unavailable"
+    assert refused.value.params == {"id": "dep-base"}
+    assert env.storage.list_installed() == ["dep-base"]
+
+
+def test_an_update_needing_a_plugin_not_installed_changes_nothing(
+    base_and_user, monkeypatch
 ):
-    resolved = installer._resolve_record_entry(plugins_dir, relative)
+    env = base_and_user
+    env.installer.disable("dep-user")
+    checked = []
+    monkeypatch.setattr(env.installer, "_load_check", checked.append)
 
-    assert resolved == (plugins_dir / expected).resolve()
+    with pytest.raises(PluginInstallError) as refused:
+        _user(env, "2.0.0", needs=("dep-base", "dep-new"))
 
-
-def test_resolve_record_entry_rejects_entries_it_cannot_place(plugins_dir):
-    assert installer._resolve_record_entry(plugins_dir, "../..") is None
-
-
-def test_uninstall_requirement_falls_back_to_the_environment(plugins_dir):
-    with patch.object(installer, "_run_pip", return_value=_completed()) as run_pip:
-        assert uninstall_requirement("dashai-legacy") == []
-
-    assert run_pip.call_args.args[0] == [
-        "uninstall",
-        "-y",
-        "--disable-pip-version-check",
-        "dashai-legacy",
-    ]
+    assert refused.value.code == "missing_plugin_dependency"
+    assert refused.value.params == {"id": "dep-new"}
+    assert env.installer._manifest_or_none("dep-user").version == "1.0.0"
+    assert checked == []
 
 
-def test_uninstall_requirement_survives_a_failed_environment_removal(plugins_dir):
-    with patch.object(
-        installer, "_run_pip", side_effect=PluginInstallError("not installed")
-    ):
-        assert uninstall_requirement("dashai-legacy") == []
+def test_a_base_pending_restart_unloads_its_dependent(base_and_user, monkeypatch):
+    env = base_and_user
+    monkeypatch.setattr(env.installer, "_uses_stale", lambda m: m.id == "dep-base")
+    monkeypatch.setattr(env.installer, "_load_check", lambda plugin_dir: None)
+    _release(env, "dep-base")
 
+    env.update("dep-base")
 
-def test_read_ledger_tolerates_a_corrupted_file(plugins_dir):
-    (plugins_dir / installer.LEDGER_FILENAME).write_text("{oops", encoding="utf-8")
-
-    assert read_ledger(plugins_dir) == {}
-
-
-def test_read_ledger_normalizes_plugin_names(plugins_dir):
-    (plugins_dir / installer.LEDGER_FILENAME).write_text(
-        json.dumps({"version": 1, "plugins": {"DashAI_Plugin": ["Some_Dep"]}}),
-        encoding="utf-8",
-    )
-
-    assert read_ledger(plugins_dir) == {"dashai-plugin": ["Some_Dep"]}
-
-
-def test_install_requirement_reports_pip_failures(plugins_dir):
-    with (
-        patch.object(
-            installer,
-            "resolve_missing_distributions",
-            side_effect=PluginInstallError("ERROR: no matching distribution"),
-        ),
-        pytest.raises(PluginInstallError, match="no matching distribution"),
-    ):
-        install_requirement("dashai-missing")
-
-
-def test_find_distribution_directory_matches_canonical_names(plugins_dir):
-    dist_info = _write_fake_distribution(plugins_dir, "DashAI.Weird_Name")
-
-    found = installer._find_distribution_directory(plugins_dir, "dashai-weird-name")
-
-    assert found == dist_info
-
-
-def test_remove_distribution_returns_false_when_not_installed(plugins_dir):
-    assert installer._remove_distribution(plugins_dir, "absent") is False
-
-
-def test_get_installed_plugins_directory_does_not_create_it(tmp_path, monkeypatch):
-    monkeypatch.setenv("DASHAI_LOCAL_PATH", str(tmp_path / "fresh"))
-
-    directory = installer.get_installed_plugins_directory()
-
-    assert not directory.exists()
-
-
-def test_run_pip_uses_the_plugins_environment(plugins_dir):
-    with patch("subprocess.run", return_value=_completed()) as run:
-        installer._run_pip(["install", "anything"], plugins_dir)
-
-    assert run.call_args.args[0][:3] == [sys.executable, "-m", "pip"]
-    assert str(plugins_dir) in run.call_args.kwargs["env"]["PYTHONPATH"]
-
-
-def test_install_requirement_activates_the_plugins_directory(tmp_path, monkeypatch):
-    monkeypatch.setenv("DASHAI_LOCAL_PATH", str(tmp_path))
-    monkeypatch.delenv("PYTHONPATH", raising=False)
-
-    with patch.object(installer, "resolve_missing_distributions", return_value=[]):
-        install_requirement("dashai-plugin")
-
-    directory = installer.get_installed_plugins_directory()
-    assert directory.is_dir()
-    assert str(directory) in sys.path
-
-
-def test_ledger_round_trip(plugins_dir):
-    installer._write_ledger(plugins_dir, {"a": ["b"]})
-
-    assert read_ledger(plugins_dir) == {"a": ["b"]}
-
-
-def test_uninstall_requirement_defaults_to_the_plugin_name(plugins_dir):
-    _write_fake_distribution(plugins_dir, "dashai-plugin")
-
-    assert uninstall_requirement("dashai-plugin") == ["dashai-plugin"]
-
-
-def test_resolve_missing_distributions_reports_unreadable_reports(plugins_dir):
-    with patch.object(installer, "_run_pip", return_value=Mock()):  # noqa: SIM117
-        with pytest.raises(PluginInstallError, match="resolution report"):
-            resolve_missing_distributions("dashai-plugin", plugins_dir)
+    assert env.installer.pending_restart == {"dep-base"}
+    assert "dep-user:User" not in env.registry

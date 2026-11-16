@@ -9,6 +9,11 @@ import pytest
 from DashAI.back.dependencies.job_queues.huey_job_queue import HueyJobQueue
 from tests.back.scratch import clear_scratch
 
+# Tests never read the real plugin store: a scheme httpx doesn't support fails
+# at once (offline; a closed local port takes ~2 s on Windows), and a test that
+# needs an index gives its own client.
+os.environ.setdefault("DASHAI_PLUGIN_INDEX_URL", "dashai-test://store/index.json")
+
 TEST_PATH = pathlib.Path("tmp")
 TEST_DATASETS_PATH = pathlib.Path("./tests/back/test_datasets")
 RANDOM_STATE = 50

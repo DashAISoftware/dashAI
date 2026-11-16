@@ -14,7 +14,8 @@ import sys
 import threading
 import warnings
 import webbrowser
-from contextlib import suppress
+from contextlib import ExitStack, suppress
+from typing import Callable
 
 import typer
 from typing_extensions import Annotated
@@ -68,8 +69,13 @@ def _print_banner() -> None:
     print()
 
 
+# The backend repairs plugins before it answers, which may take minutes after
+# dashAI changed Python (their dependencies are downloaded again).
+_BACKEND_START_SECONDS = 1200
+
+
 def open_browser() -> None:
-    _wait_for_backend_server(timeout=1200)
+    _wait_for_backend_server()
     url = "http://localhost:8000/app/"
     webbrowser.open(url=url, new=0, autoraise=True)
 
@@ -100,6 +106,7 @@ def _start_backend_server(
     local_path: pathlib.Path,
     logging_level: LoggingLevel,
     embedded_huey: bool = False,
+    on_created: Callable[[], None] = lambda: None,
 ) -> None:
     """Create the FastAPI app and serve it with Uvicorn.
 
@@ -116,15 +123,26 @@ def _start_backend_server(
         circular imports (such as scikit-learn) from two threads at the same
         time can leave one of them with a partially initialized module, so the
         consumer thread only starts after every app import has finished.
+    on_created : Callable[[], None], optional
+        Called once ``create_app`` returns (or fails): lets jobs start, which
+        waited for the plugin repair at startup.
     """
     import uvicorn
 
     from DashAI.back.app import create_app
 
-    app = create_app(
-        local_path=local_path,
-        logging_level=logging_level.value,
-    )
+    try:
+        app = create_app(
+            local_path=local_path,
+            logging_level=logging_level.value,
+        )
+    finally:
+        try:
+            on_created()
+        except OSError as error:  # e.g. the marker locked: dashAI still opens
+            logging.getLogger(__name__).warning(
+                "Could not let jobs start (plugins/.operation): %s", error
+            )
     logger = logging.getLogger(__name__)
 
     if embedded_huey:
@@ -140,24 +158,32 @@ def _start_backend_server(
     )
 
 
-def _wait_for_backend_server(host="127.0.0.1", port=8000, timeout=15):
-    """Wait for the backend server to start by attempting to connect to the specified
-    host and port."""
+def _wait_for_backend_server(
+    host="127.0.0.1", port=8000, starting: Callable[[], bool] = lambda: False
+) -> bool:
+    """Wait until the backend answers on ``host``:``port``.
+
+    Without limit while ``starting()`` (its thread is alive: a plugin repair
+    may take long, and giving up would close dashAI in the middle of it, to
+    start over at the next opening); else up to ``_BACKEND_START_SECONDS``.
+    """
     import socket
     import time
 
-    timeout = 1000
-    start_time = time.time()
-    while time.time() - start_time < timeout:
+    deadline = time.time() + _BACKEND_START_SECONDS
+    while True:
         try:
-            with socket.create_connection((host, port), timeout=timeout):
+            with socket.create_connection((host, port), timeout=1):
                 return True
-        except (OSError, ConnectionRefusedError):
+        except OSError:
+            if not (starting() or time.time() < deadline):
+                return False
             time.sleep(0.5)
-    return False
 
 
-def _start_webview(local_path: pathlib.Path, logger: logging.Logger) -> None:
+def _start_webview(
+    local_path: pathlib.Path, logger: logging.Logger, backend: threading.Thread
+) -> None:
     import base64
 
     import webview
@@ -239,7 +265,7 @@ def _start_webview(local_path: pathlib.Path, logger: logging.Logger) -> None:
     window.events.loaded += _inject_download_handler
 
     def load_logic():
-        if _wait_for_backend_server(timeout=120):
+        if _wait_for_backend_server(starting=backend.is_alive):
             logger.info("Backend server is up. Loading webview.")
             window.load_url("http://127.0.0.1:8000/app/")
             window.show()
@@ -320,12 +346,17 @@ def main(
         os.environ["DASHAI_NO_TOURS"] = "1"
         logger.info("Guided tours won't open automatically (--no-tours/-nt).")
 
-    # Installed plugins live outside the app environment, so put their
-    # directory on PYTHONPATH before copying the environment for the Huey
-    # consumer: the consumer imports plugin components too.
-    from DashAI.back.plugins.environment import activate_plugins_directory
+    # Held until the backend has started (and repaired plugins): the job queue
+    # starts first, and waits meanwhile instead of running a job whose plugin
+    # is not ready yet.
+    from DashAI.back.plugins.disk.storage import plugins_root
+    from DashAI.back.plugins.disk.trash import OperationBusyError, operation
 
-    activate_plugins_directory(resolved_local)
+    plugin_startup = ExitStack()
+    try:
+        plugin_startup.enter_context(operation(plugins_root(resolved_local)))
+    except (OperationBusyError, OSError) as error:
+        logger.warning("Jobs won't wait for the plugin repair: %s", error)
 
     child_env = os.environ.copy()
 
@@ -361,12 +392,17 @@ def main(
 
             t = threading.Thread(
                 target=_start_backend_server,
-                args=(resolved_local, logging_level, embedded_huey),
+                args=(
+                    resolved_local,
+                    logging_level,
+                    embedded_huey,
+                    plugin_startup.close,
+                ),
                 daemon=True,
             )
             t.start()
 
-            _start_webview(local_path=resolved_local, logger=logger)
+            _start_webview(local_path=resolved_local, logger=logger, backend=t)
         else:
             if not no_browser:
                 logger.info("Opening browser.")
@@ -379,6 +415,7 @@ def main(
                 local_path=resolved_local,
                 logging_level=logging_level,
                 embedded_huey=embedded_huey,
+                on_created=plugin_startup.close,
             )
 
     finally:

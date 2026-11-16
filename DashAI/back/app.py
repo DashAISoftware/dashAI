@@ -18,7 +18,7 @@ from DashAI.back.dependencies.database.backfill import (
     backfill_explorer_artifacts,
 )
 from DashAI.back.dependencies.database.migrate import migrate_on_startup
-from DashAI.back.plugins.environment import activate_plugins_directory
+from DashAI.back.plugins.bootstrap import sync_installed_plugins
 from DashAI.back.seeds import seed_datasets_if_first_run
 
 logger = logging.getLogger(__name__)
@@ -67,14 +67,11 @@ def create_app(
     FastAPI
         The created FastAPI application.
     """
-    # Plugins live in a writable per user directory that has to be importable
-    # before the initial components are collected, since building the config
-    # dict already enumerates the installed plugin entry points.
+    # Read from the environment by what has no config (the job queue, models).
     if local_path is not None:
         os.environ["DASHAI_LOCAL_PATH"] = str(
             pathlib.Path(local_path).expanduser().absolute()
         )
-    activate_plugins_directory()
 
     # generating config dict and setting logging level
     config = build_config_dict(
@@ -98,7 +95,11 @@ def create_app(
     _create_path_if_not_exists(config["DATAFILE_PATH"])
 
     logger.debug("3. Creating app container and setting up dependency injection.")
-    container = build_container(config=config)
+    container = build_container(config=config, load_plugins=False)
+    # Undo what a closed dashAI left half done, then load the plugins: only the
+    # API process does this, before any operation can run.
+    di["plugin_installer"].startup_maintenance()
+    sync_installed_plugins(di["plugin_storage"], di["component_registry"])
 
     logger.debug("4. Applying database migrations.")
     migrate_on_startup(
@@ -112,6 +113,11 @@ def create_app(
     # explorations can only be upgraded while their explorer is installed.
     logger.debug("4b-bis. Backfilling explorer render artifacts.")
     backfill_explorer_artifacts(di["session_factory"])
+
+    # Before serving: nobody can use or change plugins meanwhile (the window
+    # shows once the API answers). E.g. dashAI changed Python.
+    di["plugin_installer"].repair_missing()
+    di["plugin_updates"].check_in_background()
 
     if enable_seeding:
         logger.debug("4c. Seeding initial datasets if first run.")

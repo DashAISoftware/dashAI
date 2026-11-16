@@ -1,4 +1,5 @@
 import shutil
+import threading
 import time
 from pathlib import Path
 
@@ -43,6 +44,10 @@ def client(test_path: Path):
         job_queue.set_test_mode(False)
 
     app.container._services["engine"].dispose()
+    # create_app looks up the plugin store in a thread that writes into tmp.
+    for thread in threading.enumerate():
+        if thread.name == "plugin-updates":
+            thread.join()
     remove_dir_with_retry(app.container._services["config"]["LOCAL_PATH"])
 
 

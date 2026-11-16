@@ -1,9 +1,4 @@
-"""Tests for the PyInstaller runtime hook that lets the launcher act as python.
-
-Plugins are installed with ``sys.executable -m pip``, which in a frozen build
-means running the dashAI launcher itself, so the hook has to keep honouring the
-two interpreter invocations pip relies on.
-"""
+"""The PyInstaller hook that lets the launcher run pip as python."""
 
 import json
 import pathlib
@@ -19,10 +14,6 @@ HOOK_PATH = (
 
 def _run_hook():
     runpy.run_path(str(HOOK_PATH), run_name="dashai_surrogate_hook")
-
-
-def test_hook_file_exists():
-    assert HOOK_PATH.is_file()
 
 
 def test_hook_runs_a_module_like_dash_m(tmp_path, monkeypatch, capsys):
@@ -81,12 +72,7 @@ def test_hook_ignores_a_bare_dash_m(monkeypatch):
 
 
 def test_hook_registers_distlib_by_loader_instance(monkeypatch):
-    """distlib's register_finder applies type() itself, so it needs the instance.
-
-    Passing the loader class instead registers ``type`` and leaves the real
-    loader unmapped, which is what made every install inside the bundle fail
-    with "Unable to locate finder for 'pip._vendor.distlib'".
-    """
+    """register_finder applies type() itself, so it needs the instance."""
     import pip._vendor.distlib as distlib
     from pip._vendor.distlib import resources
 

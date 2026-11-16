@@ -17,11 +17,6 @@ class BaseJob(metaclass=ABCMeta):
     # that receive non-serializable arguments (e.g. a live SQLAlchemy Session).
     ISOLATED: bool = True
 
-    # Set to True when the job mutates the consumer's ComponentRegistry so that
-    # the persistent worker subprocess is restarted after this job completes,
-    # ensuring the worker's DI container picks up the new registry state.
-    RESETS_WORKER: bool = False
-
     def __init__(self, **kwargs):
         """Constructor of the ModelJob class.
 

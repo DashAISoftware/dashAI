@@ -27,6 +27,8 @@ from DashAI.back.dependencies.job_queues.base_job_queue import (
     JobQueueError,
 )
 from DashAI.back.job.base_job import BaseJob
+from DashAI.back.plugins.disk.storage import plugins_root
+from DashAI.back.plugins.disk.trash import WORKER_RESTART_MARKER
 
 warnings.filterwarnings(
     "ignore",
@@ -126,6 +128,18 @@ def _worker_loop(in_q, out_q) -> None:
         if job_bytes is None:
             break  # Explicit shutdown sentinel
 
+        # Catch up with plugin changes the API made (separate registry).
+        try:
+            from kink import di as _di
+
+            from DashAI.back.plugins.bootstrap import sync_installed_plugins
+
+            sync_installed_plugins(
+                _di["plugin_storage"], _di["component_registry"], is_worker=True
+            )
+        except Exception as _sync_error:  # never block a job over this
+            log.warning("Could not sync the plugins: %s", _sync_error)
+
         try:
             job = _dill.loads(job_bytes)
             result = job.run()
@@ -203,6 +217,9 @@ class HueyJobQueue(BaseJobQueue):
 
     def __init__(self, queue_name: str, path_db: str):
         self.db_path = Path(path_db) / (queue_name.strip() + ".db")
+        # Touched by PluginInstaller when plugin dependencies change.
+        self._plugin_restart_marker = plugins_root(path_db) / WORKER_RESTART_MARKER
+        self._worker_started_at = 0.0
         self.serializer = DillSerializer()
         self.huey = SqliteHuey(
             name=queue_name,
@@ -271,13 +288,6 @@ class HueyJobQueue(BaseJobQueue):
             # Wrap coroutines produced by async run() methods (e.g. PipelineJob)
             if asyncio.iscoroutine(result):
                 result = asyncio.get_event_loop().run_until_complete(result)
-            # If the job mutated the consumer's ComponentRegistry (e.g.
-            # SyncComponentsJob), the worker's DI container is now stale.
-            # Terminate it so _ensure_worker respawns a fresh one (fix #7).
-            if getattr(job, "RESETS_WORKER", False):
-                with suppress(Exception):
-                    if self._worker_proc is not None:
-                        self._terminate_worker(self._worker_proc, self._worker_pid)
             if self._cancel_requested(huey_id):
                 self._finalize_interrupted(job, huey_id)
                 raise _JobCancelledError(f"Job {huey_id} was cancelled while running")
@@ -417,6 +427,7 @@ class HueyJobQueue(BaseJobQueue):
             args=(self._worker_in_q, self._worker_out_q),
             daemon=True,
         )
+        self._worker_started_at = time.time()
         proc.start()
         self._worker_proc = proc
         self._worker_pid = None
@@ -477,6 +488,39 @@ class HueyJobQueue(BaseJobQueue):
         if proc is not None and proc.is_alive():
             self._terminate_worker(proc, self._worker_pid)
 
+    def _restart_worker_if_plugins_changed(self) -> None:
+        """New worker if plugin dependencies changed: imported ones can't reload.
+
+        The consumer runs one job at a time, so none is running here.
+        """
+        if self._worker_proc is None or not self._worker_proc.is_alive():
+            return
+        try:
+            changed = self._plugin_restart_marker.stat().st_mtime
+        except OSError:
+            return
+        if changed <= self._worker_started_at:
+            return
+        log.info("Plugin dependencies changed: restarting the job worker.")
+        with suppress(Exception):
+            self._worker_in_q.put(None)  # clean shutdown sentinel
+            self._worker_proc.join(timeout=10)
+        if self._worker_proc.is_alive():
+            self._terminate_worker(self._worker_proc, self._worker_pid)
+            self._worker_proc.join(timeout=10)
+        self._worker_proc = None
+
+    def has_running_jobs(self) -> bool:
+        """A 'started' job whose process is alive (dead ones await the watchdog)."""
+        import psutil
+
+        with sqlite3.connect(self.db_path) as conn:
+            rows = conn.execute(
+                "SELECT pid FROM task_copy WHERE status = 'started'"
+            ).fetchall()
+        # No pid yet: the job just started and has not recorded it.
+        return any(pid is None or psutil.pid_exists(pid) for (pid,) in rows)
+
     def _run_in_subprocess(self, job: BaseJob, huey_id: str):
         """Run *job* in the persistent worker process and return its result.
 
@@ -518,6 +562,13 @@ class HueyJobQueue(BaseJobQueue):
         """
         import queue as _q
 
+        from DashAI.back.plugins.disk.trash import operation_running
+
+        # A plugin operation may be changing dependencies under the worker. Its
+        # installer sees this job as started and refuses, or finishes first.
+        while operation_running(self._plugin_restart_marker.parent):
+            time.sleep(0.5)
+        self._restart_worker_if_plugins_changed()
         self._ensure_worker()
 
         try:
@@ -1477,14 +1528,20 @@ huey = _job_queue.huey
 
 @huey.on_startup()
 def create_container_huey():
+    from kink import di
+
     from DashAI.back.container import build_container
     from DashAI.back.dependencies.config_builder import build_config_dict
 
     local_path = _lp
     logging_level = os.environ.get("DASHAI_LOGGING_LEVEL", "INFO")
 
-    config = build_config_dict(local_path=local_path, logging_level=logging_level)
-    build_container(config)
+    # Embedded (the .exe, an AppImage), the consumer is a thread of the API's
+    # process, started once create_app built the container: building another
+    # would swap the API's registry and plugin installer for new ones.
+    if "plugin_installer" not in di:
+        config = build_config_dict(local_path=local_path, logging_level=logging_level)
+        build_container(config)
 
     _job_queue.reconcile_interrupted_jobs()
 

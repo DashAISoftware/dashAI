@@ -81,6 +81,7 @@ from DashAI.back.converters.simple_converters.time_series_window import (
 from DashAI.back.converters.simple_converters.type_cast import TypeCast
 
 # Credentials
+from DashAI.back.credentials.github_credential import GithubCredential
 from DashAI.back.credentials.huggingface_credential import HuggingFaceCredential
 from DashAI.back.credentials.kaggle_credential import KaggleCredential
 
@@ -422,9 +423,6 @@ from DashAI.back.pipeline.exploration_node import DataExploration
 from DashAI.back.pipeline.prediction_node import Prediction
 from DashAI.back.pipeline.retrieve_model_node import RetrieveModel
 from DashAI.back.pipeline.train_node import Train
-
-# Plugins
-from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.reports.classification.confusion_matrix import ConfusionMatrix
 
 # Reports
@@ -669,6 +667,7 @@ def get_initial_components():
         # Credentials
         HuggingFaceCredential,
         KaggleCredential,
+        GithubCredential,
         # Metrics
         F1,
         Accuracy,
@@ -896,12 +895,4 @@ def get_initial_components():
         ParallelRetriever,
     ]
 
-    # Obtener plugins instalados
-    try:
-        installed_plugins = get_available_plugins()
-        log.info(f"Se cargaron {len(installed_plugins)} plugins instalados")
-    except Exception as e:
-        log.error(f"Error al cargar plugins instalados: {str(e)}")
-        installed_plugins = []
-
-    return basic_components + installed_plugins
+    return basic_components

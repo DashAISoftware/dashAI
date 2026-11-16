@@ -1,5 +1,6 @@
 import pathlib
 import shutil
+import threading
 import time
 from abc import ABCMeta
 from typing import Final, List
@@ -164,6 +165,10 @@ def client(test_path: pathlib.Path):
     yield TestClient(app)
 
     app.container._services["engine"].dispose()
+    # create_app looks up the plugin store in a thread that writes into tmp.
+    for thread in threading.enumerate():
+        if thread.name == "plugin-updates":
+            thread.join()
     remove_dir_with_retry(app.container._services["config"]["LOCAL_PATH"])
 
 
