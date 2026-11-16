@@ -1,0 +1,18 @@
+{
+  "cards": "<0><0>Las tarjetas</0><1>Cada tarjeta muestra lo esencial: nombre, autor, una breve descripción y los tipos de componente.</1><2><0><0><0></0> Plugin oficial publicado por el equipo de dashAI.</0><1><0></0> Viene de un repositorio de GitHub.</1><2><0></0> Necesita tu atención.</2></0></2></0>",
+  "confirm": "<0><0>Instalar el plugin</0><1><0>Haz clic en \"Instalar\" para confirmar.</0></1><2>💡 Si el plugin tiene dependencias, la instalación puede tardar un poco.</2></0>",
+  "detailPanel": "<0><0>Qué agrega</0><1>El resto del panel muestra los componentes del plugin, sus dependencias, versiones y autor.</1><2>Si el plugin tiene configuración, tendrá también la pestaña \"Configuración\" sobre sus detalles.</2></0>",
+  "detailSwitch": "<0><0>Activar o desactivar</0><1>Puedes desactivar un plugin sin desinstalarlo. Si el plugin tiene un problema, se desactiva automáticamente y un aviso explica por qué; vuelve a activarse solo cuando el problema se resuelve.</1></0>",
+  "detailTrust": "<0><0>Nivel de confianza</0><1>De dónde viene el plugin y cuánto se puede rastrear, con el mismo semáforo de la vista previa antes de instalar.</1></0>",
+  "developers": "<0><0>¿Desarrollas plugins?</0><1>Si quieres probar tu plugin antes de publicarlo en la tienda, instálalo desde aquí: desde un .zip o desde la URL de un repositorio de GitHub.</1></0>",
+  "install": "<0><0>Instalemos un plugin</0><1>Probemos con este plugin. Antes de instalarlo verás una vista previa para revisar qué agrega y de dónde viene.</1><2><0>Haz clic en \"Instalar\".</0></2></0>",
+  "installed": "<0><0>¡Listo!</0><1>El plugin ya está en \"Instalados\" y sus componentes están disponibles en dashAI.</1><2><0>Haz clic en su tarjeta para ver su detalle.</0></2></0>",
+  "pluginsModule": "<0><0>Módulo de Plugins</0><1>El módulo de Plugins permite instalar y gestionar componentes que amplían dashAI: modelos, métricas, cargadores de datos y más. ¡Veamos cómo empezar!</1></0>",
+  "preview": "<0><0>Antes de instalar</0><1>dashAI te muestra qué agrega el plugin, sus dependencias y su nivel de confianza, que indica cuánto se puede rastrear su origen: desde verde, plugin verificado, hasta rojo, instalado desde un archivo local.</1><2>Si ves una casilla de confirmación, márcala para continuar.</2></0>",
+  "sampleConfirm": "<0><0>Confirmar</0><1>El aviso resume qué pasa al desinstalar: el plugin y sus componentes se quitan de dashAI, y lo que hiciste con ellos se conserva.</1><2><0>Haz clic en \"Desinstalar\".</0></2></0>",
+  "sampleDone": "<0><0>¡Tutorial completo!</0><1>Ya sabes encontrar, instalar, revisar y gestionar plugins.</1><2><0>Ahora es tu turno: instala los plugins que necesites y usa sus componentes en los demás módulos de dashAI.</0></2></0>",
+  "sampleSettings": "<0><0>Configuración</0><1>Algunos plugins tienen su propia configuración.</1><2><0>Haz clic en \"Configuración\".</0></2></0>",
+  "sampleSettingsForm": "<0><0>Sus ajustes</0><1>Este ejemplo te deja elegir con cuántos decimales muestra su métrica. Al guardar, se usa la próxima vez que se calcule.</1></0>",
+  "sampleUninstall": "<0><0>Desinstalar y actualizar</0><1>\"Desinstalar\" quita el plugin. Junto a él verás \"Actualizar a…\" cuando hay una versión nueva, y \"Reinstalar\" cuando reinstalarlo puede arreglar su problema. Este plugin de ejemplo solo sirve para el tutorial. Quitémoslo.</1><2><0>Haz clic en \"Desinstalar\".</0></2></0>",
+  "tabs": "<0><0>Tus plugins y la tienda</0><1>En \"Explorar\" están los plugins disponibles para instalar en dashAI. En \"Instalados\" gestionas los que ya tienes; si hay actualizaciones, un número junto a la pestaña indica cuántas.</1><2><0>Encontremos un plugin: haz clic en \"Explorar\".</0></2></0>"
+}

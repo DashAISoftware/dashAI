@@ -120,12 +120,14 @@ export const useTour = (tourKey) => {
     localStorage.setItem(TOUR_STORAGE_KEY, JSON.stringify(completedTours));
   }, [tourKey]);
 
+  // `key`: another page's tour, to continue there (e.g. a list's tour into
+  // its detail's).
   const handoffTour = useCallback(
-    (step) => {
+    (step, key = tourKey) => {
       const handoffs = JSON.parse(
         sessionStorage.getItem(TOUR_HANDOFF_KEY) || "{}",
       );
-      handoffs[tourKey] = step;
+      handoffs[key] = step;
       sessionStorage.setItem(TOUR_HANDOFF_KEY, JSON.stringify(handoffs));
     },
     [tourKey],

@@ -10,6 +10,13 @@ import {
 import { generativeTourSteps, generativeTourConfig } from "./generativeTour";
 import { hubTourSteps, hubTourConfig } from "./hubTour";
 import { hubImportTourSteps, hubImportTourConfig } from "./hubImportTour";
+import {
+  pluginsTourSteps,
+  pluginSampleTourSteps,
+  pluginsTourConfig,
+} from "./pluginsTour";
+
+export { TOUR_PLUGIN } from "./pluginsTour";
 
 export const tours = {
   home: {
@@ -48,6 +55,14 @@ export const tours = {
     steps: hubImportTourSteps,
     config: hubImportTourConfig,
   },
+  plugins: {
+    steps: pluginsTourSteps,
+    config: pluginsTourConfig,
+  },
+  pluginSample: {
+    steps: pluginSampleTourSteps,
+    config: pluginsTourConfig,
+  },
 };
 
 export const TOUR_KEYS = {
@@ -60,4 +75,6 @@ export const TOUR_KEYS = {
   GENERATIVE: "generative",
   HUB: "hub",
   HUB_IMPORT: "hubImport",
+  PLUGINS: "plugins",
+  PLUGIN_SAMPLE: "pluginSample",
 };

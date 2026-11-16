@@ -57,4 +57,18 @@ describe("useTour auto-start", () => {
     expect(result.current.run).toBe(false);
     expect(getToursAutostart).not.toHaveBeenCalled();
   });
+
+  it("continues in another tour handed off to, even completed", async () => {
+    localStorage.setItem(
+      "dashai_tours_completed",
+      JSON.stringify({ pluginSample: true }),
+    );
+    getToursAutostart.mockResolvedValue(false);
+    const list = renderHook(() => useTour("plugins"));
+    act(() => list.result.current.handoffTour(0, "pluginSample"));
+    const { result } = renderHook(() => useTour("pluginSample"));
+    await settleAutostart();
+    expect(result.current.run).toBe(true);
+    expect(result.current.stepIndex).toBe(0);
+  });
 });
