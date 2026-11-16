@@ -2,8 +2,11 @@
 
 Takes two or more child retrievers. The language model is shown a catalog of the
 children (index, class name and configured ``top_k``), chooses which children to
-consult each round, and supplies an explicit per-child ``top_k`` for every call.
-Sufficiency is judged over the accumulated pool.
+consult each round, and supplies an explicit per-child count of *additional*
+chunks for every call. Each child's contributed identities are tracked on its
+own: a child consulted again is called with its cumulative contributed size and
+only identities it had not contributed before are pooled, in that child's
+ranking order. Sufficiency is judged over the accumulated pool.
 
 The schema placeholders come from :mod:`DashAI.back.models.RAG.RAG_defaults`:
 ``children`` seeds the default semantic and keyword retrievers and
@@ -13,7 +16,7 @@ fully modifiable values.
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, Dict, List, Tuple
+from typing import Any, ClassVar, Dict, List, Set, Tuple
 
 from DashAI.back.core.schema_fields import (
     component_field,
@@ -42,6 +45,7 @@ from DashAI.back.models.RAG.RAG_defaults import (
 )
 from DashAI.back.models.RAG.retrievers.composite.agentic_retriever import (
     AgenticRetriever,
+    plan_incremental_fetch,
 )
 from DashAI.back.models.RAG.retrievers.composite.agentic_retriever_support import (
     LLM_RETRIEVER_CATEGORY,
@@ -49,7 +53,11 @@ from DashAI.back.models.RAG.retrievers.composite.agentic_retriever_support impor
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
 )
-from DashAI.back.models.RAG.retrievers.composite.retrieval_pool import RetrievalPool
+from DashAI.back.models.RAG.retrievers.composite.retrieval_pool import (
+    ChunkKey,
+    RetrievalPool,
+    chunk_key,
+)
 from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
     CALL_RETRIEVERS_KEY,
     DISCARD_KEY,
@@ -211,9 +219,12 @@ class AgenticEnsembleRetriever(AgenticRetriever):
     """Consults LLM-chosen children across rounds to build a sufficient pool.
 
     A planning evaluation over an empty pool selects the first round's children.
-    Each round consults the chosen children at the explicit per-child ``top_k``
-    supplied by the model, merges the results and — except for the final round —
-    judges the pool. An insufficient verdict selects the next round's children.
+    Each round consults the chosen children for the explicit number of
+    additional chunks supplied by the model, merges only identities they had not
+    contributed before in each child's ranking order and — except for the final
+    round — judges the pool. A child is never asked for more new chunks than the
+    round can still use. An insufficient verdict selects the next round's
+    children. Per-child identity histories are independent and cumulative.
     """
 
     SCHEMA = AgenticEnsembleRetrieverSchema
@@ -227,20 +238,20 @@ class AgenticEnsembleRetriever(AgenticRetriever):
     )
     DESCRIPTION: str = MultilingualString(
         en="Consults two or more child retrievers chosen by the agentic"
-        " retriever, using the explicit per-child top_k supplied for each call"
-        " until the pool suffices.",
+        " retriever, using the explicit per-child number of additional chunks"
+        " supplied for each call until the pool suffices.",
         es="Consulta dos o más recuperadores hijos elegidos por el recuperador"
-        " agéntico, usando el top_k explícito por hijo indicado en cada llamada"
-        " hasta que el conjunto sea suficiente.",
+        " agéntico, usando la cantidad explícita de fragmentos adicionales por"
+        " hijo indicada en cada llamada hasta que el conjunto sea suficiente.",
         pt="Consulta dois ou mais recuperadores filhos escolhidos pelo retriever"
-        " agêntico, usando o top_k explícito por filho indicado em cada chamada"
-        " até que o conjunto seja suficiente.",
+        " agêntico, usando o número explícito de trechos adicionais por filho"
+        " indicado em cada chamada até que o conjunto seja suficiente.",
         de="Konsultiert zwei oder mehr vom agentischen Retriever gewählte"
-        " Kind-Retriever mit dem für jeden Aufruf angegebenen top_k pro Kind, bis"
-        " der Pool ausreicht.",
+        " Kind-Retriever mit der für jeden Aufruf angegebenen Anzahl zusätzlicher"
+        " Fragmente pro Kind, bis der Pool ausreicht.",
         zh=(
             "咨询由智能体检索器选择的两个或更多子检索器，并使用每次调用指定的"
-            "每个子检索器的 top_k，直到池足够。"
+            "每个子检索器的额外片段数量，直到池足够。"
         ),
     )
 
@@ -254,16 +265,20 @@ class AgenticEnsembleRetriever(AgenticRetriever):
         "retriever returned them, discard_specific_chunks removes them, the two "
         "are mutually exclusive for the same chunk, and every chunk not "
         "mentioned is preserved. call_retrievers maps 1-based retriever indices "
-        "(1 to the number of retrievers) to the number of chunks to retrieve "
-        "next. Respect the maximum pool size and the remaining free slots. The "
-        "per-retriever top_k is a size hint; the retriever enforces the hard pool "
-        "cap. Every retriever index and chunk position must be valid, never "
-        "request and discard the same chunk, leave free capacity when calling "
-        "retrievers, and do not leave the pool empty without a retriever call or "
-        "chunk request. Chunks not mentioned stay in the pool exactly as they "
-        "are, except when the maximum capacity forces out older non-requested "
-        "chunks; requested chunks take priority. Invalid decisions are rejected "
-        "and must be retried."
+        "(1 to the number of retrievers) to the number of additional chunks to "
+        "retrieve from each next; chunks a retriever already returned are not "
+        "counted again. Any configured top_k shown in the catalog is the child's "
+        "default, not a cumulative-call ceiling. Respect the maximum pool size "
+        "and the remaining free slots. Each value is an additional-chunk count, "
+        "not a final absolute size; the retriever enforces the hard pool cap. "
+        "Every retriever index and chunk position must be valid, never request "
+        "and discard the same "
+        "chunk, leave free capacity when calling retrievers, and do not leave "
+        "the pool empty without a retriever call or chunk request. Chunks not "
+        "mentioned stay in the pool exactly as they are, except when the "
+        "maximum capacity forces out older non-requested chunks; requested "
+        "chunks take priority. Invalid decisions are rejected and must be "
+        "retried."
     )
     FUNCTION_PARAMETERS: ClassVar[Dict[str, Any]] = {
         "type": "object",
@@ -280,8 +295,10 @@ class AgenticEnsembleRetriever(AgenticRetriever):
                 "additionalProperties": {"type": "integer", "minimum": 1},
                 "description": (
                     "Optional when insufficient: maps 1-based retriever indices "
-                    "(1 to the number of retrievers) to the number of chunks to "
-                    "retrieve from them next. Not required every round."
+                    "(1 to the number of retrievers) to the number of ADDITIONAL "
+                    "chunks to retrieve from each of them next. Chunks a "
+                    "retriever already returned are not counted again. Not "
+                    "required every round."
                 ),
             },
             REQUEST_CHUNKS_KEY: {
@@ -334,7 +351,8 @@ class AgenticEnsembleRetriever(AgenticRetriever):
         query : str
             The search query string.
         **kwargs
-            Unused; children choices and sizes come from the LLM verdicts.
+            Unused; children choices and additional chunk counts come from the LLM
+            verdicts.
 
         Returns
         -------
@@ -355,6 +373,7 @@ class AgenticEnsembleRetriever(AgenticRetriever):
         pool = RetrievalPool(self.max_chunks, context)
         child_nodes: List[Dict[str, Any]] = []
         rounds: List[Dict[str, Any]] = []
+        contributed: Dict[int, Set[ChunkKey]] = {}
 
         planning, prepared = self._evaluate_with_pool(
             query,
@@ -378,12 +397,17 @@ class AgenticEnsembleRetriever(AgenticRetriever):
             call_entries: List[Dict[str, Any]] = []
             remaining = self.max_chunks - pool.size()
             if calls and remaining > 0:
-                call_entries, nodes = self._consult(query, calls, pool, remaining)
+                call_entries, nodes = self._consult(
+                    query, calls, pool, remaining, contributed
+                )
                 child_nodes.extend(nodes)
             entry = self._build_entry(round_index, call_entries)
             if round_index == 0:
                 self._record_round_narrative(
                     entry, planning, key_prefix=_PLANNING_NARRATIVE_PREFIX
+                )
+                entry[f"{_PLANNING_NARRATIVE_PREFIX}{CALL_RETRIEVERS_KEY}"] = dict(
+                    planning.call_retrievers
                 )
                 entry[f"{_PLANNING_NARRATIVE_PREFIX}{DROPPED_OPERATIONS_KEY}"] = (
                     planning_drops
@@ -449,48 +473,76 @@ class AgenticEnsembleRetriever(AgenticRetriever):
         calls: Dict[int, int],
         pool: RetrievalPool,
         remaining: int,
+        contributed: Dict[int, Set[ChunkKey]],
     ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-        """Consult the requested children and merge their chunks into the pool.
+        """Consult the requested children and merge their highest-ranked unseen chunks.
+
+        Every request asks for *additional* chunks, clamped to the budget the
+        round can still use. A child consulted in an earlier round is called with
+        its cumulative contributed size — the identities it already contributed
+        plus the clamped new request — and only up to that number of identities
+        it had not contributed before are merged into the pool, in the child's
+        own ranking order. Each child's identity history is independent and
+        grows only from the chunks actually selected, so a child that
+        over-returns or reorders its results contributes its leading unseen
+        chunks rather than its tail and is never starved. A response with no
+        unseen identity adds nothing; no chunk is ever invented.
 
         Parameters
         ----------
         query : str
             The search query string.
         calls : Dict[int, int]
-            Validated 1-based retriever index to requested top-k mapping.
+            Validated 1-based retriever index to additional-chunks mapping.
         pool : RetrievalPool
             The pool the retrieved chunks are merged into.
         remaining : int
-            Free slots before the pool reaches ``max_chunks``. Each child's
-            request is capped by it and the budget is reduced by the number of
-            chunks the pool actually gained (duplicates add nothing).
+            Free slots before the pool reaches ``max_chunks``. It gates whether
+            a child is consulted, the requested count is clamped to it, and the
+            budget is reduced by the number of chunks the pool actually gained.
+        contributed : Dict[int, Set[ChunkKey]]
+            Identities each 1-based retriever index already contributed. Updated
+            in place so the next round knows each child's cumulative size.
 
         Returns
         -------
         Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]
-            The per-child call summaries and the child trace nodes.
+            The per-child call summaries and the child trace nodes. A child whose
+            cumulative size has reached the usable capacity is skipped before it
+            is called, and the loop stops once the round's budget is spent. Each
+            summary records the actual cumulative call size (``requested_top_k``),
+            the raw response count (``returned``) and the pool growth (``added``),
+            which can be ``0`` when the response repeats known identities.
         """
         call_entries: List[Dict[str, Any]] = []
         nodes: List[Dict[str, Any]] = []
         budget = remaining
-        discarded = pool.discarded_count()
-        for index, requested_top_k in calls.items():
+        request_limit = self.max_chunks + pool.discarded_count()
+        for index, requested in calls.items():
             if budget <= 0:
                 break
             child = self._children[index - 1]
-            request_limit = self.max_chunks + discarded
-            requested = min(requested_top_k, request_limit)
+            received = contributed.setdefault(index, set())
+            fetch = plan_incremental_fetch(
+                len(received), min(requested, budget), request_limit
+            )
+            if fetch.additional <= 0:
+                continue
             before = pool.size()
-            chunks, node = self._delegate(child, query, requested)
-            pool.add(chunks)
-            added = pool.size() - before
+            chunks, node = self._delegate(child, query, fetch.top_k)
+            new_chunks = fetch.select_new(chunks, received)
+            pool.add(new_chunks)
+            received.update(chunk_key(chunk) for chunk in new_chunks)
             nodes.append(node)
+            added = pool.size() - before
             budget = max(budget - added, 0)
             call_entries.append(
                 {
+                    "index": index,
                     "name": type(child).__name__,
-                    "requested_top_k": requested,
+                    "requested_top_k": fetch.top_k,
                     "returned": len(chunks),
+                    "added": added,
                 }
             )
         return call_entries, nodes

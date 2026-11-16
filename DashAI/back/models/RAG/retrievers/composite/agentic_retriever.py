@@ -15,16 +15,27 @@ on the function-calling route up to ``function_call_max_trials`` attempts.
 Verdict application is transactional: the pool is cloned, validated and only
 then adopted, so a failed attempt never mutates the real pool.
 
-Subclasses differ only in how they choose the *next* retrieval: the depth
-retriever asks for a larger retrieval size from its single child, while the
-ensemble retriever asks the model to pick which of its children to consult.
+The model asks for *additional* chunks, never for an absolute size. Both
+subclasses turn that request into a cumulative child call with
+:func:`plan_incremental_fetch`, then merge only the chunk identities the child
+had not contributed before. Identity tracking (rather than raw response
+lengths) keeps a child that over-returns or reorders its results from hiding
+unseen chunks or being skipped forever, and the identities are taken in the
+child's own ranking order so the highest-ranked unseen chunks are the ones that
+enter the pool.
+
+Subclasses differ only in how they choose the next retrieval: the depth
+retriever asks its single child for more chunks, while the ensemble retriever
+asks the model to pick which of its children to consult and how many additional
+chunks each should return.
 """
 
 from __future__ import annotations
 
 import logging
 from abc import ABC
-from typing import Any, Callable, ClassVar, Dict, List, Tuple
+from dataclasses import dataclass
+from typing import Any, Callable, ClassVar, Dict, List, Set, Tuple
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
@@ -59,7 +70,11 @@ from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
 from DashAI.back.models.RAG.retrievers.composite.retrieval_evaluator import (
     RetrievalEvaluator,
 )
-from DashAI.back.models.RAG.retrievers.composite.retrieval_pool import RetrievalPool
+from DashAI.back.models.RAG.retrievers.composite.retrieval_pool import (
+    ChunkKey,
+    RetrievalPool,
+    chunk_key,
+)
 from DashAI.back.models.RAG.retrievers.composite.structured_output import (
     cap_errors,
 )
@@ -84,6 +99,99 @@ _PARAM_FUNCTION_CALL_MAX_TRIALS = "function_call_max_trials"
 #: Trace round-entry keys hoisted to avoid magic strings.
 _ENTRY_VERDICT_KEY = "verdict"
 _ENTRY_APPLIED_KEY = "applied"
+
+
+@dataclass(frozen=True)
+class IncrementalFetch:
+    """Cumulative fetch plan for one request of additional chunks.
+
+    Attributes
+    ----------
+    top_k : int
+        Actual cumulative retrieval size passed to the child: the identities the
+        child has already contributed plus the additional chunks this request may
+        add.
+    additional : int
+        Maximum number of new chunks this request may add. ``0`` when the
+        remaining capacity cannot use one more chunk from this child.
+    """
+
+    top_k: int
+    additional: int
+
+    def select_new(
+        self, chunks: List[Chunk], contributed: Set[ChunkKey]
+    ) -> List[Chunk]:
+        """Return up to :attr:`additional` leading unseen chunks.
+
+        The child is treated as an opaque ranked list. Identities it already
+        contributed are ignored, duplicates inside one response are collapsed,
+        and the first :attr:`additional` remaining chunks are returned in their
+        natural response order, so the highest-ranked unseen chunks are the ones
+        that enter the pool. Identity tracking, rather than a positional offset,
+        stops a child that over-returns or reorders its results from hiding
+        unseen chunks or being skipped forever.
+
+        A child that honours the cumulative size returns the prefix of its
+        ranking, and the new suffix of that prefix is precisely this selection.
+        A child that ignores the requested size or reorders its results between
+        calls contributes the leading unseen identities of *this* response
+        instead of its tail, which preserves ranking as far as the response
+        allows. A response with no unseen identity adds nothing, so ``added``
+        can be ``0``; the retriever does not retry on its own and still stops at
+        its bounded ``max_iters``.
+
+        Parameters
+        ----------
+        chunks : List[Chunk]
+            Raw cumulative result returned by the child for :attr:`top_k`.
+        contributed : Set[ChunkKey]
+            Identities this child contributed in earlier rounds.
+
+        Returns
+        -------
+        List[Chunk]
+            At most :attr:`additional` unseen chunks, in response order.
+        """
+        if self.additional <= 0:
+            return []
+        unseen: List[Chunk] = []
+        seen: Set[ChunkKey] = set(contributed)
+        for chunk in chunks:
+            key = chunk_key(chunk)
+            if key in seen:
+                continue
+            seen.add(key)
+            unseen.append(chunk)
+        return unseen[: self.additional]
+
+
+def plan_incremental_fetch(
+    fetched: int, requested: int, call_limit: int
+) -> IncrementalFetch:
+    """Plan a cumulative child call for ``requested`` additional chunks.
+
+    The model never supplies an absolute size: a child already consulted is
+    called with the identities it has contributed plus the new request, so only
+    the newly selected chunks enter the pool. ``call_limit`` bounds the
+    cumulative size to what the pool plus its discarded slots can still use.
+
+    Parameters
+    ----------
+    fetched : int
+        Identities already contributed by this child across previous rounds.
+    requested : int
+        Additional chunks asked for by the model (``>= 1``).
+    call_limit : int
+        Largest cumulative size that can still be used by the pool.
+
+    Returns
+    -------
+    IncrementalFetch
+        The cumulative ``top_k`` and how many new chunks may be added.
+    """
+    additional = max(min(requested, call_limit - fetched), 0)
+    return IncrementalFetch(top_k=fetched + additional, additional=additional)
 
 
 class AgenticRetriever(CompositeRetriever, ABC):
@@ -229,6 +337,13 @@ class AgenticRetriever(CompositeRetriever, ABC):
         cross-encoder treats it as a final count and the MMR reranker ignores it.
         That asymmetry is accepted and documented here rather than worked around
         at the call site.
+
+        The agentic subclasses pass a *cumulative* size: a child consulted again
+        is asked for the identities it already contributed plus the new request,
+        and only identities it had not contributed before are merged into the
+        pool. Because a child may ignore ``top_k`` or reorder its results, the
+        selection is identity-based in the child's own ranking order and never
+        assumes response lengths match the request.
 
         Parameters
         ----------
