@@ -15,6 +15,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.forecasting.single_series_forecasting_model import (
     SEASON_FROM_FREQUENCY,
+    SEASON_ONLY_WHEN_SEASONAL,
     SingleSeriesForecastingModel,
 )
 
@@ -89,26 +90,31 @@ class ThetaSchema(BaseSchema):
             en=(
                 "How many observations make up one full cycle: 12 for monthly "
                 "data repeating yearly, 7 for daily data repeating weekly. "
+                f"{SEASON_ONLY_WHEN_SEASONAL.en} "
                 f"{SEASON_FROM_FREQUENCY.en}"
             ),
             es=(
                 "Cuántas observaciones forman un ciclo completo: 12 para datos "
                 "mensuales que se repiten cada año, 7 para datos diarios que se "
-                f"repiten cada semana. {SEASON_FROM_FREQUENCY.es}"
+                f"repiten cada semana. {SEASON_ONLY_WHEN_SEASONAL.es} "
+                f"{SEASON_FROM_FREQUENCY.es}"
             ),
             pt=(
                 "Quantas observações formam um ciclo completo: 12 para dados "
                 "mensais que se repetem a cada ano, 7 para dados diários que se "
-                f"repetem a cada semana. {SEASON_FROM_FREQUENCY.pt}"
+                f"repetem a cada semana. {SEASON_ONLY_WHEN_SEASONAL.pt} "
+                f"{SEASON_FROM_FREQUENCY.pt}"
             ),
             de=(
                 "Wie viele Beobachtungen einen vollen Zyklus bilden: 12 für "
                 "monatliche Daten mit jährlicher Wiederholung, 7 für "
-                f"tägliche mit wöchentlicher. {SEASON_FROM_FREQUENCY.de}"
+                f"tägliche mit wöchentlicher. {SEASON_ONLY_WHEN_SEASONAL.de} "
+                f"{SEASON_FROM_FREQUENCY.de}"
             ),
             zh=(
                 "一个完整周期包含多少个观测值：月度数据按年重复为 12，"
-                f"日度数据按周重复为 7。{SEASON_FROM_FREQUENCY.zh}"
+                "日度数据按周重复为 7。"
+                f"{SEASON_ONLY_WHEN_SEASONAL.zh}{SEASON_FROM_FREQUENCY.zh}"
             ),
         ),
         alias=MultilingualString(

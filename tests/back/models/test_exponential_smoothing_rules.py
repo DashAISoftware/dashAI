@@ -46,6 +46,9 @@ from DashAI.back.models.forecasting.exponential_smoothing import (
     ExponentialSmoothing,
     ExponentialSmoothingSchema,
 )
+from DashAI.back.models.forecasting.single_series_forecasting_model import (
+    SEASON_ONLY_WHEN_SEASONAL,
+)
 
 ENVELOPE = {
     "optimize": False,
@@ -94,15 +97,21 @@ def test_the_rule_reaches_the_wire_localized():
     assert "componente estacional" in rules[0]["reason"]
 
 
-def test_the_prose_no_longer_carries_the_dependency():
-    """It was a sentence in five languages that nothing enforced."""
+def test_the_prose_says_what_the_rule_enforces():
+    """The rule disables the field; the description says when it is used.
+
+    The sentence was once dropped as prose nothing enforced. The rule enforces
+    it now, and the description says it again, as ARIMA's does, so the field
+    reads the same before a seasonal component is picked
+    (RECONCILING_FORECASTING §8.9).
+    """
     description = ExponentialSmoothing.get_schema()["properties"]["season_length"][
         "description"
     ]
     for language in ("en", "es", "pt", "de", "zh"):
-        text = getattr(description, language)
-        assert "nly used when" not in text
-        assert "Solo se usa" not in text
+        assert getattr(SEASON_ONLY_WHEN_SEASONAL, language) in getattr(
+            description, language
+        )
 
 
 # --------------------------------------------------------------------------- #

@@ -24,28 +24,51 @@ EXOGENOUS_REQUIRED = "required"
 #: empty rather than a number that would reach every model as it is.
 SEASON_FROM_FREQUENCY = MultilingualString(
     en=(
-        "Left empty, the season the series' frequency implies: 12 for monthly, "
-        "7 for daily and 24 for hourly data, and 1 when it implies none."
+        "Left empty, it uses the season of the series' frequency (monthly: 12, "
+        "daily: 7, hourly: 24; 1 when it implies none). A number sets another "
+        "cycle."
     ),
     es=(
-        "Vacío, la temporada que implica la frecuencia de la serie: 12 en "
-        "datos mensuales, 7 en diarios y 24 en horarios, y 1 cuando no "
-        "implica ninguna."
+        "Vacío, usa la temporada según la frecuencia de la serie (mensual: 12, "
+        "diaria: 7, horaria: 24; 1 si no implica ninguna). Un número fija otro "
+        "ciclo."
     ),
     pt=(
-        "Vazio, a temporada que a frequência da série implica: 12 em dados "
-        "mensais, 7 em diários e 24 em horários, e 1 quando não implica "
-        "nenhuma."
+        "Vazio, usa a temporada segundo a frequência da série (mensal: 12, "
+        "diária: 7, horária: 24; 1 se não implica nenhuma). Um número fixa "
+        "outro ciclo."
     ),
     de=(
-        "Leer: die Saison, die die Frequenz der Reihe nahelegt: 12 bei "
-        "monatlichen, 7 bei täglichen und 24 bei stündlichen Daten, 1 wenn sie "
-        "keine nahelegt."
+        "Leer: die Saison nach der Frequenz der Reihe (monatlich: 12, täglich: "
+        "7, stündlich: 24; 1, wenn sie keine nahelegt). Eine Zahl legt einen "
+        "anderen Zyklus fest."
     ),
     zh=(
-        "留空时，取序列频率所对应的季节长度：月度数据为 12，日度为 7，"
-        "小时数据为 24，无对应季节时为 1。"
+        "留空时，按序列的频率取季节长度（月度：12，日度：7，小时：24；"
+        "无对应季节时为 1）。填写数字则指定其他周期。"
     ),
+)
+
+#: Where ExponentialSmoothing and Theta use their season: only with a seasonal
+#: component, and then it has to be at least 2 (their ``__init__`` checks it).
+SEASON_ONLY_WHEN_SEASONAL = MultilingualString(
+    en=(
+        "Only used when the seasonal part is on, with Seasonal other than "
+        "none, and then at least 2."
+    ),
+    es=(
+        "Solo se usa si la parte estacional está activada, con Estacional "
+        "distinto de none, y entonces tiene que ser al menos 2."
+    ),
+    pt=(
+        "Só é usada se a parte sazonal estiver ativada, com Sazonal diferente "
+        "de none, e então tem que ser pelo menos 2."
+    ),
+    de=(
+        "Nur verwendet, wenn der saisonale Teil aktiv ist (Saisonal nicht "
+        "none), und dann mindestens 2."
+    ),
+    zh="仅在启用季节部分（季节性不为 none）时使用，此时至少为 2。",
 )
 
 

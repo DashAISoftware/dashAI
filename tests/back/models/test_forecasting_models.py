@@ -772,3 +772,97 @@ def test_a_regressor_that_is_not_scikit_learn_is_refused_when_built():
 
     with pytest.raises(TypeError, match="scikit-learn regressor"):
         RecursiveRegressionForecaster(MLPRegression())
+
+
+# --- what an empty season and empty lags mean, as the form says it ----------
+
+#: The sentence every season field ends with: what empty does, and a number.
+EMPTY_SEASON = {
+    "en": (
+        "Left empty, it uses the season of the series' frequency (monthly: 12, "
+        "daily: 7, hourly: 24",
+        "A number sets another cycle.",
+    ),
+    "es": (
+        "Vacío, usa la temporada según la frecuencia de la serie (mensual: 12, "
+        "diaria: 7, horaria: 24",
+        "Un número fija otro ciclo.",
+    ),
+}
+
+#: Where each model uses its season, when not always.
+SEASON_USED = {
+    ARIMA: {
+        "en": "Only used when the seasonal part is on",
+        "es": "Solo se usa si la parte estacional está activada",
+    },
+    ExponentialSmoothing: {
+        "en": "Only used when the seasonal part is on",
+        "es": "Solo se usa si la parte estacional está activada",
+    },
+    Theta: {
+        "en": "Only used when the seasonal part is on",
+        "es": "Solo se usa si la parte estacional está activada",
+    },
+    RecursiveRegressionForecaster: {
+        "en": "Only used for the default lags",
+        "es": "Solo se usa para los rezagos por defecto",
+    },
+}
+
+
+def _described(model_class, field, lang):
+    from DashAI.back.core.utils import localize
+
+    schema = localize(model_class.get_schema(), lang)
+    return schema["properties"][field]["description"]
+
+
+@pytest.mark.parametrize("lang", ["en", "es"])
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        SeasonalNaiveForecaster,
+        ARIMA,
+        ExponentialSmoothing,
+        Theta,
+        RecursiveRegressionForecaster,
+    ],
+)
+def test_the_season_says_what_empty_and_a_number_do(model_class, lang):
+    description = _described(model_class, "season_length", lang)
+
+    for sentence in EMPTY_SEASON[lang]:
+        assert sentence in description
+    if model_class in SEASON_USED:
+        assert SEASON_USED[model_class][lang] in description
+
+
+@pytest.mark.parametrize(
+    ("lang", "sentences"),
+    [
+        (
+            "en",
+            (
+                "Left empty, it reads one season: Season length, or the season "
+                "of the series' frequency when that is empty too (monthly: 12, "
+                "daily: 7, hourly: 24), and at least 3.",
+                "A number sets another count.",
+            ),
+        ),
+        (
+            "es",
+            (
+                "Vacío, lee una temporada: Largo de temporada, o la temporada "
+                "según la frecuencia de la serie si también queda vacío "
+                "(mensual: 12, diaria: 7, horaria: 24), y al menos 3.",
+                "Un número fija otra cantidad.",
+            ),
+        ),
+    ],
+)
+def test_the_lags_say_what_empty_and_a_number_do(lang, sentences):
+    description = _described(RecursiveRegressionForecaster, "lags", lang)
+
+    for sentence in sentences:
+        assert sentence in description

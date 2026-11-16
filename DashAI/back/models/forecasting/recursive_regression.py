@@ -169,27 +169,38 @@ class RecursiveRegressionForecasterSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "How many past values the regressor reads to predict the next "
-                "one. Left empty, one season of values, and at least "
-                f"{MIN_DEFAULT_LAGS}."
+                "one. Left empty, it reads one season: Season length, or the "
+                "season of the series' frequency when that is empty too "
+                "(monthly: 12, daily: 7, hourly: 24), and at least "
+                f"{MIN_DEFAULT_LAGS}. A number sets another count."
             ),
             es=(
                 "Cuántos valores pasados lee el regresor para predecir el "
-                "siguiente. Vacío, una temporada de valores, y al menos "
-                f"{MIN_DEFAULT_LAGS}."
+                "siguiente. Vacío, lee una temporada: Largo de temporada, o la "
+                "temporada según la frecuencia de la serie si también queda "
+                "vacío (mensual: 12, diaria: 7, horaria: 24), y al menos "
+                f"{MIN_DEFAULT_LAGS}. Un número fija otra cantidad."
             ),
             pt=(
                 "Quantos valores passados o regressor lê para prever o "
-                "próximo. Vazio, uma temporada de valores, e pelo menos "
-                f"{MIN_DEFAULT_LAGS}."
+                "próximo. Vazio, lê uma temporada: Comprimento da temporada, "
+                "ou a temporada segundo a frequência da série se também "
+                "ficar vazio (mensal: 12, diária: 7, horária: 24), e pelo "
+                f"menos {MIN_DEFAULT_LAGS}. Um número fixa outra quantidade."
             ),
             de=(
                 "Wie viele vergangene Werte der Regressor liest, um den "
-                "nächsten vorherzusagen. Leer: eine Saison von Werten, "
-                f"mindestens {MIN_DEFAULT_LAGS}."
+                "nächsten vorherzusagen. Leer: eine Saison, also die "
+                "Saisonlänge oder, wenn auch diese leer ist, die Saison nach "
+                "der Frequenz der Reihe (monatlich: 12, täglich: 7, stündlich: "
+                f"24), mindestens {MIN_DEFAULT_LAGS}. Eine Zahl legt eine "
+                "andere Anzahl fest."
             ),
             zh=(
-                "回归器读取多少个过去的值来预测下一个值。"
-                f"留空时为一个季节的值，且至少为 {MIN_DEFAULT_LAGS}。"
+                "回归器读取多少个过去的值来预测下一个值。留空时读取一个季节："
+                "即季节长度；若季节长度也留空，则按序列频率取季节长度"
+                f"（月度：12，日度：7，小时：24），且至少为 {MIN_DEFAULT_LAGS}。"
+                "填写数字则指定其他数量。"
             ),
         ),
         alias=MultilingualString(
@@ -203,28 +214,32 @@ class RecursiveRegressionForecasterSchema(BaseSchema):
         high=12,
         description=MultilingualString(
             en=(
-                "How many steps make up one season. In this model it only "
-                "sets how many lags are read when Lags is left empty; it does "
-                f"not model the seasonality. {SEASON_FROM_FREQUENCY.en}"
+                "How many steps make up one season. Only used for the default "
+                "lags: it sets how many lags are read when Lags is left "
+                "empty; it does not model the seasonality. "
+                f"{SEASON_FROM_FREQUENCY.en}"
             ),
             es=(
-                "Cuántos pasos forman una temporada. En este modelo solo "
-                "decide cuántos rezagos se leen cuando Rezagos queda vacío; "
-                f"no modela la estacionalidad. {SEASON_FROM_FREQUENCY.es}"
+                "Cuántos pasos forman una temporada. Solo se usa para los "
+                "rezagos por defecto: decide cuántos rezagos se leen cuando "
+                "Rezagos queda vacío; no modela la estacionalidad. "
+                f"{SEASON_FROM_FREQUENCY.es}"
             ),
             pt=(
-                "Quantos passos formam uma temporada. Neste modelo só define "
-                "quantas defasagens são lidas quando Defasagens fica vazio; "
-                f"não modela a sazonalidade. {SEASON_FROM_FREQUENCY.pt}"
+                "Quantos passos formam uma temporada. Só é usada para as "
+                "defasagens por padrão: define quantas defasagens são lidas "
+                "quando Defasagens fica vazio; não modela a sazonalidade. "
+                f"{SEASON_FROM_FREQUENCY.pt}"
             ),
             de=(
-                "Wie viele Schritte eine Saison bilden. In diesem Modell legt "
-                "sie nur fest, wie viele Verzögerungen gelesen werden, wenn "
-                "Verzögerungen leer bleibt; die Saisonalität modelliert sie "
-                f"nicht. {SEASON_FROM_FREQUENCY.de}"
+                "Wie viele Schritte eine Saison bilden. Nur für die "
+                "Standard-Verzögerungen verwendet: legt fest, wie viele "
+                "Verzögerungen gelesen werden, wenn Verzögerungen leer bleibt; "
+                "die Saisonalität modelliert sie nicht. "
+                f"{SEASON_FROM_FREQUENCY.de}"
             ),
             zh=(
-                "一个季节包含多少步。在本模型中，它只决定滞后数留空时读取多少个滞后值，"
+                "一个季节包含多少步。仅用于默认滞后数：决定滞后数留空时读取多少个滞后值，"
                 f"并不对季节性建模。{SEASON_FROM_FREQUENCY.zh}"
             ),
         ),
