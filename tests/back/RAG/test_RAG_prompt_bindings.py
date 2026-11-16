@@ -30,6 +30,7 @@ from DashAI.back.models.RAG.prompts.transformation.transformation_prompt import 
 from DashAI.back.services.RAG.exceptions import RAGPromptValidationError
 from DashAI.back.services.RAG.prompt_service import PromptService
 from DashAI.back.services.RAG.utils import build_prompt_hash
+from tests.back.RAG.conftest import RAG_TEST_GENERATOR
 
 
 def _service(client, db) -> PromptService:
@@ -43,8 +44,9 @@ def _template(placeholders: str, prefix: str = "prompt") -> str:
 def _create_session(db, name: str = None) -> GenerativeSession:
     session = GenerativeSession(
         name=name or f"binding_{uuid.uuid4().hex[:8]}",
-        task_name="RAGTask",
-        model_name="RAGPipeline",
+        task_name="TextToTextGenerationTask",
+        workflow_name="RAGWorkflow",
+        model_name=RAG_TEST_GENERATOR,
         parameters={"documents": []},
     )
     db.add(session)
