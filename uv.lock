@@ -1643,7 +1643,7 @@ requires-dist = [
     { name = "torchvision", specifier = ">=0.21" },
     { name = "torchvision", marker = "extra == 'cpu'", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "dashai", extra = "cpu" } },
     { name = "torchvision", marker = "extra == 'cuda'", index = "https://download.pytorch.org/whl/cu128", conflict = { package = "dashai", extra = "cuda" } },
-    { name = "transformers", specifier = ">=5.0.0" },
+    { name = "transformers", specifier = ">=5.12.1" },
     { name = "typer" },
     { name = "unstructured", extras = ["docx", "md", "pptx", "xlsx"], specifier = ">=0.27.34" },
     { name = "wordcloud" },

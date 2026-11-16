@@ -6,6 +6,7 @@ import pytest
 from DashAI.back.converters.document.image_captioning import ImageCaptioningConverter
 from DashAI.back.converters.document.language_filter import LanguageFilter
 from DashAI.back.converters.document.ocr import OCRConverter
+from DashAI.back.converters.document.surya_ocr import SuryaOCRConverter
 from DashAI.back.converters.hugging_face.pretrained_tool import torch_device
 from DashAI.back.converters.hugging_face.summarizer import Summarizer
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -36,6 +37,11 @@ class FakeSummaries(Summarizer):
 class FakeOCR(OCRConverter):
     def read_images(self, images):
         return ["Scanned text " if image.size[0] == 4 else "  " for image in images]
+
+
+class FakeSuryaOCR(SuryaOCRConverter):
+    def read_images(self, images):
+        return ["Scanned & searchable text" for _ in images]
 
 
 class FakeCaptions(ImageCaptioningConverter):
@@ -133,6 +139,17 @@ def test_ocr_can_replace_images_and_drops_those_without_text():
     )
     assert converted.types == [Text]
     assert converted[Text] == ["Read", "end"]
+
+
+def test_surya_ocr_text_items_follow_their_image():
+    converted = apply_converter_to_document(
+        build_document([image(page=2)]), FakeSuryaOCR, {"Image": ItemFilter()}
+    )
+
+    assert converted[Text] == ["Scanned & searchable text"]
+    assert [
+        (item.type.display_name(), item.kind, item.page) for item in converted.items()
+    ] == [("Image", "image", 2), ("Text", "paragraph", 2)]
 
 
 def test_captions_follow_their_images():
