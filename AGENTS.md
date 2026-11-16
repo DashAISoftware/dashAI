@@ -73,7 +73,7 @@ The frontend polls `/api/v1/jobs/{job_id}` for long-running task status.
 | `DashAI/back/api/api_v1/api.py`                            | Mounts all endpoint routers on `api_router_v1`                                                                        |
 | `DashAI/back/core/schema_fields/`                          | Type system driving dynamic frontend forms                                                                            |
 | `DashAI/back/pipeline/`                                    | DAG pipeline nodes                                                                                                    |
-| `DashAI/back/plugins/`                                     | Plugin system (PyPI packages with `dashai.plugins` entry point)                                                       |
+| `DashAI/back/plugins/`                                     | Plugin system: `plugin_installer.py`, `manifest/`, `sources/`, `store/`, `disk/`                                      |
 | `DashAI/front/src/components/configurableObject/`          | Auto-generates forms from backend component schemas                                                                   |
 | `DashAI/front/src/pages/generative/SessionRouter.jsx`      | Routes `/app/generative/sessions/:id` to RAG or non-RAG view based on session `task_name`                             |
 | `DashAI/front/src/pages/generative/RAGSession/`            | RAG session setup wizard (RAGSessionSetup) + collapsible section components per pipeline stage                        |
@@ -90,6 +90,8 @@ The frontend polls `/api/v1/jobs/{job_id}` for long-running task status.
 **Dependency injection (`kink`)** — singletons (config, DB engine, ComponentRegistry, job queue) live in the `di` container. Use `@inject` to receive them. Config is accessed as `di["config"]` and includes `INITIAL_COMPONENTS`.
 
 **Huey job queue** — in dev mode the Huey consumer runs as a subprocess spawned from `__main__.py`; in PyInstaller bundles it runs as a daemon thread due to limitations with frozen executables.
+
+**Plugin system** — a plugin is a folder with a `manifest.json`, installed from a `.zip` or a GitHub release and kept only on disk (no DB tables). Components are registered as `<plugin-id>:Class`. Jobs run in a worker with its own registry, so test plugin changes in the real app, not only in test mode.
 
 ## RAG Module
 
@@ -119,7 +121,7 @@ DashAI includes a **Retrieval-Augmented Generation (RAG)** module — a 4-stage 
 ## Data at runtime
 
 Default `~/.DashAI/` (overridable via `DASHAI_LOCAL_PATH` env var):
-`datasets/`, `runs/`, `explanations/`, `notebooks/`, `images/`, `documents/`, `rag/`, `sqlite.db`
+`datasets/`, `runs/`, `explanations/`, `notebooks/`, `images/`, `documents/`, `rag/`, `sqlite.db`, `plugins/installed/<id>/` (installed plugins) and `plugins/py3.xx/` (their pip dependencies)
 
 ## CI
 

@@ -97,6 +97,13 @@ Estudia ejemplos funcionales para entender las mejores prácticas:
 - **[Ejemplo real](/build/plugin-development/overview):** `dashai-phi-model-package` agrega los modelos Microsoft Phi
 - **Plugins de la comunidad:** [pypi.org/search/?q=dashai](https://pypi.org/search/?q=dashai)
 
+### Construye sobre Otro Plugin
+
+Para reusar las clases de otro plugin, impórtalas desde `dashai_plugins.p<id>`
+(`plugin-b` → `dashai_plugins.pplugin_b`) y pon su id en `plugin_dependencies`
+del manifiesto, no en `dependencies`. Ver
+[Opcional: otros plugins](/build/plugin-development/migrate#opcional-otros-plugins).
+
 ### Prueba tu Plugin Durante el Desarrollo
 
 1. Crea los archivos Python y JSON localmente (Opción 2: clonar el repositorio)

@@ -78,7 +78,7 @@ Long-running operations (training, data conversion, explanations) are dispatched
 | `DashAI/back/api/api_v1/endpoints/`          | REST endpoints                                                                  |
 | `DashAI/back/core/schema_fields/`            | Type system for component parameters (drives dynamic frontend forms)            |
 | `DashAI/back/pipeline/`                      | DAG pipeline nodes: DataSelector → Converter → Train → Prediction → Exploration |
-| `DashAI/back/plugins/`                       | Plugin system (PyPI packages with `dashai.plugins` entry point)                 |
+| `DashAI/back/plugins/`                       | Plugin system: `plugin_installer.py`, `manifest/`, `sources/`, `store/`, `disk/` |
 
 ### Key patterns
 
@@ -90,7 +90,7 @@ Long-running operations (training, data conversion, explanations) are dispatched
 
 **Pipeline as DAG** — `PipelineValidator` validates the graph before execution. Each node is a `BaseJob` subclass. Results flow between nodes via a shared `context` dict.
 
-**Plugin system** — plugins are PyPI packages prefixed `dashai-*` that register components via `entry_points` group `dashai.plugins`. Install/uninstall via `/api/v1/plugins`.
+**Plugin system** — a plugin is a folder with a `manifest.json`, installed from a `.zip` or a GitHub release and kept only on disk (no DB tables). Components are registered as `<plugin-id>:Class`. Jobs run in a worker with its own registry, so test plugin changes in the real app, not only in test mode.
 
 ### Frontend layout
 
@@ -106,6 +106,7 @@ Long-running operations (training, data conversion, explanations) are dispatched
 Default path `~/.DashAI/` (overridable via `DASHAI_LOCAL_PATH`):
 
 - `datasets/`, `runs/`, `explanations/`, `notebooks/`, `images/`, `sqlite.db`
+- `plugins/installed/<id>/` (installed plugins, each with a `.source` marker) and `plugins/py3.xx/` (their pip dependencies)
 
 ### Testing notes
 
