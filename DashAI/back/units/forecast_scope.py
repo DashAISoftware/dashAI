@@ -112,8 +112,8 @@ def with_season_from_grid(parameters: Dict[str, Any], freq: str) -> Dict[str, An
 
     A season is empty when the run leaves the key out, as the API may, or
     sends it as None, or as a search envelope whose fixed value is None, as
-    the run form does with the schema's placeholder. A searched envelope keeps
-    its range and its switch: only its starting value is filled.
+    the run form does with the schema's placeholder, or missing. A searched
+    envelope keeps its range and its switch: only its starting value is filled.
 
     Parameters
     ----------
@@ -131,7 +131,7 @@ def with_season_from_grid(parameters: Dict[str, Any], freq: str) -> Dict[str, An
     value = resolved.get("season_length")
     if value is None:
         resolved["season_length"] = season_length_for(freq)
-    elif isinstance(value, dict) and value.get("fixed_value", 0) is None:
+    elif isinstance(value, dict) and value.get("fixed_value") is None:
         resolved["season_length"] = {**value, "fixed_value": season_length_for(freq)}
     return resolved
 

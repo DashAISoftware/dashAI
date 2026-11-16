@@ -228,6 +228,21 @@ def test_a_searched_season_left_empty_starts_from_the_grid_and_is_searched():
     assert ctx.require("factory").optimizable_parameters
 
 
+@pytest.mark.parametrize("optimize", [False, True])
+def test_a_season_envelope_without_a_fixed_value_comes_from_the_grid(optimize):
+    # An envelope with no fixed value at all is as empty as one whose fixed
+    # value is None.
+    envelope = {"optimize": optimize, "lower_bound": 2, "upper_bound": 12}
+
+    ctx = _build({"season_length": envelope})
+
+    assert ctx.require("model").season_length == 12
+    assert ctx.require("model_parameters")["season_length"] == {
+        **envelope,
+        "fixed_value": 12,
+    }
+
+
 # --- BacktestForecasterUnit --------------------------------------------------
 
 
