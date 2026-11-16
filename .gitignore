@@ -216,7 +216,7 @@ docs/node_modules/
 **/csv-train.arrow
 **/dataset_info.json
 
-/RAG_benchmark
+/RAG_benchmark/data
 tests/back/dataloaders/iris/**
 tests/back/dataloaders/json/**
 tests/back/models/json/**

@@ -1,0 +1,184 @@
+{
+  "iter0-turn0": {
+    "inputs": {
+      "user_message": "You mentioned different chunking strategies — could you explain what the main ones are and how you'd decide which to use for a given document?",
+      "turn_number": 0
+    },
+    "outputs": {
+      "assistant_response": "The main chunking strategies in the context of dense passage retrieval and few-shot learning are:\n\n1. **Sparse Retrieval**: This method involves encoding each document into a specific representation and then constructing an index to organize the data source for efficient search. In sparse retrieval, the keys/values represent the documents to be searched, and these methods leverage term matching metrics such as TF-IDF.\n\n2. **Dense Retrieval**: This method involves mapping any text passage to a dense, real-valued vector and building an index for all the passages that will be used for retrieval. Dense retrieval is used in the Dense Passage Retrieval (DPR) model, which uses a dense encoder to map text passages to dense vectors.\n\n3. **Chunk Optimization**: This method involves adjusting the chunk size for improved retrieval results. Chunk optimization refers to the process of adjusting the size of the text chunks to improve the retrieval results. This can be done by operating on a 'small-to-big' principle, where the chunk size is adjusted to balance between the trade-off between retrieval accuracy and computational efficiency.\n\n4. **Few-Shot Learning**: This method involves training a language model on a small number of examples and then fine-tuning it on a larger dataset. Few-shot learning is used in the Atlas: Few-shot Learning with Retrieval Augmented Language Models paper, which presents a framework for few-shot learning with retrieval augmented language models.\n\nWhen deciding which chunking strategy to use for a given document, the following factors should be considered:\n\n* The size and complexity of the document\n* The type of task being performed (e.g., question answering, text summarization)\n* The computational resources available\n* The trade-off between retrieval accuracy and computational efficiency\n\nIn general, the choice of chunking strategy will depend on the specific requirements of the task and the characteristics of the document.",
+      "retrieved_chunks": {
+        "8_81": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 81,
+          "text": ".\nwhich usually extracts relevant knowledge from financial docu-\nments. As professional documents are usually stored in PDF format,\nLin [74] introduces a PDF parser combined with RA-LLMs to re-\ntrieve knowledge from financial reports. On the other hand, Yepes\net al. [143] propose a document chunking method based on struc-\nture instead of chunking based on paragraphs, further improving\nthe quality of RA-LLMs outputs.\n5 FUTURE CHALLENGES AND\nOPPORTUNITIES\nSince the studies of RA-LLMs are still in the early stage, we present\nsome potential research directions that can be explored in the future\nin",
+          "page": 8,
+          "source_positions": null
+        },
+        "1_40": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 40,
+          "text": "this computation model may seem naive, the main assumption\nis that document sizes are constant.1 Since we split long documents into passages with\nsimilar number of words, and use padding when processing documents of diﬀerent sizes, this\nassumption is reasonable in practice. LetK be the number of documents that are retrieved\nand processed by the language model,Plm be the number of parameters of the language\nmodel andB the batch size. Each training step has a complexity of4×B×K×Plm.2\nNext, let N be the number of documents in the index, andPretr be the number of\nparameters of the retriever. Then,",
+          "page": 9,
+          "source_positions": null
+        },
+        "5_448": {
+          "document_id": 5,
+          "document_name": "Llama-2.pdf",
+          "document_position": 448,
+          "text": "s noted in Chowdhery\net al. (2022), some datasets (such as BoolQ) contain contexts extracted verbatim from the web, but not the\nquestion and answer continuation. As such, highly contaminated samples from these datasets are unlikely\nto gain an unfair advantage. The methodology in Chowdhery et al. (2022) further improves on the earlier\nn-gram collision detection by considering a sample to be contaminated if 70% of all 8-grams can be found at\nleast once in the training data.\nThe previous methodologies noted above all consider contamination in text space, and don’t appear to\nconsider the formattin",
+          "page": 75,
+          "source_positions": null
+        },
+        "7_61": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 61,
+          "text": "ing, and summarization of text chunks until further \nclustering becomes infeasible, thereby constructing a multi-\nlevel\ttree\tstructure.\tPrompt-RAG\t[138] enhances retrieval \naccuracy\tby\tpre-generating\ta\ttable\tof\tcontents,\tenabling\tthe\t\nmodel\tto\tautonomously\tselect\trelevant\tchapters\tbased\ton\t\nthe query. Raina et al. [ 139]\tbreak\ttext\tchunks\tinto\tfiner\t\natomic\tstatements\tto\tachieve\thigher\trecall\tand\timproved\t\nresults. MoM [ 140]\ttrains\ta\tmodel\tto\tperform\tdocument\t\nchunking,\twhich\tenables\tfiner-grained\tsemantic\toverlap\tand\t\nfacilitates subsequent retrieval.\n3.2.2.3 Retriever Finetuning The retriev",
+          "page": 9,
+          "source_positions": null
+        },
+        "3_8": {
+          "document_id": 3,
+          "document_name": "Faster-And-Lighter-LLMs.pdf",
+          "document_position": 8,
+          "text": "s\nas well.\n• To provide a practical perspective, we present an em-\npirical analysis of well-known compression methods for\nLLMs under a standardized setup. The insights derived\ncan help make informed decisions about the selection\nof LLM compression methods based on the deployment\nenvironment.\n• Drawing upon insights derived from our survey and em-\nProceedings of the Thirty-Third International Joint Conference on Artiﬁcial Intelligence (IJCAI-24)\nSurvey Track\n7980\n\npirical analysis, we systematically pinpoint existing lim-\nitations and propose viable pathways forward for achiev-\ning optimal effi",
+          "page": 1,
+          "source_positions": null
+        },
+        "8_41": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 41,
+          "text": "the number of retrieved documents, since\nthe concatenated new input may be too long to be processed by\nthe generation model. In-context RALM specifically alleviates this\nlimitation by removing tokens from the beginning of the new in-\nput. To avoid information loss with such a token removing strategy,\nFID [50] employs a different integration method that processes each\nretrieved document independently in the encoder. This strategy\nis scalable to a large number of contexts as it only performs self-\nattention over one context at a time in the follow-up processing.\nAtlas [\n51] and REPLUG [114] appl",
+          "page": 4,
+          "source_positions": null
+        },
+        "5_248": {
+          "document_id": 5,
+          "document_name": "Llama-2.pdf",
+          "document_position": 248,
+          "text": "dy Zou. A framework for few-shot language model evaluation, September 2021. URL\nhttps://doi.org/10.5281/zenodo.5371628.\nSebastian Gehrmann, Elizabeth Clark, and Thibault Sellam. Repairing the cracked foundation: A survey\nof obstacles in evaluation practices for generated text.Journal of Artificial Intelligence Research, 77:103–166,\n2023.\nFabrizioGilardi,MeysamAlizadeh,andMaëlKubli. Chatgptoutperformscrowd-workersfortext-annotation\ntasks. arXiv preprint arXiv:2303.15056, 2023.\nArnav Gudibande, Eric Wallace, Charlie Snell, Xinyang Geng, Hao Liu, Pieter Abbeel, Sergey Levine, and\nDawn Song. The f",
+          "page": 40,
+          "source_positions": null
+        },
+        "1_132": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 132,
+          "text": "l component—the passages\nthemselves, and the document embedding index. The tokenized passages, once binarized,\nrequire 11GB and 130GB of storage for the Wikipedia and combined indices respectively.\nThese passages do not need to be stored in expensive GPU RAM, and could even be memory-\nmapped to disk, sharded across nodes or compressed if required, and thus do not represent\na limiting hardware challenge in this context. The embedding index itself, however, must\nbe stored in GPU RAM for fast search, and thus its size is more sensitive. In the above\nexperiments, we perform exact search over our i",
+          "page": 26,
+          "source_positions": null
+        },
+        "1_22": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 22,
+          "text": "ween the input documents and the generation can be used as a proxy of the\nimportance of each input document when generating the output. In particular, Izacard and\nGrave (2021b) showed that these scores can be aggregated across attention heads, layers\nand tokens for a given document to obtain a single score for each document. Then, these\nscores are distilled into the retriever by minimizing the KL-divergence with the probability\ndistribution pretr over the top-K documents{dk}1,...,K obtained from the retriever:\npretr (d| q) = exp(s(d, q)/θ)∑K\nk=1 exp(s(dk, q)/θ)\n, (1)\nwhere s is the dot-product",
+          "page": 5,
+          "source_positions": null
+        },
+        "2_15": {
+          "document_id": 2,
+          "document_name": "Dense-Passage-Retrieval.pdf",
+          "document_position": 15,
+          "text": "s usually small, such\nas 20–100.\n3.1 Overview\nOur dense passage retriever (DPR) uses a dense\nencoderEP (·) which maps any text passage to ad-\ndimensional real-valued vectors and builds an index\nfor all theM passages that we will use for retrieval.\n3The ideal size and boundary of a text passage are func-\ntions of both the retriever and reader. We also experimented\nwith natural paragraphs in our preliminary trials and found that\nusing ﬁxed-length passages performs better in both retrieval\nand ﬁnal QA accuracy, as observed by Wang et al. (2019).\n4Exceptions include (Seo et al., 2019) and (Roberts",
+          "page": 2,
+          "source_positions": null
+        },
+        "7_70": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 70,
+          "text": "ere\tare\talso\tsome\tother\toptimization\tmethods\tfor\tthe\t\nretrieval\tprocess.\tFor\texample,\tmeta-data\tfiltering\t\t[165] is \na\tmethod\tto\thelp\tprocess\tretrieved\tdocuments\twhich\tuses\t\nmetadata\t(such\tas\ttime,\tpurpose,\tetc.)\tto\tfilter\tthe\tretrieved\t\ndocuments\t for\t better\t results.\t GENREAD\t [166] and \nGRG [167]\tintroduce\ta\tnovel\tapproach\twhere\tthe\tretrieval\t\nprocess\tis\tsupplanted\tor\timproved\tby\tprompting\tan\tLLM\tto\t\ngenerate\tdocuments\tin\tresponse\tto\ta\tgiven\tquestion.\tMulti-\nHead-RAG [168]\temploys\tmultiple\tembedding\tmodels\tto\t\nproject\tthe\tsame\ttext\tchunk\tinto\tvarious\tvector\tspaces\tand\t\nutilizes\ta\tmulti-hea",
+          "page": 10,
+          "source_positions": null
+        },
+        "7_101": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 101,
+          "text": "mmarization\t involves\t\nthe\tautomatic\tselection\tand\tcompilation\tof\tkey\tphrases\t\ndirectly from the source text; it refrains from creating new \nsentences,\tinstead\trepurposing\tsegments\tfrom\tthe\toriginal\t\ntext. Abstractive summarization, on the other hand, entails \ncomprehending\tthe\toriginal\ttext’s\tmeaning\tand\treformulat-\ning it into new sentences [96, 217–219], which can convey \nthe\tsource’s\tintent\tmore\tfluidly\tbut\tposes\tgreater\tchal-\nlenges\tin\tterms\tof\timplementation\tdue\tto\tits\tcomplexity.\t\nRAMKG [217]\teffectively\tleverages\ta\tcomprehensive\tEng-\nlish\tcorpus\tto\tbolster\tthe\tperformance\tof\tkeyphrase\t",
+          "page": 14,
+          "source_positions": null
+        },
+        "1_36": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 36,
+          "text": "of average length 3 tokens, leading\nto a masking ratio of15%. We then replace each span by a diﬀerent special token. The\nmodel is then trained to generate the masked spans, each span beginning with the special\nsentinel mask token that was inserted in the input sequence. We retrieve documents using\nthe masked query, but replace the special mask tokens with a mask token supported by the\nretriever vocabulary.\n2.3.3 Title to Section Generation\nFinally, we consider a more abstractive generation task, generating sections from Wikipedia\narticles, given the article and section title. Here, the query c",
+          "page": 8,
+          "source_positions": null
+        },
+        "2_12": {
+          "document_id": 2,
+          "document_name": "Dense-Passage-Retrieval.pdf",
+          "document_position": 12,
+          "text": "pus. Assume that our collection\ncontains D documents, d1,d 2,··· ,d D. We ﬁrst\nsplit each of the documents into text passages of\nequal lengths as the basic retrieval units3 and getM\ntotal passages in our corpusC ={p1,p 2,...,p M},\nwhere each passagepi can be viewed as a sequence\nof tokensw(i)\n1 ,w (i)\n2 ,··· ,w (i)\n|pi|. Given a questionq,\nthe task is to ﬁnd a spanw(i)\ns ,w (i)\ns+1,··· ,w (i)\ne from\none of the passagespi that can answer the question.\nNotice that to cover a wide variety of domains, the\ncorpus size can easily range from millions of docu-\nments (e.g., Wikipedia) to billions (e.g.",
+          "page": 2,
+          "source_positions": null
+        },
+        "1_15": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 15,
+          "text": "t documents from alarge corpusof text with the retriever.\n3\n\nIzacard, Lewis, Lomeli, Hosseini, Petroni, Schick, Dwivedi-Yu, Joulin, Riedel, Gra ve\nTask Query Output\nFact Checking Bermuda Triangle is in the western part of the Hi-\nmalayas.\nFalse\nQuestion\nAnswering\nwho is playing the halftime show at super bowl 2016 Coldplay\nEntity Linking NTFS-3G is an open source <E>cross-platform</E>\nimplementation of the Microsoft Windows NTFS ﬁle\nsystem with read-write support.\nCross-platform\nsoftware\nFigure 2: Examples of query and output pairs for diﬀerent tasks from KILT.\nThen, these documents are fed to",
+          "page": 3,
+          "source_positions": null
+        },
+        "2_26": {
+          "document_id": 2,
+          "document_name": "Dense-Passage-Retrieval.pdf",
+          "document_position": 26,
+          "text": " text\nblocks of 100 words as passages, serving as our\nbasic retrieval units, following (Wang et al., 2019),\nwhich results in 21,015,324 passages in the end.5\nEach passage is also prepended with the title of the\nWikipedia article where the passage is from, along\nwith an [SEP] token.\n4.2 Question Answering Datasets\nWe use the same ﬁve QA datasets and train-\ning/dev/testing splitting method as in previous\nwork (Lee et al., 2019). Below we brieﬂy describe\neach dataset and refer readers to their paper for the\ndetails of data preparation.\nNatural Questions (NQ) (Kwiatkowski et al.,\n2019) was designe",
+          "page": 4,
+          "source_positions": null
+        },
+        "7_59": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 59,
+          "text": "ng the retrieval quality and factual accuracy \nof\tLLMs.\tEBCAR\t[161]\treranks\tpassages\tby\tleveraging\ta\t\ntransformer-based model to score them. This model goes \nbeyond\tpairwise\tsimilarity\tby\tevaluating\tthe\tglobal\trela-\nSearch\tfor\tsimulations\tto\tselect\toptimal\tretrieval\tcontent,\t\nwhich\tis\tthen\ttemplated\tand\tforwarded\tto\tthe\tgenerator\tfor\t\noutput.\n3.2.2.2 Chunk\t Optimization\tChunk\t optimization\t refers\t\nto\tadjusting\tchunk\tsize\tfor\timproved\tretrieval\tresults.\tLla-\nmaIndex\t[136]\tincorporates\ta\tseries\tof\tchunk\toptimization\t\nmethods,\tone\tof\twhich\toperates\ton\ta\t‘small\tto\tbig’\tprinciple.\t\nThe\tcore\tconcep",
+          "page": 9,
+          "source_positions": null
+        },
+        "2_25": {
+          "document_id": 2,
+          "document_name": "Dense-Passage-Retrieval.pdf",
+          "document_position": 25,
+          "text": "n this section, we describe the data we used for\nexperiments and the basic setup.\n4.1 Wikipedia Data Pre-processing\nFollowing (Lee et al., 2019), we use the English\nWikipedia dump from Dec. 20, 2018 as the source\ndocuments for answering questions. We ﬁrst apply\nthe pre-processing code released in DrQA (Chen\net al., 2017) to extract the clean, text-portion of\narticles from the Wikipedia dump. This step re-\nmoves semi-structured data, such as tables, info-\nboxes, lists, as well as the disambiguation pages.\nWe then split each article into multiple, disjoint text\nblocks of 100 words as passages, s",
+          "page": 4,
+          "source_positions": null
+        },
+        "1_72": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 72,
+          "text": "al., 2020). We perform additional document ﬁltering, in\na similar fashion to Gopher (Rae et al., 2021). More precisely, we ﬁlter documents based\non document length, average word length, ratio of alphanumeric characters and number of\n14\n\nAtlas: Few-shot Learning with Retriev al Augmented Language Models\n64-shot 1024-shot\nMLM NQ WoW FEVER Avg. NQ WoW FEVER Avg.\nClosed-book 1.083 6.5 14.1 59.0 26.5 10.7 16.5 75.3 34.2\nNo joint pre-training - 9.0 14.1 67.0 30.0 9.9 16.6 78.3 34.9\nFixed retriever 0.823 39.9 14.3 72.4 42.2 45.3 17.9 90.0 51.1\nADist 0.780 40.9 14.4 73.8 43.0 46.2 17.2 90.9 51.4\nEMDR2",
+          "page": 14,
+          "source_positions": null
+        },
+        "7_22": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 22,
+          "text": "arity\t\nfunctions, existing retrieval methods can be categorized into \nsparse\tretrieval,\tdense\tretrieval,\tand\tothers.\tIn\twidely\tused\t\nsparse\tand\tdense\tretrieval,\tthe\tentire\tprocess\tcan\tbe\tdivided\t\ninto\ttwo\tdistinct\tphases:\t(i)\teach\tobject\tis\tfirst\tencoded\tinto\ta\t\nspecific\trepresentation;\tand\tthen\t(ii)\tan\tindex\tis\tconstructed\t\nto\torganize\tthe\tdata\tsource\tfor\tefficient\tsearch.\n2.3.1 Sparse Retriever\nSparse\tretrieval\tmethods\tare\tcommonly\tused\tin\tdocument\t\nretrieval,\twhere\tthe\tkeys/values\trepresent\tthe\tdocuments\tto\t\nbe searched. These methods leverage term matching metrics \nsuch\tas\tTF-IDF\t[67], que",
+          "page": 4,
+          "source_positions": null
+        }
+      },
+      "chunks_retrieved": 20,
+      "queries": [
+        "You mentioned different chunking strategies — could you explain what the main ones are and how you'd decide which to use for a given document?"
+      ],
+      "retrieval_time_ms": 43.456099985633045,
+      "transformation_time_ms": 0.0,
+      "generation_time_ms": 53100.37909995299,
+      "total_turn_time_ms": 109747.48610000825,
+      "prompt_length_chars": 142,
+      "response_length_chars": 1973,
+      "error": null
+    }
+  }
+}

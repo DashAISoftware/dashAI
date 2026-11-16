@@ -1,0 +1,80 @@
+{
+  "run_id": "20260802_215832",
+  "command": "components",
+  "start_time": "2026-08-02T21:58:32.283138",
+  "end_time": "2026-08-02T22:34:48.057516",
+  "parameters": {
+    "iterations": 10,
+    "llm_device": "CPU",
+    "skip_passes": false,
+    "has_openai": true,
+    "has_deepseek": true,
+    "papers_dir": "RAG_benchmark\\papers",
+    "categories": [
+      "chunking",
+      "retrieval",
+      "embedding",
+      "llm"
+    ]
+  },
+  "environment": {
+    "python_version": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "completed": true,
+  "suite_name": "RAG Component Benchmarks",
+  "models_tested": [
+    "BERTEmbedding[base]",
+    "BERTEmbedding[large]",
+    "BM25Retriever[custom]",
+    "BM25Retriever[default]",
+    "CharacterChunkModel[page]",
+    "CharacterChunkModel[paragraph]",
+    "DenseEmbeddingRetriever[cosine_k5]",
+    "DenseEmbeddingRetriever[euclidean_k10]",
+    "DistilBERTEmbedding[base]",
+    "E5Embedding[small]",
+    "GemmaEmbedding[default]",
+    "InstructorEmbedding[base]",
+    "LaBSEmbedding[default]",
+    "LlamaModel[llama3.2-1b]",
+    "LlamaModel[llama3.2-3b]",
+    "MMRRerankerRetriever[lambda05_factor3]",
+    "MMRRerankerRetriever[lambda07_factor2]",
+    "MistralModel[mistral-7b]",
+    "OpenAIEmbedding[small]",
+    "ParallelRetriever[interleave]",
+    "ParallelRetriever[round_robin]",
+    "Phi4MiniInstructModel[phi4-mini]",
+    "QwenModel[qwen2.5-0.5b]",
+    "QwenModel[qwen2.5-1.5b]",
+    "QwenModel[qwen2.5-3b]",
+    "QwenModel[qwen2.5-7b]",
+    "RecursiveCharacterChunkModel[default]",
+    "RecursiveCharacterChunkModel[small]",
+    "RoBERTaEmbedding[base]",
+    "SentenceTransformerCrossEncoderRetriever[mmarco_multilingual_dense]",
+    "SentenceTransformerCrossEncoderRetriever[msmarco_minilm12_bm25]",
+    "SentenceTransformerCrossEncoderRetriever[msmarco_minilm6_dense]",
+    "SentenceTransformerCrossEncoderRetriever[stsb_distilroberta_dense]",
+    "SentenceTransformerEmbedding[minilm]",
+    "SequentialRetriever[cascade_top10_top5]",
+    "SmolLMModel[smollm2-1.7b]",
+    "SmolLMModel[smollm2-360m]",
+    "TFIDFRetriever[default]",
+    "TokenChunkModel[default]"
+  ],
+  "summary": {
+    "total_executions": 400,
+    "successful": 390,
+    "skipped": 0,
+    "failed": 10,
+    "total_duration_seconds": 2175.774378,
+    "categories_run": [
+      "chunking",
+      "retrieval",
+      "embedding",
+      "llm"
+    ]
+  }
+}

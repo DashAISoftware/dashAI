@@ -1,0 +1,106 @@
+{
+  "iter0-turn0": {
+    "inputs": {
+      "user_message": "You mentioned different chunking strategies earlier—could you explain what the main trade-off is when choosing chunk size? Like, what actually goes wrong if chunks are too small versus too large?",
+      "turn_number": 0
+    },
+    "outputs": {
+      "assistant_response": "The main trade-off when choosing chunk size is related to the balance between capturing fine-grained content and returning richer information. If chunks are too small, they may not capture the necessary context, leading to reduced retrieval results. On the other hand, if chunks are too large, they may not be able to capture the fine-grained details required for accurate retrieval.\n\nDocument RAG-For-AIGC.pdf (page 9) mentions that chunk optimization refers to adjusting chunk size for improved retrieval results. One of the methods mentioned is the 'small to big' principle, which aims to pinpoint finer-grained content but return richer information.\n\nDocument Llama-2.pdf (page 75) discusses the issue of dataset contamination, which can affect evaluation performance. The authors suggest using a high-precision clean subset (samples with < 20% contamination) and a high-precision contaminated subset (samples with > 80% contamination) to account for the vagaries of the precise format of verbalized samples.\n\nDocument Dense-Passage-Retrieval.pdf (page 7) mentions that the ideal size and boundary of a text passage are functions of both the retriever and reader. The authors experimented with fixed-length passages and found that using them performs better in both retrieval and final QA accuracy.\n\nIn general, the optimal chunk size will depend on the specific use case and the characteristics of the data being processed. However, the key is to find a balance between capturing enough context and returning relevant information.\n\nIt's worth noting that the documents do not provide a clear answer to the question of what happens if chunks are too small or too large. However, based on the information provided, it can be inferred that chunks that are too small may not capture enough context, leading to reduced retrieval results, while chunks that are too large may not be able to capture the fine-grained details required for accurate retrieval.",
+      "retrieved_chunks": {
+        "7_53": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 53,
+          "text": "0] inte-\ngrate a reranking module into their end-to-end RAG sys -\ntem, enhancing the retrieval quality and factual accuracy \nof\tLLMs.\tEBCAR\t[161]\treranks\tpassages\tby\tleveraging\ta\t\ntransformer-based model to score them. This model goes \nbeyond\tpairwise\tsimilarity\tby\tevaluating\tthe\tglobal\trela-\nSearch\tfor\tsimulations\tto\tselect\toptimal\tretrieval\tcontent,\t\nwhich\tis\tthen\ttemplated\tand\tforwarded\tto\tthe\tgenerator\tfor\t\noutput.\n3.2.2.2 Chunk\t Optimization\tChunk\t optimization\t refers\t\nto\tadjusting\tchunk\tsize\tfor\timproved\tretrieval\tresults.\tLla-\nmaIndex\t[136]\tincorporates\ta\tseries\tof\tchunk\toptimization\t\nmethods,\tone\tof\twhich\toperates\ton\ta\t‘small\tto\tbig’\tprinciple.\t\nThe\tcore\tconcept\there\tis\tto\tpinpoint\tfiner-grained\tcontent\t\nbut return richer information. For instance, Sentence-win -\nd",
+          "page": 9,
+          "source_positions": null
+        },
+        "5_349": {
+          "document_id": 5,
+          "document_name": "Llama-2.pdf",
+          "document_position": 349,
+          "text": ". Models sizes refer to pretrained-only models\nmay appear contaminated, by virtue of many tokens appearing in matched sequences found in the training\ndata. However, the matched sequences might be highly fragmented across the training data, in which case it\nis very unlikely the model saw the correctly-assembled contaminated sequences during training. To reduce\nthe chance of this phenomenon, we repeat our analysis with minimum match lengthL ∈ {10, 20, 30, 40, 50}.\nSinceinthelimitof L → ∞everysamplefallsintoboththe\"clean\"and\"notdirty\"(thereisnocontamination),\nwe report the largestL for each dataset that appeared to benefit from contamination to strike a balance\nbetween fragmentation and overall contamination.\nForeachdatasetandeachoftheabovesamplesubsettypes,wecomputeboththemean ¯X oftheperformance\nmetric X and the statisticZn = ( ¯X−µn)\nσn\n, wheren is the size of the sample subset type, andµn and σ2\nn are the\nmean and variance of the sampling distribution of the performance metric for samples of sizen, respectively.\nBy the Central Limit Theorem,Zn tends towards a standard normal distribution and so we consider there\nis sufficient evidence to suggest contamination has affected evaluation",
+          "page": 76,
+          "source_positions": null
+        },
+        "5_263": {
+          "document_id": 5,
+          "document_name": "Llama-2.pdf",
+          "document_position": 263,
+          "text": "shaped faces or angular features. It’s a low-maintenance cut that can be styled with or without bangs.\n3. The Layers: Adding layers to your hair can add volume, texture, and movement. This haircut is great for those with\nstraight, wavy, or curly hair, and can be styled with or without bangs.\n4. The Shag: A choppy, layered haircut that is generally flattering on most people, the shag is a great option for those with\nround or oval faces. It’s a versatile cut that can be styled with or without bangs.\nRemember, the best haircut for you will depend on your personal style, hair texture, and face shape. It’s always a good\nidea to consult with a professional stylist before making any major changes to your hairstyle. They can help you find the\nperfect cut that complements your features and makes you feel confident and beautiful.\nChatGPT As an AI language model, I don’t have personal opinions or the ability to physically see individuals, so I can’t provide\nspecificrecommendationsforhaircuts. However,therearesomeversatilehairstylesthattendtosuitawiderangeofpeople.\nClassic cuts like a bob, layered haircut, or a pixie cut can be adapted to suit different face shapes and",
+          "page": 59,
+          "source_positions": null
+        },
+        "4_14": {
+          "document_id": 4,
+          "document_name": "Gemini-Multimodal-Models.pdf",
+          "document_position": 14,
+          "text": "MD partitioner (Xu et al., 2021) in the XLA compiler\npartitions the training step computation, and the MegaScale XLA compiler (XLA, 2019) pass statically\nschedules appropriate collectives so that they maximally overlap with the computation with very little\nvariation in step time.\nMaintaining a high goodput2 at this scale would have been impossible using the conventional\napproach of periodic checkpointing of weights to persistent cluster storage. For Gemini models, we\ninstead made use of redundant in-memory copies of the model state, and on any unplanned hardware\nfailures, we rapidly recover directly from an intact model replica. Compared to both PaLM and PaLM-2\n(Anil et al., 2023), this provided a substantial speedup in recovery time, despite the significantly\nlarger training resources being used. As a result, the overall goodput for the largest-scale training job\nincreased from 85% to 97%.\nTraining at unprecedented scale invariably surfaces new and interesting systems failure modes -\nand in this instance one of the problems that we needed to address was that of “Silent Data Corruption\n(SDC)” (Dixit et al., 2021; Hochschild et al., 2021",
+          "page": 5,
+          "source_positions": null
+        },
+        "5_344": {
+          "document_id": 5,
+          "document_name": "Llama-2.pdf",
+          "document_position": 344,
+          "text": "a high-precision clean subset (samples with< 20% contamination)\nand a high-precision contaminated subset (samples with> 80%contamination). In order to account for the\nvagaries of the precise format of verbalized samples, we allow a small \"skipgram budget\" of four tokens, so\nthat matched spans between an evaluation sample and the training data can differ in at most four positions\n(we do not allow trailing mismatches, or mismatches in the first 10 tokens).\nWe identify such 10(+)-skipgrams with suffix arrays implemented using a variation of the library from Lee\net al. (2022), modified to work on a PySpark cluster (effectively without random access to disk). Given the\nembarrassingly parallel nature of the task, we are able to find all such 10-grams (and their full lengths) in\nour entire dataset in around seven hours (including time to tokenize), utilizing an estimated 1,500 cores.\nAs there are many confounding factors at play when determining whether dataset contamination has\ncontributed to evaluation performance (mostly stemming from the fact that \"clean\" and \"dirty\" subsets do\nnot necessarily well-estimate the population distribution), we make the following assumption: In the event\nof dataset contamination contributing",
+          "page": 75,
+          "source_positions": null
+        },
+        "2_39": {
+          "document_id": 2,
+          "document_name": "Dense-Passage-Retrieval.pdf",
+          "document_position": 39,
+          "text": "multiple times\nin one passage), combined with the log-likelihood\nof the positive passage being selected. We use the\nbatch size of 16 for large (NQ, TriviaQA, SQuAD)\nand 4 for small (TREC, WQ) datasets, and tunek\non the development set. For experiments on small\ndatasets under the Multi setting, in which using\nother datasets is allowed, we ﬁne-tune the reader\ntrained on Natural Questions to the target dataset.\nAll experiments were done on eight 32GB GPUs.\n6.2 Results\nTable 4 summarizes our ﬁnal end-to-end QA re-\nsults, measured by exact match with the reference\nanswer after minor normalization as in (Chen et al.,\n2017; Lee et al., 2019). From the table, we can\n\n6776\nTraining Model NQ TriviaQA WQ TREC SQuAD\nSingle BM25+BERT (Lee et al., 2019) 26.5 47.1 17.7 21.3 33.2\nSingle ORQA (Lee et al., 2019) 33.3 45.0 36.4 ",
+          "page": 7,
+          "source_positions": null
+        },
+        "3_36": {
+          "document_id": 3,
+          "document_name": "Faster-And-Lighter-LLMs.pdf",
+          "document_position": 36,
+          "text": ".89\nK-Quants 4bit Llama.cpp 3.80 7.38 104.45 5.96\nOmniQuant 3bit MLC-LLM 3.20 5.10 83.4 6.65\nOmniQuant 4bit MLC-LLM 3.80 5.70 134.2 5.97\nTable 2: Performance comparison of different quantization methods for the compression of LLaMA2-7B. Here, WM and RM refer to weight\nmemory and running memory consumption, respectively.\nthis approach involves learning localized parts of the\nteacher network in smaller-scale student sub-networks.\nA strategy can then be devised to combine these sub-\nnetworks into a fully compressed student LLM. This ap-\nproach holds promise as a potential solution to the com-\nputational challenges associated with LLM distillation.\n• Growing smaller LLMs to reach the desired perfor-\nmance. The primary obstacle in compressing Large Lan-\nguage Models (LLMs) lies in the computational chal-\nlenges during fine-tuning, attributed to the models’ sub-\nstantial size. An alternative and ambitious research\ndirection involves growing smaller language",
+          "page": 6,
+          "source_positions": null
+        },
+        "3_15": {
+          "document_id": 3,
+          "document_name": "Faster-And-Lighter-LLMs.pdf",
+          "document_position": 15,
+          "text": "Ms. LLM.int8()\n[Dettmers et al., 2022] made it possible to convert the higher\nbit LLM weights into 8-bit without deterioration in perfor-\nmance post-training. They proposed a two-stage quantization\nscheme with vector-wise quantization and mixed-precision\ndecomposition for outliers. SmoothQuant [Xiao et al., 2023],\na training-free PTQ method, reduced both weights and acti-\nvations of LLMs to 8 bits. QLoRA [Dettmers et al., 2023 ]\nintroduced 4-bit NormalFloat (NF4) and double quantization\nto save memory without losing out on the performance of\nmodels. OmniQuant [Shao et al., 2023] introduced Learnable\nWeight Clipping (LWC) and Learnable Equivalent Transfor-\nmation(LET). LWC prevents weights from attaining extreme\nvalues by optimizing the clipping threshold, while LET deals\nwith activation outliers by quantizing weights instead of acti-\nvations through a LET. SqueezeLLM [Kim et al., 2023 ] en-\nabled compression up to 3-bit by using a sensitivity-based\nnon-uniform quantization scheme",
+          "page": 3,
+          "source_positions": null
+        },
+        "2_10": {
+          "document_id": 2,
+          "document_name": "Dense-Passage-Retrieval.pdf",
+          "document_position": 10,
+          "text": "ages in a low-dimensional and continuous\nspace, such that it can retrieve efﬁciently the top\nk passages relevant to the input question for the\nreader at run-time. Note thatM can be very large\n(e.g., 21 million passages in our experiments, de-\nscribed in Section 4.1) andk is usually small, such\nas 20–100.\n3.1 Overview\nOur dense passage retriever (DPR) uses a dense\nencoderEP (·) which maps any text passage to ad-\ndimensional real-valued vectors and builds an index\nfor all theM passages that we will use for retrieval.\n3The ideal size and boundary of a text passage are func-\ntions of both the retriever and reader. We also experimented\nwith natural paragraphs in our preliminary trials and found that\nusing ﬁxed-length passages performs better in both retrieval\nand ﬁnal QA accuracy, as observed by Wang et al. (2019).\n4Exceptions include (Seo et al., 2019) and (Roberts et al.,\n2020), which retrieves and generates the answers, respectively.\n\n6771\nAt run-time, DPR applies a different encoderEQ(·)\nthat",
+          "page": 2,
+          "source_positions": null
+        },
+        "8_50": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 50,
+          "text": "et al.\nwhich usually extracts relevant knowledge from financial docu-\nments. As professional documents are usually stored in PDF format,\nLin [74] introduces a PDF parser combined with RA-LLMs to re-\ntrieve knowledge from financial reports. On the other hand, Yepes\net al. [143] propose a document chunking method based on struc-\nture instead of chunking based on paragraphs, further improving\nthe quality of RA-LLMs outputs.\n5 FUTURE CHALLENGES AND\nOPPORTUNITIES\nSince the studies of RA-LLMs are still in the early stage, we present\nsome potential research directions that can be explored in the future\nin the field of RA-LLMs.\nTrustworthy RA-LLMs. The essential objective of developing\nRAG-empowered LLMs is to enhance the capability of the language\nmodels, thereby benefiting users and society by alleviating redun-\ndant and meaningless labor, increasing conveniences, and spurring\nsocial progress. However, recent research indicates that RA-LLMs\ncan be maliciously and unintentionally manipulated to make un-\nreliable decisions and harm humans [\n22, 162], which may have\nserious consequences in safety-critical scenarios [11,",
+          "page": 8,
+          "source_positions": null
+        }
+      },
+      "chunks_retrieved": 10,
+      "queries": [
+        "What are the main trade-offs when choosing chunk size?",
+        "What issues arise if chunks are too small?",
+        "What problems occur if chunks are too large?"
+      ],
+      "retrieval_time_ms": 8571.746699977666,
+      "transformation_time_ms": 30483.700199984014,
+      "generation_time_ms": 46471.063400036655,
+      "total_turn_time_ms": 280175.7065000129,
+      "prompt_length_chars": 195,
+      "response_length_chars": 1954,
+      "error": null
+    }
+  }
+}

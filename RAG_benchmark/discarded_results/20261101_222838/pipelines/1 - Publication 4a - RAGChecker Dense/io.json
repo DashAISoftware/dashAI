@@ -1,0 +1,184 @@
+{
+  "iter0-turn0": {
+    "inputs": {
+      "user_message": "Can you explain the difference between sparse and dense retrieval methods, and why you might choose one over the other?",
+      "turn_number": 0
+    },
+    "outputs": {
+      "assistant_response": "The difference between sparse and dense retrieval methods lies in how they represent queries and keys, and how they build their indexes.\n\nSparse retrieval methods represent queries and keys using a specific representation, and then construct an index to organize the data source for efficient searching. Each term from the query performs a lookup to obtain a list of candidate documents, which are subsequently ranked based on their statistical scores. This approach is commonly used in document retrieval, where the keys/values represent the documents to be searched.\n\nOn the other hand, dense retrieval methods represent queries and keys using dense embedding vectors, and build an Approximate Nearest Neighbor (ANN) index to speed up the search. This approach can be applied to all modalities, including text, code, audio, image, and video data. Dense retrieval embeds queries and external knowledge into vector spaces, which allows for more efficient and effective searching.\n\nYou might choose sparse retrieval over dense retrieval when:\n\n* You need to search in a specific domain or modality where dense retrieval may not be as effective.\n* You have a large dataset and need to reduce the computational cost of building and querying the index.\n* You prefer a more straightforward and interpretable approach to retrieval.\n\nOn the other hand, you might choose dense retrieval over sparse retrieval when:\n\n* You need to search in a high-dimensional space, such as image or audio data, where dense retrieval can be more effective.\n* You want to leverage pre-trained models and their embeddings to improve the retrieval performance.\n* You need to search in multiple modalities simultaneously, where dense retrieval can provide a more unified and efficient approach.\n\nIt's worth noting that the choice between sparse and dense retrieval ultimately depends on the specific use case, dataset, and requirements of the application.",
+      "retrieved_chunks": {
+        "7_21": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 21,
+          "text": "verted index to organize documents. Concretely, \neach\tterm\tfrom\tthe\tquery\tperforms\ta\tlookup\tto\tobtain\ta\tlist\t\nof candidate documents, which are subsequently ranked \nbased on their statistical scores.\n2.3.2 Dense Retriever\nUnlike\tsparse\tretrieval,\tdense\tretrieval\tmethods\trepresent\t\nqueries and keys using dense embedding vectors, and build \nan\tApproximate\tNearest\tNeighbor\t(ANN)\tindex\tto\tspeed\t\nup\tthe\tsearch.\tThis\tcan\tbe\tapplied\tto\tall\tmodalities.\tFor\ttext\t\ndata,\trecent\tadvancements\tin\tpre-trained\tmodels\t(such\tas\t\nBERT\t[15])\thave\tbeen\temployed\tto\tencode\tqueries\tand\tkeys\t\nindividually [20].\tThis\tapproach\tis\toften\treferred\tto\tas\tDense\t\nPassage\tRetrieval\t(DPR).\tSimilar\tto\ttext,\tmodels\thave\tbeen\t\nproposed\tto\tencode\tcode\tdata\t[25], audio data [69], image \ndata [24], video data [70",
+          "page": 4,
+          "source_positions": null
+        },
+        "8_4": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 4,
+          "text": "\n(LLM), Pre-training, Fine-tuning, In-context Learning, Prompting\nACM Reference Format:\nWenqi Fan, Yujuan Ding, Liangbo Ning, Shijie Wang, Hengyun Li, Dawei\nYin, Tat-Seng Chua, and Qing Li. 2024. A Survey on RAG Meeting LLMs:\nTowards Retrieval-Augmented Large Language Models. InProceedings of\nthe 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining\n(KDD ’24), August 25–29, 2024, Barcelona, Spain. ACM, New York, NY, USA,\n11 pages. https://doi.org/10.1145/3637528.3671470\n1 INTRODUCTION\nAs one of the most fundamental data mining techniques, retrieval\naims to understand the input query and extract relevant information\nfrom external data sources [23, 29, 60, 118]. It has found extensive\napplication in various fields [8, 27, 90, 144], such as search, ques-\ntion answering, and recommender systems.",
+          "page": 1,
+          "source_positions": null
+        },
+        "7_20": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 20,
+          "text": "a\t\nspecific\trepresentation;\tand\tthen\t(ii)\tan\tindex\tis\tconstructed\t\nto\torganize\tthe\tdata\tsource\tfor\tefficient\tsearch.\n2.3.1 Sparse Retriever\nSparse\tretrieval\tmethods\tare\tcommonly\tused\tin\tdocument\t\nretrieval,\twhere\tthe\tkeys/values\trepresent\tthe\tdocuments\tto\t\nbe searched. These methods leverage term matching metrics \nsuch\tas\tTF-IDF\t[67], query likelihood [68], and BM25 [19], \nwhich analyze word statistics from texts and construct \ninverted\tindices\tfor\tefficient\tsearching.\tEssentially,\tBM25\t\nis a strong baseline in large-scale web search, integrating \ninverse document frequency weights, query token occur -\nrences,\tand\tother\tpertinent\tmetrics.\nTo\tenable\tefficient\tsearch,\tsparse\tretrieval\ttypically\tlever-\nage an inverted index to organize documents. Concretely, \neach\tterm\tfrom\tthe\tquery\tperforms\ta\tlookup\tto\tobtain\ta\tlist\t\nof candidate documents, which are subsequently ranked \nbased on their statistical scores.\n2.3.",
+          "page": 4,
+          "source_positions": null
+        },
+        "8_14": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 14,
+          "text": "ed into two types: sparse and dense, based on the information\nencoding methods. Sparse retrieval is word-based and applied in\ntext retrieval mostly, while dense retrieval embeds queries and ex-\nternal knowledge into vector spaces and can be applied to various\ndata formats.\nAs a straightforward approach, sparse retrieval, e.g., TF-IDF and\nBM25 [106, 121], usually relies on inverted index matching along\nwith the raw data input. For example, many studies directly ap-\nply BM25 for passage-level retrieval to facilitate their RAG [10, 52,\n98, 137, 159, 160], where passages are specifically represented as\na bag of words and ranked based on term and inverse document\nfrequencies [\n50]. On top of offering supplementary to enhance\nthe input of the generator, sparse retrieval has also been used to\nfind demonstrations to function in In-Context Learning (ICL) for\nRA-LLMs [2, 83, 107, 117, 141]. The main limitation of applying\nsparse retrieval in RAG is its no-training nature, which makes the\nretrieval performance heavily rely on the quality of the database\nand the query. Moreover",
+          "page": 3,
+          "source_positions": null
+        },
+        "7_211": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 211,
+          "text": "\tLearning\tto\tfilter\tcontext\tfor\t\nretrieval-augmented generation. arxiv:2311.08377\n163.\tHofstätter\tS,\tChen\tJ,\tRaman\tK,\tZamani\tH\t(2023)\tFid-light:\teffi-\ncient\tand\teffective\tretrieval-augmented\ttext\tgeneration.\tIn:\tSIGIR\n164.\tArora\tD,\tKini\tA,\tChowdhury\tSR\tet\tal\t(2023)\tGar-meets-rag\tpara-\ndigm for zero-shot information retrieval. arXiv:2310.20158\n165.\thttps://www.pinecone.io\n166.\tYu\tW,\tIter\tD\tet\tal\t(2022)\tGenerate\trather\tthan\tretrieve:\tlarge\tlan-\nguage models are strong context generators. arXiv:2209.10063\n167.\tAbdallah\t A,\t Jatowt\t A\t (2023)\t Generator-retriever",
+          "page": 25,
+          "source_positions": null
+        },
+        "7_69": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 69,
+          "text": "\tanswer\t(e.g.,\tquestion\tanswer-\ning\tand\tcode\tgeneration).\nIn\tthe\tdimension\tof\tenhancement,\tInput\tEnhancement\t\nhas\tbeen\twidely\tadopted\tacross\tvarious\tmodalities\tdue\tto\tits\t\nease\tof\timplementation(e.g.,\tImage\tGeneration,\tVideo\tGen-\neration\tand\tAudio\tGeneration).\tRetriever\tEnhancement\tand\t\nGenerator\tEnhancement,\tconversely,\tnecessitate\tthe\tselec-\ntion\tof\tspecific\tmodel\tarchitectures\tand\tretrieval\tmethods\t\ntailored\tto\tthe\tunique\tcharacteristics\tof\tdifferent\tmodalities\t\nand\ttasks.\tResult\tEnhancement\tis\ta\trelatively\tgeneric\tstep\t\ndesigned\tto\tensure\tthat\tthe\tfinal\toutput\tgenerated\tby\tthe\t\nmodel\taligns\tmore\tclosely\twith\tthe\tspecific\trequirements\t\nof\tthe\ttask.(e.g.,\tCode\tSummary\tand\tImage\tCaptioning)\t\nPipeline\tEnhancement\tfocuses\tprimarily\ton\toverall\tsystem\t\nefficiency\t",
+          "page": 11,
+          "source_positions": null
+        },
+        "7_111": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 111,
+          "text": "relevant facts through \nentity matching. Sen et al. [ 271]\treplaced\tthe\tretrieval\twith\t\na\trelation\tdistribution\tgeneration\tmodel\tfor\tweighted\ttrip-\nlets. Retrieve-Rewrite-Answer [272]\t retrieves\t subgraphs\t\ninto\tprompts\tusing\thop\tprediction,\trelation\tpath\tprediction,\t\nand\ttriplet\tsampling.\tKeqing\t[273]\tdecomposes\ta\tcomplex\t\nquestion\t into\t simple\t sub-questions\t through\t LLM,\t then\t\nretrieves\tsub-question\ttemplates\tand\textracts\tcandidate\tenti-\nties\tfrom\tknowledge\tgraph,\tand\tfinally\tgenerates\tthe\tanswer\t\nthrough ChatGPT. Liu et al. [274]\tleveraged\tretrieved\tpairs\t\nto\texplore\tthe\tcapability\tof\tformal\tlanguage\tunderstand-\ning\tand\tgeneration.\tInteractive-KBQA\t[275]\temploys\tthe\t\nLLM as an agent, which conducts entity-linking on KG and \n1 3\n16\n\nRetrieval",
+          "page": 16,
+          "source_positions": null
+        },
+        "8_70": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 70,
+          "text": "2020. Entities as Experts: Sparse Memory Access with Entity\nSupervision. In EMNLP. 4937–4951.\n[39] Yunfan Gao, Yun Xiong, Xinyu Gao, Kangxiang Jia, Jinliu Pan, Yuxi Bi, Yi Dai,\nJiawei Sun, and Haofen Wang. 2023. Retrieval-augmented generation for large\nlanguage models: A survey. arXiv:2312.10997 (2023).\n[40] Izacard Gautier, Caron Mathilde, Hosseini Lucas, Riedel Sebastian, Bojanowski\nPiotr, Joulin Armand, and Grave Edouard. 2022. Unsupervised dense information\nretrieval with contrastive learning. J Mach Learn Res (2022).\n[41] Marjan Ghazvininejad, Chris Brockett, Ming-Wei Chang, Bill Dolan, Jianfeng\nGao, Wen-tau Yih, and Michel Galley. 2018. A knowledge-grounded neural\nconversation model. In AAAI, Vol. 32.\n[42]",
+          "page": 9,
+          "source_positions": null
+        },
+        "7_192": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 192,
+          "text": "790\n98.\t Li\tJ,\tLi\tY\tet\tal\t(2021)\tEditSum:\ta\tretrieve-and-edit\tframework\tfor\t\nsource\tcode\tsummarization.\tIn:\tASE\n99.\t Yu\tC,\tYang\tG,\tChen\tX\tet\tal\t(2022)\tBashExplainer:\tretrieval-\naugmented\tBash\tcode\tcomment\tgeneration\tbased\ton\tfine-tuned\t\nCodeBERT.\tIn:\tICSME\n100.\tHashimoto\tTB,\tGuu\tK\tet\tal\t(2018)\tA\tretrieve-and-edit\tframework\t\nfor\tpredicting\tstructured\toutputs.\tIn:\tNeurIPS\n101.\tWei\tB,\tLi\tY,\tLi\tG\tet\tal\t(2020)\tRetrieve\tand\trefine:\texemplar-\nbased\tneural\tcomment\tgeneration.\tIn:\tASE\n102.\tShi\tE,\tWang\tY,\tTao\tW\tet\tal\t(2022)\tRACE:\tretrieval",
+          "page": 24,
+          "source_positions": null
+        },
+        "7_32": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 32,
+          "text": "ployed\t\nacross various modalities.\nFor\ttext\tgeneration,\tREALM\t[33]\temploys\ta\tdual-BERT\t\nframework to streamline knowledge retrieval and integra -\ntion,\tmarrying\tpre-trained\tmodels\twith\tknowledge\textrac-\ntors. Lewis et al. [ 34]\t leveraged\t DPR\t for\t information\t\nretrieval\tand\temployed\tBART\tas\tthe\tgenerator\tto\teffectively\t\nenhance\tthe\tgeneration.\tSELF-RAG\t[85] utilizes a critique \nmodule\tto\tdetermine\twhether\tthe\tretrieval\tis\trequired.\tIn\t\naddition\tto\tbeing\tcompatible\twith\tlocal\tgenerators,\tquery-\nbased\tRAG\tis\talso\tapplicable\tto\tscenarios\tthat\tuse\tLLM\t\nthrough\tAPI\tcalls.\tREPLUG\t[86] follows this methodology \nby\ttreating\tthe\tlanguage\tmodel\tas\ta\t“black\tbox”,\tand\teffec-\ntively integrates relevant external documents into the query. \nIn-Context\tRALM\t[87] uses BM25 for document retrieval",
+          "page": 6,
+          "source_positions": null
+        },
+        "7_253": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 253,
+          "text": "omedical texts. arXiv:2405.13179\n343.\tYang\tK\tet\tal\t(2024)\tLeandojo:\ttheorem\tproving\twith\tretrieval-\naugmented\tlanguage\tmodels.\tIn:\tNeurIPS\n344.\tLevonian\tZ,\tLi\tC,\tZhu\tW\tet\tal\t(2023)\tRetrieval-augmented\tgen-\neration\tto\timprove\tmath\tquestion-answering:\ttrade-offs\tbetween\t\ngroundedness\tand\thuman\tpreference.\tarXiv:2310.03184\n345.\tChen\tJ,\tLin\tH,\tHan\tX,\tSun\tL\t(2023)\tBenchmarking\tlarge\tlanguage\t\nmodels in retrieval-augmented generation. arxiv:2309.01431\n346.\tES\tS,\tJames\tJ,\tAnke\tLE,\tSchockaert\tS\t(2023)\tRAGAS:\tautomated\t\nevaluation of retrieval augmented generation. arxiv:230",
+          "page": 28,
+          "source_positions": null
+        },
+        "7_72": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 72,
+          "text": "\tknowledge\t\nsuffices\tfor\tanswering\trelevant\tquestions.\tConsequently,\t\nthis\tchapter\twill\tdelve\tinto\ttwo\tmethods\tfor\tdetermining\t\nretrieval\tnecessity:\trule-based\tand\tmodel-based\tapproaches.\nRule-based:\t FLARE\t [181] actively decides whether \nand\twhen\tto\tsearch\tthrough\tthe\tprobability\tin\tthe\tgenera-\ntion\tprocess.\tEfficient-KNNLM\t[38] combines the genera -\ntion\tprobability\tof\tKNN-LM\t[37] and NPM [ 119] with a \nhyperparameter\tλ\tto\tdetermine\tthe\tproportion\tof\tgeneration\t\nand retrieval. Mallen et al. [182] uses statistical analysis on \nquestions to enable direct answers for high-frequency ones \nand\tapplied\tRAG\tfor\tlow-frequency\tones.\tJiang\tet\tal.\t[183] \nevaluated\tmodel\tconfidence\tbased\ton\tModel\tUncertainty,\t\nInput\tUncertainty,\tand\tInput\tStatistics\tto\tguide\tretrieval\t",
+          "page": 11,
+          "source_positions": null
+        },
+        "2_48": {
+          "document_id": 2,
+          "document_name": "Dense-Passage-Retrieval.pdf",
+          "document_position": 48,
+          "text": "\nand relevant passages, Lee et al. (2019) jointly train\nthe question encoder and reader. Their approach\noutperforms the BM25 plus reader paradigm on\nmultiple open-domain QA datasets in QA accuracy,\nand is further extended by REALM (Guu et al.,\n2020), which includes tuning the passage encoder\nasynchronously by re-indexing the passages dur-\ning training. The pretraining objective has also\nrecently been improved by Xiong et al. (2020b).\nIn contrast, our model provides a simple and yet\neffective solution that shows stronger empirical per-\nformance, without relying on additional pretraining\nor complex joint training schemes.\nDPR has also been used as an important mod-\nule in very recent work. For instance, extending\nthe idea of leveraging hard negatives, Xiong et al.\n(2020a) use the retrieval model trained in the pre-\nvious iteration to discover new negatives and con-\nstruct a different set of examples in each training\niteration. Starting from our trained DPR model,\nthey show that the retrieval performance can be\nfurther improved. Recent work (Izacard and Grave,\n2020; Lewis et al., 2020b)",
+          "page": 9,
+          "source_positions": null
+        },
+        "7_49": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 49,
+          "text": "retrieve\tsimilar\tcode\tsnippets\ton\t\nsemantic-level.\tBashexplainer\t[99]\tfirst\tuses\tdense\tretriever\t\nto\t capture\t semantic\t information\t and\t then\t uses\t sparse\t\nretriever\tto\tacquire\tlexical\tinformation.\tRetDream\t[50]\tfirst\t\nretrieves with text and then retrieves with the image embed-\nding. CRAG [148] features a retrieval evaluator that gauges \ndocument\trelevance\tto\tqueries,\tprompting\tthree\tretrieval\t\nresponses\tbased\ton\tconfidence:\tdirect\tuse\tof\tresults\tfor\t\nKnowledge\tRefinement\tif\taccurate,\tWeb\tSearch\tif\tincor-\nrect,\tand\ta\thybrid\tapproach\tfor\tambiguous\tcases.\tHuang\t\net al. [149]\timproves\tquestion-answering\tby\tintroducing\t\nDKS\t(Dense\tKnowledge\tSimilarity)\tand\tRAC\t(Retriever\tas\t\nAnswer\tClassifier)\tin\tthe\tretrieval\tphase,\tevaluating\tanswer\t\nrelevance",
+          "page": 9,
+          "source_positions": null
+        },
+        "7_186": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 186,
+          "text": "s\t:\t/\t\t/\tg\ti\tt\t\th\tu\t\tb\t.\tc\t\to\tm\t/\tj\t\te\tr\tr\t\ty\tj\tl\t\ti\tu\t/\tl\tl\ta\tm\ta\t_\ti\tn\td\te\tx\n137.\tSarthi\tP,\tAbdullah\tS,\tTuli\tA\tet\tal\t(2023)\tRaptor:\trecursive\tabstrac-\ntive\tprocessing\tfor\ttree-organized\tretrieval.\tIn:\tICLR\n138.\tKang\tB,\tKim\tJ\tet\tal\t(2024)\tPrompt-rag:\tpioneering\tvector\tembed-\nding-free retrieval-augmented generation in niche domains, \nexemplified\tby\tKorean\tmedicine.\tarXiv:2401.11246\n139.\tRaina\tV\tet\tal\t(2024)\tQuestion-based\tretrieval\tusing\tatomic\tunits\t\nfor\tenterprise\trag.\tarXiv:2405.1236",
+          "page": 24,
+          "source_positions": null
+        },
+        "8_13": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 13,
+          "text": "in each process.\n2.1 Retrieval\nGiven the query from the input of LLMs, the retriever is an infor-\nmation provider in RAG, aiming to return relevant knowledge by\nmeasuring the distance between the query and documents from\n6492\n\nA Survey on RAG Meeting LLMs: Towards Retrieval-Augmented Large Language Models KDD ’24, August 25–29, 2024, Barcelona, Spain\nthe external knowledge sources. As shown in Figure 2, the retrieval\ncomponent consists of several compulsory or optional procedures\nto function as a whole for effective information retrieval. The spe-\ncific pipeline of the retrieval part is jointly determined by several\nperspectives of design, such as retriever type and retrieval granu-\nlarity. In this subsection, we will introduce the existing retrieval\nmethods in RA-LLMs based on these key aspects.\n2.1.1 Retriever Type. Retrieval methods can be generally catego-\nrized into two types: sparse and dense, based on the information\nencoding methods. Sparse retrieval is word-based and applied in\ntext retrieval mostly, while dense retrieval embeds queries and ex-\nternal knowledge into vector spaces and can be applied to various\ndata formats",
+          "page": 2,
+          "source_positions": null
+        },
+        "2_67": {
+          "document_id": 2,
+          "document_name": "Dense-Passage-Retrieval.pdf",
+          "document_position": 67,
+          "text": "the retrieval accuracy for our “baseline”\nsettings reported in Table 5 (Gold) and Table 6\n(DP, NLL) is slightly better than those reported in\nTable 3. This is due to a better hyper-parameter\nsetting used in these analysis experiments, which\nis documented in our code release.\nC Qualitative Analysis\nAlthough DPR performs better than BM25 in gen-\neral, the retrieved passages of these two retrievers\nactually differ qualitatively. Methods like BM25\nare sensitive to highly selective keywords and\nphrases, but cannot capture lexical variations or se-\nmantic relationships well. In contrast, DPR excels\nat semantic representation, but might lack sufﬁcient\ncapacity to represent salient phrases which appear\nrarely. Table 7 illustrates this phenomenon with\ntwo examples. In the ﬁrst example, the top scor-\ning passage from BM25 is irrelevant, even though\nkeywords such as England and Ireland appear mul-\ntiple times. In comparison, DPR is able to return\nTop-1 Top-5 Top-20 Top-100\nGold 44.9 66.8 78.1 85.0\nDist. Sup. 43.9 65.3 77.1",
+          "page": 12,
+          "source_positions": null
+        },
+        "7_193": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 193,
+          "text": "emplar-\nbased\tneural\tcomment\tgeneration.\tIn:\tASE\n102.\tShi\tE,\tWang\tY,\tTao\tW\tet\tal\t(2022)\tRACE:\tretrieval-augmented\t\ncommit\tmessage\tgeneration.\tIn:\tEMNLP\n103.\tChen\tW,\tHu\t H,\t Saharia\t C,\t Cohen\tWW\t (2023)\t Re-imagen:\t\nretrieval-augmented\ttext-to-image\tgenerator.\tIn:\tICLR\n104.\tSheynin\tS,\tAshual\tO\tet\tal\t(2023)\tKNN-diffusion:\tImage\tgenera-\ntion\tvia\tlarge-scale\tretrieval.\tIn:\tICLR\n105.\tBlattmann\tA,\tRombach\tR,\tOktay\tK\tet\tal\t(2022)\tRetrieval-aug-\nmented\tdiffusion\tmodels.\tIn:\tNeurIPS\n106.\tRombach\tR,\tBlattmann\tA,\tOmmer\tB\t(2022)\t",
+          "page": 24,
+          "source_positions": null
+        },
+        "4_41": {
+          "document_id": 4,
+          "document_name": "Gemini-Multimodal-Models.pdf",
+          "document_position": 41,
+          "text": "ization of a\nuser-provided source, generating fine-grained citations given a question and provided snippets\nakin to Menick et al. (2022); Peng et al. (2023), answering questions from a long-form source\nsuch as a book (Mihaylov et al., 2018), and transforming a given source to a desired output\n(e.g. an email from a portion of a meeting transcript).\n3. Hedging: If prompted with an input that is “unanswerable”, Gemini API models must ac-\nknowledge that it cannot provide a response by hedging to avoid hallucination. These include\nscenarios where the input prompt contains false-premise questions [see examples in Hu et al.\n(2023)], the input prompt instructs the model to perform open book QA, but the answer is not\nderivable from the given context, and so forth.\nFactuality is evaluated via human annotators who fact-check each response manually; we report\nthe percentage of factually inaccurate responses as judged by annotators. Attribution is evaluated via\nhuman annotators who check for attribution to sources in the prompt for each response manually;\nthe reported metric is AIS (Rashkin et al., 2023).",
+          "page": 11,
+          "source_positions": null
+        },
+        "7_255": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 255,
+          "text": "\tLi\tZ,\tNiu\tS\tet\tal\t(2024)\tCRUD-RAG:\ta\tcomprehensive\t\nChinese benchmark for retrieval-augmented generation of large \nlanguage models. arxiv:2401.17043\n350.\tXiong\tG,\tJin\tQ,\tLu\tZ,\tZhang\tA\t(2024)\tBenchmarking\tretrieval-\naugmented generation for medicine. arXiv:2402.13178\n351.\tPetroni\tF,\tPiktus\tA\tet\tal\t(2021)\tKilt:\ta\tbenchmark\tfor\tknowledge\t\nintensive\tlanguage\ttasks.\tIn:\tNAACL-HLT\n352.\tYang\tX,\tSun\tK,\tXin\tH,\tSun\tY,\tBhalla\tN,\tChen\tX,\tChoudhary\tS,\t\nGui\tRD,\tJiang\tZW,\tJiang\tZ\tet\tal\t(2024)\tCrag-comprehensive\trag\t\nbenchmark.\tAdv\tNeural\tInf",
+          "page": 28,
+          "source_positions": null
+        }
+      },
+      "chunks_retrieved": 20,
+      "queries": [
+        "Can you explain the difference between sparse and dense retrieval methods, and why you might choose one over the other?"
+      ],
+      "retrieval_time_ms": 137.39930000156164,
+      "transformation_time_ms": 0.0,
+      "generation_time_ms": 662502.2346000187,
+      "total_turn_time_ms": 1108246.295799967,
+      "prompt_length_chars": 119,
+      "response_length_chars": 1926,
+      "error": null
+    }
+  }
+}

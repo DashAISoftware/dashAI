@@ -1,0 +1,84 @@
+{
+  "iter0": {
+    "model_name": "RAGPipeline",
+    "task_name": "RAGTask",
+    "name": "Pub 5b - Query Expansion (BM25) (run 261101185013, iter 0)",
+    "description": null,
+    "parameters": {
+      "chunking_model": {
+        "component": "TokenChunkModel",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60
+        }
+      },
+      "retriever_model": {
+        "component": "BM25Retriever",
+        "params": {
+          "vectorizer": {
+            "component": "BagOfWordsConverter",
+            "params": {
+              "max_features": null,
+              "lowercase": true,
+              "strip_accents": null,
+              "analyzer": "word",
+              "stop_words": null,
+              "custom_stop_words": null,
+              "lower_bound_ngrams": 1,
+              "upper_bound_ngrams": 1,
+              "min_df": 0.0,
+              "max_df": 1.0
+            }
+          },
+          "similarity_function": "cosine",
+          "top_k": 20,
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0
+        }
+      },
+      "generation_model": {
+        "component": "Llama32_3BInstruct",
+        "params": {
+          "max_tokens": 1024,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 8192,
+          "device": "CPU"
+        }
+      },
+      "prompt": {
+        "component": "DefaultRAGGenerationPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a helpful AI assistant with access to a set of retrieved documents.\nUse the documents below to support your answer. Prioritize information from the documents over your own knowledge. If the documents do not contain relevant information, say so clearly rather than guessing.\n\nUser message:\n{input}\nSearch queries used for retrieval: {queries}\n\nRetrieved documents:\n{chunks}\n\nAnswer the user's message based on the documents above."
+        }
+      },
+      "query_transformation": {
+        "component": "LLMQueryExpander",
+        "params": {
+          "prompt": {
+            "component": "DefaultQueryExpansionPrompt",
+            "params": {
+              "language": "en",
+              "template": "You are a query expansion assistant. Rewrite the user message into exactly {n} search queries that broaden retrieval coverage so that more relevant documents can be found.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nProduce exactly {n} concise, independent search queries or keyword phrases. At least one of them must closely preserve the original request; the others should cover related terms, synonyms or angles that may appear in relevant documents. Also write a short user-facing message describing what you did and a short justification explaining why. Do not add any other explanation.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<query 1>\", \"<query 2>\"], \"message\": \"<one short sentence for the user describing what you did>\", \"justification\": \"<one short sentence explaining why>\"}}"
+            }
+          },
+          "llm_model": {
+            "component": "Qwen25_15BInstruct",
+            "params": {
+              "max_tokens": 256,
+              "temperature": 0.1,
+              "frequency_penalty": 0.0,
+              "context_window": 2048,
+              "device": "CPU"
+            }
+          },
+          "history_window": 2,
+          "n_queries": 3
+        }
+      }
+    }
+  }
+}

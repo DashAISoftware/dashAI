@@ -1,0 +1,2 @@
+id,run_id,pipeline_name,iteration,turn_number,user_message,assistant_response,retrieval_time_ms,transformation_time_ms,generation_time_ms,total_turn_time_ms,chunks_retrieved,queries,retrieved_chunks,prompt_length_chars,response_length_chars,error
+iter0-turn0,iter0,Publication 5b - Query Expansion (BM25),0,0,I've read that RAG combines retrieval with generation. Can you explain what problem RAG is actually trying to solve compared to just using a large language model on its own?,,0.00,0.00,0.00,30755.95,0,[],{},0,0,Process 7 ended with ERROR status

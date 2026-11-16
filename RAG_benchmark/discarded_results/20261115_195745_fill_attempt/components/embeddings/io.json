@@ -1,0 +1,452 @@
+{
+  "0001": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-default",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 32,
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0002": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-default",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 32,
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0003": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-default",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 32,
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0004": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-default",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 32,
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0005": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-default",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 32,
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0006": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-default",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 32,
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0007": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-default",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 32,
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0008": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-default",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 32,
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0009": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-default",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 32,
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0010": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-alternate",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 16,
+          "normalize": false,
+          "overflow_strategy": "aggregate",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0011": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-alternate",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 16,
+          "normalize": false,
+          "overflow_strategy": "aggregate",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0012": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-alternate",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 16,
+          "normalize": false,
+          "overflow_strategy": "aggregate",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0013": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-alternate",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 16,
+          "normalize": false,
+          "overflow_strategy": "aggregate",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0014": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-alternate",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 16,
+          "normalize": false,
+          "overflow_strategy": "aggregate",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0015": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-alternate",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 16,
+          "normalize": false,
+          "overflow_strategy": "aggregate",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0016": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-alternate",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 16,
+          "normalize": false,
+          "overflow_strategy": "aggregate",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0017": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-alternate",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 16,
+          "normalize": false,
+          "overflow_strategy": "aggregate",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  },
+  "0018": {
+    "inputs": {
+      "config": {
+        "component_class": "AllMiniLML6V2Embedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "AllMiniLML6V2Embedding-alternate",
+        "params": {
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+          "batch_size": 16,
+          "normalize": false,
+          "overflow_strategy": "aggregate",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "failed",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "'Service config is not registered.'",
+      "output_size": null
+    }
+  }
+}

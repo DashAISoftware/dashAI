@@ -1,0 +1,1062 @@
+{
+  "0001": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval sufficiency evaluator for a Retrieval-Augmented Generation system. Decide whether the retrieved chunks are enough to answer the user message.\n\nThis is evaluation round {round} of at most {max_rounds}.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nChunk positions are ZERO-BASED: a document with C chunks has valid positions 0 through C-1. Never use C or a larger number as a position.\n\nCurrent pool (each line shows its document_id and position):\n{chunks}\n\nCurrent pool size: {pool_size} chunks.\n\nMaximum retrievable chunks: {topk}.\n\nFree pool slots left: {remaining}.\n\nRetriever catalog: {retriever.description}\n\nThe listed chunks ARE the current pool. Chunks not mentioned in the two chunk fields stay in the pool exactly as they are, except when the maximum capacity forces out older non-requested chunks; requested chunks take priority. Use the document chunk counts to choose valid positions in 0..C-1.\n\nRespond by calling the function evaluate_agentic_retrieval with a single JSON object with this shape:\n{\"sufficient\": <true or false>, \"call_retrievers\": {\"<retriever index>\": <top_k>}, \"request_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"discard_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"message\": \"<one short user-facing sentence>\", \"justification\": \"<one short rationale>\"}\n\n- \"sufficient\" is required and says whether the retrieved chunks answer the user message.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you decided to do.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining why.\n- \"call_retrievers\" maps 1-based retriever indices from the retriever catalog to the number of chunks to retrieve from that retriever next. It is NOT mandatory every round. Indices must be at least 1. The per-retriever top_k is a size hint; the retriever enforces the hard pool cap.\n- \"request_specific_chunks\" maps document ids to chunk positions to ADD to the pool, even if no retriever returned them. Use the document chunk counts to choose valid positions in 0..C-1.\n- \"discard_specific_chunks\" maps document ids to chunk positions to REMOVE from the pool.\n- \"request_specific_chunks\" and \"discard_specific_chunks\" are mutually exclusive for the same chunk: never list the same chunk in both.\n- Calling retrievers is NOT mandatory every round. Two valid cases:\n  1. The pool already has enough information for an accurate answer: set \"sufficient\": true and omit all actions.\n  2. The pool is insufficient: set \"sufficient\": false and request chunks, call retrievers, or both.\n- When asking for more, prefer requests within the remaining slots; the retriever enforces the hard pool cap.\n\nInvalid decisions are rejected and must be retried. Use only valid retriever indices and chunk positions, never request and discard the same chunk, leave free pool slots for the retrievers you call, and do not leave the pool empty unless you also call a retriever or request chunks.\n\nRespond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0002": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval sufficiency evaluator for a Retrieval-Augmented Generation system. Decide whether the retrieved chunks are enough to answer the user message.\n\nThis is evaluation round {round} of at most {max_rounds}.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nChunk positions are ZERO-BASED: a document with C chunks has valid positions 0 through C-1. Never use C or a larger number as a position.\n\nCurrent pool (each line shows its document_id and position):\n{chunks}\n\nCurrent pool size: {pool_size} chunks.\n\nMaximum retrievable chunks: {topk}.\n\nFree pool slots left: {remaining}.\n\nRetriever catalog: {retriever.description}\n\nThe listed chunks ARE the current pool. Chunks not mentioned in the two chunk fields stay in the pool exactly as they are, except when the maximum capacity forces out older non-requested chunks; requested chunks take priority. Use the document chunk counts to choose valid positions in 0..C-1.\n\nRespond by calling the function evaluate_agentic_retrieval with a single JSON object with this shape:\n{\"sufficient\": <true or false>, \"call_retrievers\": {\"<retriever index>\": <top_k>}, \"request_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"discard_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"message\": \"<one short user-facing sentence>\", \"justification\": \"<one short rationale>\"}\n\n- \"sufficient\" is required and says whether the retrieved chunks answer the user message.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you decided to do.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining why.\n- \"call_retrievers\" maps 1-based retriever indices from the retriever catalog to the number of chunks to retrieve from that retriever next. It is NOT mandatory every round. Indices must be at least 1. The per-retriever top_k is a size hint; the retriever enforces the hard pool cap.\n- \"request_specific_chunks\" maps document ids to chunk positions to ADD to the pool, even if no retriever returned them. Use the document chunk counts to choose valid positions in 0..C-1.\n- \"discard_specific_chunks\" maps document ids to chunk positions to REMOVE from the pool.\n- \"request_specific_chunks\" and \"discard_specific_chunks\" are mutually exclusive for the same chunk: never list the same chunk in both.\n- Calling retrievers is NOT mandatory every round. Two valid cases:\n  1. The pool already has enough information for an accurate answer: set \"sufficient\": true and omit all actions.\n  2. The pool is insufficient: set \"sufficient\": false and request chunks, call retrievers, or both.\n- When asking for more, prefer requests within the remaining slots; the retriever enforces the hard pool cap.\n\nInvalid decisions are rejected and must be retried. Use only valid retriever indices and chunk positions, never request and discard the same chunk, leave free pool slots for the retrievers you call, and do not leave the pool empty unless you also call a retriever or request chunks.\n\nRespond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0003": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval sufficiency evaluator for a Retrieval-Augmented Generation system. Decide whether the retrieved chunks are enough to answer the user message.\n\nThis is evaluation round {round} of at most {max_rounds}.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nChunk positions are ZERO-BASED: a document with C chunks has valid positions 0 through C-1. Never use C or a larger number as a position.\n\nCurrent pool (each line shows its document_id and position):\n{chunks}\n\nCurrent pool size: {pool_size} chunks.\n\nMaximum retrievable chunks: {topk}.\n\nFree pool slots left: {remaining}.\n\nRetriever catalog: {retriever.description}\n\nThe listed chunks ARE the current pool. Chunks not mentioned in the two chunk fields stay in the pool exactly as they are, except when the maximum capacity forces out older non-requested chunks; requested chunks take priority. Use the document chunk counts to choose valid positions in 0..C-1.\n\nRespond by calling the function evaluate_agentic_retrieval with a single JSON object with this shape:\n{\"sufficient\": <true or false>, \"call_retrievers\": {\"<retriever index>\": <top_k>}, \"request_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"discard_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"message\": \"<one short user-facing sentence>\", \"justification\": \"<one short rationale>\"}\n\n- \"sufficient\" is required and says whether the retrieved chunks answer the user message.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you decided to do.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining why.\n- \"call_retrievers\" maps 1-based retriever indices from the retriever catalog to the number of chunks to retrieve from that retriever next. It is NOT mandatory every round. Indices must be at least 1. The per-retriever top_k is a size hint; the retriever enforces the hard pool cap.\n- \"request_specific_chunks\" maps document ids to chunk positions to ADD to the pool, even if no retriever returned them. Use the document chunk counts to choose valid positions in 0..C-1.\n- \"discard_specific_chunks\" maps document ids to chunk positions to REMOVE from the pool.\n- \"request_specific_chunks\" and \"discard_specific_chunks\" are mutually exclusive for the same chunk: never list the same chunk in both.\n- Calling retrievers is NOT mandatory every round. Two valid cases:\n  1. The pool already has enough information for an accurate answer: set \"sufficient\": true and omit all actions.\n  2. The pool is insufficient: set \"sufficient\": false and request chunks, call retrievers, or both.\n- When asking for more, prefer requests within the remaining slots; the retriever enforces the hard pool cap.\n\nInvalid decisions are rejected and must be retried. Use only valid retriever indices and chunk positions, never request and discard the same chunk, leave free pool slots for the retrievers you call, and do not leave the pool empty unless you also call a retriever or request chunks.\n\nRespond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0004": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval sufficiency evaluator for a Retrieval-Augmented Generation system. Decide whether the retrieved chunks are enough to answer the user message.\n\nThis is evaluation round {round} of at most {max_rounds}.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nChunk positions are ZERO-BASED: a document with C chunks has valid positions 0 through C-1. Never use C or a larger number as a position.\n\nCurrent pool (each line shows its document_id and position):\n{chunks}\n\nCurrent pool size: {pool_size} chunks.\n\nMaximum retrievable chunks: {topk}.\n\nFree pool slots left: {remaining}.\n\nRetriever catalog: {retriever.description}\n\nThe listed chunks ARE the current pool. Chunks not mentioned in the two chunk fields stay in the pool exactly as they are, except when the maximum capacity forces out older non-requested chunks; requested chunks take priority. Use the document chunk counts to choose valid positions in 0..C-1.\n\nRespond by calling the function evaluate_agentic_retrieval with a single JSON object with this shape:\n{\"sufficient\": <true or false>, \"call_retrievers\": {\"<retriever index>\": <top_k>}, \"request_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"discard_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"message\": \"<one short user-facing sentence>\", \"justification\": \"<one short rationale>\"}\n\n- \"sufficient\" is required and says whether the retrieved chunks answer the user message.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you decided to do.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining why.\n- \"call_retrievers\" maps 1-based retriever indices from the retriever catalog to the number of chunks to retrieve from that retriever next. It is NOT mandatory every round. Indices must be at least 1. The per-retriever top_k is a size hint; the retriever enforces the hard pool cap.\n- \"request_specific_chunks\" maps document ids to chunk positions to ADD to the pool, even if no retriever returned them. Use the document chunk counts to choose valid positions in 0..C-1.\n- \"discard_specific_chunks\" maps document ids to chunk positions to REMOVE from the pool.\n- \"request_specific_chunks\" and \"discard_specific_chunks\" are mutually exclusive for the same chunk: never list the same chunk in both.\n- Calling retrievers is NOT mandatory every round. Two valid cases:\n  1. The pool already has enough information for an accurate answer: set \"sufficient\": true and omit all actions.\n  2. The pool is insufficient: set \"sufficient\": false and request chunks, call retrievers, or both.\n- When asking for more, prefer requests within the remaining slots; the retriever enforces the hard pool cap.\n\nInvalid decisions are rejected and must be retried. Use only valid retriever indices and chunk positions, never request and discard the same chunk, leave free pool slots for the retrievers you call, and do not leave the pool empty unless you also call a retriever or request chunks.\n\nRespond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0005": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval sufficiency evaluator for a Retrieval-Augmented Generation system. Decide whether the retrieved chunks are enough to answer the user message.\n\nThis is evaluation round {round} of at most {max_rounds}.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nChunk positions are ZERO-BASED: a document with C chunks has valid positions 0 through C-1. Never use C or a larger number as a position.\n\nCurrent pool (each line shows its document_id and position):\n{chunks}\n\nCurrent pool size: {pool_size} chunks.\n\nMaximum retrievable chunks: {topk}.\n\nFree pool slots left: {remaining}.\n\nRetriever catalog: {retriever.description}\n\nThe listed chunks ARE the current pool. Chunks not mentioned in the two chunk fields stay in the pool exactly as they are, except when the maximum capacity forces out older non-requested chunks; requested chunks take priority. Use the document chunk counts to choose valid positions in 0..C-1.\n\nRespond by calling the function evaluate_agentic_retrieval with a single JSON object with this shape:\n{\"sufficient\": <true or false>, \"call_retrievers\": {\"<retriever index>\": <top_k>}, \"request_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"discard_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"message\": \"<one short user-facing sentence>\", \"justification\": \"<one short rationale>\"}\n\n- \"sufficient\" is required and says whether the retrieved chunks answer the user message.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you decided to do.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining why.\n- \"call_retrievers\" maps 1-based retriever indices from the retriever catalog to the number of chunks to retrieve from that retriever next. It is NOT mandatory every round. Indices must be at least 1. The per-retriever top_k is a size hint; the retriever enforces the hard pool cap.\n- \"request_specific_chunks\" maps document ids to chunk positions to ADD to the pool, even if no retriever returned them. Use the document chunk counts to choose valid positions in 0..C-1.\n- \"discard_specific_chunks\" maps document ids to chunk positions to REMOVE from the pool.\n- \"request_specific_chunks\" and \"discard_specific_chunks\" are mutually exclusive for the same chunk: never list the same chunk in both.\n- Calling retrievers is NOT mandatory every round. Two valid cases:\n  1. The pool already has enough information for an accurate answer: set \"sufficient\": true and omit all actions.\n  2. The pool is insufficient: set \"sufficient\": false and request chunks, call retrievers, or both.\n- When asking for more, prefer requests within the remaining slots; the retriever enforces the hard pool cap.\n\nInvalid decisions are rejected and must be retried. Use only valid retriever indices and chunk positions, never request and discard the same chunk, leave free pool slots for the retrievers you call, and do not leave the pool empty unless you also call a retriever or request chunks.\n\nRespond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0006": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval sufficiency evaluator for a Retrieval-Augmented Generation system. Decide whether the retrieved chunks are enough to answer the user message.\n\nThis is evaluation round {round} of at most {max_rounds}.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nChunk positions are ZERO-BASED: a document with C chunks has valid positions 0 through C-1. Never use C or a larger number as a position.\n\nCurrent pool (each line shows its document_id and position):\n{chunks}\n\nCurrent pool size: {pool_size} chunks.\n\nMaximum retrievable chunks: {topk}.\n\nFree pool slots left: {remaining}.\n\nRetriever catalog: {retriever.description}\n\nThe listed chunks ARE the current pool. Chunks not mentioned in the two chunk fields stay in the pool exactly as they are, except when the maximum capacity forces out older non-requested chunks; requested chunks take priority. Use the document chunk counts to choose valid positions in 0..C-1.\n\nRespond by calling the function evaluate_agentic_retrieval with a single JSON object with this shape:\n{\"sufficient\": <true or false>, \"call_retrievers\": {\"<retriever index>\": <top_k>}, \"request_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"discard_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"message\": \"<one short user-facing sentence>\", \"justification\": \"<one short rationale>\"}\n\n- \"sufficient\" is required and says whether the retrieved chunks answer the user message.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you decided to do.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining why.\n- \"call_retrievers\" maps 1-based retriever indices from the retriever catalog to the number of chunks to retrieve from that retriever next. It is NOT mandatory every round. Indices must be at least 1. The per-retriever top_k is a size hint; the retriever enforces the hard pool cap.\n- \"request_specific_chunks\" maps document ids to chunk positions to ADD to the pool, even if no retriever returned them. Use the document chunk counts to choose valid positions in 0..C-1.\n- \"discard_specific_chunks\" maps document ids to chunk positions to REMOVE from the pool.\n- \"request_specific_chunks\" and \"discard_specific_chunks\" are mutually exclusive for the same chunk: never list the same chunk in both.\n- Calling retrievers is NOT mandatory every round. Two valid cases:\n  1. The pool already has enough information for an accurate answer: set \"sufficient\": true and omit all actions.\n  2. The pool is insufficient: set \"sufficient\": false and request chunks, call retrievers, or both.\n- When asking for more, prefer requests within the remaining slots; the retriever enforces the hard pool cap.\n\nInvalid decisions are rejected and must be retried. Use only valid retriever indices and chunk positions, never request and discard the same chunk, leave free pool slots for the retrievers you call, and do not leave the pool empty unless you also call a retriever or request chunks.\n\nRespond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0007": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval sufficiency evaluator for a Retrieval-Augmented Generation system. Decide whether the retrieved chunks are enough to answer the user message.\n\nThis is evaluation round {round} of at most {max_rounds}.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nChunk positions are ZERO-BASED: a document with C chunks has valid positions 0 through C-1. Never use C or a larger number as a position.\n\nCurrent pool (each line shows its document_id and position):\n{chunks}\n\nCurrent pool size: {pool_size} chunks.\n\nMaximum retrievable chunks: {topk}.\n\nFree pool slots left: {remaining}.\n\nRetriever catalog: {retriever.description}\n\nThe listed chunks ARE the current pool. Chunks not mentioned in the two chunk fields stay in the pool exactly as they are, except when the maximum capacity forces out older non-requested chunks; requested chunks take priority. Use the document chunk counts to choose valid positions in 0..C-1.\n\nRespond by calling the function evaluate_agentic_retrieval with a single JSON object with this shape:\n{\"sufficient\": <true or false>, \"call_retrievers\": {\"<retriever index>\": <top_k>}, \"request_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"discard_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"message\": \"<one short user-facing sentence>\", \"justification\": \"<one short rationale>\"}\n\n- \"sufficient\" is required and says whether the retrieved chunks answer the user message.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you decided to do.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining why.\n- \"call_retrievers\" maps 1-based retriever indices from the retriever catalog to the number of chunks to retrieve from that retriever next. It is NOT mandatory every round. Indices must be at least 1. The per-retriever top_k is a size hint; the retriever enforces the hard pool cap.\n- \"request_specific_chunks\" maps document ids to chunk positions to ADD to the pool, even if no retriever returned them. Use the document chunk counts to choose valid positions in 0..C-1.\n- \"discard_specific_chunks\" maps document ids to chunk positions to REMOVE from the pool.\n- \"request_specific_chunks\" and \"discard_specific_chunks\" are mutually exclusive for the same chunk: never list the same chunk in both.\n- Calling retrievers is NOT mandatory every round. Two valid cases:\n  1. The pool already has enough information for an accurate answer: set \"sufficient\": true and omit all actions.\n  2. The pool is insufficient: set \"sufficient\": false and request chunks, call retrievers, or both.\n- When asking for more, prefer requests within the remaining slots; the retriever enforces the hard pool cap.\n\nInvalid decisions are rejected and must be retried. Use only valid retriever indices and chunk positions, never request and discard the same chunk, leave free pool slots for the retrievers you call, and do not leave the pool empty unless you also call a retriever or request chunks.\n\nRespond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0008": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval sufficiency evaluator for a Retrieval-Augmented Generation system. Decide whether the retrieved chunks are enough to answer the user message.\n\nThis is evaluation round {round} of at most {max_rounds}.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nChunk positions are ZERO-BASED: a document with C chunks has valid positions 0 through C-1. Never use C or a larger number as a position.\n\nCurrent pool (each line shows its document_id and position):\n{chunks}\n\nCurrent pool size: {pool_size} chunks.\n\nMaximum retrievable chunks: {topk}.\n\nFree pool slots left: {remaining}.\n\nRetriever catalog: {retriever.description}\n\nThe listed chunks ARE the current pool. Chunks not mentioned in the two chunk fields stay in the pool exactly as they are, except when the maximum capacity forces out older non-requested chunks; requested chunks take priority. Use the document chunk counts to choose valid positions in 0..C-1.\n\nRespond by calling the function evaluate_agentic_retrieval with a single JSON object with this shape:\n{\"sufficient\": <true or false>, \"call_retrievers\": {\"<retriever index>\": <top_k>}, \"request_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"discard_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"message\": \"<one short user-facing sentence>\", \"justification\": \"<one short rationale>\"}\n\n- \"sufficient\" is required and says whether the retrieved chunks answer the user message.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you decided to do.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining why.\n- \"call_retrievers\" maps 1-based retriever indices from the retriever catalog to the number of chunks to retrieve from that retriever next. It is NOT mandatory every round. Indices must be at least 1. The per-retriever top_k is a size hint; the retriever enforces the hard pool cap.\n- \"request_specific_chunks\" maps document ids to chunk positions to ADD to the pool, even if no retriever returned them. Use the document chunk counts to choose valid positions in 0..C-1.\n- \"discard_specific_chunks\" maps document ids to chunk positions to REMOVE from the pool.\n- \"request_specific_chunks\" and \"discard_specific_chunks\" are mutually exclusive for the same chunk: never list the same chunk in both.\n- Calling retrievers is NOT mandatory every round. Two valid cases:\n  1. The pool already has enough information for an accurate answer: set \"sufficient\": true and omit all actions.\n  2. The pool is insufficient: set \"sufficient\": false and request chunks, call retrievers, or both.\n- When asking for more, prefer requests within the remaining slots; the retriever enforces the hard pool cap.\n\nInvalid decisions are rejected and must be retried. Use only valid retriever indices and chunk positions, never request and discard the same chunk, leave free pool slots for the retrievers you call, and do not leave the pool empty unless you also call a retriever or request chunks.\n\nRespond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0009": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval sufficiency evaluator for a Retrieval-Augmented Generation system. Decide whether the retrieved chunks are enough to answer the user message.\n\nThis is evaluation round {round} of at most {max_rounds}.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nChunk positions are ZERO-BASED: a document with C chunks has valid positions 0 through C-1. Never use C or a larger number as a position.\n\nCurrent pool (each line shows its document_id and position):\n{chunks}\n\nCurrent pool size: {pool_size} chunks.\n\nMaximum retrievable chunks: {topk}.\n\nFree pool slots left: {remaining}.\n\nRetriever catalog: {retriever.description}\n\nThe listed chunks ARE the current pool. Chunks not mentioned in the two chunk fields stay in the pool exactly as they are, except when the maximum capacity forces out older non-requested chunks; requested chunks take priority. Use the document chunk counts to choose valid positions in 0..C-1.\n\nRespond by calling the function evaluate_agentic_retrieval with a single JSON object with this shape:\n{\"sufficient\": <true or false>, \"call_retrievers\": {\"<retriever index>\": <top_k>}, \"request_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"discard_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"message\": \"<one short user-facing sentence>\", \"justification\": \"<one short rationale>\"}\n\n- \"sufficient\" is required and says whether the retrieved chunks answer the user message.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you decided to do.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining why.\n- \"call_retrievers\" maps 1-based retriever indices from the retriever catalog to the number of chunks to retrieve from that retriever next. It is NOT mandatory every round. Indices must be at least 1. The per-retriever top_k is a size hint; the retriever enforces the hard pool cap.\n- \"request_specific_chunks\" maps document ids to chunk positions to ADD to the pool, even if no retriever returned them. Use the document chunk counts to choose valid positions in 0..C-1.\n- \"discard_specific_chunks\" maps document ids to chunk positions to REMOVE from the pool.\n- \"request_specific_chunks\" and \"discard_specific_chunks\" are mutually exclusive for the same chunk: never list the same chunk in both.\n- Calling retrievers is NOT mandatory every round. Two valid cases:\n  1. The pool already has enough information for an accurate answer: set \"sufficient\": true and omit all actions.\n  2. The pool is insufficient: set \"sufficient\": false and request chunks, call retrievers, or both.\n- When asking for more, prefer requests within the remaining slots; the retriever enforces the hard pool cap.\n\nInvalid decisions are rejected and must be retried. Use only valid retriever indices and chunk positions, never request and discard the same chunk, leave free pool slots for the retrievers you call, and do not leave the pool empty unless you also call a retriever or request chunks.\n\nRespond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0010": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval sufficiency evaluator for a Retrieval-Augmented Generation system. Decide whether the retrieved chunks are enough to answer the user message.\n\nThis is evaluation round {round} of at most {max_rounds}.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nChunk positions are ZERO-BASED: a document with C chunks has valid positions 0 through C-1. Never use C or a larger number as a position.\n\nCurrent pool (each line shows its document_id and position):\n{chunks}\n\nCurrent pool size: {pool_size} chunks.\n\nMaximum retrievable chunks: {topk}.\n\nFree pool slots left: {remaining}.\n\nRetriever catalog: {retriever.description}\n\nThe listed chunks ARE the current pool. Chunks not mentioned in the two chunk fields stay in the pool exactly as they are, except when the maximum capacity forces out older non-requested chunks; requested chunks take priority. Use the document chunk counts to choose valid positions in 0..C-1.\n\nRespond by calling the function evaluate_agentic_retrieval with a single JSON object with this shape:\n{\"sufficient\": <true or false>, \"call_retrievers\": {\"<retriever index>\": <top_k>}, \"request_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"discard_specific_chunks\": {\"<document id>\": [<chunk positions>]}, \"message\": \"<one short user-facing sentence>\", \"justification\": \"<one short rationale>\"}\n\n- \"sufficient\" is required and says whether the retrieved chunks answer the user message.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you decided to do.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining why.\n- \"call_retrievers\" maps 1-based retriever indices from the retriever catalog to the number of chunks to retrieve from that retriever next. It is NOT mandatory every round. Indices must be at least 1. The per-retriever top_k is a size hint; the retriever enforces the hard pool cap.\n- \"request_specific_chunks\" maps document ids to chunk positions to ADD to the pool, even if no retriever returned them. Use the document chunk counts to choose valid positions in 0..C-1.\n- \"discard_specific_chunks\" maps document ids to chunk positions to REMOVE from the pool.\n- \"request_specific_chunks\" and \"discard_specific_chunks\" are mutually exclusive for the same chunk: never list the same chunk in both.\n- Calling retrievers is NOT mandatory every round. Two valid cases:\n  1. The pool already has enough information for an accurate answer: set \"sufficient\": true and omit all actions.\n  2. The pool is insufficient: set \"sufficient\": false and request chunks, call retrievers, or both.\n- When asking for more, prefer requests within the remaining slots; the retriever enforces the hard pool cap.\n\nInvalid decisions are rejected and must be retried. Use only valid retriever indices and chunk positions, never request and discard the same chunk, leave free pool slots for the retrievers you call, and do not leave the pool empty unless you also call a retriever or request chunks.\n\nRespond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0011": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un evaluador de suficiencia de recuperación para un sistema de Generación Aumentada por Recuperación. Decide si los fragmentos recuperados son suficientes para responder al mensaje del usuario.\n\nEsta es la ronda de evaluación {round} de como máximo {max_rounds}.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nLas posiciones de los fragmentos empiezan en 0: un documento con C fragmentos tiene posiciones válidas de 0 a C-1. Nunca uses C ni un número mayor como posición.\n\nConjunto actual (cada línea muestra su document_id y posición):\n{chunks}\n\nTamaño del conjunto actual: {pool_size} fragmentos.\n\nMáximo de fragmentos recuperables: {topk}.\n\nEspacios libres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nLos fragmentos listados SON el conjunto actual. Los fragmentos no mencionados en los dos campos de fragmentos permanecen en el conjunto exactamente como están, salvo que la capacidad máxima expulse fragmentos antiguos no solicitados; los fragmentos solicitados tienen prioridad. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n\nResponde llamando a la función evaluate_agentic_retrieval con un único objeto JSON con esta forma:\n{\"sufficient\": <true o false>, \"call_retrievers\": {\"<índice del recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"discard_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"message\": \"<una frase breve para el usuario>\", \"justification\": \"<una justificación breve>\"}\n\n- \"sufficient\" es obligatorio e indica si los fragmentos recuperados responden al mensaje del usuario.\n- \"message\" es opcional: una frase breve para el usuario, en el mismo idioma de este prompt, describiendo lo que decidiste hacer.\n- \"justification\" es opcional: una frase breve, en el mismo idioma de este prompt, explicando por qué.\n- \"call_retrievers\" asigna índices de recuperador basados en 1 del catálogo al número de fragmentos a recuperar de ese recuperador en la siguiente ronda. NO es obligatorio en cada ronda. Los índices deben ser al menos 1. El top_k por recuperador es una sugerencia de tamaño; el recuperador aplica el límite máximo del conjunto.\n- \"request_specific_chunks\" asigna ids de documento a posiciones de fragmento para AÑADIRLAS al conjunto, aunque ningún recuperador las haya devuelto. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n- \"discard_specific_chunks\" asigna ids de documento a posiciones de fragmento para ELIMINARLAS del conjunto.\n- \"request_specific_chunks\" y \"discard_specific_chunks\" son mutuamente excluyentes para el mismo fragmento: nunca listes el mismo fragmento en ambos.\n- Llamar a los recuperadores NO es obligatorio en cada ronda. Dos casos válidos:\n  1. El conjunto ya tiene información suficiente para una respuesta precisa: establece \"sufficient\": true y omite todas las acciones.\n  2. El conjunto es insuficiente: establece \"sufficient\": false y solicita fragmentos, llama a recuperadores, o ambos.\n- Cuando pidas más, prefiere solicitudes dentro de los espacios restantes; el recuperador impone el límite máximo del conjunto.\n\nLas decisiones inválidas se rechazan y deben reintentarse. Usa solo índices de recuperador y posiciones de fragmento válidos, nunca solicites y descartes el mismo fragmento, deja espacios libres para los recuperadores que llames y no dejes el conjunto vacío salvo que también llames a un recuperador o solicites fragmentos.\n\nResponde ÚNICAMENTE con un objeto JSON, sin bloques de código ni texto adicional.",
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0012": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un evaluador de suficiencia de recuperación para un sistema de Generación Aumentada por Recuperación. Decide si los fragmentos recuperados son suficientes para responder al mensaje del usuario.\n\nEsta es la ronda de evaluación {round} de como máximo {max_rounds}.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nLas posiciones de los fragmentos empiezan en 0: un documento con C fragmentos tiene posiciones válidas de 0 a C-1. Nunca uses C ni un número mayor como posición.\n\nConjunto actual (cada línea muestra su document_id y posición):\n{chunks}\n\nTamaño del conjunto actual: {pool_size} fragmentos.\n\nMáximo de fragmentos recuperables: {topk}.\n\nEspacios libres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nLos fragmentos listados SON el conjunto actual. Los fragmentos no mencionados en los dos campos de fragmentos permanecen en el conjunto exactamente como están, salvo que la capacidad máxima expulse fragmentos antiguos no solicitados; los fragmentos solicitados tienen prioridad. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n\nResponde llamando a la función evaluate_agentic_retrieval con un único objeto JSON con esta forma:\n{\"sufficient\": <true o false>, \"call_retrievers\": {\"<índice del recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"discard_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"message\": \"<una frase breve para el usuario>\", \"justification\": \"<una justificación breve>\"}\n\n- \"sufficient\" es obligatorio e indica si los fragmentos recuperados responden al mensaje del usuario.\n- \"message\" es opcional: una frase breve para el usuario, en el mismo idioma de este prompt, describiendo lo que decidiste hacer.\n- \"justification\" es opcional: una frase breve, en el mismo idioma de este prompt, explicando por qué.\n- \"call_retrievers\" asigna índices de recuperador basados en 1 del catálogo al número de fragmentos a recuperar de ese recuperador en la siguiente ronda. NO es obligatorio en cada ronda. Los índices deben ser al menos 1. El top_k por recuperador es una sugerencia de tamaño; el recuperador aplica el límite máximo del conjunto.\n- \"request_specific_chunks\" asigna ids de documento a posiciones de fragmento para AÑADIRLAS al conjunto, aunque ningún recuperador las haya devuelto. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n- \"discard_specific_chunks\" asigna ids de documento a posiciones de fragmento para ELIMINARLAS del conjunto.\n- \"request_specific_chunks\" y \"discard_specific_chunks\" son mutuamente excluyentes para el mismo fragmento: nunca listes el mismo fragmento en ambos.\n- Llamar a los recuperadores NO es obligatorio en cada ronda. Dos casos válidos:\n  1. El conjunto ya tiene información suficiente para una respuesta precisa: establece \"sufficient\": true y omite todas las acciones.\n  2. El conjunto es insuficiente: establece \"sufficient\": false y solicita fragmentos, llama a recuperadores, o ambos.\n- Cuando pidas más, prefiere solicitudes dentro de los espacios restantes; el recuperador impone el límite máximo del conjunto.\n\nLas decisiones inválidas se rechazan y deben reintentarse. Usa solo índices de recuperador y posiciones de fragmento válidos, nunca solicites y descartes el mismo fragmento, deja espacios libres para los recuperadores que llames y no dejes el conjunto vacío salvo que también llames a un recuperador o solicites fragmentos.\n\nResponde ÚNICAMENTE con un objeto JSON, sin bloques de código ni texto adicional.",
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0013": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un evaluador de suficiencia de recuperación para un sistema de Generación Aumentada por Recuperación. Decide si los fragmentos recuperados son suficientes para responder al mensaje del usuario.\n\nEsta es la ronda de evaluación {round} de como máximo {max_rounds}.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nLas posiciones de los fragmentos empiezan en 0: un documento con C fragmentos tiene posiciones válidas de 0 a C-1. Nunca uses C ni un número mayor como posición.\n\nConjunto actual (cada línea muestra su document_id y posición):\n{chunks}\n\nTamaño del conjunto actual: {pool_size} fragmentos.\n\nMáximo de fragmentos recuperables: {topk}.\n\nEspacios libres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nLos fragmentos listados SON el conjunto actual. Los fragmentos no mencionados en los dos campos de fragmentos permanecen en el conjunto exactamente como están, salvo que la capacidad máxima expulse fragmentos antiguos no solicitados; los fragmentos solicitados tienen prioridad. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n\nResponde llamando a la función evaluate_agentic_retrieval con un único objeto JSON con esta forma:\n{\"sufficient\": <true o false>, \"call_retrievers\": {\"<índice del recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"discard_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"message\": \"<una frase breve para el usuario>\", \"justification\": \"<una justificación breve>\"}\n\n- \"sufficient\" es obligatorio e indica si los fragmentos recuperados responden al mensaje del usuario.\n- \"message\" es opcional: una frase breve para el usuario, en el mismo idioma de este prompt, describiendo lo que decidiste hacer.\n- \"justification\" es opcional: una frase breve, en el mismo idioma de este prompt, explicando por qué.\n- \"call_retrievers\" asigna índices de recuperador basados en 1 del catálogo al número de fragmentos a recuperar de ese recuperador en la siguiente ronda. NO es obligatorio en cada ronda. Los índices deben ser al menos 1. El top_k por recuperador es una sugerencia de tamaño; el recuperador aplica el límite máximo del conjunto.\n- \"request_specific_chunks\" asigna ids de documento a posiciones de fragmento para AÑADIRLAS al conjunto, aunque ningún recuperador las haya devuelto. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n- \"discard_specific_chunks\" asigna ids de documento a posiciones de fragmento para ELIMINARLAS del conjunto.\n- \"request_specific_chunks\" y \"discard_specific_chunks\" son mutuamente excluyentes para el mismo fragmento: nunca listes el mismo fragmento en ambos.\n- Llamar a los recuperadores NO es obligatorio en cada ronda. Dos casos válidos:\n  1. El conjunto ya tiene información suficiente para una respuesta precisa: establece \"sufficient\": true y omite todas las acciones.\n  2. El conjunto es insuficiente: establece \"sufficient\": false y solicita fragmentos, llama a recuperadores, o ambos.\n- Cuando pidas más, prefiere solicitudes dentro de los espacios restantes; el recuperador impone el límite máximo del conjunto.\n\nLas decisiones inválidas se rechazan y deben reintentarse. Usa solo índices de recuperador y posiciones de fragmento válidos, nunca solicites y descartes el mismo fragmento, deja espacios libres para los recuperadores que llames y no dejes el conjunto vacío salvo que también llames a un recuperador o solicites fragmentos.\n\nResponde ÚNICAMENTE con un objeto JSON, sin bloques de código ni texto adicional.",
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0014": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un evaluador de suficiencia de recuperación para un sistema de Generación Aumentada por Recuperación. Decide si los fragmentos recuperados son suficientes para responder al mensaje del usuario.\n\nEsta es la ronda de evaluación {round} de como máximo {max_rounds}.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nLas posiciones de los fragmentos empiezan en 0: un documento con C fragmentos tiene posiciones válidas de 0 a C-1. Nunca uses C ni un número mayor como posición.\n\nConjunto actual (cada línea muestra su document_id y posición):\n{chunks}\n\nTamaño del conjunto actual: {pool_size} fragmentos.\n\nMáximo de fragmentos recuperables: {topk}.\n\nEspacios libres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nLos fragmentos listados SON el conjunto actual. Los fragmentos no mencionados en los dos campos de fragmentos permanecen en el conjunto exactamente como están, salvo que la capacidad máxima expulse fragmentos antiguos no solicitados; los fragmentos solicitados tienen prioridad. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n\nResponde llamando a la función evaluate_agentic_retrieval con un único objeto JSON con esta forma:\n{\"sufficient\": <true o false>, \"call_retrievers\": {\"<índice del recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"discard_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"message\": \"<una frase breve para el usuario>\", \"justification\": \"<una justificación breve>\"}\n\n- \"sufficient\" es obligatorio e indica si los fragmentos recuperados responden al mensaje del usuario.\n- \"message\" es opcional: una frase breve para el usuario, en el mismo idioma de este prompt, describiendo lo que decidiste hacer.\n- \"justification\" es opcional: una frase breve, en el mismo idioma de este prompt, explicando por qué.\n- \"call_retrievers\" asigna índices de recuperador basados en 1 del catálogo al número de fragmentos a recuperar de ese recuperador en la siguiente ronda. NO es obligatorio en cada ronda. Los índices deben ser al menos 1. El top_k por recuperador es una sugerencia de tamaño; el recuperador aplica el límite máximo del conjunto.\n- \"request_specific_chunks\" asigna ids de documento a posiciones de fragmento para AÑADIRLAS al conjunto, aunque ningún recuperador las haya devuelto. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n- \"discard_specific_chunks\" asigna ids de documento a posiciones de fragmento para ELIMINARLAS del conjunto.\n- \"request_specific_chunks\" y \"discard_specific_chunks\" son mutuamente excluyentes para el mismo fragmento: nunca listes el mismo fragmento en ambos.\n- Llamar a los recuperadores NO es obligatorio en cada ronda. Dos casos válidos:\n  1. El conjunto ya tiene información suficiente para una respuesta precisa: establece \"sufficient\": true y omite todas las acciones.\n  2. El conjunto es insuficiente: establece \"sufficient\": false y solicita fragmentos, llama a recuperadores, o ambos.\n- Cuando pidas más, prefiere solicitudes dentro de los espacios restantes; el recuperador impone el límite máximo del conjunto.\n\nLas decisiones inválidas se rechazan y deben reintentarse. Usa solo índices de recuperador y posiciones de fragmento válidos, nunca solicites y descartes el mismo fragmento, deja espacios libres para los recuperadores que llames y no dejes el conjunto vacío salvo que también llames a un recuperador o solicites fragmentos.\n\nResponde ÚNICAMENTE con un objeto JSON, sin bloques de código ni texto adicional.",
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0015": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un evaluador de suficiencia de recuperación para un sistema de Generación Aumentada por Recuperación. Decide si los fragmentos recuperados son suficientes para responder al mensaje del usuario.\n\nEsta es la ronda de evaluación {round} de como máximo {max_rounds}.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nLas posiciones de los fragmentos empiezan en 0: un documento con C fragmentos tiene posiciones válidas de 0 a C-1. Nunca uses C ni un número mayor como posición.\n\nConjunto actual (cada línea muestra su document_id y posición):\n{chunks}\n\nTamaño del conjunto actual: {pool_size} fragmentos.\n\nMáximo de fragmentos recuperables: {topk}.\n\nEspacios libres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nLos fragmentos listados SON el conjunto actual. Los fragmentos no mencionados en los dos campos de fragmentos permanecen en el conjunto exactamente como están, salvo que la capacidad máxima expulse fragmentos antiguos no solicitados; los fragmentos solicitados tienen prioridad. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n\nResponde llamando a la función evaluate_agentic_retrieval con un único objeto JSON con esta forma:\n{\"sufficient\": <true o false>, \"call_retrievers\": {\"<índice del recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"discard_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"message\": \"<una frase breve para el usuario>\", \"justification\": \"<una justificación breve>\"}\n\n- \"sufficient\" es obligatorio e indica si los fragmentos recuperados responden al mensaje del usuario.\n- \"message\" es opcional: una frase breve para el usuario, en el mismo idioma de este prompt, describiendo lo que decidiste hacer.\n- \"justification\" es opcional: una frase breve, en el mismo idioma de este prompt, explicando por qué.\n- \"call_retrievers\" asigna índices de recuperador basados en 1 del catálogo al número de fragmentos a recuperar de ese recuperador en la siguiente ronda. NO es obligatorio en cada ronda. Los índices deben ser al menos 1. El top_k por recuperador es una sugerencia de tamaño; el recuperador aplica el límite máximo del conjunto.\n- \"request_specific_chunks\" asigna ids de documento a posiciones de fragmento para AÑADIRLAS al conjunto, aunque ningún recuperador las haya devuelto. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n- \"discard_specific_chunks\" asigna ids de documento a posiciones de fragmento para ELIMINARLAS del conjunto.\n- \"request_specific_chunks\" y \"discard_specific_chunks\" son mutuamente excluyentes para el mismo fragmento: nunca listes el mismo fragmento en ambos.\n- Llamar a los recuperadores NO es obligatorio en cada ronda. Dos casos válidos:\n  1. El conjunto ya tiene información suficiente para una respuesta precisa: establece \"sufficient\": true y omite todas las acciones.\n  2. El conjunto es insuficiente: establece \"sufficient\": false y solicita fragmentos, llama a recuperadores, o ambos.\n- Cuando pidas más, prefiere solicitudes dentro de los espacios restantes; el recuperador impone el límite máximo del conjunto.\n\nLas decisiones inválidas se rechazan y deben reintentarse. Usa solo índices de recuperador y posiciones de fragmento válidos, nunca solicites y descartes el mismo fragmento, deja espacios libres para los recuperadores que llames y no dejes el conjunto vacío salvo que también llames a un recuperador o solicites fragmentos.\n\nResponde ÚNICAMENTE con un objeto JSON, sin bloques de código ni texto adicional.",
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0016": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un evaluador de suficiencia de recuperación para un sistema de Generación Aumentada por Recuperación. Decide si los fragmentos recuperados son suficientes para responder al mensaje del usuario.\n\nEsta es la ronda de evaluación {round} de como máximo {max_rounds}.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nLas posiciones de los fragmentos empiezan en 0: un documento con C fragmentos tiene posiciones válidas de 0 a C-1. Nunca uses C ni un número mayor como posición.\n\nConjunto actual (cada línea muestra su document_id y posición):\n{chunks}\n\nTamaño del conjunto actual: {pool_size} fragmentos.\n\nMáximo de fragmentos recuperables: {topk}.\n\nEspacios libres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nLos fragmentos listados SON el conjunto actual. Los fragmentos no mencionados en los dos campos de fragmentos permanecen en el conjunto exactamente como están, salvo que la capacidad máxima expulse fragmentos antiguos no solicitados; los fragmentos solicitados tienen prioridad. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n\nResponde llamando a la función evaluate_agentic_retrieval con un único objeto JSON con esta forma:\n{\"sufficient\": <true o false>, \"call_retrievers\": {\"<índice del recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"discard_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"message\": \"<una frase breve para el usuario>\", \"justification\": \"<una justificación breve>\"}\n\n- \"sufficient\" es obligatorio e indica si los fragmentos recuperados responden al mensaje del usuario.\n- \"message\" es opcional: una frase breve para el usuario, en el mismo idioma de este prompt, describiendo lo que decidiste hacer.\n- \"justification\" es opcional: una frase breve, en el mismo idioma de este prompt, explicando por qué.\n- \"call_retrievers\" asigna índices de recuperador basados en 1 del catálogo al número de fragmentos a recuperar de ese recuperador en la siguiente ronda. NO es obligatorio en cada ronda. Los índices deben ser al menos 1. El top_k por recuperador es una sugerencia de tamaño; el recuperador aplica el límite máximo del conjunto.\n- \"request_specific_chunks\" asigna ids de documento a posiciones de fragmento para AÑADIRLAS al conjunto, aunque ningún recuperador las haya devuelto. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n- \"discard_specific_chunks\" asigna ids de documento a posiciones de fragmento para ELIMINARLAS del conjunto.\n- \"request_specific_chunks\" y \"discard_specific_chunks\" son mutuamente excluyentes para el mismo fragmento: nunca listes el mismo fragmento en ambos.\n- Llamar a los recuperadores NO es obligatorio en cada ronda. Dos casos válidos:\n  1. El conjunto ya tiene información suficiente para una respuesta precisa: establece \"sufficient\": true y omite todas las acciones.\n  2. El conjunto es insuficiente: establece \"sufficient\": false y solicita fragmentos, llama a recuperadores, o ambos.\n- Cuando pidas más, prefiere solicitudes dentro de los espacios restantes; el recuperador impone el límite máximo del conjunto.\n\nLas decisiones inválidas se rechazan y deben reintentarse. Usa solo índices de recuperador y posiciones de fragmento válidos, nunca solicites y descartes el mismo fragmento, deja espacios libres para los recuperadores que llames y no dejes el conjunto vacío salvo que también llames a un recuperador o solicites fragmentos.\n\nResponde ÚNICAMENTE con un objeto JSON, sin bloques de código ni texto adicional.",
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0017": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un evaluador de suficiencia de recuperación para un sistema de Generación Aumentada por Recuperación. Decide si los fragmentos recuperados son suficientes para responder al mensaje del usuario.\n\nEsta es la ronda de evaluación {round} de como máximo {max_rounds}.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nLas posiciones de los fragmentos empiezan en 0: un documento con C fragmentos tiene posiciones válidas de 0 a C-1. Nunca uses C ni un número mayor como posición.\n\nConjunto actual (cada línea muestra su document_id y posición):\n{chunks}\n\nTamaño del conjunto actual: {pool_size} fragmentos.\n\nMáximo de fragmentos recuperables: {topk}.\n\nEspacios libres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nLos fragmentos listados SON el conjunto actual. Los fragmentos no mencionados en los dos campos de fragmentos permanecen en el conjunto exactamente como están, salvo que la capacidad máxima expulse fragmentos antiguos no solicitados; los fragmentos solicitados tienen prioridad. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n\nResponde llamando a la función evaluate_agentic_retrieval con un único objeto JSON con esta forma:\n{\"sufficient\": <true o false>, \"call_retrievers\": {\"<índice del recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"discard_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"message\": \"<una frase breve para el usuario>\", \"justification\": \"<una justificación breve>\"}\n\n- \"sufficient\" es obligatorio e indica si los fragmentos recuperados responden al mensaje del usuario.\n- \"message\" es opcional: una frase breve para el usuario, en el mismo idioma de este prompt, describiendo lo que decidiste hacer.\n- \"justification\" es opcional: una frase breve, en el mismo idioma de este prompt, explicando por qué.\n- \"call_retrievers\" asigna índices de recuperador basados en 1 del catálogo al número de fragmentos a recuperar de ese recuperador en la siguiente ronda. NO es obligatorio en cada ronda. Los índices deben ser al menos 1. El top_k por recuperador es una sugerencia de tamaño; el recuperador aplica el límite máximo del conjunto.\n- \"request_specific_chunks\" asigna ids de documento a posiciones de fragmento para AÑADIRLAS al conjunto, aunque ningún recuperador las haya devuelto. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n- \"discard_specific_chunks\" asigna ids de documento a posiciones de fragmento para ELIMINARLAS del conjunto.\n- \"request_specific_chunks\" y \"discard_specific_chunks\" son mutuamente excluyentes para el mismo fragmento: nunca listes el mismo fragmento en ambos.\n- Llamar a los recuperadores NO es obligatorio en cada ronda. Dos casos válidos:\n  1. El conjunto ya tiene información suficiente para una respuesta precisa: establece \"sufficient\": true y omite todas las acciones.\n  2. El conjunto es insuficiente: establece \"sufficient\": false y solicita fragmentos, llama a recuperadores, o ambos.\n- Cuando pidas más, prefiere solicitudes dentro de los espacios restantes; el recuperador impone el límite máximo del conjunto.\n\nLas decisiones inválidas se rechazan y deben reintentarse. Usa solo índices de recuperador y posiciones de fragmento válidos, nunca solicites y descartes el mismo fragmento, deja espacios libres para los recuperadores que llames y no dejes el conjunto vacío salvo que también llames a un recuperador o solicites fragmentos.\n\nResponde ÚNICAMENTE con un objeto JSON, sin bloques de código ni texto adicional.",
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0018": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un evaluador de suficiencia de recuperación para un sistema de Generación Aumentada por Recuperación. Decide si los fragmentos recuperados son suficientes para responder al mensaje del usuario.\n\nEsta es la ronda de evaluación {round} de como máximo {max_rounds}.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nLas posiciones de los fragmentos empiezan en 0: un documento con C fragmentos tiene posiciones válidas de 0 a C-1. Nunca uses C ni un número mayor como posición.\n\nConjunto actual (cada línea muestra su document_id y posición):\n{chunks}\n\nTamaño del conjunto actual: {pool_size} fragmentos.\n\nMáximo de fragmentos recuperables: {topk}.\n\nEspacios libres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nLos fragmentos listados SON el conjunto actual. Los fragmentos no mencionados en los dos campos de fragmentos permanecen en el conjunto exactamente como están, salvo que la capacidad máxima expulse fragmentos antiguos no solicitados; los fragmentos solicitados tienen prioridad. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n\nResponde llamando a la función evaluate_agentic_retrieval con un único objeto JSON con esta forma:\n{\"sufficient\": <true o false>, \"call_retrievers\": {\"<índice del recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"discard_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"message\": \"<una frase breve para el usuario>\", \"justification\": \"<una justificación breve>\"}\n\n- \"sufficient\" es obligatorio e indica si los fragmentos recuperados responden al mensaje del usuario.\n- \"message\" es opcional: una frase breve para el usuario, en el mismo idioma de este prompt, describiendo lo que decidiste hacer.\n- \"justification\" es opcional: una frase breve, en el mismo idioma de este prompt, explicando por qué.\n- \"call_retrievers\" asigna índices de recuperador basados en 1 del catálogo al número de fragmentos a recuperar de ese recuperador en la siguiente ronda. NO es obligatorio en cada ronda. Los índices deben ser al menos 1. El top_k por recuperador es una sugerencia de tamaño; el recuperador aplica el límite máximo del conjunto.\n- \"request_specific_chunks\" asigna ids de documento a posiciones de fragmento para AÑADIRLAS al conjunto, aunque ningún recuperador las haya devuelto. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n- \"discard_specific_chunks\" asigna ids de documento a posiciones de fragmento para ELIMINARLAS del conjunto.\n- \"request_specific_chunks\" y \"discard_specific_chunks\" son mutuamente excluyentes para el mismo fragmento: nunca listes el mismo fragmento en ambos.\n- Llamar a los recuperadores NO es obligatorio en cada ronda. Dos casos válidos:\n  1. El conjunto ya tiene información suficiente para una respuesta precisa: establece \"sufficient\": true y omite todas las acciones.\n  2. El conjunto es insuficiente: establece \"sufficient\": false y solicita fragmentos, llama a recuperadores, o ambos.\n- Cuando pidas más, prefiere solicitudes dentro de los espacios restantes; el recuperador impone el límite máximo del conjunto.\n\nLas decisiones inválidas se rechazan y deben reintentarse. Usa solo índices de recuperador y posiciones de fragmento válidos, nunca solicites y descartes el mismo fragmento, deja espacios libres para los recuperadores que llames y no dejes el conjunto vacío salvo que también llames a un recuperador o solicites fragmentos.\n\nResponde ÚNICAMENTE con un objeto JSON, sin bloques de código ni texto adicional.",
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0019": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un evaluador de suficiencia de recuperación para un sistema de Generación Aumentada por Recuperación. Decide si los fragmentos recuperados son suficientes para responder al mensaje del usuario.\n\nEsta es la ronda de evaluación {round} de como máximo {max_rounds}.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nLas posiciones de los fragmentos empiezan en 0: un documento con C fragmentos tiene posiciones válidas de 0 a C-1. Nunca uses C ni un número mayor como posición.\n\nConjunto actual (cada línea muestra su document_id y posición):\n{chunks}\n\nTamaño del conjunto actual: {pool_size} fragmentos.\n\nMáximo de fragmentos recuperables: {topk}.\n\nEspacios libres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nLos fragmentos listados SON el conjunto actual. Los fragmentos no mencionados en los dos campos de fragmentos permanecen en el conjunto exactamente como están, salvo que la capacidad máxima expulse fragmentos antiguos no solicitados; los fragmentos solicitados tienen prioridad. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n\nResponde llamando a la función evaluate_agentic_retrieval con un único objeto JSON con esta forma:\n{\"sufficient\": <true o false>, \"call_retrievers\": {\"<índice del recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"discard_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"message\": \"<una frase breve para el usuario>\", \"justification\": \"<una justificación breve>\"}\n\n- \"sufficient\" es obligatorio e indica si los fragmentos recuperados responden al mensaje del usuario.\n- \"message\" es opcional: una frase breve para el usuario, en el mismo idioma de este prompt, describiendo lo que decidiste hacer.\n- \"justification\" es opcional: una frase breve, en el mismo idioma de este prompt, explicando por qué.\n- \"call_retrievers\" asigna índices de recuperador basados en 1 del catálogo al número de fragmentos a recuperar de ese recuperador en la siguiente ronda. NO es obligatorio en cada ronda. Los índices deben ser al menos 1. El top_k por recuperador es una sugerencia de tamaño; el recuperador aplica el límite máximo del conjunto.\n- \"request_specific_chunks\" asigna ids de documento a posiciones de fragmento para AÑADIRLAS al conjunto, aunque ningún recuperador las haya devuelto. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n- \"discard_specific_chunks\" asigna ids de documento a posiciones de fragmento para ELIMINARLAS del conjunto.\n- \"request_specific_chunks\" y \"discard_specific_chunks\" son mutuamente excluyentes para el mismo fragmento: nunca listes el mismo fragmento en ambos.\n- Llamar a los recuperadores NO es obligatorio en cada ronda. Dos casos válidos:\n  1. El conjunto ya tiene información suficiente para una respuesta precisa: establece \"sufficient\": true y omite todas las acciones.\n  2. El conjunto es insuficiente: establece \"sufficient\": false y solicita fragmentos, llama a recuperadores, o ambos.\n- Cuando pidas más, prefiere solicitudes dentro de los espacios restantes; el recuperador impone el límite máximo del conjunto.\n\nLas decisiones inválidas se rechazan y deben reintentarse. Usa solo índices de recuperador y posiciones de fragmento válidos, nunca solicites y descartes el mismo fragmento, deja espacios libres para los recuperadores que llames y no dejes el conjunto vacío salvo que también llames a un recuperador o solicites fragmentos.\n\nResponde ÚNICAMENTE con un objeto JSON, sin bloques de código ni texto adicional.",
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0020": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un evaluador de suficiencia de recuperación para un sistema de Generación Aumentada por Recuperación. Decide si los fragmentos recuperados son suficientes para responder al mensaje del usuario.\n\nEsta es la ronda de evaluación {round} de como máximo {max_rounds}.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nLas posiciones de los fragmentos empiezan en 0: un documento con C fragmentos tiene posiciones válidas de 0 a C-1. Nunca uses C ni un número mayor como posición.\n\nConjunto actual (cada línea muestra su document_id y posición):\n{chunks}\n\nTamaño del conjunto actual: {pool_size} fragmentos.\n\nMáximo de fragmentos recuperables: {topk}.\n\nEspacios libres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nLos fragmentos listados SON el conjunto actual. Los fragmentos no mencionados en los dos campos de fragmentos permanecen en el conjunto exactamente como están, salvo que la capacidad máxima expulse fragmentos antiguos no solicitados; los fragmentos solicitados tienen prioridad. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n\nResponde llamando a la función evaluate_agentic_retrieval con un único objeto JSON con esta forma:\n{\"sufficient\": <true o false>, \"call_retrievers\": {\"<índice del recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"discard_specific_chunks\": {\"<id del documento>\": [<posiciones de fragmentos>]}, \"message\": \"<una frase breve para el usuario>\", \"justification\": \"<una justificación breve>\"}\n\n- \"sufficient\" es obligatorio e indica si los fragmentos recuperados responden al mensaje del usuario.\n- \"message\" es opcional: una frase breve para el usuario, en el mismo idioma de este prompt, describiendo lo que decidiste hacer.\n- \"justification\" es opcional: una frase breve, en el mismo idioma de este prompt, explicando por qué.\n- \"call_retrievers\" asigna índices de recuperador basados en 1 del catálogo al número de fragmentos a recuperar de ese recuperador en la siguiente ronda. NO es obligatorio en cada ronda. Los índices deben ser al menos 1. El top_k por recuperador es una sugerencia de tamaño; el recuperador aplica el límite máximo del conjunto.\n- \"request_specific_chunks\" asigna ids de documento a posiciones de fragmento para AÑADIRLAS al conjunto, aunque ningún recuperador las haya devuelto. Usa el número de fragmentos de cada documento para elegir posiciones válidas en 0..C-1.\n- \"discard_specific_chunks\" asigna ids de documento a posiciones de fragmento para ELIMINARLAS del conjunto.\n- \"request_specific_chunks\" y \"discard_specific_chunks\" son mutuamente excluyentes para el mismo fragmento: nunca listes el mismo fragmento en ambos.\n- Llamar a los recuperadores NO es obligatorio en cada ronda. Dos casos válidos:\n  1. El conjunto ya tiene información suficiente para una respuesta precisa: establece \"sufficient\": true y omite todas las acciones.\n  2. El conjunto es insuficiente: establece \"sufficient\": false y solicita fragmentos, llama a recuperadores, o ambos.\n- Cuando pidas más, prefiere solicitudes dentro de los espacios restantes; el recuperador impone el límite máximo del conjunto.\n\nLas decisiones inválidas se rechazan y deben reintentarse. Usa solo índices de recuperador y posiciones de fragmento válidos, nunca solicites y descartes el mismo fragmento, deja espacios libres para los recuperadores que llames y no dejes el conjunto vacío salvo que también llames a un recuperador o solicites fragmentos.\n\nResponde ÚNICAMENTE con un objeto JSON, sin bloques de código ni texto adicional.",
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0021": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um avaliador de suficiência de recuperação para um sistema de Geração Aumentada por Recuperação. Decida se os trechos recuperados são suficientes para responder à mensagem do usuário.\n\nEsta é a rodada de avaliação {round} de no máximo {max_rounds}.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nAs posições dos trechos começam em 0: um documento com C trechos tem posições válidas de 0 a C-1. Nunca use C ou um número maior como posição.\n\nConjunto atual (cada linha mostra seu document_id e posição):\n{chunks}\n\nTamanho do conjunto atual: {pool_size} trechos.\n\nMáximo de trechos recuperáveis: {topk}.\n\nEspaços livres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nOs trechos listados SÃO o conjunto atual. Os trechos não mencionados nos dois campos de trechos permanecem no conjunto exatamente como estão, exceto quando a capacidade máxima expulsa trechos antigos não solicitados; os trechos solicitados têm prioridade. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n\nResponda chamando a função evaluate_agentic_retrieval com um único objeto JSON com esta forma:\n{\"sufficient\": <true ou false>, \"call_retrievers\": {\"<índice do recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"discard_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"message\": \"<uma frase breve para o usuário>\", \"justification\": \"<uma justificativa breve>\"}\n\n- \"sufficient\" é obrigatório e indica se os trechos recuperados respondem à mensagem do usuário.\n- \"message\" é opcional: uma frase breve para o usuário, no mesmo idioma deste prompt, descrevendo o que você decidiu fazer.\n- \"justification\" é opcional: uma frase breve, no mesmo idioma deste prompt, explicando por quê.\n- \"call_retrievers\" mapeia índices de recuperador baseados em 1 do catálogo para o número de trechos a recuperar desse recuperador na próxima rodada. NÃO é obrigatório em cada rodada. Os índices devem ser pelo menos 1. O top_k por recuperador é uma sugestão de tamanho; o recuperador aplica o limite máximo do conjunto.\n- \"request_specific_chunks\" mapeia ids de documento para posições de trecho a ADICIONAR ao conjunto, mesmo que nenhum recuperador as tenha retornado. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n- \"discard_specific_chunks\" mapeia ids de documento para posições de trecho a REMOVER do conjunto.\n- \"request_specific_chunks\" e \"discard_specific_chunks\" são mutuamente exclusivos para o mesmo trecho: nunca liste o mesmo trecho em ambos.\n- Chamar os recuperadores NÃO é obrigatório em cada rodada. Dois casos válidos:\n  1. O conjunto já tem informação suficiente para uma resposta precisa: defina \"sufficient\": true e omita todas as ações.\n  2. O conjunto é insuficiente: defina \"sufficient\": false e solicite trechos, chame recuperadores, ou ambos.\n- Ao pedir mais, prefira solicitações dentro dos espaços restantes; o recuperador impõe o limite máximo do conjunto.\n\nDecisões inválidas são rejeitadas e devem ser repetidas. Use apenas índices de recuperador e posições de trecho válidos, nunca solicite e descarte o mesmo trecho, deixe espaços livres para os recuperadores que chamar e não deixe o conjunto vazio a menos que também chame um recuperador ou solicite trechos.\n\nResponda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0022": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um avaliador de suficiência de recuperação para um sistema de Geração Aumentada por Recuperação. Decida se os trechos recuperados são suficientes para responder à mensagem do usuário.\n\nEsta é a rodada de avaliação {round} de no máximo {max_rounds}.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nAs posições dos trechos começam em 0: um documento com C trechos tem posições válidas de 0 a C-1. Nunca use C ou um número maior como posição.\n\nConjunto atual (cada linha mostra seu document_id e posição):\n{chunks}\n\nTamanho do conjunto atual: {pool_size} trechos.\n\nMáximo de trechos recuperáveis: {topk}.\n\nEspaços livres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nOs trechos listados SÃO o conjunto atual. Os trechos não mencionados nos dois campos de trechos permanecem no conjunto exatamente como estão, exceto quando a capacidade máxima expulsa trechos antigos não solicitados; os trechos solicitados têm prioridade. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n\nResponda chamando a função evaluate_agentic_retrieval com um único objeto JSON com esta forma:\n{\"sufficient\": <true ou false>, \"call_retrievers\": {\"<índice do recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"discard_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"message\": \"<uma frase breve para o usuário>\", \"justification\": \"<uma justificativa breve>\"}\n\n- \"sufficient\" é obrigatório e indica se os trechos recuperados respondem à mensagem do usuário.\n- \"message\" é opcional: uma frase breve para o usuário, no mesmo idioma deste prompt, descrevendo o que você decidiu fazer.\n- \"justification\" é opcional: uma frase breve, no mesmo idioma deste prompt, explicando por quê.\n- \"call_retrievers\" mapeia índices de recuperador baseados em 1 do catálogo para o número de trechos a recuperar desse recuperador na próxima rodada. NÃO é obrigatório em cada rodada. Os índices devem ser pelo menos 1. O top_k por recuperador é uma sugestão de tamanho; o recuperador aplica o limite máximo do conjunto.\n- \"request_specific_chunks\" mapeia ids de documento para posições de trecho a ADICIONAR ao conjunto, mesmo que nenhum recuperador as tenha retornado. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n- \"discard_specific_chunks\" mapeia ids de documento para posições de trecho a REMOVER do conjunto.\n- \"request_specific_chunks\" e \"discard_specific_chunks\" são mutuamente exclusivos para o mesmo trecho: nunca liste o mesmo trecho em ambos.\n- Chamar os recuperadores NÃO é obrigatório em cada rodada. Dois casos válidos:\n  1. O conjunto já tem informação suficiente para uma resposta precisa: defina \"sufficient\": true e omita todas as ações.\n  2. O conjunto é insuficiente: defina \"sufficient\": false e solicite trechos, chame recuperadores, ou ambos.\n- Ao pedir mais, prefira solicitações dentro dos espaços restantes; o recuperador impõe o limite máximo do conjunto.\n\nDecisões inválidas são rejeitadas e devem ser repetidas. Use apenas índices de recuperador e posições de trecho válidos, nunca solicite e descarte o mesmo trecho, deixe espaços livres para os recuperadores que chamar e não deixe o conjunto vazio a menos que também chame um recuperador ou solicite trechos.\n\nResponda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0023": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um avaliador de suficiência de recuperação para um sistema de Geração Aumentada por Recuperação. Decida se os trechos recuperados são suficientes para responder à mensagem do usuário.\n\nEsta é a rodada de avaliação {round} de no máximo {max_rounds}.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nAs posições dos trechos começam em 0: um documento com C trechos tem posições válidas de 0 a C-1. Nunca use C ou um número maior como posição.\n\nConjunto atual (cada linha mostra seu document_id e posição):\n{chunks}\n\nTamanho do conjunto atual: {pool_size} trechos.\n\nMáximo de trechos recuperáveis: {topk}.\n\nEspaços livres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nOs trechos listados SÃO o conjunto atual. Os trechos não mencionados nos dois campos de trechos permanecem no conjunto exatamente como estão, exceto quando a capacidade máxima expulsa trechos antigos não solicitados; os trechos solicitados têm prioridade. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n\nResponda chamando a função evaluate_agentic_retrieval com um único objeto JSON com esta forma:\n{\"sufficient\": <true ou false>, \"call_retrievers\": {\"<índice do recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"discard_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"message\": \"<uma frase breve para o usuário>\", \"justification\": \"<uma justificativa breve>\"}\n\n- \"sufficient\" é obrigatório e indica se os trechos recuperados respondem à mensagem do usuário.\n- \"message\" é opcional: uma frase breve para o usuário, no mesmo idioma deste prompt, descrevendo o que você decidiu fazer.\n- \"justification\" é opcional: uma frase breve, no mesmo idioma deste prompt, explicando por quê.\n- \"call_retrievers\" mapeia índices de recuperador baseados em 1 do catálogo para o número de trechos a recuperar desse recuperador na próxima rodada. NÃO é obrigatório em cada rodada. Os índices devem ser pelo menos 1. O top_k por recuperador é uma sugestão de tamanho; o recuperador aplica o limite máximo do conjunto.\n- \"request_specific_chunks\" mapeia ids de documento para posições de trecho a ADICIONAR ao conjunto, mesmo que nenhum recuperador as tenha retornado. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n- \"discard_specific_chunks\" mapeia ids de documento para posições de trecho a REMOVER do conjunto.\n- \"request_specific_chunks\" e \"discard_specific_chunks\" são mutuamente exclusivos para o mesmo trecho: nunca liste o mesmo trecho em ambos.\n- Chamar os recuperadores NÃO é obrigatório em cada rodada. Dois casos válidos:\n  1. O conjunto já tem informação suficiente para uma resposta precisa: defina \"sufficient\": true e omita todas as ações.\n  2. O conjunto é insuficiente: defina \"sufficient\": false e solicite trechos, chame recuperadores, ou ambos.\n- Ao pedir mais, prefira solicitações dentro dos espaços restantes; o recuperador impõe o limite máximo do conjunto.\n\nDecisões inválidas são rejeitadas e devem ser repetidas. Use apenas índices de recuperador e posições de trecho válidos, nunca solicite e descarte o mesmo trecho, deixe espaços livres para os recuperadores que chamar e não deixe o conjunto vazio a menos que também chame um recuperador ou solicite trechos.\n\nResponda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0024": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um avaliador de suficiência de recuperação para um sistema de Geração Aumentada por Recuperação. Decida se os trechos recuperados são suficientes para responder à mensagem do usuário.\n\nEsta é a rodada de avaliação {round} de no máximo {max_rounds}.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nAs posições dos trechos começam em 0: um documento com C trechos tem posições válidas de 0 a C-1. Nunca use C ou um número maior como posição.\n\nConjunto atual (cada linha mostra seu document_id e posição):\n{chunks}\n\nTamanho do conjunto atual: {pool_size} trechos.\n\nMáximo de trechos recuperáveis: {topk}.\n\nEspaços livres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nOs trechos listados SÃO o conjunto atual. Os trechos não mencionados nos dois campos de trechos permanecem no conjunto exatamente como estão, exceto quando a capacidade máxima expulsa trechos antigos não solicitados; os trechos solicitados têm prioridade. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n\nResponda chamando a função evaluate_agentic_retrieval com um único objeto JSON com esta forma:\n{\"sufficient\": <true ou false>, \"call_retrievers\": {\"<índice do recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"discard_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"message\": \"<uma frase breve para o usuário>\", \"justification\": \"<uma justificativa breve>\"}\n\n- \"sufficient\" é obrigatório e indica se os trechos recuperados respondem à mensagem do usuário.\n- \"message\" é opcional: uma frase breve para o usuário, no mesmo idioma deste prompt, descrevendo o que você decidiu fazer.\n- \"justification\" é opcional: uma frase breve, no mesmo idioma deste prompt, explicando por quê.\n- \"call_retrievers\" mapeia índices de recuperador baseados em 1 do catálogo para o número de trechos a recuperar desse recuperador na próxima rodada. NÃO é obrigatório em cada rodada. Os índices devem ser pelo menos 1. O top_k por recuperador é uma sugestão de tamanho; o recuperador aplica o limite máximo do conjunto.\n- \"request_specific_chunks\" mapeia ids de documento para posições de trecho a ADICIONAR ao conjunto, mesmo que nenhum recuperador as tenha retornado. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n- \"discard_specific_chunks\" mapeia ids de documento para posições de trecho a REMOVER do conjunto.\n- \"request_specific_chunks\" e \"discard_specific_chunks\" são mutuamente exclusivos para o mesmo trecho: nunca liste o mesmo trecho em ambos.\n- Chamar os recuperadores NÃO é obrigatório em cada rodada. Dois casos válidos:\n  1. O conjunto já tem informação suficiente para uma resposta precisa: defina \"sufficient\": true e omita todas as ações.\n  2. O conjunto é insuficiente: defina \"sufficient\": false e solicite trechos, chame recuperadores, ou ambos.\n- Ao pedir mais, prefira solicitações dentro dos espaços restantes; o recuperador impõe o limite máximo do conjunto.\n\nDecisões inválidas são rejeitadas e devem ser repetidas. Use apenas índices de recuperador e posições de trecho válidos, nunca solicite e descarte o mesmo trecho, deixe espaços livres para os recuperadores que chamar e não deixe o conjunto vazio a menos que também chame um recuperador ou solicite trechos.\n\nResponda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0025": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um avaliador de suficiência de recuperação para um sistema de Geração Aumentada por Recuperação. Decida se os trechos recuperados são suficientes para responder à mensagem do usuário.\n\nEsta é a rodada de avaliação {round} de no máximo {max_rounds}.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nAs posições dos trechos começam em 0: um documento com C trechos tem posições válidas de 0 a C-1. Nunca use C ou um número maior como posição.\n\nConjunto atual (cada linha mostra seu document_id e posição):\n{chunks}\n\nTamanho do conjunto atual: {pool_size} trechos.\n\nMáximo de trechos recuperáveis: {topk}.\n\nEspaços livres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nOs trechos listados SÃO o conjunto atual. Os trechos não mencionados nos dois campos de trechos permanecem no conjunto exatamente como estão, exceto quando a capacidade máxima expulsa trechos antigos não solicitados; os trechos solicitados têm prioridade. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n\nResponda chamando a função evaluate_agentic_retrieval com um único objeto JSON com esta forma:\n{\"sufficient\": <true ou false>, \"call_retrievers\": {\"<índice do recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"discard_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"message\": \"<uma frase breve para o usuário>\", \"justification\": \"<uma justificativa breve>\"}\n\n- \"sufficient\" é obrigatório e indica se os trechos recuperados respondem à mensagem do usuário.\n- \"message\" é opcional: uma frase breve para o usuário, no mesmo idioma deste prompt, descrevendo o que você decidiu fazer.\n- \"justification\" é opcional: uma frase breve, no mesmo idioma deste prompt, explicando por quê.\n- \"call_retrievers\" mapeia índices de recuperador baseados em 1 do catálogo para o número de trechos a recuperar desse recuperador na próxima rodada. NÃO é obrigatório em cada rodada. Os índices devem ser pelo menos 1. O top_k por recuperador é uma sugestão de tamanho; o recuperador aplica o limite máximo do conjunto.\n- \"request_specific_chunks\" mapeia ids de documento para posições de trecho a ADICIONAR ao conjunto, mesmo que nenhum recuperador as tenha retornado. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n- \"discard_specific_chunks\" mapeia ids de documento para posições de trecho a REMOVER do conjunto.\n- \"request_specific_chunks\" e \"discard_specific_chunks\" são mutuamente exclusivos para o mesmo trecho: nunca liste o mesmo trecho em ambos.\n- Chamar os recuperadores NÃO é obrigatório em cada rodada. Dois casos válidos:\n  1. O conjunto já tem informação suficiente para uma resposta precisa: defina \"sufficient\": true e omita todas as ações.\n  2. O conjunto é insuficiente: defina \"sufficient\": false e solicite trechos, chame recuperadores, ou ambos.\n- Ao pedir mais, prefira solicitações dentro dos espaços restantes; o recuperador impõe o limite máximo do conjunto.\n\nDecisões inválidas são rejeitadas e devem ser repetidas. Use apenas índices de recuperador e posições de trecho válidos, nunca solicite e descarte o mesmo trecho, deixe espaços livres para os recuperadores que chamar e não deixe o conjunto vazio a menos que também chame um recuperador ou solicite trechos.\n\nResponda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0026": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um avaliador de suficiência de recuperação para um sistema de Geração Aumentada por Recuperação. Decida se os trechos recuperados são suficientes para responder à mensagem do usuário.\n\nEsta é a rodada de avaliação {round} de no máximo {max_rounds}.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nAs posições dos trechos começam em 0: um documento com C trechos tem posições válidas de 0 a C-1. Nunca use C ou um número maior como posição.\n\nConjunto atual (cada linha mostra seu document_id e posição):\n{chunks}\n\nTamanho do conjunto atual: {pool_size} trechos.\n\nMáximo de trechos recuperáveis: {topk}.\n\nEspaços livres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nOs trechos listados SÃO o conjunto atual. Os trechos não mencionados nos dois campos de trechos permanecem no conjunto exatamente como estão, exceto quando a capacidade máxima expulsa trechos antigos não solicitados; os trechos solicitados têm prioridade. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n\nResponda chamando a função evaluate_agentic_retrieval com um único objeto JSON com esta forma:\n{\"sufficient\": <true ou false>, \"call_retrievers\": {\"<índice do recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"discard_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"message\": \"<uma frase breve para o usuário>\", \"justification\": \"<uma justificativa breve>\"}\n\n- \"sufficient\" é obrigatório e indica se os trechos recuperados respondem à mensagem do usuário.\n- \"message\" é opcional: uma frase breve para o usuário, no mesmo idioma deste prompt, descrevendo o que você decidiu fazer.\n- \"justification\" é opcional: uma frase breve, no mesmo idioma deste prompt, explicando por quê.\n- \"call_retrievers\" mapeia índices de recuperador baseados em 1 do catálogo para o número de trechos a recuperar desse recuperador na próxima rodada. NÃO é obrigatório em cada rodada. Os índices devem ser pelo menos 1. O top_k por recuperador é uma sugestão de tamanho; o recuperador aplica o limite máximo do conjunto.\n- \"request_specific_chunks\" mapeia ids de documento para posições de trecho a ADICIONAR ao conjunto, mesmo que nenhum recuperador as tenha retornado. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n- \"discard_specific_chunks\" mapeia ids de documento para posições de trecho a REMOVER do conjunto.\n- \"request_specific_chunks\" e \"discard_specific_chunks\" são mutuamente exclusivos para o mesmo trecho: nunca liste o mesmo trecho em ambos.\n- Chamar os recuperadores NÃO é obrigatório em cada rodada. Dois casos válidos:\n  1. O conjunto já tem informação suficiente para uma resposta precisa: defina \"sufficient\": true e omita todas as ações.\n  2. O conjunto é insuficiente: defina \"sufficient\": false e solicite trechos, chame recuperadores, ou ambos.\n- Ao pedir mais, prefira solicitações dentro dos espaços restantes; o recuperador impõe o limite máximo do conjunto.\n\nDecisões inválidas são rejeitadas e devem ser repetidas. Use apenas índices de recuperador e posições de trecho válidos, nunca solicite e descarte o mesmo trecho, deixe espaços livres para os recuperadores que chamar e não deixe o conjunto vazio a menos que também chame um recuperador ou solicite trechos.\n\nResponda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0027": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um avaliador de suficiência de recuperação para um sistema de Geração Aumentada por Recuperação. Decida se os trechos recuperados são suficientes para responder à mensagem do usuário.\n\nEsta é a rodada de avaliação {round} de no máximo {max_rounds}.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nAs posições dos trechos começam em 0: um documento com C trechos tem posições válidas de 0 a C-1. Nunca use C ou um número maior como posição.\n\nConjunto atual (cada linha mostra seu document_id e posição):\n{chunks}\n\nTamanho do conjunto atual: {pool_size} trechos.\n\nMáximo de trechos recuperáveis: {topk}.\n\nEspaços livres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nOs trechos listados SÃO o conjunto atual. Os trechos não mencionados nos dois campos de trechos permanecem no conjunto exatamente como estão, exceto quando a capacidade máxima expulsa trechos antigos não solicitados; os trechos solicitados têm prioridade. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n\nResponda chamando a função evaluate_agentic_retrieval com um único objeto JSON com esta forma:\n{\"sufficient\": <true ou false>, \"call_retrievers\": {\"<índice do recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"discard_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"message\": \"<uma frase breve para o usuário>\", \"justification\": \"<uma justificativa breve>\"}\n\n- \"sufficient\" é obrigatório e indica se os trechos recuperados respondem à mensagem do usuário.\n- \"message\" é opcional: uma frase breve para o usuário, no mesmo idioma deste prompt, descrevendo o que você decidiu fazer.\n- \"justification\" é opcional: uma frase breve, no mesmo idioma deste prompt, explicando por quê.\n- \"call_retrievers\" mapeia índices de recuperador baseados em 1 do catálogo para o número de trechos a recuperar desse recuperador na próxima rodada. NÃO é obrigatório em cada rodada. Os índices devem ser pelo menos 1. O top_k por recuperador é uma sugestão de tamanho; o recuperador aplica o limite máximo do conjunto.\n- \"request_specific_chunks\" mapeia ids de documento para posições de trecho a ADICIONAR ao conjunto, mesmo que nenhum recuperador as tenha retornado. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n- \"discard_specific_chunks\" mapeia ids de documento para posições de trecho a REMOVER do conjunto.\n- \"request_specific_chunks\" e \"discard_specific_chunks\" são mutuamente exclusivos para o mesmo trecho: nunca liste o mesmo trecho em ambos.\n- Chamar os recuperadores NÃO é obrigatório em cada rodada. Dois casos válidos:\n  1. O conjunto já tem informação suficiente para uma resposta precisa: defina \"sufficient\": true e omita todas as ações.\n  2. O conjunto é insuficiente: defina \"sufficient\": false e solicite trechos, chame recuperadores, ou ambos.\n- Ao pedir mais, prefira solicitações dentro dos espaços restantes; o recuperador impõe o limite máximo do conjunto.\n\nDecisões inválidas são rejeitadas e devem ser repetidas. Use apenas índices de recuperador e posições de trecho válidos, nunca solicite e descarte o mesmo trecho, deixe espaços livres para os recuperadores que chamar e não deixe o conjunto vazio a menos que também chame um recuperador ou solicite trechos.\n\nResponda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0028": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um avaliador de suficiência de recuperação para um sistema de Geração Aumentada por Recuperação. Decida se os trechos recuperados são suficientes para responder à mensagem do usuário.\n\nEsta é a rodada de avaliação {round} de no máximo {max_rounds}.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nAs posições dos trechos começam em 0: um documento com C trechos tem posições válidas de 0 a C-1. Nunca use C ou um número maior como posição.\n\nConjunto atual (cada linha mostra seu document_id e posição):\n{chunks}\n\nTamanho do conjunto atual: {pool_size} trechos.\n\nMáximo de trechos recuperáveis: {topk}.\n\nEspaços livres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nOs trechos listados SÃO o conjunto atual. Os trechos não mencionados nos dois campos de trechos permanecem no conjunto exatamente como estão, exceto quando a capacidade máxima expulsa trechos antigos não solicitados; os trechos solicitados têm prioridade. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n\nResponda chamando a função evaluate_agentic_retrieval com um único objeto JSON com esta forma:\n{\"sufficient\": <true ou false>, \"call_retrievers\": {\"<índice do recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"discard_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"message\": \"<uma frase breve para o usuário>\", \"justification\": \"<uma justificativa breve>\"}\n\n- \"sufficient\" é obrigatório e indica se os trechos recuperados respondem à mensagem do usuário.\n- \"message\" é opcional: uma frase breve para o usuário, no mesmo idioma deste prompt, descrevendo o que você decidiu fazer.\n- \"justification\" é opcional: uma frase breve, no mesmo idioma deste prompt, explicando por quê.\n- \"call_retrievers\" mapeia índices de recuperador baseados em 1 do catálogo para o número de trechos a recuperar desse recuperador na próxima rodada. NÃO é obrigatório em cada rodada. Os índices devem ser pelo menos 1. O top_k por recuperador é uma sugestão de tamanho; o recuperador aplica o limite máximo do conjunto.\n- \"request_specific_chunks\" mapeia ids de documento para posições de trecho a ADICIONAR ao conjunto, mesmo que nenhum recuperador as tenha retornado. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n- \"discard_specific_chunks\" mapeia ids de documento para posições de trecho a REMOVER do conjunto.\n- \"request_specific_chunks\" e \"discard_specific_chunks\" são mutuamente exclusivos para o mesmo trecho: nunca liste o mesmo trecho em ambos.\n- Chamar os recuperadores NÃO é obrigatório em cada rodada. Dois casos válidos:\n  1. O conjunto já tem informação suficiente para uma resposta precisa: defina \"sufficient\": true e omita todas as ações.\n  2. O conjunto é insuficiente: defina \"sufficient\": false e solicite trechos, chame recuperadores, ou ambos.\n- Ao pedir mais, prefira solicitações dentro dos espaços restantes; o recuperador impõe o limite máximo do conjunto.\n\nDecisões inválidas são rejeitadas e devem ser repetidas. Use apenas índices de recuperador e posições de trecho válidos, nunca solicite e descarte o mesmo trecho, deixe espaços livres para os recuperadores que chamar e não deixe o conjunto vazio a menos que também chame um recuperador ou solicite trechos.\n\nResponda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0029": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um avaliador de suficiência de recuperação para um sistema de Geração Aumentada por Recuperação. Decida se os trechos recuperados são suficientes para responder à mensagem do usuário.\n\nEsta é a rodada de avaliação {round} de no máximo {max_rounds}.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nAs posições dos trechos começam em 0: um documento com C trechos tem posições válidas de 0 a C-1. Nunca use C ou um número maior como posição.\n\nConjunto atual (cada linha mostra seu document_id e posição):\n{chunks}\n\nTamanho do conjunto atual: {pool_size} trechos.\n\nMáximo de trechos recuperáveis: {topk}.\n\nEspaços livres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nOs trechos listados SÃO o conjunto atual. Os trechos não mencionados nos dois campos de trechos permanecem no conjunto exatamente como estão, exceto quando a capacidade máxima expulsa trechos antigos não solicitados; os trechos solicitados têm prioridade. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n\nResponda chamando a função evaluate_agentic_retrieval com um único objeto JSON com esta forma:\n{\"sufficient\": <true ou false>, \"call_retrievers\": {\"<índice do recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"discard_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"message\": \"<uma frase breve para o usuário>\", \"justification\": \"<uma justificativa breve>\"}\n\n- \"sufficient\" é obrigatório e indica se os trechos recuperados respondem à mensagem do usuário.\n- \"message\" é opcional: uma frase breve para o usuário, no mesmo idioma deste prompt, descrevendo o que você decidiu fazer.\n- \"justification\" é opcional: uma frase breve, no mesmo idioma deste prompt, explicando por quê.\n- \"call_retrievers\" mapeia índices de recuperador baseados em 1 do catálogo para o número de trechos a recuperar desse recuperador na próxima rodada. NÃO é obrigatório em cada rodada. Os índices devem ser pelo menos 1. O top_k por recuperador é uma sugestão de tamanho; o recuperador aplica o limite máximo do conjunto.\n- \"request_specific_chunks\" mapeia ids de documento para posições de trecho a ADICIONAR ao conjunto, mesmo que nenhum recuperador as tenha retornado. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n- \"discard_specific_chunks\" mapeia ids de documento para posições de trecho a REMOVER do conjunto.\n- \"request_specific_chunks\" e \"discard_specific_chunks\" são mutuamente exclusivos para o mesmo trecho: nunca liste o mesmo trecho em ambos.\n- Chamar os recuperadores NÃO é obrigatório em cada rodada. Dois casos válidos:\n  1. O conjunto já tem informação suficiente para uma resposta precisa: defina \"sufficient\": true e omita todas as ações.\n  2. O conjunto é insuficiente: defina \"sufficient\": false e solicite trechos, chame recuperadores, ou ambos.\n- Ao pedir mais, prefira solicitações dentro dos espaços restantes; o recuperador impõe o limite máximo do conjunto.\n\nDecisões inválidas são rejeitadas e devem ser repetidas. Use apenas índices de recuperador e posições de trecho válidos, nunca solicite e descarte o mesmo trecho, deixe espaços livres para os recuperadores que chamar e não deixe o conjunto vazio a menos que também chame um recuperador ou solicite trechos.\n\nResponda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0030": {
+    "component_class": "DefaultAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um avaliador de suficiência de recuperação para um sistema de Geração Aumentada por Recuperação. Decida se os trechos recuperados são suficientes para responder à mensagem do usuário.\n\nEsta é a rodada de avaliação {round} de no máximo {max_rounds}.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nAs posições dos trechos começam em 0: um documento com C trechos tem posições válidas de 0 a C-1. Nunca use C ou um número maior como posição.\n\nConjunto atual (cada linha mostra seu document_id e posição):\n{chunks}\n\nTamanho do conjunto atual: {pool_size} trechos.\n\nMáximo de trechos recuperáveis: {topk}.\n\nEspaços livres restantes: {remaining}.\n\nCatálogo de recuperadores: {retriever.description}\n\nOs trechos listados SÃO o conjunto atual. Os trechos não mencionados nos dois campos de trechos permanecem no conjunto exatamente como estão, exceto quando a capacidade máxima expulsa trechos antigos não solicitados; os trechos solicitados têm prioridade. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n\nResponda chamando a função evaluate_agentic_retrieval com um único objeto JSON com esta forma:\n{\"sufficient\": <true ou false>, \"call_retrievers\": {\"<índice do recuperador>\": <top_k>}, \"request_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"discard_specific_chunks\": {\"<id do documento>\": [<posições de trechos>]}, \"message\": \"<uma frase breve para o usuário>\", \"justification\": \"<uma justificativa breve>\"}\n\n- \"sufficient\" é obrigatório e indica se os trechos recuperados respondem à mensagem do usuário.\n- \"message\" é opcional: uma frase breve para o usuário, no mesmo idioma deste prompt, descrevendo o que você decidiu fazer.\n- \"justification\" é opcional: uma frase breve, no mesmo idioma deste prompt, explicando por quê.\n- \"call_retrievers\" mapeia índices de recuperador baseados em 1 do catálogo para o número de trechos a recuperar desse recuperador na próxima rodada. NÃO é obrigatório em cada rodada. Os índices devem ser pelo menos 1. O top_k por recuperador é uma sugestão de tamanho; o recuperador aplica o limite máximo do conjunto.\n- \"request_specific_chunks\" mapeia ids de documento para posições de trecho a ADICIONAR ao conjunto, mesmo que nenhum recuperador as tenha retornado. Use o número de trechos de cada documento para escolher posições válidas em 0..C-1.\n- \"discard_specific_chunks\" mapeia ids de documento para posições de trecho a REMOVER do conjunto.\n- \"request_specific_chunks\" e \"discard_specific_chunks\" são mutuamente exclusivos para o mesmo trecho: nunca liste o mesmo trecho em ambos.\n- Chamar os recuperadores NÃO é obrigatório em cada rodada. Dois casos válidos:\n  1. O conjunto já tem informação suficiente para uma resposta precisa: defina \"sufficient\": true e omita todas as ações.\n  2. O conjunto é insuficiente: defina \"sufficient\": false e solicite trechos, chame recuperadores, ou ambos.\n- Ao pedir mais, prefira solicitações dentro dos espaços restantes; o recuperador impõe o limite máximo do conjunto.\n\nDecisões inválidas são rejeitadas e devem ser repetidas. Use apenas índices de recuperador e posições de trecho válidos, nunca solicite e descarte o mesmo trecho, deixe espaços livres para os recuperadores que chamar e não deixe o conjunto vazio a menos que também chame um recuperador ou solicite trechos.\n\nResponda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0031": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval result filter for a Retrieval-Augmented Generation system. From the numbered candidate chunks, select the best ones for answering the user message.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nCandidate chunks (each line shows its [number], document_id, position and text):\n{chunks}\n\nSelect at most {topk} best chunks, best first.\n\nRespond by calling the function select_best_chunks with a single JSON object with this shape:\n{\"selected_chunks\": [<1-based candidate numbers>], \"message\": \"<optional short user-facing sentence>\", \"justification\": \"<optional short rationale>\"}\n\n- \"selected_chunks\" is required: 1-based indices into the numbered candidate list above, best first, unique, at most {topk} entries.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you selected.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining your selection.\n\nInvalid selections are rejected and must be retried: every selected index must be unique, in-range and at most {topk}, or the whole selection is rejected. Only select numbers that appear in the candidate list. Respond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0032": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval result filter for a Retrieval-Augmented Generation system. From the numbered candidate chunks, select the best ones for answering the user message.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nCandidate chunks (each line shows its [number], document_id, position and text):\n{chunks}\n\nSelect at most {topk} best chunks, best first.\n\nRespond by calling the function select_best_chunks with a single JSON object with this shape:\n{\"selected_chunks\": [<1-based candidate numbers>], \"message\": \"<optional short user-facing sentence>\", \"justification\": \"<optional short rationale>\"}\n\n- \"selected_chunks\" is required: 1-based indices into the numbered candidate list above, best first, unique, at most {topk} entries.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you selected.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining your selection.\n\nInvalid selections are rejected and must be retried: every selected index must be unique, in-range and at most {topk}, or the whole selection is rejected. Only select numbers that appear in the candidate list. Respond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0033": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval result filter for a Retrieval-Augmented Generation system. From the numbered candidate chunks, select the best ones for answering the user message.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nCandidate chunks (each line shows its [number], document_id, position and text):\n{chunks}\n\nSelect at most {topk} best chunks, best first.\n\nRespond by calling the function select_best_chunks with a single JSON object with this shape:\n{\"selected_chunks\": [<1-based candidate numbers>], \"message\": \"<optional short user-facing sentence>\", \"justification\": \"<optional short rationale>\"}\n\n- \"selected_chunks\" is required: 1-based indices into the numbered candidate list above, best first, unique, at most {topk} entries.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you selected.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining your selection.\n\nInvalid selections are rejected and must be retried: every selected index must be unique, in-range and at most {topk}, or the whole selection is rejected. Only select numbers that appear in the candidate list. Respond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0034": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval result filter for a Retrieval-Augmented Generation system. From the numbered candidate chunks, select the best ones for answering the user message.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nCandidate chunks (each line shows its [number], document_id, position and text):\n{chunks}\n\nSelect at most {topk} best chunks, best first.\n\nRespond by calling the function select_best_chunks with a single JSON object with this shape:\n{\"selected_chunks\": [<1-based candidate numbers>], \"message\": \"<optional short user-facing sentence>\", \"justification\": \"<optional short rationale>\"}\n\n- \"selected_chunks\" is required: 1-based indices into the numbered candidate list above, best first, unique, at most {topk} entries.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you selected.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining your selection.\n\nInvalid selections are rejected and must be retried: every selected index must be unique, in-range and at most {topk}, or the whole selection is rejected. Only select numbers that appear in the candidate list. Respond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0035": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval result filter for a Retrieval-Augmented Generation system. From the numbered candidate chunks, select the best ones for answering the user message.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nCandidate chunks (each line shows its [number], document_id, position and text):\n{chunks}\n\nSelect at most {topk} best chunks, best first.\n\nRespond by calling the function select_best_chunks with a single JSON object with this shape:\n{\"selected_chunks\": [<1-based candidate numbers>], \"message\": \"<optional short user-facing sentence>\", \"justification\": \"<optional short rationale>\"}\n\n- \"selected_chunks\" is required: 1-based indices into the numbered candidate list above, best first, unique, at most {topk} entries.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you selected.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining your selection.\n\nInvalid selections are rejected and must be retried: every selected index must be unique, in-range and at most {topk}, or the whole selection is rejected. Only select numbers that appear in the candidate list. Respond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0036": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval result filter for a Retrieval-Augmented Generation system. From the numbered candidate chunks, select the best ones for answering the user message.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nCandidate chunks (each line shows its [number], document_id, position and text):\n{chunks}\n\nSelect at most {topk} best chunks, best first.\n\nRespond by calling the function select_best_chunks with a single JSON object with this shape:\n{\"selected_chunks\": [<1-based candidate numbers>], \"message\": \"<optional short user-facing sentence>\", \"justification\": \"<optional short rationale>\"}\n\n- \"selected_chunks\" is required: 1-based indices into the numbered candidate list above, best first, unique, at most {topk} entries.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you selected.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining your selection.\n\nInvalid selections are rejected and must be retried: every selected index must be unique, in-range and at most {topk}, or the whole selection is rejected. Only select numbers that appear in the candidate list. Respond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0037": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval result filter for a Retrieval-Augmented Generation system. From the numbered candidate chunks, select the best ones for answering the user message.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nCandidate chunks (each line shows its [number], document_id, position and text):\n{chunks}\n\nSelect at most {topk} best chunks, best first.\n\nRespond by calling the function select_best_chunks with a single JSON object with this shape:\n{\"selected_chunks\": [<1-based candidate numbers>], \"message\": \"<optional short user-facing sentence>\", \"justification\": \"<optional short rationale>\"}\n\n- \"selected_chunks\" is required: 1-based indices into the numbered candidate list above, best first, unique, at most {topk} entries.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you selected.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining your selection.\n\nInvalid selections are rejected and must be retried: every selected index must be unique, in-range and at most {topk}, or the whole selection is rejected. Only select numbers that appear in the candidate list. Respond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0038": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval result filter for a Retrieval-Augmented Generation system. From the numbered candidate chunks, select the best ones for answering the user message.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nCandidate chunks (each line shows its [number], document_id, position and text):\n{chunks}\n\nSelect at most {topk} best chunks, best first.\n\nRespond by calling the function select_best_chunks with a single JSON object with this shape:\n{\"selected_chunks\": [<1-based candidate numbers>], \"message\": \"<optional short user-facing sentence>\", \"justification\": \"<optional short rationale>\"}\n\n- \"selected_chunks\" is required: 1-based indices into the numbered candidate list above, best first, unique, at most {topk} entries.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you selected.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining your selection.\n\nInvalid selections are rejected and must be retried: every selected index must be unique, in-range and at most {topk}, or the whole selection is rejected. Only select numbers that appear in the candidate list. Respond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0039": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval result filter for a Retrieval-Augmented Generation system. From the numbered candidate chunks, select the best ones for answering the user message.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nCandidate chunks (each line shows its [number], document_id, position and text):\n{chunks}\n\nSelect at most {topk} best chunks, best first.\n\nRespond by calling the function select_best_chunks with a single JSON object with this shape:\n{\"selected_chunks\": [<1-based candidate numbers>], \"message\": \"<optional short user-facing sentence>\", \"justification\": \"<optional short rationale>\"}\n\n- \"selected_chunks\" is required: 1-based indices into the numbered candidate list above, best first, unique, at most {topk} entries.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you selected.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining your selection.\n\nInvalid selections are rejected and must be retried: every selected index must be unique, in-range and at most {topk}, or the whole selection is rejected. Only select numbers that appear in the candidate list. Respond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0040": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "en",
+    "params": {
+      "language": "en",
+      "template": "You are a retrieval result filter for a Retrieval-Augmented Generation system. From the numbered candidate chunks, select the best ones for answering the user message.\n\nUser message:\n{input}\n\nDocuments: {documents.names}\n\nDocument description: {documents.description}\n\nCandidate chunks (each line shows its [number], document_id, position and text):\n{chunks}\n\nSelect at most {topk} best chunks, best first.\n\nRespond by calling the function select_best_chunks with a single JSON object with this shape:\n{\"selected_chunks\": [<1-based candidate numbers>], \"message\": \"<optional short user-facing sentence>\", \"justification\": \"<optional short rationale>\"}\n\n- \"selected_chunks\" is required: 1-based indices into the numbered candidate list above, best first, unique, at most {topk} entries.\n- \"message\" is optional: one short user-facing sentence in the same language as this prompt describing what you selected.\n- \"justification\" is optional: one short sentence in the same language as this prompt explaining your selection.\n\nInvalid selections are rejected and must be retried: every selected index must be unique, in-range and at most {topk}, or the whole selection is rejected. Only select numbers that appear in the candidate list. Respond with ONLY one JSON object, with no markdown fences and no extra text.",
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0041": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un filtro de resultados de recuperación para un sistema de Generación Aumentada por Recuperación. De los fragmentos candidatos numerados, selecciona los mejores para responder al mensaje del usuario.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nFragmentos candidatos (cada línea muestra su [número], document_id, posición y texto):\n{chunks}\n\nSelecciona como máximo {topk} de los mejores fragmentos, los mejores primero.\n\nResponde llamando a la función select_best_chunks con un único objeto JSON con esta forma:\n{\"selected_chunks\": [<números de candidato basados en 1>], \"message\": \"<frase breve opcional para el usuario>\", \"justification\": \"<justificación breve opcional>\"}\n\n- \"selected_chunks\" es obligatorio: índices basados en 1 en la lista numerada de candidatos anterior, los mejores primero, únicos, como máximo {topk} entradas.\n- \"message\" es opcional: una frase breve para el usuario en el mismo idioma de este prompt describiendo lo que seleccionaste.\n- \"justification\" es opcional: una frase breve en el mismo idioma de este prompt explicando tu selección.\n\nLas selecciones inválidas se rechazan y deben reintentarse: cada índice seleccionado debe ser único, estar dentro del rango y ser como máximo {topk}, o se rechaza toda la selección. Selecciona solo números que aparezcan en la lista de candidatos. Responde ÚNICAMENTE con un objeto JSON, sin bloques de código y sin texto adicional.",
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0042": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un filtro de resultados de recuperación para un sistema de Generación Aumentada por Recuperación. De los fragmentos candidatos numerados, selecciona los mejores para responder al mensaje del usuario.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nFragmentos candidatos (cada línea muestra su [número], document_id, posición y texto):\n{chunks}\n\nSelecciona como máximo {topk} de los mejores fragmentos, los mejores primero.\n\nResponde llamando a la función select_best_chunks con un único objeto JSON con esta forma:\n{\"selected_chunks\": [<números de candidato basados en 1>], \"message\": \"<frase breve opcional para el usuario>\", \"justification\": \"<justificación breve opcional>\"}\n\n- \"selected_chunks\" es obligatorio: índices basados en 1 en la lista numerada de candidatos anterior, los mejores primero, únicos, como máximo {topk} entradas.\n- \"message\" es opcional: una frase breve para el usuario en el mismo idioma de este prompt describiendo lo que seleccionaste.\n- \"justification\" es opcional: una frase breve en el mismo idioma de este prompt explicando tu selección.\n\nLas selecciones inválidas se rechazan y deben reintentarse: cada índice seleccionado debe ser único, estar dentro del rango y ser como máximo {topk}, o se rechaza toda la selección. Selecciona solo números que aparezcan en la lista de candidatos. Responde ÚNICAMENTE con un objeto JSON, sin bloques de código y sin texto adicional.",
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0043": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un filtro de resultados de recuperación para un sistema de Generación Aumentada por Recuperación. De los fragmentos candidatos numerados, selecciona los mejores para responder al mensaje del usuario.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nFragmentos candidatos (cada línea muestra su [número], document_id, posición y texto):\n{chunks}\n\nSelecciona como máximo {topk} de los mejores fragmentos, los mejores primero.\n\nResponde llamando a la función select_best_chunks con un único objeto JSON con esta forma:\n{\"selected_chunks\": [<números de candidato basados en 1>], \"message\": \"<frase breve opcional para el usuario>\", \"justification\": \"<justificación breve opcional>\"}\n\n- \"selected_chunks\" es obligatorio: índices basados en 1 en la lista numerada de candidatos anterior, los mejores primero, únicos, como máximo {topk} entradas.\n- \"message\" es opcional: una frase breve para el usuario en el mismo idioma de este prompt describiendo lo que seleccionaste.\n- \"justification\" es opcional: una frase breve en el mismo idioma de este prompt explicando tu selección.\n\nLas selecciones inválidas se rechazan y deben reintentarse: cada índice seleccionado debe ser único, estar dentro del rango y ser como máximo {topk}, o se rechaza toda la selección. Selecciona solo números que aparezcan en la lista de candidatos. Responde ÚNICAMENTE con un objeto JSON, sin bloques de código y sin texto adicional.",
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0044": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un filtro de resultados de recuperación para un sistema de Generación Aumentada por Recuperación. De los fragmentos candidatos numerados, selecciona los mejores para responder al mensaje del usuario.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nFragmentos candidatos (cada línea muestra su [número], document_id, posición y texto):\n{chunks}\n\nSelecciona como máximo {topk} de los mejores fragmentos, los mejores primero.\n\nResponde llamando a la función select_best_chunks con un único objeto JSON con esta forma:\n{\"selected_chunks\": [<números de candidato basados en 1>], \"message\": \"<frase breve opcional para el usuario>\", \"justification\": \"<justificación breve opcional>\"}\n\n- \"selected_chunks\" es obligatorio: índices basados en 1 en la lista numerada de candidatos anterior, los mejores primero, únicos, como máximo {topk} entradas.\n- \"message\" es opcional: una frase breve para el usuario en el mismo idioma de este prompt describiendo lo que seleccionaste.\n- \"justification\" es opcional: una frase breve en el mismo idioma de este prompt explicando tu selección.\n\nLas selecciones inválidas se rechazan y deben reintentarse: cada índice seleccionado debe ser único, estar dentro del rango y ser como máximo {topk}, o se rechaza toda la selección. Selecciona solo números que aparezcan en la lista de candidatos. Responde ÚNICAMENTE con un objeto JSON, sin bloques de código y sin texto adicional.",
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0045": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un filtro de resultados de recuperación para un sistema de Generación Aumentada por Recuperación. De los fragmentos candidatos numerados, selecciona los mejores para responder al mensaje del usuario.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nFragmentos candidatos (cada línea muestra su [número], document_id, posición y texto):\n{chunks}\n\nSelecciona como máximo {topk} de los mejores fragmentos, los mejores primero.\n\nResponde llamando a la función select_best_chunks con un único objeto JSON con esta forma:\n{\"selected_chunks\": [<números de candidato basados en 1>], \"message\": \"<frase breve opcional para el usuario>\", \"justification\": \"<justificación breve opcional>\"}\n\n- \"selected_chunks\" es obligatorio: índices basados en 1 en la lista numerada de candidatos anterior, los mejores primero, únicos, como máximo {topk} entradas.\n- \"message\" es opcional: una frase breve para el usuario en el mismo idioma de este prompt describiendo lo que seleccionaste.\n- \"justification\" es opcional: una frase breve en el mismo idioma de este prompt explicando tu selección.\n\nLas selecciones inválidas se rechazan y deben reintentarse: cada índice seleccionado debe ser único, estar dentro del rango y ser como máximo {topk}, o se rechaza toda la selección. Selecciona solo números que aparezcan en la lista de candidatos. Responde ÚNICAMENTE con un objeto JSON, sin bloques de código y sin texto adicional.",
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0046": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un filtro de resultados de recuperación para un sistema de Generación Aumentada por Recuperación. De los fragmentos candidatos numerados, selecciona los mejores para responder al mensaje del usuario.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nFragmentos candidatos (cada línea muestra su [número], document_id, posición y texto):\n{chunks}\n\nSelecciona como máximo {topk} de los mejores fragmentos, los mejores primero.\n\nResponde llamando a la función select_best_chunks con un único objeto JSON con esta forma:\n{\"selected_chunks\": [<números de candidato basados en 1>], \"message\": \"<frase breve opcional para el usuario>\", \"justification\": \"<justificación breve opcional>\"}\n\n- \"selected_chunks\" es obligatorio: índices basados en 1 en la lista numerada de candidatos anterior, los mejores primero, únicos, como máximo {topk} entradas.\n- \"message\" es opcional: una frase breve para el usuario en el mismo idioma de este prompt describiendo lo que seleccionaste.\n- \"justification\" es opcional: una frase breve en el mismo idioma de este prompt explicando tu selección.\n\nLas selecciones inválidas se rechazan y deben reintentarse: cada índice seleccionado debe ser único, estar dentro del rango y ser como máximo {topk}, o se rechaza toda la selección. Selecciona solo números que aparezcan en la lista de candidatos. Responde ÚNICAMENTE con un objeto JSON, sin bloques de código y sin texto adicional.",
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0047": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un filtro de resultados de recuperación para un sistema de Generación Aumentada por Recuperación. De los fragmentos candidatos numerados, selecciona los mejores para responder al mensaje del usuario.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nFragmentos candidatos (cada línea muestra su [número], document_id, posición y texto):\n{chunks}\n\nSelecciona como máximo {topk} de los mejores fragmentos, los mejores primero.\n\nResponde llamando a la función select_best_chunks con un único objeto JSON con esta forma:\n{\"selected_chunks\": [<números de candidato basados en 1>], \"message\": \"<frase breve opcional para el usuario>\", \"justification\": \"<justificación breve opcional>\"}\n\n- \"selected_chunks\" es obligatorio: índices basados en 1 en la lista numerada de candidatos anterior, los mejores primero, únicos, como máximo {topk} entradas.\n- \"message\" es opcional: una frase breve para el usuario en el mismo idioma de este prompt describiendo lo que seleccionaste.\n- \"justification\" es opcional: una frase breve en el mismo idioma de este prompt explicando tu selección.\n\nLas selecciones inválidas se rechazan y deben reintentarse: cada índice seleccionado debe ser único, estar dentro del rango y ser como máximo {topk}, o se rechaza toda la selección. Selecciona solo números que aparezcan en la lista de candidatos. Responde ÚNICAMENTE con un objeto JSON, sin bloques de código y sin texto adicional.",
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0048": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un filtro de resultados de recuperación para un sistema de Generación Aumentada por Recuperación. De los fragmentos candidatos numerados, selecciona los mejores para responder al mensaje del usuario.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nFragmentos candidatos (cada línea muestra su [número], document_id, posición y texto):\n{chunks}\n\nSelecciona como máximo {topk} de los mejores fragmentos, los mejores primero.\n\nResponde llamando a la función select_best_chunks con un único objeto JSON con esta forma:\n{\"selected_chunks\": [<números de candidato basados en 1>], \"message\": \"<frase breve opcional para el usuario>\", \"justification\": \"<justificación breve opcional>\"}\n\n- \"selected_chunks\" es obligatorio: índices basados en 1 en la lista numerada de candidatos anterior, los mejores primero, únicos, como máximo {topk} entradas.\n- \"message\" es opcional: una frase breve para el usuario en el mismo idioma de este prompt describiendo lo que seleccionaste.\n- \"justification\" es opcional: una frase breve en el mismo idioma de este prompt explicando tu selección.\n\nLas selecciones inválidas se rechazan y deben reintentarse: cada índice seleccionado debe ser único, estar dentro del rango y ser como máximo {topk}, o se rechaza toda la selección. Selecciona solo números que aparezcan en la lista de candidatos. Responde ÚNICAMENTE con un objeto JSON, sin bloques de código y sin texto adicional.",
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0049": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un filtro de resultados de recuperación para un sistema de Generación Aumentada por Recuperación. De los fragmentos candidatos numerados, selecciona los mejores para responder al mensaje del usuario.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nFragmentos candidatos (cada línea muestra su [número], document_id, posición y texto):\n{chunks}\n\nSelecciona como máximo {topk} de los mejores fragmentos, los mejores primero.\n\nResponde llamando a la función select_best_chunks con un único objeto JSON con esta forma:\n{\"selected_chunks\": [<números de candidato basados en 1>], \"message\": \"<frase breve opcional para el usuario>\", \"justification\": \"<justificación breve opcional>\"}\n\n- \"selected_chunks\" es obligatorio: índices basados en 1 en la lista numerada de candidatos anterior, los mejores primero, únicos, como máximo {topk} entradas.\n- \"message\" es opcional: una frase breve para el usuario en el mismo idioma de este prompt describiendo lo que seleccionaste.\n- \"justification\" es opcional: una frase breve en el mismo idioma de este prompt explicando tu selección.\n\nLas selecciones inválidas se rechazan y deben reintentarse: cada índice seleccionado debe ser único, estar dentro del rango y ser como máximo {topk}, o se rechaza toda la selección. Selecciona solo números que aparezcan en la lista de candidatos. Responde ÚNICAMENTE con un objeto JSON, sin bloques de código y sin texto adicional.",
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0050": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "es",
+    "params": {
+      "language": "es",
+      "template": "Eres un filtro de resultados de recuperación para un sistema de Generación Aumentada por Recuperación. De los fragmentos candidatos numerados, selecciona los mejores para responder al mensaje del usuario.\n\nMensaje del usuario:\n{input}\n\nDocumentos: {documents.names}\n\nDescripción de los documentos: {documents.description}\n\nFragmentos candidatos (cada línea muestra su [número], document_id, posición y texto):\n{chunks}\n\nSelecciona como máximo {topk} de los mejores fragmentos, los mejores primero.\n\nResponde llamando a la función select_best_chunks con un único objeto JSON con esta forma:\n{\"selected_chunks\": [<números de candidato basados en 1>], \"message\": \"<frase breve opcional para el usuario>\", \"justification\": \"<justificación breve opcional>\"}\n\n- \"selected_chunks\" es obligatorio: índices basados en 1 en la lista numerada de candidatos anterior, los mejores primero, únicos, como máximo {topk} entradas.\n- \"message\" es opcional: una frase breve para el usuario en el mismo idioma de este prompt describiendo lo que seleccionaste.\n- \"justification\" es opcional: una frase breve en el mismo idioma de este prompt explicando tu selección.\n\nLas selecciones inválidas se rechazan y deben reintentarse: cada índice seleccionado debe ser único, estar dentro del rango y ser como máximo {topk}, o se rechaza toda la selección. Selecciona solo números que aparezcan en la lista de candidatos. Responde ÚNICAMENTE con un objeto JSON, sin bloques de código y sin texto adicional.",
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0051": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um filtro de resultados de recuperação para um sistema de Geração Aumentada por Recuperação. Dos trechos candidatos numerados, selecione os melhores para responder à mensagem do usuário.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nTrechos candidatos (cada linha mostra seu [número], document_id, posição e texto):\n{chunks}\n\nSelecione no máximo {topk} dos melhores trechos, os melhores primeiro.\n\nResponda chamando a função select_best_chunks com um único objeto JSON com esta forma:\n{\"selected_chunks\": [<números de candidato baseados em 1>], \"message\": \"<frase breve opcional para o usuário>\", \"justification\": \"<justificativa breve opcional>\"}\n\n- \"selected_chunks\" é obrigatório: índices baseados em 1 na lista numerada de candidatos acima, os melhores primeiro, únicos, no máximo {topk} entradas.\n- \"message\" é opcional: uma frase breve para o usuário no mesmo idioma deste prompt descrevendo o que você selecionou.\n- \"justification\" é opcional: uma frase breve no mesmo idioma deste prompt explicando sua seleção.\n\nSeleções inválidas são rejeitadas e devem ser repetidas: cada índice selecionado deve ser único, estar dentro do intervalo e ser no máximo {topk}, ou toda a seleção é rejeitada. Selecione apenas números que apareçam na lista de candidatos. Responda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0052": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um filtro de resultados de recuperação para um sistema de Geração Aumentada por Recuperação. Dos trechos candidatos numerados, selecione os melhores para responder à mensagem do usuário.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nTrechos candidatos (cada linha mostra seu [número], document_id, posição e texto):\n{chunks}\n\nSelecione no máximo {topk} dos melhores trechos, os melhores primeiro.\n\nResponda chamando a função select_best_chunks com um único objeto JSON com esta forma:\n{\"selected_chunks\": [<números de candidato baseados em 1>], \"message\": \"<frase breve opcional para o usuário>\", \"justification\": \"<justificativa breve opcional>\"}\n\n- \"selected_chunks\" é obrigatório: índices baseados em 1 na lista numerada de candidatos acima, os melhores primeiro, únicos, no máximo {topk} entradas.\n- \"message\" é opcional: uma frase breve para o usuário no mesmo idioma deste prompt descrevendo o que você selecionou.\n- \"justification\" é opcional: uma frase breve no mesmo idioma deste prompt explicando sua seleção.\n\nSeleções inválidas são rejeitadas e devem ser repetidas: cada índice selecionado deve ser único, estar dentro do intervalo e ser no máximo {topk}, ou toda a seleção é rejeitada. Selecione apenas números que apareçam na lista de candidatos. Responda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0053": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um filtro de resultados de recuperação para um sistema de Geração Aumentada por Recuperação. Dos trechos candidatos numerados, selecione os melhores para responder à mensagem do usuário.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nTrechos candidatos (cada linha mostra seu [número], document_id, posição e texto):\n{chunks}\n\nSelecione no máximo {topk} dos melhores trechos, os melhores primeiro.\n\nResponda chamando a função select_best_chunks com um único objeto JSON com esta forma:\n{\"selected_chunks\": [<números de candidato baseados em 1>], \"message\": \"<frase breve opcional para o usuário>\", \"justification\": \"<justificativa breve opcional>\"}\n\n- \"selected_chunks\" é obrigatório: índices baseados em 1 na lista numerada de candidatos acima, os melhores primeiro, únicos, no máximo {topk} entradas.\n- \"message\" é opcional: uma frase breve para o usuário no mesmo idioma deste prompt descrevendo o que você selecionou.\n- \"justification\" é opcional: uma frase breve no mesmo idioma deste prompt explicando sua seleção.\n\nSeleções inválidas são rejeitadas e devem ser repetidas: cada índice selecionado deve ser único, estar dentro do intervalo e ser no máximo {topk}, ou toda a seleção é rejeitada. Selecione apenas números que apareçam na lista de candidatos. Responda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0054": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um filtro de resultados de recuperação para um sistema de Geração Aumentada por Recuperação. Dos trechos candidatos numerados, selecione os melhores para responder à mensagem do usuário.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nTrechos candidatos (cada linha mostra seu [número], document_id, posição e texto):\n{chunks}\n\nSelecione no máximo {topk} dos melhores trechos, os melhores primeiro.\n\nResponda chamando a função select_best_chunks com um único objeto JSON com esta forma:\n{\"selected_chunks\": [<números de candidato baseados em 1>], \"message\": \"<frase breve opcional para o usuário>\", \"justification\": \"<justificativa breve opcional>\"}\n\n- \"selected_chunks\" é obrigatório: índices baseados em 1 na lista numerada de candidatos acima, os melhores primeiro, únicos, no máximo {topk} entradas.\n- \"message\" é opcional: uma frase breve para o usuário no mesmo idioma deste prompt descrevendo o que você selecionou.\n- \"justification\" é opcional: uma frase breve no mesmo idioma deste prompt explicando sua seleção.\n\nSeleções inválidas são rejeitadas e devem ser repetidas: cada índice selecionado deve ser único, estar dentro do intervalo e ser no máximo {topk}, ou toda a seleção é rejeitada. Selecione apenas números que apareçam na lista de candidatos. Responda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0055": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um filtro de resultados de recuperação para um sistema de Geração Aumentada por Recuperação. Dos trechos candidatos numerados, selecione os melhores para responder à mensagem do usuário.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nTrechos candidatos (cada linha mostra seu [número], document_id, posição e texto):\n{chunks}\n\nSelecione no máximo {topk} dos melhores trechos, os melhores primeiro.\n\nResponda chamando a função select_best_chunks com um único objeto JSON com esta forma:\n{\"selected_chunks\": [<números de candidato baseados em 1>], \"message\": \"<frase breve opcional para o usuário>\", \"justification\": \"<justificativa breve opcional>\"}\n\n- \"selected_chunks\" é obrigatório: índices baseados em 1 na lista numerada de candidatos acima, os melhores primeiro, únicos, no máximo {topk} entradas.\n- \"message\" é opcional: uma frase breve para o usuário no mesmo idioma deste prompt descrevendo o que você selecionou.\n- \"justification\" é opcional: uma frase breve no mesmo idioma deste prompt explicando sua seleção.\n\nSeleções inválidas são rejeitadas e devem ser repetidas: cada índice selecionado deve ser único, estar dentro do intervalo e ser no máximo {topk}, ou toda a seleção é rejeitada. Selecione apenas números que apareçam na lista de candidatos. Responda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0056": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um filtro de resultados de recuperação para um sistema de Geração Aumentada por Recuperação. Dos trechos candidatos numerados, selecione os melhores para responder à mensagem do usuário.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nTrechos candidatos (cada linha mostra seu [número], document_id, posição e texto):\n{chunks}\n\nSelecione no máximo {topk} dos melhores trechos, os melhores primeiro.\n\nResponda chamando a função select_best_chunks com um único objeto JSON com esta forma:\n{\"selected_chunks\": [<números de candidato baseados em 1>], \"message\": \"<frase breve opcional para o usuário>\", \"justification\": \"<justificativa breve opcional>\"}\n\n- \"selected_chunks\" é obrigatório: índices baseados em 1 na lista numerada de candidatos acima, os melhores primeiro, únicos, no máximo {topk} entradas.\n- \"message\" é opcional: uma frase breve para o usuário no mesmo idioma deste prompt descrevendo o que você selecionou.\n- \"justification\" é opcional: uma frase breve no mesmo idioma deste prompt explicando sua seleção.\n\nSeleções inválidas são rejeitadas e devem ser repetidas: cada índice selecionado deve ser único, estar dentro do intervalo e ser no máximo {topk}, ou toda a seleção é rejeitada. Selecione apenas números que apareçam na lista de candidatos. Responda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0057": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um filtro de resultados de recuperação para um sistema de Geração Aumentada por Recuperação. Dos trechos candidatos numerados, selecione os melhores para responder à mensagem do usuário.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nTrechos candidatos (cada linha mostra seu [número], document_id, posição e texto):\n{chunks}\n\nSelecione no máximo {topk} dos melhores trechos, os melhores primeiro.\n\nResponda chamando a função select_best_chunks com um único objeto JSON com esta forma:\n{\"selected_chunks\": [<números de candidato baseados em 1>], \"message\": \"<frase breve opcional para o usuário>\", \"justification\": \"<justificativa breve opcional>\"}\n\n- \"selected_chunks\" é obrigatório: índices baseados em 1 na lista numerada de candidatos acima, os melhores primeiro, únicos, no máximo {topk} entradas.\n- \"message\" é opcional: uma frase breve para o usuário no mesmo idioma deste prompt descrevendo o que você selecionou.\n- \"justification\" é opcional: uma frase breve no mesmo idioma deste prompt explicando sua seleção.\n\nSeleções inválidas são rejeitadas e devem ser repetidas: cada índice selecionado deve ser único, estar dentro do intervalo e ser no máximo {topk}, ou toda a seleção é rejeitada. Selecione apenas números que apareçam na lista de candidatos. Responda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0058": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um filtro de resultados de recuperação para um sistema de Geração Aumentada por Recuperação. Dos trechos candidatos numerados, selecione os melhores para responder à mensagem do usuário.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nTrechos candidatos (cada linha mostra seu [número], document_id, posição e texto):\n{chunks}\n\nSelecione no máximo {topk} dos melhores trechos, os melhores primeiro.\n\nResponda chamando a função select_best_chunks com um único objeto JSON com esta forma:\n{\"selected_chunks\": [<números de candidato baseados em 1>], \"message\": \"<frase breve opcional para o usuário>\", \"justification\": \"<justificativa breve opcional>\"}\n\n- \"selected_chunks\" é obrigatório: índices baseados em 1 na lista numerada de candidatos acima, os melhores primeiro, únicos, no máximo {topk} entradas.\n- \"message\" é opcional: uma frase breve para o usuário no mesmo idioma deste prompt descrevendo o que você selecionou.\n- \"justification\" é opcional: uma frase breve no mesmo idioma deste prompt explicando sua seleção.\n\nSeleções inválidas são rejeitadas e devem ser repetidas: cada índice selecionado deve ser único, estar dentro do intervalo e ser no máximo {topk}, ou toda a seleção é rejeitada. Selecione apenas números que apareçam na lista de candidatos. Responda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0059": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um filtro de resultados de recuperação para um sistema de Geração Aumentada por Recuperação. Dos trechos candidatos numerados, selecione os melhores para responder à mensagem do usuário.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nTrechos candidatos (cada linha mostra seu [número], document_id, posição e texto):\n{chunks}\n\nSelecione no máximo {topk} dos melhores trechos, os melhores primeiro.\n\nResponda chamando a função select_best_chunks com um único objeto JSON com esta forma:\n{\"selected_chunks\": [<números de candidato baseados em 1>], \"message\": \"<frase breve opcional para o usuário>\", \"justification\": \"<justificativa breve opcional>\"}\n\n- \"selected_chunks\" é obrigatório: índices baseados em 1 na lista numerada de candidatos acima, os melhores primeiro, únicos, no máximo {topk} entradas.\n- \"message\" é opcional: uma frase breve para o usuário no mesmo idioma deste prompt descrevendo o que você selecionou.\n- \"justification\" é opcional: uma frase breve no mesmo idioma deste prompt explicando sua seleção.\n\nSeleções inválidas são rejeitadas e devem ser repetidas: cada índice selecionado deve ser único, estar dentro do intervalo e ser no máximo {topk}, ou toda a seleção é rejeitada. Selecione apenas números que apareçam na lista de candidatos. Responda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0060": {
+    "component_class": "DefaultAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "pt",
+    "params": {
+      "language": "pt",
+      "template": "Você é um filtro de resultados de recuperação para um sistema de Geração Aumentada por Recuperação. Dos trechos candidatos numerados, selecione os melhores para responder à mensagem do usuário.\n\nMensagem do usuário:\n{input}\n\nDocumentos: {documents.names}\n\nDescrição dos documentos: {documents.description}\n\nTrechos candidatos (cada linha mostra seu [número], document_id, posição e texto):\n{chunks}\n\nSelecione no máximo {topk} dos melhores trechos, os melhores primeiro.\n\nResponda chamando a função select_best_chunks com um único objeto JSON com esta forma:\n{\"selected_chunks\": [<números de candidato baseados em 1>], \"message\": \"<frase breve opcional para o usuário>\", \"justification\": \"<justificativa breve opcional>\"}\n\n- \"selected_chunks\" é obrigatório: índices baseados em 1 na lista numerada de candidatos acima, os melhores primeiro, únicos, no máximo {topk} entradas.\n- \"message\" é opcional: uma frase breve para o usuário no mesmo idioma deste prompt descrevendo o que você selecionou.\n- \"justification\" é opcional: uma frase breve no mesmo idioma deste prompt explicando sua seleção.\n\nSeleções inválidas são rejeitadas e devem ser repetidas: cada índice selecionado deve ser único, estar dentro do intervalo e ser no máximo {topk}, ou toda a seleção é rejeitada. Selecione apenas números que apareçam na lista de candidatos. Responda APENAS com um objeto JSON, sem blocos de código e sem texto adicional.",
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0061": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Decide whether the chunks below already answer the user message well enough to stop retrieving.\n\nUser message:\n{input}\n\nDocuments on file: {documents.names}\n\nCandidate chunks:\n{chunks}\n\nPool size: {pool_size} of {topk} allowed chunks ({remaining} slots free, round {round} of {max_rounds}).\n\nRetrievers available:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0062": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Decide whether the chunks below already answer the user message well enough to stop retrieving.\n\nUser message:\n{input}\n\nDocuments on file: {documents.names}\n\nCandidate chunks:\n{chunks}\n\nPool size: {pool_size} of {topk} allowed chunks ({remaining} slots free, round {round} of {max_rounds}).\n\nRetrievers available:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0063": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Decide whether the chunks below already answer the user message well enough to stop retrieving.\n\nUser message:\n{input}\n\nDocuments on file: {documents.names}\n\nCandidate chunks:\n{chunks}\n\nPool size: {pool_size} of {topk} allowed chunks ({remaining} slots free, round {round} of {max_rounds}).\n\nRetrievers available:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0064": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Decide whether the chunks below already answer the user message well enough to stop retrieving.\n\nUser message:\n{input}\n\nDocuments on file: {documents.names}\n\nCandidate chunks:\n{chunks}\n\nPool size: {pool_size} of {topk} allowed chunks ({remaining} slots free, round {round} of {max_rounds}).\n\nRetrievers available:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0065": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Decide whether the chunks below already answer the user message well enough to stop retrieving.\n\nUser message:\n{input}\n\nDocuments on file: {documents.names}\n\nCandidate chunks:\n{chunks}\n\nPool size: {pool_size} of {topk} allowed chunks ({remaining} slots free, round {round} of {max_rounds}).\n\nRetrievers available:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0066": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Decide whether the chunks below already answer the user message well enough to stop retrieving.\n\nUser message:\n{input}\n\nDocuments on file: {documents.names}\n\nCandidate chunks:\n{chunks}\n\nPool size: {pool_size} of {topk} allowed chunks ({remaining} slots free, round {round} of {max_rounds}).\n\nRetrievers available:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0067": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Decide whether the chunks below already answer the user message well enough to stop retrieving.\n\nUser message:\n{input}\n\nDocuments on file: {documents.names}\n\nCandidate chunks:\n{chunks}\n\nPool size: {pool_size} of {topk} allowed chunks ({remaining} slots free, round {round} of {max_rounds}).\n\nRetrievers available:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0068": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Decide whether the chunks below already answer the user message well enough to stop retrieving.\n\nUser message:\n{input}\n\nDocuments on file: {documents.names}\n\nCandidate chunks:\n{chunks}\n\nPool size: {pool_size} of {topk} allowed chunks ({remaining} slots free, round {round} of {max_rounds}).\n\nRetrievers available:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0069": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Decide whether the chunks below already answer the user message well enough to stop retrieving.\n\nUser message:\n{input}\n\nDocuments on file: {documents.names}\n\nCandidate chunks:\n{chunks}\n\nPool size: {pool_size} of {topk} allowed chunks ({remaining} slots free, round {round} of {max_rounds}).\n\nRetrievers available:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0070": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Decide whether the chunks below already answer the user message well enough to stop retrieving.\n\nUser message:\n{input}\n\nDocuments on file: {documents.names}\n\nCandidate chunks:\n{chunks}\n\nPool size: {pool_size} of {topk} allowed chunks ({remaining} slots free, round {round} of {max_rounds}).\n\nRetrievers available:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0071": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You audit a retrieval pool before generation. Keep the pool only if it answers the user message completely; otherwise ask for the missing evidence from the catalog.\n\nUser message:\n{input}\n\nPool content:\n{chunks}\n\nPool size: {pool_size} chunks, {remaining} free slots left in round {round} of {max_rounds} (cap {topk}).\n\nDocument inventory:\n{documents.description}\n\nRetriever catalog:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0072": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You audit a retrieval pool before generation. Keep the pool only if it answers the user message completely; otherwise ask for the missing evidence from the catalog.\n\nUser message:\n{input}\n\nPool content:\n{chunks}\n\nPool size: {pool_size} chunks, {remaining} free slots left in round {round} of {max_rounds} (cap {topk}).\n\nDocument inventory:\n{documents.description}\n\nRetriever catalog:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0073": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You audit a retrieval pool before generation. Keep the pool only if it answers the user message completely; otherwise ask for the missing evidence from the catalog.\n\nUser message:\n{input}\n\nPool content:\n{chunks}\n\nPool size: {pool_size} chunks, {remaining} free slots left in round {round} of {max_rounds} (cap {topk}).\n\nDocument inventory:\n{documents.description}\n\nRetriever catalog:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0074": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You audit a retrieval pool before generation. Keep the pool only if it answers the user message completely; otherwise ask for the missing evidence from the catalog.\n\nUser message:\n{input}\n\nPool content:\n{chunks}\n\nPool size: {pool_size} chunks, {remaining} free slots left in round {round} of {max_rounds} (cap {topk}).\n\nDocument inventory:\n{documents.description}\n\nRetriever catalog:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0075": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You audit a retrieval pool before generation. Keep the pool only if it answers the user message completely; otherwise ask for the missing evidence from the catalog.\n\nUser message:\n{input}\n\nPool content:\n{chunks}\n\nPool size: {pool_size} chunks, {remaining} free slots left in round {round} of {max_rounds} (cap {topk}).\n\nDocument inventory:\n{documents.description}\n\nRetriever catalog:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0076": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You audit a retrieval pool before generation. Keep the pool only if it answers the user message completely; otherwise ask for the missing evidence from the catalog.\n\nUser message:\n{input}\n\nPool content:\n{chunks}\n\nPool size: {pool_size} chunks, {remaining} free slots left in round {round} of {max_rounds} (cap {topk}).\n\nDocument inventory:\n{documents.description}\n\nRetriever catalog:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0077": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You audit a retrieval pool before generation. Keep the pool only if it answers the user message completely; otherwise ask for the missing evidence from the catalog.\n\nUser message:\n{input}\n\nPool content:\n{chunks}\n\nPool size: {pool_size} chunks, {remaining} free slots left in round {round} of {max_rounds} (cap {topk}).\n\nDocument inventory:\n{documents.description}\n\nRetriever catalog:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0078": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You audit a retrieval pool before generation. Keep the pool only if it answers the user message completely; otherwise ask for the missing evidence from the catalog.\n\nUser message:\n{input}\n\nPool content:\n{chunks}\n\nPool size: {pool_size} chunks, {remaining} free slots left in round {round} of {max_rounds} (cap {topk}).\n\nDocument inventory:\n{documents.description}\n\nRetriever catalog:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0079": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You audit a retrieval pool before generation. Keep the pool only if it answers the user message completely; otherwise ask for the missing evidence from the catalog.\n\nUser message:\n{input}\n\nPool content:\n{chunks}\n\nPool size: {pool_size} chunks, {remaining} free slots left in round {round} of {max_rounds} (cap {topk}).\n\nDocument inventory:\n{documents.description}\n\nRetriever catalog:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0080": {
+    "component_class": "CustomAgenticRetrieverPrompt",
+    "model_name": "sufficiency",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You audit a retrieval pool before generation. Keep the pool only if it answers the user message completely; otherwise ask for the missing evidence from the catalog.\n\nUser message:\n{input}\n\nPool content:\n{chunks}\n\nPool size: {pool_size} chunks, {remaining} free slots left in round {round} of {max_rounds} (cap {topk}).\n\nDocument inventory:\n{documents.description}\n\nRetriever catalog:\n{retriever.description}\n\nRespond with the evaluate_retrieval_sufficiency JSON object only.",
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0081": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Pick the candidate chunks that best answer the user message and drop the rest. Fewer, better chunks beat a long list.\n\nUser message:\n{input}\n\nCandidates:\n{chunks}\n\nKeep at most {topk} candidates, best first. Documents available: {documents.names}\n\nRespond with the select_best_chunks JSON object only.",
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0082": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Pick the candidate chunks that best answer the user message and drop the rest. Fewer, better chunks beat a long list.\n\nUser message:\n{input}\n\nCandidates:\n{chunks}\n\nKeep at most {topk} candidates, best first. Documents available: {documents.names}\n\nRespond with the select_best_chunks JSON object only.",
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0083": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Pick the candidate chunks that best answer the user message and drop the rest. Fewer, better chunks beat a long list.\n\nUser message:\n{input}\n\nCandidates:\n{chunks}\n\nKeep at most {topk} candidates, best first. Documents available: {documents.names}\n\nRespond with the select_best_chunks JSON object only.",
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0084": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Pick the candidate chunks that best answer the user message and drop the rest. Fewer, better chunks beat a long list.\n\nUser message:\n{input}\n\nCandidates:\n{chunks}\n\nKeep at most {topk} candidates, best first. Documents available: {documents.names}\n\nRespond with the select_best_chunks JSON object only.",
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0085": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Pick the candidate chunks that best answer the user message and drop the rest. Fewer, better chunks beat a long list.\n\nUser message:\n{input}\n\nCandidates:\n{chunks}\n\nKeep at most {topk} candidates, best first. Documents available: {documents.names}\n\nRespond with the select_best_chunks JSON object only.",
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0086": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Pick the candidate chunks that best answer the user message and drop the rest. Fewer, better chunks beat a long list.\n\nUser message:\n{input}\n\nCandidates:\n{chunks}\n\nKeep at most {topk} candidates, best first. Documents available: {documents.names}\n\nRespond with the select_best_chunks JSON object only.",
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0087": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Pick the candidate chunks that best answer the user message and drop the rest. Fewer, better chunks beat a long list.\n\nUser message:\n{input}\n\nCandidates:\n{chunks}\n\nKeep at most {topk} candidates, best first. Documents available: {documents.names}\n\nRespond with the select_best_chunks JSON object only.",
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0088": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Pick the candidate chunks that best answer the user message and drop the rest. Fewer, better chunks beat a long list.\n\nUser message:\n{input}\n\nCandidates:\n{chunks}\n\nKeep at most {topk} candidates, best first. Documents available: {documents.names}\n\nRespond with the select_best_chunks JSON object only.",
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0089": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Pick the candidate chunks that best answer the user message and drop the rest. Fewer, better chunks beat a long list.\n\nUser message:\n{input}\n\nCandidates:\n{chunks}\n\nKeep at most {topk} candidates, best first. Documents available: {documents.names}\n\nRespond with the select_best_chunks JSON object only.",
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0090": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-1",
+    "params": {
+      "template": "Pick the candidate chunks that best answer the user message and drop the rest. Fewer, better chunks beat a long list.\n\nUser message:\n{input}\n\nCandidates:\n{chunks}\n\nKeep at most {topk} candidates, best first. Documents available: {documents.names}\n\nRespond with the select_best_chunks JSON object only.",
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0091": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You are triaging search results. Number the candidates you would keep for the answer, in priority order, and ignore anything that only repeats the question.\n\nUser message:\n{input}\n\nCandidate list:\n{chunks}\n\nCorpus:\n{documents.description}\n\nReturn at most {topk} 1-based candidate numbers via select_best_chunks.",
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0092": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You are triaging search results. Number the candidates you would keep for the answer, in priority order, and ignore anything that only repeats the question.\n\nUser message:\n{input}\n\nCandidate list:\n{chunks}\n\nCorpus:\n{documents.description}\n\nReturn at most {topk} 1-based candidate numbers via select_best_chunks.",
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0093": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You are triaging search results. Number the candidates you would keep for the answer, in priority order, and ignore anything that only repeats the question.\n\nUser message:\n{input}\n\nCandidate list:\n{chunks}\n\nCorpus:\n{documents.description}\n\nReturn at most {topk} 1-based candidate numbers via select_best_chunks.",
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0094": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You are triaging search results. Number the candidates you would keep for the answer, in priority order, and ignore anything that only repeats the question.\n\nUser message:\n{input}\n\nCandidate list:\n{chunks}\n\nCorpus:\n{documents.description}\n\nReturn at most {topk} 1-based candidate numbers via select_best_chunks.",
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0095": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You are triaging search results. Number the candidates you would keep for the answer, in priority order, and ignore anything that only repeats the question.\n\nUser message:\n{input}\n\nCandidate list:\n{chunks}\n\nCorpus:\n{documents.description}\n\nReturn at most {topk} 1-based candidate numbers via select_best_chunks.",
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0096": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You are triaging search results. Number the candidates you would keep for the answer, in priority order, and ignore anything that only repeats the question.\n\nUser message:\n{input}\n\nCandidate list:\n{chunks}\n\nCorpus:\n{documents.description}\n\nReturn at most {topk} 1-based candidate numbers via select_best_chunks.",
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0097": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You are triaging search results. Number the candidates you would keep for the answer, in priority order, and ignore anything that only repeats the question.\n\nUser message:\n{input}\n\nCandidate list:\n{chunks}\n\nCorpus:\n{documents.description}\n\nReturn at most {topk} 1-based candidate numbers via select_best_chunks.",
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0098": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You are triaging search results. Number the candidates you would keep for the answer, in priority order, and ignore anything that only repeats the question.\n\nUser message:\n{input}\n\nCandidate list:\n{chunks}\n\nCorpus:\n{documents.description}\n\nReturn at most {topk} 1-based candidate numbers via select_best_chunks.",
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0099": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You are triaging search results. Number the candidates you would keep for the answer, in priority order, and ignore anything that only repeats the question.\n\nUser message:\n{input}\n\nCandidate list:\n{chunks}\n\nCorpus:\n{documents.description}\n\nReturn at most {topk} 1-based candidate numbers via select_best_chunks.",
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0100": {
+    "component_class": "CustomAgenticRerankerPrompt",
+    "model_name": "filter",
+    "config_name": "custom-2",
+    "params": {
+      "template": "You are triaging search results. Number the candidates you would keep for the answer, in priority order, and ignore anything that only repeats the question.\n\nUser message:\n{input}\n\nCandidate list:\n{chunks}\n\nCorpus:\n{documents.description}\n\nReturn at most {topk} 1-based candidate numbers via select_best_chunks.",
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  }
+}

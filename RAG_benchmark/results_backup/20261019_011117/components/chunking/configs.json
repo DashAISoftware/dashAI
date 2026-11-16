@@ -1,0 +1,822 @@
+{
+  "0001": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "paragraph",
+    "params": {
+      "chunk_size": 500,
+      "chunk_overlap": 50,
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0002": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "page",
+    "params": {
+      "chunk_size": 2000,
+      "chunk_overlap": 200,
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0003": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "default",
+    "params": {
+      "chunk_size": 1000,
+      "chunk_overlap": 100,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0004": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "small",
+    "params": {
+      "chunk_size": 200,
+      "chunk_overlap": 20,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0005": {
+    "component_class": "TokenChunkModel",
+    "model_name": "e5-mistral",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+      "chunk_size": 300,
+      "chunk_overlap": 60,
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0006": {
+    "component_class": "TokenChunkModel",
+    "model_name": "bert-spanish",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+      "chunk_size": 512,
+      "chunk_overlap": 50,
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0007": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "paragraph",
+    "params": {
+      "chunk_size": 500,
+      "chunk_overlap": 50,
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0008": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "page",
+    "params": {
+      "chunk_size": 2000,
+      "chunk_overlap": 200,
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0009": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "default",
+    "params": {
+      "chunk_size": 1000,
+      "chunk_overlap": 100,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0010": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "small",
+    "params": {
+      "chunk_size": 200,
+      "chunk_overlap": 20,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0011": {
+    "component_class": "TokenChunkModel",
+    "model_name": "e5-mistral",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+      "chunk_size": 300,
+      "chunk_overlap": 60,
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0012": {
+    "component_class": "TokenChunkModel",
+    "model_name": "bert-spanish",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+      "chunk_size": 512,
+      "chunk_overlap": 50,
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0013": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "paragraph",
+    "params": {
+      "chunk_size": 500,
+      "chunk_overlap": 50,
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0014": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "page",
+    "params": {
+      "chunk_size": 2000,
+      "chunk_overlap": 200,
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0015": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "default",
+    "params": {
+      "chunk_size": 1000,
+      "chunk_overlap": 100,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0016": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "small",
+    "params": {
+      "chunk_size": 200,
+      "chunk_overlap": 20,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0017": {
+    "component_class": "TokenChunkModel",
+    "model_name": "e5-mistral",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+      "chunk_size": 300,
+      "chunk_overlap": 60,
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0018": {
+    "component_class": "TokenChunkModel",
+    "model_name": "bert-spanish",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+      "chunk_size": 512,
+      "chunk_overlap": 50,
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0019": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "paragraph",
+    "params": {
+      "chunk_size": 500,
+      "chunk_overlap": 50,
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0020": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "page",
+    "params": {
+      "chunk_size": 2000,
+      "chunk_overlap": 200,
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0021": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "default",
+    "params": {
+      "chunk_size": 1000,
+      "chunk_overlap": 100,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0022": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "small",
+    "params": {
+      "chunk_size": 200,
+      "chunk_overlap": 20,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0023": {
+    "component_class": "TokenChunkModel",
+    "model_name": "e5-mistral",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+      "chunk_size": 300,
+      "chunk_overlap": 60,
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0024": {
+    "component_class": "TokenChunkModel",
+    "model_name": "bert-spanish",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+      "chunk_size": 512,
+      "chunk_overlap": 50,
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0025": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "paragraph",
+    "params": {
+      "chunk_size": 500,
+      "chunk_overlap": 50,
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0026": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "page",
+    "params": {
+      "chunk_size": 2000,
+      "chunk_overlap": 200,
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0027": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "default",
+    "params": {
+      "chunk_size": 1000,
+      "chunk_overlap": 100,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0028": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "small",
+    "params": {
+      "chunk_size": 200,
+      "chunk_overlap": 20,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0029": {
+    "component_class": "TokenChunkModel",
+    "model_name": "e5-mistral",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+      "chunk_size": 300,
+      "chunk_overlap": 60,
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0030": {
+    "component_class": "TokenChunkModel",
+    "model_name": "bert-spanish",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+      "chunk_size": 512,
+      "chunk_overlap": 50,
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0031": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "paragraph",
+    "params": {
+      "chunk_size": 500,
+      "chunk_overlap": 50,
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0032": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "page",
+    "params": {
+      "chunk_size": 2000,
+      "chunk_overlap": 200,
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0033": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "default",
+    "params": {
+      "chunk_size": 1000,
+      "chunk_overlap": 100,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0034": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "small",
+    "params": {
+      "chunk_size": 200,
+      "chunk_overlap": 20,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0035": {
+    "component_class": "TokenChunkModel",
+    "model_name": "e5-mistral",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+      "chunk_size": 300,
+      "chunk_overlap": 60,
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0036": {
+    "component_class": "TokenChunkModel",
+    "model_name": "bert-spanish",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+      "chunk_size": 512,
+      "chunk_overlap": 50,
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0037": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "paragraph",
+    "params": {
+      "chunk_size": 500,
+      "chunk_overlap": 50,
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0038": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "page",
+    "params": {
+      "chunk_size": 2000,
+      "chunk_overlap": 200,
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0039": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "default",
+    "params": {
+      "chunk_size": 1000,
+      "chunk_overlap": 100,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0040": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "small",
+    "params": {
+      "chunk_size": 200,
+      "chunk_overlap": 20,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0041": {
+    "component_class": "TokenChunkModel",
+    "model_name": "e5-mistral",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+      "chunk_size": 300,
+      "chunk_overlap": 60,
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0042": {
+    "component_class": "TokenChunkModel",
+    "model_name": "bert-spanish",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+      "chunk_size": 512,
+      "chunk_overlap": 50,
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0043": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "paragraph",
+    "params": {
+      "chunk_size": 500,
+      "chunk_overlap": 50,
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0044": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "page",
+    "params": {
+      "chunk_size": 2000,
+      "chunk_overlap": 200,
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0045": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "default",
+    "params": {
+      "chunk_size": 1000,
+      "chunk_overlap": 100,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0046": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "small",
+    "params": {
+      "chunk_size": 200,
+      "chunk_overlap": 20,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0047": {
+    "component_class": "TokenChunkModel",
+    "model_name": "e5-mistral",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+      "chunk_size": 300,
+      "chunk_overlap": 60,
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0048": {
+    "component_class": "TokenChunkModel",
+    "model_name": "bert-spanish",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+      "chunk_size": 512,
+      "chunk_overlap": 50,
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0049": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "paragraph",
+    "params": {
+      "chunk_size": 500,
+      "chunk_overlap": 50,
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0050": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "page",
+    "params": {
+      "chunk_size": 2000,
+      "chunk_overlap": 200,
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0051": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "default",
+    "params": {
+      "chunk_size": 1000,
+      "chunk_overlap": 100,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0052": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "small",
+    "params": {
+      "chunk_size": 200,
+      "chunk_overlap": 20,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0053": {
+    "component_class": "TokenChunkModel",
+    "model_name": "e5-mistral",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+      "chunk_size": 300,
+      "chunk_overlap": 60,
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0054": {
+    "component_class": "TokenChunkModel",
+    "model_name": "bert-spanish",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+      "chunk_size": 512,
+      "chunk_overlap": 50,
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0055": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "paragraph",
+    "params": {
+      "chunk_size": 500,
+      "chunk_overlap": 50,
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0056": {
+    "component_class": "CharacterChunkModel",
+    "model_name": "CharacterChunk",
+    "config_name": "page",
+    "params": {
+      "chunk_size": 2000,
+      "chunk_overlap": 200,
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0057": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "default",
+    "params": {
+      "chunk_size": 1000,
+      "chunk_overlap": 100,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0058": {
+    "component_class": "RecursiveCharacterChunkModel",
+    "model_name": "RecursiveChar",
+    "config_name": "small",
+    "params": {
+      "chunk_size": 200,
+      "chunk_overlap": 20,
+      "separators": [
+        "\n\n",
+        "\n",
+        ".",
+        " ",
+        ""
+      ],
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0059": {
+    "component_class": "TokenChunkModel",
+    "model_name": "e5-mistral",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+      "chunk_size": 300,
+      "chunk_overlap": 60,
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0060": {
+    "component_class": "TokenChunkModel",
+    "model_name": "bert-spanish",
+    "config_name": "default",
+    "params": {
+      "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+      "chunk_size": 512,
+      "chunk_overlap": 50,
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  }
+}

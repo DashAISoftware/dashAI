@@ -1,0 +1,59 @@
+{
+  "iter0": {
+    "model_name": "RAGPipeline",
+    "task_name": "RAGTask",
+    "name": "Pub 3 - Case Study (run 261101185013, iter 0)",
+    "description": null,
+    "parameters": {
+      "chunking_model": {
+        "component": "RecursiveCharacterChunkModel",
+        "params": {
+          "chunk_size": 1000,
+          "chunk_overlap": 100,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ]
+        }
+      },
+      "retriever_model": {
+        "component": "DenseEmbeddingRetriever",
+        "params": {
+          "embedding_model": {
+            "component": "OpenAIEmbedding",
+            "params": {
+              "model_name": "text-embedding-ada-002",
+              "api_key": "",
+              "device": "CPU",
+              "batch_size": 32,
+              "normalize": true,
+              "overflow_strategy": "truncate"
+            }
+          },
+          "similarity_metric": "cosine",
+          "top_k": 10
+        }
+      },
+      "generation_model": {
+        "component": "Llama32_1BInstruct",
+        "params": {
+          "max_tokens": 1024,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 8192,
+          "device": "CPU"
+        }
+      },
+      "prompt": {
+        "component": "DefaultRAGGenerationPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a helpful AI assistant with access to a set of retrieved documents.\nUse the documents below to support your answer. Prioritize information from the documents over your own knowledge. If the documents do not contain relevant information, say so clearly rather than guessing.\n\nUser message:\n{input}\nSearch queries used for retrieval: {queries}\n\nRetrieved documents:\n{chunks}\n\nAnswer the user's message based on the documents above."
+        }
+      }
+    }
+  }
+}

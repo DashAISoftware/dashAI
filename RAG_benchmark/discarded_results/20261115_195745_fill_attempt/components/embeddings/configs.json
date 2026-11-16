@@ -1,0 +1,236 @@
+{
+  "0001": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-default",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 32,
+      "normalize": true,
+      "overflow_strategy": "truncate",
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0002": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-default",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 32,
+      "normalize": true,
+      "overflow_strategy": "truncate",
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0003": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-default",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 32,
+      "normalize": true,
+      "overflow_strategy": "truncate",
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0004": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-default",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 32,
+      "normalize": true,
+      "overflow_strategy": "truncate",
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0005": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-default",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 32,
+      "normalize": true,
+      "overflow_strategy": "truncate",
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0006": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-default",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 32,
+      "normalize": true,
+      "overflow_strategy": "truncate",
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0007": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-default",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 32,
+      "normalize": true,
+      "overflow_strategy": "truncate",
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0008": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-default",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 32,
+      "normalize": true,
+      "overflow_strategy": "truncate",
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0009": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-default",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 32,
+      "normalize": true,
+      "overflow_strategy": "truncate",
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0010": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-alternate",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 16,
+      "normalize": false,
+      "overflow_strategy": "aggregate",
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0011": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-alternate",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 16,
+      "normalize": false,
+      "overflow_strategy": "aggregate",
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0012": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-alternate",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 16,
+      "normalize": false,
+      "overflow_strategy": "aggregate",
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0013": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-alternate",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 16,
+      "normalize": false,
+      "overflow_strategy": "aggregate",
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0014": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-alternate",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 16,
+      "normalize": false,
+      "overflow_strategy": "aggregate",
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0015": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-alternate",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 16,
+      "normalize": false,
+      "overflow_strategy": "aggregate",
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0016": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-alternate",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 16,
+      "normalize": false,
+      "overflow_strategy": "aggregate",
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0017": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-alternate",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 16,
+      "normalize": false,
+      "overflow_strategy": "aggregate",
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0018": {
+    "component_class": "AllMiniLML6V2Embedding",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "config_name": "AllMiniLML6V2Embedding-alternate",
+    "params": {
+      "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "batch_size": 16,
+      "normalize": false,
+      "overflow_strategy": "aggregate",
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  }
+}

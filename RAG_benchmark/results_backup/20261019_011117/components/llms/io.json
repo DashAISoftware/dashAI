@@ -1,0 +1,2622 @@
+{
+  "0001": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama31_8BInstruct",
+        "model_name": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "config_name": "llama3.1-8b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 13.192590300051961,
+      "first_load_time": 3.890322599967476,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0002": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_1BInstruct",
+        "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+        "config_name": "llama3.2-1b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.7596914999885485,
+      "first_load_time": 0.8281496999552473,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0003": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_3BInstruct",
+        "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+        "config_name": "llama3.2-3b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 6.294865100004245,
+      "first_load_time": 1.6390883000567555,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0004": {
+    "inputs": {
+      "config": {
+        "component_class": "Mistral7BInstructV03",
+        "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+        "config_name": "mistral-7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.764533700013999,
+      "first_load_time": 2.785295200010296,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0005": {
+    "inputs": {
+      "config": {
+        "component_class": "MistralNemoInstruct2407",
+        "model_name": "bartowski/Mistral-Nemo-Instruct-2407-GGUF",
+        "config_name": "mistral-nemo",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 19.2979323999607,
+      "first_load_time": 4.811832599982154,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0006": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_05BInstruct",
+        "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-0.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.0005061999545433,
+      "first_load_time": 0.668446599971503,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0007": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_15BInstruct",
+        "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-1.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.752322899992578,
+      "first_load_time": 1.3593481000280008,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0008": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_360MInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+        "config_name": "smollm2-360m",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.6506287999800406,
+      "first_load_time": 0.3646456000278704,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0009": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_17BInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+        "config_name": "smollm2-1.7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.5045647000079043,
+      "first_load_time": 0.9036529999575578,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0010": {
+    "inputs": {
+      "config": {
+        "component_class": "Phi4MiniInstructModel",
+        "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+        "config_name": "phi4-mini",
+        "params": {
+          "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+          "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0011": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama31_8BInstruct",
+        "model_name": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "config_name": "llama3.1-8b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.666258800018113,
+      "first_load_time": 3.293999099987559,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0012": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_1BInstruct",
+        "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+        "config_name": "llama3.2-1b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.626238299999386,
+      "first_load_time": 0.8027956999721937,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0013": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_3BInstruct",
+        "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+        "config_name": "llama3.2-3b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 5.986849200038705,
+      "first_load_time": 1.572378100012429,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0014": {
+    "inputs": {
+      "config": {
+        "component_class": "Mistral7BInstructV03",
+        "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+        "config_name": "mistral-7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 11.898213499982376,
+      "first_load_time": 2.708792299963534,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0015": {
+    "inputs": {
+      "config": {
+        "component_class": "MistralNemoInstruct2407",
+        "model_name": "bartowski/Mistral-Nemo-Instruct-2407-GGUF",
+        "config_name": "mistral-nemo",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 19.719901599979494,
+      "first_load_time": 4.796953300014138,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0016": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_05BInstruct",
+        "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-0.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.9637009999714792,
+      "first_load_time": 0.6721733000013046,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0017": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_15BInstruct",
+        "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-1.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.702893499983475,
+      "first_load_time": 1.376631000021007,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0018": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_360MInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+        "config_name": "smollm2-360m",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.7142997999908403,
+      "first_load_time": 0.35905760002788156,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0019": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_17BInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+        "config_name": "smollm2-1.7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.4409752000356093,
+      "first_load_time": 0.8975072000175714,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0020": {
+    "inputs": {
+      "config": {
+        "component_class": "Phi4MiniInstructModel",
+        "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+        "config_name": "phi4-mini",
+        "params": {
+          "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+          "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0021": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama31_8BInstruct",
+        "model_name": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "config_name": "llama3.1-8b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.892856499995105,
+      "first_load_time": 3.3427378999767825,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0022": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_1BInstruct",
+        "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+        "config_name": "llama3.2-1b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.6250051999813877,
+      "first_load_time": 0.8256501999567263,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0023": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_3BInstruct",
+        "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+        "config_name": "llama3.2-3b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 5.851906500000041,
+      "first_load_time": 1.5756595999700949,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0024": {
+    "inputs": {
+      "config": {
+        "component_class": "Mistral7BInstructV03",
+        "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+        "config_name": "mistral-7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.137879699992482,
+      "first_load_time": 2.724603999988176,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0025": {
+    "inputs": {
+      "config": {
+        "component_class": "MistralNemoInstruct2407",
+        "model_name": "bartowski/Mistral-Nemo-Instruct-2407-GGUF",
+        "config_name": "mistral-nemo",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 19.657930299988948,
+      "first_load_time": 4.846027200052049,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0026": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_05BInstruct",
+        "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-0.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.9380765000241809,
+      "first_load_time": 0.6398118999786675,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0027": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_15BInstruct",
+        "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-1.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.704191599972546,
+      "first_load_time": 1.3505359999835491,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0028": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_360MInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+        "config_name": "smollm2-360m",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.5708216999773867,
+      "first_load_time": 0.3524761999724433,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0029": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_17BInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+        "config_name": "smollm2-1.7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.497625899966806,
+      "first_load_time": 0.9017211999744177,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0030": {
+    "inputs": {
+      "config": {
+        "component_class": "Phi4MiniInstructModel",
+        "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+        "config_name": "phi4-mini",
+        "params": {
+          "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+          "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0031": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama31_8BInstruct",
+        "model_name": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "config_name": "llama3.1-8b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.846623599994928,
+      "first_load_time": 3.2965805000276305,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0032": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_1BInstruct",
+        "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+        "config_name": "llama3.2-1b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.6189403000171296,
+      "first_load_time": 0.8016202000435442,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0033": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_3BInstruct",
+        "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+        "config_name": "llama3.2-3b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 5.930710699991323,
+      "first_load_time": 1.5817406999995,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0034": {
+    "inputs": {
+      "config": {
+        "component_class": "Mistral7BInstructV03",
+        "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+        "config_name": "mistral-7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.408616300032008,
+      "first_load_time": 2.7100104999844916,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0035": {
+    "inputs": {
+      "config": {
+        "component_class": "MistralNemoInstruct2407",
+        "model_name": "bartowski/Mistral-Nemo-Instruct-2407-GGUF",
+        "config_name": "mistral-nemo",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 19.499954400002025,
+      "first_load_time": 4.791856599971652,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0036": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_05BInstruct",
+        "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-0.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.9563208000035957,
+      "first_load_time": 0.6352600999525748,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0037": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_15BInstruct",
+        "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-1.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.732369099976495,
+      "first_load_time": 1.3779717999859713,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0038": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_360MInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+        "config_name": "smollm2-360m",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.6755020000273362,
+      "first_load_time": 0.36172510002506897,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0039": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_17BInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+        "config_name": "smollm2-1.7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.5440207000356168,
+      "first_load_time": 0.8972784000216052,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0040": {
+    "inputs": {
+      "config": {
+        "component_class": "Phi4MiniInstructModel",
+        "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+        "config_name": "phi4-mini",
+        "params": {
+          "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+          "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0041": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama31_8BInstruct",
+        "model_name": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "config_name": "llama3.1-8b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.71718979999423,
+      "first_load_time": 3.3505179000203498,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0042": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_1BInstruct",
+        "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+        "config_name": "llama3.2-1b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.6059109999914654,
+      "first_load_time": 0.8269546000519767,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0043": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_3BInstruct",
+        "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+        "config_name": "llama3.2-3b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 5.95186069997726,
+      "first_load_time": 1.5814927000319585,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0044": {
+    "inputs": {
+      "config": {
+        "component_class": "Mistral7BInstructV03",
+        "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+        "config_name": "mistral-7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.035840599972289,
+      "first_load_time": 2.700831099995412,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0045": {
+    "inputs": {
+      "config": {
+        "component_class": "MistralNemoInstruct2407",
+        "model_name": "bartowski/Mistral-Nemo-Instruct-2407-GGUF",
+        "config_name": "mistral-nemo",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 19.677737599995453,
+      "first_load_time": 4.768649500038009,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0046": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_05BInstruct",
+        "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-0.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.9780560999643058,
+      "first_load_time": 0.6465537999756634,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0047": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_15BInstruct",
+        "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-1.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.837466299999505,
+      "first_load_time": 1.3534636000404134,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0048": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_360MInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+        "config_name": "smollm2-360m",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.7529794000438415,
+      "first_load_time": 0.35615380003582686,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0049": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_17BInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+        "config_name": "smollm2-1.7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.5486130999634042,
+      "first_load_time": 0.8818650000030175,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0050": {
+    "inputs": {
+      "config": {
+        "component_class": "Phi4MiniInstructModel",
+        "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+        "config_name": "phi4-mini",
+        "params": {
+          "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+          "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0051": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama31_8BInstruct",
+        "model_name": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "config_name": "llama3.1-8b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.695281899999827,
+      "first_load_time": 3.307408900000155,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0052": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_1BInstruct",
+        "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+        "config_name": "llama3.2-1b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.604852899967227,
+      "first_load_time": 0.7993522000033408,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0053": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_3BInstruct",
+        "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+        "config_name": "llama3.2-3b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 5.882624299963936,
+      "first_load_time": 1.5928892999654636,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0054": {
+    "inputs": {
+      "config": {
+        "component_class": "Mistral7BInstructV03",
+        "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+        "config_name": "mistral-7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 11.894328000023961,
+      "first_load_time": 2.7087313999654725,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0055": {
+    "inputs": {
+      "config": {
+        "component_class": "MistralNemoInstruct2407",
+        "model_name": "bartowski/Mistral-Nemo-Instruct-2407-GGUF",
+        "config_name": "mistral-nemo",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 19.41296909999801,
+      "first_load_time": 4.802102999994531,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0056": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_05BInstruct",
+        "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-0.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.9689620999852195,
+      "first_load_time": 0.672409399994649,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0057": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_15BInstruct",
+        "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-1.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.69976200000383,
+      "first_load_time": 1.362018599989824,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0058": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_360MInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+        "config_name": "smollm2-360m",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.7605334000545554,
+      "first_load_time": 0.3634345000027679,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0059": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_17BInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+        "config_name": "smollm2-1.7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.559381700004451,
+      "first_load_time": 0.917807099991478,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0060": {
+    "inputs": {
+      "config": {
+        "component_class": "Phi4MiniInstructModel",
+        "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+        "config_name": "phi4-mini",
+        "params": {
+          "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+          "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0061": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama31_8BInstruct",
+        "model_name": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "config_name": "llama3.1-8b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.79317080002511,
+      "first_load_time": 3.297238099970855,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0062": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_1BInstruct",
+        "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+        "config_name": "llama3.2-1b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.612100600032136,
+      "first_load_time": 0.7945464000222273,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0063": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_3BInstruct",
+        "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+        "config_name": "llama3.2-3b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 5.997867199999746,
+      "first_load_time": 1.6123529000324197,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0064": {
+    "inputs": {
+      "config": {
+        "component_class": "Mistral7BInstructV03",
+        "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+        "config_name": "mistral-7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 11.973595700052101,
+      "first_load_time": 2.699901600019075,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0065": {
+    "inputs": {
+      "config": {
+        "component_class": "MistralNemoInstruct2407",
+        "model_name": "bartowski/Mistral-Nemo-Instruct-2407-GGUF",
+        "config_name": "mistral-nemo",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 19.373094099981245,
+      "first_load_time": 4.777382900007069,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0066": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_05BInstruct",
+        "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-0.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.9734041999909095,
+      "first_load_time": 0.6463005000259727,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0067": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_15BInstruct",
+        "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-1.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.7817095000064,
+      "first_load_time": 1.3600579000194557,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0068": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_360MInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+        "config_name": "smollm2-360m",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.7096369999926537,
+      "first_load_time": 0.34938429994508624,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0069": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_17BInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+        "config_name": "smollm2-1.7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.555889399955049,
+      "first_load_time": 0.8901722999871708,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0070": {
+    "inputs": {
+      "config": {
+        "component_class": "Phi4MiniInstructModel",
+        "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+        "config_name": "phi4-mini",
+        "params": {
+          "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+          "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0071": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama31_8BInstruct",
+        "model_name": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "config_name": "llama3.1-8b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.82260449999012,
+      "first_load_time": 3.266233899979852,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0072": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_1BInstruct",
+        "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+        "config_name": "llama3.2-1b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.585698200040497,
+      "first_load_time": 0.814984500000719,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0073": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_3BInstruct",
+        "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+        "config_name": "llama3.2-3b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 5.9693212999845855,
+      "first_load_time": 1.5912013999768533,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0074": {
+    "inputs": {
+      "config": {
+        "component_class": "Mistral7BInstructV03",
+        "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+        "config_name": "mistral-7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.13658970000688,
+      "first_load_time": 2.7257684999494813,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0075": {
+    "inputs": {
+      "config": {
+        "component_class": "MistralNemoInstruct2407",
+        "model_name": "bartowski/Mistral-Nemo-Instruct-2407-GGUF",
+        "config_name": "mistral-nemo",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 19.543828500027303,
+      "first_load_time": 4.78580160002457,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0076": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_05BInstruct",
+        "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-0.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.8800044999807142,
+      "first_load_time": 0.6627321999985725,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0077": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_15BInstruct",
+        "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-1.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.710475700034294,
+      "first_load_time": 1.3469499999773689,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0078": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_360MInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+        "config_name": "smollm2-360m",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.6771091999835335,
+      "first_load_time": 0.39257399999769405,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0079": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_17BInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+        "config_name": "smollm2-1.7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.49953720002668,
+      "first_load_time": 0.9201697999960743,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0080": {
+    "inputs": {
+      "config": {
+        "component_class": "Phi4MiniInstructModel",
+        "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+        "config_name": "phi4-mini",
+        "params": {
+          "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+          "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0081": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama31_8BInstruct",
+        "model_name": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "config_name": "llama3.1-8b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.998410900007002,
+      "first_load_time": 3.29585459997179,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0082": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_1BInstruct",
+        "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+        "config_name": "llama3.2-1b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.595133700000588,
+      "first_load_time": 0.8100914999959059,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0083": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_3BInstruct",
+        "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+        "config_name": "llama3.2-3b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 5.887363700021524,
+      "first_load_time": 1.563385899993591,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0084": {
+    "inputs": {
+      "config": {
+        "component_class": "Mistral7BInstructV03",
+        "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+        "config_name": "mistral-7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.14782929996727,
+      "first_load_time": 2.739051599986851,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0085": {
+    "inputs": {
+      "config": {
+        "component_class": "MistralNemoInstruct2407",
+        "model_name": "bartowski/Mistral-Nemo-Instruct-2407-GGUF",
+        "config_name": "mistral-nemo",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 19.513536100042984,
+      "first_load_time": 4.790876600018237,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0086": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_05BInstruct",
+        "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-0.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.8917019000509754,
+      "first_load_time": 0.6405413000029512,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0087": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_15BInstruct",
+        "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-1.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.68909200001508,
+      "first_load_time": 1.3430417999625206,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0088": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_360MInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+        "config_name": "smollm2-360m",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.6983136999770068,
+      "first_load_time": 0.36315420002210885,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0089": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_17BInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+        "config_name": "smollm2-1.7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.4897290999651887,
+      "first_load_time": 0.9231013000244275,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0090": {
+    "inputs": {
+      "config": {
+        "component_class": "Phi4MiniInstructModel",
+        "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+        "config_name": "phi4-mini",
+        "params": {
+          "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+          "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0091": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama31_8BInstruct",
+        "model_name": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "config_name": "llama3.1-8b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 12.866488600033335,
+      "first_load_time": 3.330575400032103,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0092": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_1BInstruct",
+        "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+        "config_name": "llama3.2-1b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.6208123000105843,
+      "first_load_time": 0.7988102000090294,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0093": {
+    "inputs": {
+      "config": {
+        "component_class": "Llama32_3BInstruct",
+        "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+        "config_name": "llama3.2-3b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 5.96334899996873,
+      "first_load_time": 1.5645317999878898,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0094": {
+    "inputs": {
+      "config": {
+        "component_class": "Mistral7BInstructV03",
+        "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+        "config_name": "mistral-7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 11.837586700043175,
+      "first_load_time": 2.7323301000287756,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0095": {
+    "inputs": {
+      "config": {
+        "component_class": "MistralNemoInstruct2407",
+        "model_name": "bartowski/Mistral-Nemo-Instruct-2407-GGUF",
+        "config_name": "mistral-nemo",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 19.410933499981184,
+      "first_load_time": 4.788698200020008,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0096": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_05BInstruct",
+        "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-0.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.890238500025589,
+      "first_load_time": 0.6746141000185162,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0097": {
+    "inputs": {
+      "config": {
+        "component_class": "Qwen25_15BInstruct",
+        "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "config_name": "qwen2.5-1.5b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.6734795000520535,
+      "first_load_time": 1.3561577000073157,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0098": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_360MInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+        "config_name": "smollm2-360m",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.672174500010442,
+      "first_load_time": 0.3557938999729231,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0099": {
+    "inputs": {
+      "config": {
+        "component_class": "SmolLM2_17BInstruct",
+        "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+        "config_name": "smollm2-1.7b",
+        "params": {
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.6383001999929547,
+      "first_load_time": 0.9417050000047311,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0100": {
+    "inputs": {
+      "config": {
+        "component_class": "Phi4MiniInstructModel",
+        "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+        "config_name": "phi4-mini",
+        "params": {
+          "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+          "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+          "max_tokens": 100,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 4096,
+          "device": "CPU",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "llm"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  }
+}

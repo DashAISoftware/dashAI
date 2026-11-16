@@ -1,0 +1,2462 @@
+{
+  "0001": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "minilm",
+        "params": {
+          "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0002": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "google-bert/bert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0003": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-large-uncased",
+        "config_name": "large",
+        "params": {
+          "model_name": "google-bert/bert-large-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0004": {
+    "inputs": {
+      "config": {
+        "component_class": "DistilBERTEmbedding",
+        "model_name": "distilbert/distilbert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "distilbert/distilbert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0005": {
+    "inputs": {
+      "config": {
+        "component_class": "RoBERTaEmbedding",
+        "model_name": "FacebookAI/roberta-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "FacebookAI/roberta-base",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0006": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/e5-small-v2",
+        "config_name": "small",
+        "params": {
+          "model_name": "intfloat/e5-small-v2",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0007": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/multilingual-e5-large",
+        "config_name": "multilingual-large",
+        "params": {
+          "model_name": "intfloat/multilingual-e5-large",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.6562339999945834,
+      "first_load_time": 8.71666139998706,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0008": {
+    "inputs": {
+      "config": {
+        "component_class": "InstructorEmbedding",
+        "model_name": "hkunlp/instructor-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "hkunlp/instructor-base",
+          "device": "cpu",
+          "instruction": "Represent the document for retrieval:",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0009": {
+    "inputs": {
+      "config": {
+        "component_class": "LaBSEmbedding",
+        "model_name": "sentence-transformers/LaBSE",
+        "config_name": "default",
+        "params": {
+          "model_name": "sentence-transformers/LaBSE",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0010": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+        "config_name": "paraphrase-multilingual",
+        "params": {
+          "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.8953182000550441,
+      "first_load_time": 2.4860418000025675,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0011": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "minilm",
+        "params": {
+          "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0012": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "google-bert/bert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0013": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-large-uncased",
+        "config_name": "large",
+        "params": {
+          "model_name": "google-bert/bert-large-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0014": {
+    "inputs": {
+      "config": {
+        "component_class": "DistilBERTEmbedding",
+        "model_name": "distilbert/distilbert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "distilbert/distilbert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0015": {
+    "inputs": {
+      "config": {
+        "component_class": "RoBERTaEmbedding",
+        "model_name": "FacebookAI/roberta-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "FacebookAI/roberta-base",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0016": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/e5-small-v2",
+        "config_name": "small",
+        "params": {
+          "model_name": "intfloat/e5-small-v2",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0017": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/multilingual-e5-large",
+        "config_name": "multilingual-large",
+        "params": {
+          "model_name": "intfloat/multilingual-e5-large",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.3784138000337407,
+      "first_load_time": 2.729273800039664,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0018": {
+    "inputs": {
+      "config": {
+        "component_class": "InstructorEmbedding",
+        "model_name": "hkunlp/instructor-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "hkunlp/instructor-base",
+          "device": "cpu",
+          "instruction": "Represent the document for retrieval:",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0019": {
+    "inputs": {
+      "config": {
+        "component_class": "LaBSEmbedding",
+        "model_name": "sentence-transformers/LaBSE",
+        "config_name": "default",
+        "params": {
+          "model_name": "sentence-transformers/LaBSE",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0020": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+        "config_name": "paraphrase-multilingual",
+        "params": {
+          "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 0.9140779000008479,
+      "first_load_time": 2.517565200047102,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0021": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "minilm",
+        "params": {
+          "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0022": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "google-bert/bert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0023": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-large-uncased",
+        "config_name": "large",
+        "params": {
+          "model_name": "google-bert/bert-large-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0024": {
+    "inputs": {
+      "config": {
+        "component_class": "DistilBERTEmbedding",
+        "model_name": "distilbert/distilbert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "distilbert/distilbert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0025": {
+    "inputs": {
+      "config": {
+        "component_class": "RoBERTaEmbedding",
+        "model_name": "FacebookAI/roberta-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "FacebookAI/roberta-base",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0026": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/e5-small-v2",
+        "config_name": "small",
+        "params": {
+          "model_name": "intfloat/e5-small-v2",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0027": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/multilingual-e5-large",
+        "config_name": "multilingual-large",
+        "params": {
+          "model_name": "intfloat/multilingual-e5-large",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.3959594999905676,
+      "first_load_time": 2.6475528000155464,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0028": {
+    "inputs": {
+      "config": {
+        "component_class": "InstructorEmbedding",
+        "model_name": "hkunlp/instructor-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "hkunlp/instructor-base",
+          "device": "cpu",
+          "instruction": "Represent the document for retrieval:",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0029": {
+    "inputs": {
+      "config": {
+        "component_class": "LaBSEmbedding",
+        "model_name": "sentence-transformers/LaBSE",
+        "config_name": "default",
+        "params": {
+          "model_name": "sentence-transformers/LaBSE",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0030": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+        "config_name": "paraphrase-multilingual",
+        "params": {
+          "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 0.8774950999650173,
+      "first_load_time": 2.4568949000095017,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0031": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "minilm",
+        "params": {
+          "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0032": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "google-bert/bert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0033": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-large-uncased",
+        "config_name": "large",
+        "params": {
+          "model_name": "google-bert/bert-large-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0034": {
+    "inputs": {
+      "config": {
+        "component_class": "DistilBERTEmbedding",
+        "model_name": "distilbert/distilbert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "distilbert/distilbert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0035": {
+    "inputs": {
+      "config": {
+        "component_class": "RoBERTaEmbedding",
+        "model_name": "FacebookAI/roberta-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "FacebookAI/roberta-base",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0036": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/e5-small-v2",
+        "config_name": "small",
+        "params": {
+          "model_name": "intfloat/e5-small-v2",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0037": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/multilingual-e5-large",
+        "config_name": "multilingual-large",
+        "params": {
+          "model_name": "intfloat/multilingual-e5-large",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.4248358000186272,
+      "first_load_time": 2.6185793000040576,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0038": {
+    "inputs": {
+      "config": {
+        "component_class": "InstructorEmbedding",
+        "model_name": "hkunlp/instructor-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "hkunlp/instructor-base",
+          "device": "cpu",
+          "instruction": "Represent the document for retrieval:",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0039": {
+    "inputs": {
+      "config": {
+        "component_class": "LaBSEmbedding",
+        "model_name": "sentence-transformers/LaBSE",
+        "config_name": "default",
+        "params": {
+          "model_name": "sentence-transformers/LaBSE",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0040": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+        "config_name": "paraphrase-multilingual",
+        "params": {
+          "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 0.8625371000380255,
+      "first_load_time": 2.483794300002046,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0041": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "minilm",
+        "params": {
+          "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0042": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "google-bert/bert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0043": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-large-uncased",
+        "config_name": "large",
+        "params": {
+          "model_name": "google-bert/bert-large-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0044": {
+    "inputs": {
+      "config": {
+        "component_class": "DistilBERTEmbedding",
+        "model_name": "distilbert/distilbert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "distilbert/distilbert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0045": {
+    "inputs": {
+      "config": {
+        "component_class": "RoBERTaEmbedding",
+        "model_name": "FacebookAI/roberta-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "FacebookAI/roberta-base",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0046": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/e5-small-v2",
+        "config_name": "small",
+        "params": {
+          "model_name": "intfloat/e5-small-v2",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0047": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/multilingual-e5-large",
+        "config_name": "multilingual-large",
+        "params": {
+          "model_name": "intfloat/multilingual-e5-large",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.3507384999538772,
+      "first_load_time": 2.7336850999854505,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0048": {
+    "inputs": {
+      "config": {
+        "component_class": "InstructorEmbedding",
+        "model_name": "hkunlp/instructor-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "hkunlp/instructor-base",
+          "device": "cpu",
+          "instruction": "Represent the document for retrieval:",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0049": {
+    "inputs": {
+      "config": {
+        "component_class": "LaBSEmbedding",
+        "model_name": "sentence-transformers/LaBSE",
+        "config_name": "default",
+        "params": {
+          "model_name": "sentence-transformers/LaBSE",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0050": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+        "config_name": "paraphrase-multilingual",
+        "params": {
+          "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 0.9408426000154577,
+      "first_load_time": 2.3559132000082172,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0051": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "minilm",
+        "params": {
+          "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0052": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "google-bert/bert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0053": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-large-uncased",
+        "config_name": "large",
+        "params": {
+          "model_name": "google-bert/bert-large-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0054": {
+    "inputs": {
+      "config": {
+        "component_class": "DistilBERTEmbedding",
+        "model_name": "distilbert/distilbert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "distilbert/distilbert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0055": {
+    "inputs": {
+      "config": {
+        "component_class": "RoBERTaEmbedding",
+        "model_name": "FacebookAI/roberta-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "FacebookAI/roberta-base",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0056": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/e5-small-v2",
+        "config_name": "small",
+        "params": {
+          "model_name": "intfloat/e5-small-v2",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0057": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/multilingual-e5-large",
+        "config_name": "multilingual-large",
+        "params": {
+          "model_name": "intfloat/multilingual-e5-large",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.3878319999785163,
+      "first_load_time": 2.654356699960772,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0058": {
+    "inputs": {
+      "config": {
+        "component_class": "InstructorEmbedding",
+        "model_name": "hkunlp/instructor-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "hkunlp/instructor-base",
+          "device": "cpu",
+          "instruction": "Represent the document for retrieval:",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0059": {
+    "inputs": {
+      "config": {
+        "component_class": "LaBSEmbedding",
+        "model_name": "sentence-transformers/LaBSE",
+        "config_name": "default",
+        "params": {
+          "model_name": "sentence-transformers/LaBSE",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0060": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+        "config_name": "paraphrase-multilingual",
+        "params": {
+          "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 0.9017716000089422,
+      "first_load_time": 2.4038357000099495,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0061": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "minilm",
+        "params": {
+          "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0062": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "google-bert/bert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0063": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-large-uncased",
+        "config_name": "large",
+        "params": {
+          "model_name": "google-bert/bert-large-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0064": {
+    "inputs": {
+      "config": {
+        "component_class": "DistilBERTEmbedding",
+        "model_name": "distilbert/distilbert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "distilbert/distilbert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0065": {
+    "inputs": {
+      "config": {
+        "component_class": "RoBERTaEmbedding",
+        "model_name": "FacebookAI/roberta-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "FacebookAI/roberta-base",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0066": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/e5-small-v2",
+        "config_name": "small",
+        "params": {
+          "model_name": "intfloat/e5-small-v2",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0067": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/multilingual-e5-large",
+        "config_name": "multilingual-large",
+        "params": {
+          "model_name": "intfloat/multilingual-e5-large",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.3500168999889866,
+      "first_load_time": 2.6228217000025325,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0068": {
+    "inputs": {
+      "config": {
+        "component_class": "InstructorEmbedding",
+        "model_name": "hkunlp/instructor-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "hkunlp/instructor-base",
+          "device": "cpu",
+          "instruction": "Represent the document for retrieval:",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0069": {
+    "inputs": {
+      "config": {
+        "component_class": "LaBSEmbedding",
+        "model_name": "sentence-transformers/LaBSE",
+        "config_name": "default",
+        "params": {
+          "model_name": "sentence-transformers/LaBSE",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0070": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+        "config_name": "paraphrase-multilingual",
+        "params": {
+          "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 0.9400777000118978,
+      "first_load_time": 2.361189999966882,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0071": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "minilm",
+        "params": {
+          "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0072": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "google-bert/bert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0073": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-large-uncased",
+        "config_name": "large",
+        "params": {
+          "model_name": "google-bert/bert-large-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0074": {
+    "inputs": {
+      "config": {
+        "component_class": "DistilBERTEmbedding",
+        "model_name": "distilbert/distilbert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "distilbert/distilbert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0075": {
+    "inputs": {
+      "config": {
+        "component_class": "RoBERTaEmbedding",
+        "model_name": "FacebookAI/roberta-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "FacebookAI/roberta-base",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0076": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/e5-small-v2",
+        "config_name": "small",
+        "params": {
+          "model_name": "intfloat/e5-small-v2",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0077": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/multilingual-e5-large",
+        "config_name": "multilingual-large",
+        "params": {
+          "model_name": "intfloat/multilingual-e5-large",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.3748875000164844,
+      "first_load_time": 2.605427599977702,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0078": {
+    "inputs": {
+      "config": {
+        "component_class": "InstructorEmbedding",
+        "model_name": "hkunlp/instructor-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "hkunlp/instructor-base",
+          "device": "cpu",
+          "instruction": "Represent the document for retrieval:",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0079": {
+    "inputs": {
+      "config": {
+        "component_class": "LaBSEmbedding",
+        "model_name": "sentence-transformers/LaBSE",
+        "config_name": "default",
+        "params": {
+          "model_name": "sentence-transformers/LaBSE",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0080": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+        "config_name": "paraphrase-multilingual",
+        "params": {
+          "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 0.898785300028976,
+      "first_load_time": 2.3950672999490052,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0081": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "minilm",
+        "params": {
+          "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0082": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "google-bert/bert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0083": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-large-uncased",
+        "config_name": "large",
+        "params": {
+          "model_name": "google-bert/bert-large-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0084": {
+    "inputs": {
+      "config": {
+        "component_class": "DistilBERTEmbedding",
+        "model_name": "distilbert/distilbert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "distilbert/distilbert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0085": {
+    "inputs": {
+      "config": {
+        "component_class": "RoBERTaEmbedding",
+        "model_name": "FacebookAI/roberta-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "FacebookAI/roberta-base",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0086": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/e5-small-v2",
+        "config_name": "small",
+        "params": {
+          "model_name": "intfloat/e5-small-v2",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0087": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/multilingual-e5-large",
+        "config_name": "multilingual-large",
+        "params": {
+          "model_name": "intfloat/multilingual-e5-large",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.350391399988439,
+      "first_load_time": 2.545088900020346,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0088": {
+    "inputs": {
+      "config": {
+        "component_class": "InstructorEmbedding",
+        "model_name": "hkunlp/instructor-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "hkunlp/instructor-base",
+          "device": "cpu",
+          "instruction": "Represent the document for retrieval:",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0089": {
+    "inputs": {
+      "config": {
+        "component_class": "LaBSEmbedding",
+        "model_name": "sentence-transformers/LaBSE",
+        "config_name": "default",
+        "params": {
+          "model_name": "sentence-transformers/LaBSE",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0090": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+        "config_name": "paraphrase-multilingual",
+        "params": {
+          "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 0.8733576000086032,
+      "first_load_time": 2.3055557999759912,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0091": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "config_name": "minilm",
+        "params": {
+          "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0092": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "google-bert/bert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0093": {
+    "inputs": {
+      "config": {
+        "component_class": "BERTEmbedding",
+        "model_name": "google-bert/bert-large-uncased",
+        "config_name": "large",
+        "params": {
+          "model_name": "google-bert/bert-large-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0094": {
+    "inputs": {
+      "config": {
+        "component_class": "DistilBERTEmbedding",
+        "model_name": "distilbert/distilbert-base-uncased",
+        "config_name": "base",
+        "params": {
+          "model_name": "distilbert/distilbert-base-uncased",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0095": {
+    "inputs": {
+      "config": {
+        "component_class": "RoBERTaEmbedding",
+        "model_name": "FacebookAI/roberta-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "FacebookAI/roberta-base",
+          "device": "cpu",
+          "pooling_strategy": "mean",
+          "overflow_strategy": "truncate",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0096": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/e5-small-v2",
+        "config_name": "small",
+        "params": {
+          "model_name": "intfloat/e5-small-v2",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0097": {
+    "inputs": {
+      "config": {
+        "component_class": "E5Embedding",
+        "model_name": "intfloat/multilingual-e5-large",
+        "config_name": "multilingual-large",
+        "params": {
+          "model_name": "intfloat/multilingual-e5-large",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 1.3881994999828748,
+      "first_load_time": 2.5558400999871083,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0098": {
+    "inputs": {
+      "config": {
+        "component_class": "InstructorEmbedding",
+        "model_name": "hkunlp/instructor-base",
+        "config_name": "base",
+        "params": {
+          "model_name": "hkunlp/instructor-base",
+          "device": "cpu",
+          "instruction": "Represent the document for retrieval:",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0099": {
+    "inputs": {
+      "config": {
+        "component_class": "LaBSEmbedding",
+        "model_name": "sentence-transformers/LaBSE",
+        "config_name": "default",
+        "params": {
+          "model_name": "sentence-transformers/LaBSE",
+          "device": "cpu",
+          "overflow_strategy": "truncate",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0100": {
+    "inputs": {
+      "config": {
+        "component_class": "SentenceTransformerEmbedding",
+        "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+        "config_name": "paraphrase-multilingual",
+        "params": {
+          "model_name": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+          "device": "cpu",
+          "normalize": true,
+          "overflow_strategy": "truncate",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "embedding"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 0.9395351999555714,
+      "first_load_time": 2.303439299983438,
+      "error_message": "",
+      "output_size": null
+    }
+  }
+}

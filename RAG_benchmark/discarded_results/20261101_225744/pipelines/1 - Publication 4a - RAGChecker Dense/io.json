@@ -1,0 +1,184 @@
+{
+  "iter0-turn0": {
+    "inputs": {
+      "user_message": "You mentioned chunking strategies earlier — could you explain the main trade-offs between using larger versus smaller chunks in a RAG pipeline? I'm trying to understand how chunk size affects both retrieval quality and the context passed to the model.",
+      "turn_number": 0
+    },
+    "outputs": {
+      "assistant_response": "The trade-offs between using larger versus smaller chunks in a RAG pipeline are related to retrieval quality and the context passed to the model. \n\nRetrieval quality is often improved with larger chunks, as this allows the model to capture more context and relationships between the input query and the retrieved passages. However, larger chunks can also lead to increased computational costs and memory requirements, which may be a limitation in certain scenarios.\n\nOn the other hand, smaller chunks can provide more flexibility and efficiency, as they allow for faster retrieval and generation processes. However, smaller chunks may also lead to a loss of context and relationships between the input query and the retrieved passages, which can negatively impact retrieval quality.\n\nIn terms of context passing, larger chunks can provide more context to the model, which can lead to better retrieval quality. However, larger chunks can also make it more difficult for the model to focus on the most relevant information, which can negatively impact retrieval quality.\n\nSmaller chunks, on the other hand, can provide more focused context to the model, which can lead to better retrieval quality. However, smaller chunks may also lead to a loss of context and relationships between the input query and the retrieved passages.\n\nIt's worth noting that the optimal chunk size will depend on the specific use case and the characteristics of the data being used. Experimentation and evaluation are often necessary to determine the best chunk size for a particular RAG pipeline.\n\nIn general, the choice of chunk size will depend on a trade-off between retrieval quality and computational efficiency. Larger chunks may provide better retrieval quality, but at the cost of increased computational costs and memory requirements. Smaller chunks, on the other hand, may provide more efficient retrieval and generation processes, but at the cost of reduced retrieval quality.\n\nIn the context of the documents provided, there is no clear indication of the optimal chunk size for a RAG pipeline. However, the documents do suggest that the choice of chunk size will depend on the specific use case and the characteristics of the data being used.",
+      "retrieved_chunks": {
+        "7_61": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 61,
+          "text": "\t\nconcept\tdetection\tloss,\twhile\tkeeping\tthe\tencoders\tand\t\nretriever\tfixed.\tAnimate-A-Story\t[177]\toptimizes\tthe\tvideo\t\ngenerator\twith\timage\tdata,\tand\tthen\tfinetunes\ta\tLoRA\t[178] \nadapter\tto\tcapture\tthe\tappearance\tdetails\tof\tthe\tgiven\tchar-\nacter.\tRetDream\t[50]\tfinetunes\ta\tLoRA\tadapter\t[178] with \nthe rendered images.\n3.2.4 Result Enhancement\nIn\tmany\tscenarios,\tthe\tresult\tof\tRAG\tmay\tnot\tachieve\tthe\t\nexpected\teffect,\tand\tsome\ttechniques\tof\tResult\tEnhance-\nment\tcan\thelp\talleviate\tthis\tproblem.\ntionships\tamong\tall\tpassages\tand\tperforming\tintegrated\t\nreasoning\tto\tdetermine\tthe\tfinal\torder.\n3.2.2.6 Retrieval Transformation Retrieval Transforma -\ntion\tinvolves\trephrasing\tretrieved\tcontent\tto\tbetter\tactivate\t\n",
+          "page": 10,
+          "source_positions": null
+        },
+        "3_18": {
+          "document_id": 3,
+          "document_name": "Faster-And-Lighter-LLMs.pdf",
+          "document_position": 18,
+          "text": "where they queried a pre-trained model to gen-\nerate data which was used to train a quantized student model\nusing a distillation loss. With the quantization of the KV-\ncache as well, apart from weights and activations, they can\nquantize 7B, 13B, and 30M LLaMA down to 4 bits. Bit-\nNet [Wang et al., 2023a] introduced a 1-bit LLM transformer\narchitecture. It mainly replaces the standard nn.Linear\nin PyTorch with BitLinear to train 1-bit weights. As the\nsize of the models increases, it comprehensively outperforms\ncounterparts trained on FP16. [Tao et al., 2022 ] proposed\ntoken-level contrastive distillation and used dynamic scaling\nto make quantizers adaptive to different modules.\nKnowledge distillation. Among the knowledge distillation\nmethods, both white-box as well as black-box methods have\nbeen used to compress large open-source language models.\nInstead of solely relying on a fixed set of output sequences,\nGeneralized KD [Agarwal et al., 2023] trains the student on\nits self-generated output sequences by leveraging feedback\nfrom the teacher on such sequences.",
+          "page": 3,
+          "source_positions": null
+        },
+        "7_30": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 30,
+          "text": "\tas\tselected\timage\tpatches\tand\t\ntheir\tbounding\tboxes,\tinto\tthe\tgenerator’s\tinput\tstage.\tIC-\nGAN [95]\tmodulates\tthe\tspecific\tconditions\tand\tdetails\tof\t\nthe generated images by concatenating noise vectors with \ninstance features.\nFor\t 3D\t generation,\t RetDream\t [50] initially utilizes \nCLIP\t[24]\tto\tretrieve\trelevant\t3D\tassets,\tthen\tmerges\tthe\t\nretrieved\tcontents\twith\tthe\tuser\tinput\tduring\tthe\tinput\tphase.\nQuery-based\tRAG,\toften\tpaired\twith\tLLM\tgenerators,\t\noffers\tmodular\tflexibility,\tallowing\tswift\tintegration\tof\tpre-\ntrained\tcomponents\tfor\tquick\tdeployment.\tPrompt\tdesign\tis\t\ncrucial\tfor\tutilizing\tretrieved\tdata\twithin\tthis\tsetup.\n3.1 RAG Foundations\nBased on how the retriever augments the generator, we cat-\negorize RAG foundations into 4 classes, as shown in Fig. 3.\n3.1.1 Query-Based RAG\n",
+          "page": 6,
+          "source_positions": null
+        },
+        "2_30": {
+          "document_id": 2,
+          "document_name": "Dense-Passage-Retrieval.pdf",
+          "document_position": 30,
+          "text": "It produces\nmore pairs and thus increases the number of train-\ning examples, which might contribute to the good\nmodel performance. As a result, accuracy consis-\ntently improves as the batch size grows.\nFinally, we explore in-batch negative training\nwith additional “hard” negative passages that have\nhigh BM25 scores given the question, but do not\ncontain the answer string (the bottom block). These\nadditional passages are used as negative passages\nfor all questions in the same batch. We ﬁnd that\nadding a single BM25 negative passage improves\nthe result substantially while adding two does not\nhelp further.\nImpact of gold passages We use passages that\nmatch the gold contexts in the original datasets\n(when available) as positive examples (Section 4.2).\nType #N IB Top-5 Top-20 Top-100\nRandom 7 \u0017 47.0 64.3 77.8\nBM25 7 \u0017 50.0 63.3 74.8\nGold 7 \u0017 42.6 63.1 78.3\nGold 7 \u0013 51.1 69.1 80.8\nGold 31 \u0013 52.1 70.",
+          "page": 6,
+          "source_positions": null
+        },
+        "7_93": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 93,
+          "text": "to\tovercome\tthe\tlimited\tcon-\ntext window constraints faced by LLMs, utilizing retrieved \ninformation\tto\tgenerate\thigh-quality\tWikipedia\tdocuments\t\nfor\temerging\tevents.\tRIGHT\t[219]selects\tdifferent\ttypes\t\nof\tretrievers\tin\tdifferent\tdatasets\tto\tenhance\tthe\tgenerator.\t\nM-RAG [220]\tsignificantly\timproves\ttext\tsummarization\tby\t\nsegmenting\tdocuments\tinto\tvarious\tdatabases\tand\tincorpo-\nrating multi-agent reinforcement learning techniques.\n4.2 RAG for Code\nSeparate\tretrieval\tand\tgeneration\tapproaches\thave\thistori-\ncally\tbeen\temployed\tfor\tcode-related\ttasks.\tFor\tretrieval,\t\nsimilar\t code\t snippets\t can\t be\t identified\t using\t Abstract\t\nSyntax\tTrees\t(AST)\tor\ttext\tedit\tdistance.\tFor\tgeneration,\t\nsequence-to-sequence\t models\t are\t employed\t to\t generate\t\ncode or natural language. Recent RAG research combines \nboth retrieval and generation techniques to enhance the \noverall\tperformance.\n",
+          "page": 14,
+          "source_positions": null
+        },
+        "5_349": {
+          "document_id": 5,
+          "document_name": "Llama-2.pdf",
+          "document_position": 349,
+          "text": ". Models sizes refer to pretrained-only models\nmay appear contaminated, by virtue of many tokens appearing in matched sequences found in the training\ndata. However, the matched sequences might be highly fragmented across the training data, in which case it\nis very unlikely the model saw the correctly-assembled contaminated sequences during training. To reduce\nthe chance of this phenomenon, we repeat our analysis with minimum match lengthL ∈ {10, 20, 30, 40, 50}.\nSinceinthelimitof L → ∞everysamplefallsintoboththe\"clean\"and\"notdirty\"(thereisnocontamination),\nwe report the largestL for each dataset that appeared to benefit from contamination to strike a balance\nbetween fragmentation and overall contamination.\nForeachdatasetandeachoftheabovesamplesubsettypes,wecomputeboththemean ¯X oftheperformance\nmetric X and the statisticZn = ( ¯X−µn)\nσn\n, wheren is the size of the sample subset type, andµn and σ2\nn are the\nmean and variance of the sampling distribution of the performance metric for samples of sizen, respectively.\nBy the Central Limit Theorem,Zn tends towards a standard normal distribution and so we consider there\nis sufficient evidence to suggest contamination has affected evaluation",
+          "page": 76,
+          "source_positions": null
+        },
+        "3_40": {
+          "document_id": 3,
+          "document_name": "Faster-And-Lighter-LLMs.pdf",
+          "document_position": 40,
+          "text": "problem. Many of these approaches\nare computationally expensive, particularly in the context of\nLarge Language Models (LLMs). There is a necessity to ex-\nplore and develop an effective strategy for searching for the\nright rank when employing low-rank approximations.\nExisting evaluation metrics may not comply well. Com-\npressing LLMs while preserving their ability to handle ex-\ntensive contextual information is a challenge, and appropriate\nevaluation metrics need to be developed to tackle this issue.\nAnother factor is the loss of fidelity. Aggressive compression\nmay lead to a significant loss of model fidelity, impacting the\nlanguage model’s ability to generate accurate and contextu-\nally relevant outputs. Several such characteristics of LLMs\nneed to be captured in their compressed variants, and this can\nonly be identified by the right choice of metrics.\nPython - an interpreted language leads to slower execution\ntimes. The Global Interpreter Lock (GIL) in CPython, the\ndefault Python interpreter, further restricts the concurrent ex-\nProceedings of the Thirty-Third International Joint Conference on Artiﬁcial Intelligence (IJCAI-24)\nSurvey Track\n7985\n\nMethod Hard\nware Support Quantization Type WM (GB) RM (GB) Tokens/sec Perplexity\n",
+          "page": 6,
+          "source_positions": null
+        },
+        "1_107": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 107,
+          "text": "4 32 16\n5-shot (multitask) max train steps 2000 500 250\nFull / transfer max train steps 5000 2000 2000\nTable 14: Hyperparameters for MMLU\nRun # All Hum. Soc. Sci. STEM Other\n1 45.2 40.6 54.1 37.1 51.1\n2 45.1 39.8 54.4 37.1 52.0\n3 45.0 40.0 54.1 37.7 51.1\n4 45.6 41.3 54.7 37.0 51.6\n5 44.3 40.6 50.7 38.1 49.8\nAve: 45.0± 0.5 40 .5± 0.6 53 .6± 1.6 37 .4± 0.5 51 .1± 0.8\nTable 15: Interrun Variance for 5-shot MMLU usingAtlas-11B\nA.1.7",
+          "page": 30,
+          "source_positions": null
+        },
+        "8_4": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 4,
+          "text": "\n(LLM), Pre-training, Fine-tuning, In-context Learning, Prompting\nACM Reference Format:\nWenqi Fan, Yujuan Ding, Liangbo Ning, Shijie Wang, Hengyun Li, Dawei\nYin, Tat-Seng Chua, and Qing Li. 2024. A Survey on RAG Meeting LLMs:\nTowards Retrieval-Augmented Large Language Models. InProceedings of\nthe 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining\n(KDD ’24), August 25–29, 2024, Barcelona, Spain. ACM, New York, NY, USA,\n11 pages. https://doi.org/10.1145/3637528.3671470\n1 INTRODUCTION\nAs one of the most fundamental data mining techniques, retrieval\naims to understand the input query and extract relevant information\nfrom external data sources [23, 29, 60, 118]. It has found extensive\napplication in various fields [8, 27, 90, 144], such as search, ques-\ntion answering, and recommender systems.",
+          "page": 1,
+          "source_positions": null
+        },
+        "7_69": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 69,
+          "text": "\tanswer\t(e.g.,\tquestion\tanswer-\ning\tand\tcode\tgeneration).\nIn\tthe\tdimension\tof\tenhancement,\tInput\tEnhancement\t\nhas\tbeen\twidely\tadopted\tacross\tvarious\tmodalities\tdue\tto\tits\t\nease\tof\timplementation(e.g.,\tImage\tGeneration,\tVideo\tGen-\neration\tand\tAudio\tGeneration).\tRetriever\tEnhancement\tand\t\nGenerator\tEnhancement,\tconversely,\tnecessitate\tthe\tselec-\ntion\tof\tspecific\tmodel\tarchitectures\tand\tretrieval\tmethods\t\ntailored\tto\tthe\tunique\tcharacteristics\tof\tdifferent\tmodalities\t\nand\ttasks.\tResult\tEnhancement\tis\ta\trelatively\tgeneric\tstep\t\ndesigned\tto\tensure\tthat\tthe\tfinal\toutput\tgenerated\tby\tthe\t\nmodel\taligns\tmore\tclosely\twith\tthe\tspecific\trequirements\t\nof\tthe\ttask.(e.g.,\tCode\tSummary\tand\tImage\tCaptioning)\t\nPipeline\tEnhancement\tfocuses\tprimarily\ton\toverall\tsystem\t\nefficiency\t",
+          "page": 11,
+          "source_positions": null
+        },
+        "7_122": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 122,
+          "text": "\tinputs.\n4.6 RAG for Audio\n4.6.1 Audio Generation\nAudio generation usually synthesises audio with natural lan-\nguage\tprompt.\tGiven\tinput\tprompt,\tRe-AudioLDM\t[116] \nretrieves\trelevant\tcaption-audio\tpairs\twith\tdense\tretriever\t\nCLAP [26] for generation. Make-An-Audio [ 44] retrieves \naudios\tgiven\ttext\tprompt,\tthen\tconstructs\tpseudo\tprompts\t\nfor\ttext-to-audio\tdiffusion\tmodel\ttraining.\n4.6.2 Audio Captioning\nAudio\t captioning,\t basically\t a\t sequence-to-sequence\t\ntask, generates natural language data for audio data. \nRECAP\t[329] and [ 43] leverages dense retrievers, CLAP \n[26] and VGGish [69]\trespectively,\tto\tretrieve\trelated\tcap-\ntions\tgiven\taudio\tdata.\tFor\tRECAP,\tcaptions\tare\tincluded\t\ninto\tLLM\tprompts,\twhile\t\t[43] uses both audio and retrieved \ncaptions\tin\tattention\tmodule",
+          "page": 18,
+          "source_positions": null
+        },
+        "5_217": {
+          "document_id": 5,
+          "document_name": "Llama-2.pdf",
+          "document_position": 217,
+          "text": "et al.,\n2022). The latter, however, can complicate an inference service, as it works only when batch sizes are larger\nthan the number of shards and the additional communication cost is not worth it in all cases.\nContext NarrativeQA Qasper QuALITY QMSum ContractNLI SQuAD\nLength (F1) (F1) (acc) (Rouge 1/2/L) (EM) (EM/F1)\n2k 0.21 0.71 26.1 0.13/0.01/0.12 11.76 57.23/62.89\n4k 17.26 18.52 29.6 15.08 /3.55/12.16 16.33 57.99 /64.46\nTable 16: Context length ablation on long-context tasks.\nContext Hella-Swag NQ TQA GSM8K Human-Eval\nLength (0-shot) (64-shot) (64-shot) (8-shot) (0-shot)\n2k 75.1 25.5 53.7 4.9 7.",
+          "page": 47,
+          "source_positions": null
+        },
+        "1_157": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 157,
+          "text": "classiﬁcation from a single example utilizing class relevance met-\nrics. In NIPS, 2005. URL https://proceedings.neurips.cc/paper/2004/file/\nef1e491a766ce3127556063d49bc2f98-Paper.pdf.\nT. Gao, A. Fisch, and D. Chen. Making pre-trained language models better few-shot learners.\nIn ACL-IJCNLP, 2021. URL https://aclanthology.org/2021.acl-long.295.\nM. Glass, G. Rossiello, M. F. M. Chowdhury, A. R. Naik, P. Cai, and A. Gliozzo. Re2g:\nRetrieve, rerank, generate, 2022. URLhttps://arxiv.org/abs/2207.06300.\nE. Grave, M. Cisse, and A. Joulin. Unbounded cache model for online language modeling\nwith open vocabulary, 2017a. URLhttps://arxiv.org/abs/1711.02604.\n",
+          "page": 37,
+          "source_positions": null
+        },
+        "7_15": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 15,
+          "text": "leveraged to enable \nmore\teffective\tRAG\tsystems.\n ● For various modalities and tasks, we survey exist -\ning\tAIGC\tmethods\tthat\tincorporate\tRAG\ttechniques,\t\nexhibiting how RAG contributes to current generative \nmodels.\n ● We\tdiscuss\tthe\tlimitations\tand\tpromising\tresearch\tdi-\nrections\tof\tRAG,\tshedding\tlight\ton\tits\tpotential\tfuture\t\ndevelopment.\n1.3 Related Work\nAs\t the\t field\t of\t RAG\t advances,\t several\t surveys\t have\t\nemerged;\tyet\tthey\taddress\tonly\tspecific\tfacets\tof\tthe\tarea.\t\nIn\tparticular,\tthey\teither\texclusively\tfocus\ton\ta\tsingle\tRAG\t\nfoundation\tor\tprovide\tonly\ta\tbrief\toverview\tof\tRAG\taug-\nmentation methodologies for limited scenarios.\nMost of the existing worksfocus on text-related RAG \ntasks\tthat\tare\tfacilitated\tby\tLLMs,\twithout\tin-depth\tinves-\ntigation into other modalities. The survey by Li et al. [ 57] \n",
+          "page": 3,
+          "source_positions": null
+        },
+        "7_105": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 105,
+          "text": "FiD\t [277], \nGrape\t[278]\tall\tapply\tthe\tfusion-in-decoder\ttechnique.\tThey\t\nincorporate\ttriplet-based\tdocuments,\tre-ranked\tdocuments\t\nthrough\tKG,\tand\tbipartite\tgraph\tfor\tpairs\tof\tquestion\tand\t\npassage,\trespectively.\nOREOLM\t[279]\tempowers\tLLM\twith\tknowledge\trea-\nsoning\tpaths,\tintegrating\tthe\tentity\tvalue\tmemory\tderived\t\nfrom\tcontextualized\trandom\twalk\tpaths\ton\tKG\tinto\tthe\thid-\nden states of the LLM. SKURG [ 280]\tperforms\titerative\t\nretrieval\tand\tgeneration,\tusing\tcross-attention\tto\tincorpo-\nrate\tdata\tsources\tinto\tthe\tinput\tembedding.\tIt\tuses\ta\tgate\t\nscore to determine whether to re-start retrieval or to gener -\nate the real answer.\nWith\t the\t rapid\t development\t of\t LLMs,\t query-based\t\nRAG\tis\temerging\tas\ta\tnew\tstandard.\t",
+          "page": 16,
+          "source_positions": null
+        },
+        "8_65": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 65,
+          "text": "actor Quantization Network for Large-scale Image Retrieval. In ICMR.\n851–859.\n[24] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2019. BERT:\nPre-training of Deep Bidirectional Transformers for Language Understanding.\nIn NAACL-HLT (1). 4171–4186.\n[25] Dario Di Palma. 2023. Retrieval-augmented recommender system: Enhancing\nrecommender systems with large language models. In RecSys. 1369–1373.\n[26] Yujuan Ding, Yunshan Ma, Wenqi Fan, Yige Yao, Tat-Seng Chua, and Qing Li.\n2024. FashionReGen: LLM-Empowered Fashion Report Generation. In WWW.\n[27] Yujuan Ding, P. Y. Mok, Yunshan Ma, and Yi Bin. 2023. Personalized fashion\noutfit generation with user coordination preference learning. IP&M 60, 5 (2023),\n103434.",
+          "page": 9,
+          "source_positions": null
+        },
+        "5_184": {
+          "document_id": 5,
+          "document_name": "Llama-2.pdf",
+          "document_position": 184,
+          "text": ".07958, 2021.\nYinhan Liu, Myle Ott, Naman Goyal, Jingfei Du, Mandar Joshi, Danqi Chen, Omer Levy, Mike Lewis, Luke\nZettlemoyer,andVeselinStoyanov. Roberta: Arobustlyoptimizedbertpretrainingapproach. arXivpreprint\narXiv:1907.11692, 2019.\nShayne Longpre, Le Hou, Tu Vu, Albert Webson, Hyung Won Chung, Yi Tay, Denny Zhou, Quoc V Le, Barret\nZoph, Jason Wei, et al. The flan collection: Designing data and methods for effective instruction tuning.\narXiv preprint arXiv:2301.13688, 2023.\nIlya Loshchilov and Frank Hutter. Decoupled weight decay regularization.arXiv preprint arXiv:1711.05101,\n2017.\nAman Madaan, Niket Tandon, Prakhar Gupta, Skyler Hallinan, Luyu Gao, Sarah Wiegreffe, Uri Alon, Nouha\n",
+          "page": 41,
+          "source_positions": null
+        },
+        "7_32": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 32,
+          "text": "ployed\t\nacross various modalities.\nFor\ttext\tgeneration,\tREALM\t[33]\temploys\ta\tdual-BERT\t\nframework to streamline knowledge retrieval and integra -\ntion,\tmarrying\tpre-trained\tmodels\twith\tknowledge\textrac-\ntors. Lewis et al. [ 34]\t leveraged\t DPR\t for\t information\t\nretrieval\tand\temployed\tBART\tas\tthe\tgenerator\tto\teffectively\t\nenhance\tthe\tgeneration.\tSELF-RAG\t[85] utilizes a critique \nmodule\tto\tdetermine\twhether\tthe\tretrieval\tis\trequired.\tIn\t\naddition\tto\tbeing\tcompatible\twith\tlocal\tgenerators,\tquery-\nbased\tRAG\tis\talso\tapplicable\tto\tscenarios\tthat\tuse\tLLM\t\nthrough\tAPI\tcalls.\tREPLUG\t[86] follows this methodology \nby\ttreating\tthe\tlanguage\tmodel\tas\ta\t“black\tbox”,\tand\teffec-\ntively integrates relevant external documents into the query. \nIn-Context\tRALM\t[87] uses BM25 for document retrieval",
+          "page": 6,
+          "source_positions": null
+        },
+        "1_145": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 145,
+          "text": "51.8world religions 77.2 74.9 80.7 87.1\nTable 18: MMLU Test set scores for the de-biasedAtlas-XXL using cyclic permutations\nfor each of the 57 domains for zero-shot, 5 shot, 5-shot-multitask and the transfer\nsetting.\n34\n\nAtlas: Few-shot Learning with Retriev al Augmented Language Models\nNumber of parameters 220M 770M 3B 11B\nNatural Questions 64-shot 27.0 35.4 41.3 45.1\nNatural Questions full 54.1 60.8 63.4 64.0\nTriviaQA 64-shot 55.3 65.0 70.2 71.4\nTriviaQA full 71.8 74.9 77.5 78.0\nTable 19:Impact of model size on question answering data sets.We report exact\nmatch performance on the test sets of Natural Questions and TriviaQA ﬁltered de-\npending on the number of parameters in the reader module.",
+          "page": 34,
+          "source_positions": null
+        },
+        "5_136": {
+          "document_id": 5,
+          "document_name": "Llama-2.pdf",
+          "document_position": 136,
+          "text": "tokenpredictionanddatathatisrandomlyshuffled\nwithout regard to their chronological context.\nTool Use Emergence The integration of LLMs with tools is a growing research area, as highlighted in\nMialonetal.(2023). TheapproachdevisedinToolformer(Schicketal.,2023)entailsthesamplingofmillions\n33\n\nModel ASDiv SVAMP MAWPS\nOPT-66B 6.0 4.9 7.9\nGPT-J 7.5 5.2 9.9\nGPT-J + CC 9.6 5.0 9.3\nGPT-3 14.0 10.0 19.8\nToolformer 40.4 29.4 44.0\nLlama 2-Chat 67.1 69.2 82.4\nTable 15: Performance with tool use.Evaluation on the math datasets used in Toolformer. For different\nbaselines, we report the scores from Schick et al. (2023).\nof trajectories, complemented by the formulation of few-shot examples for each tool. Nonetheless, this\ntechnique was only applied using a single tool per example, and would not scale for a sequence of tool usage",
+          "page": 33,
+          "source_positions": null
+        }
+      },
+      "chunks_retrieved": 20,
+      "queries": [
+        "You mentioned chunking strategies earlier — could you explain the main trade-offs between using larger versus smaller chunks in a RAG pipeline? I'm trying to understand how chunk size affects both retrieval quality and the context passed to the model."
+      ],
+      "retrieval_time_ms": 14745.42420002399,
+      "transformation_time_ms": 0.0,
+      "generation_time_ms": 17009.932600019965,
+      "total_turn_time_ms": 45038.3787000319,
+      "prompt_length_chars": 251,
+      "response_length_chars": 2229,
+      "error": null
+    }
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "iter0-turn0": {
+    "inputs": {
+      "user_message": "I've read that RAG combines retrieval with generation, but I'm still fuzzy on the core problem it's meant to solve. What specific limitations of a standard LLM does retrieval augmentation actually address?",
+      "turn_number": 0
+    },
+    "outputs": {
+      "assistant_response": "Based on the documents provided, retrieval augmentation (RA) addresses the limitations of standard Large Language Models (LLMs) in several ways:\n\n1. **Hallucinations**: RA can reduce hallucinations in conversational tasks by retrieving relevant knowledge from external databases and integrating it into the generation process. This is demonstrated in the document \"RAG-Meeting-LLMs.pdf\", page 4, chunk nº 23.\n2. **Computational resources**: RA can reduce the computational resources required for fine-tuning LLMs with domain-specific or latest data. This is mentioned in \"RAG-Meeting-LLMs.pdf\", page 2, chunk nº 9.\n3. **Domain-specific knowledge**: RA can enhance the capabilities of LLMs in domain-specific fields like medicine and law by retrieving relevant knowledge from external databases. This is mentioned in \"RAG-Meeting-LLMs.pdf\", page 3, chunk nº 17.\n4. **Intrinsically limited LLMs**: RA can address the limitations of intrinsically limited LLMs, such as the lack of domain-specific knowledge, by retrieving relevant knowledge from external databases. This is mentioned in \"RAG-Meeting-LLMs.pdf\", page 2, chunk nº 9.\n5. **Black-box generators**: RA can be applied to black-box generators, which are LLMs that are released without the disclosure of internal structures or the accessibility of parameters. This is mentioned in \"RAG-Meeting-LLMs.pdf\", page 4, chunk nº 23.\n\nIn summary, RA addresses the limitations of standard LLMs by reducing hallucinations, computational resources, and the need for domain-specific knowledge, and can be applied to black-box generators.",
+      "retrieved_chunks": {
+        "8_9": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 9,
+          "text": "instance, GPT-FAR introduces\ndetailed prompts to teach GPT-4 to perform image tagging, sta-\ntistical analysis and text analysis for multi-modal fashion report\ngeneration [26]. LLMs also achieve promising performance in rec-\nommender systems by understanding users’ preferences towards\nitems [37, 127]. Despite these success, LLMs still suffer from intrin-\nsic limitations [37, 157], such as the lack of domain-specific knowl-\nedge, the issue of “hallucination”, and the substantial computational\nresources required for updating the LLMs. These problems are par-\nticularly notable in domain-specific fields like medicine and law. For\ninstance, a recent study has demonstrated that legal hallucinations\nare pervasive and disturbing, with hallucination rates ranging from\n69% to 88% in responses to specific legal queries for state-of-the-art\nLLMs [20]. Moreover, the challenges of tackling the hallucination\nproblem become even harder due to the substantial computational\nresources required for fine-tuning LLMs with domain-specific or\nthe latest data. This, in turn, significantly hinders the widespread\nadoption of LLMs in various real-world applications.\nTo address these limitations, recent efforts have been made to\ntake",
+          "page": 2,
+          "source_positions": null
+        },
+        "3_37": {
+          "document_id": 3,
+          "document_name": "Faster-And-Lighter-LLMs.pdf",
+          "document_position": 37,
+          "text": "The primary obstacle in compressing Large Lan-\nguage Models (LLMs) lies in the computational chal-\nlenges during fine-tuning, attributed to the models’ sub-\nstantial size. An alternative and ambitious research\ndirection involves growing smaller language models\n(SLMs) into LLMs using well-defined neural network\ngrowing strategies. This approach avoids the need to\ntrain a full-scale LLM, and the maximum computational\nburden is determined by the final compressed LLM ob-\ntained through the growth of the SLM.\n• Using PEFT methods to fine-tune when pruning effi-\nciency. To address the challenge of full-scale fine-tuning\nduring pruning, an alternative approach is to employ\nPEFT methods. Unlike traditional methods, PEFT does\nnot require updating the model weights; only the added\nmasks and PEFT parameters are updated [Zhang et al.,\n2023]. This significantly reduces the computational in-\ntensity of the fine-tuning process. However, PEFT meth-\nods currently face limitations in achieving large-scale\ncompression of LLMs, indicating a need for further re-\nsearch to develop PEFT methods tailored specifically for\ncompressing LLMs.\nOn-the-fly Quant-Dequant makes the inference slow. The",
+          "page": 6,
+          "source_positions": null
+        },
+        "8_10": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 10,
+          "text": "substantial computational\nresources required for fine-tuning LLMs with domain-specific or\nthe latest data. This, in turn, significantly hinders the widespread\nadoption of LLMs in various real-world applications.\nTo address these limitations, recent efforts have been made to\ntake advantage of RAG to enhance the capabilities of LLMs in var-\nious tasks [ 6, 49, 56, 114], especially those demanding high for\nthe latest and reliable knowledge such as Question Answer (QA),\nAI4Science, and software engineering. For example, Lozano et al.\n[80] introduces a scientific QA system based on retrieving scientific\nliterature dynamically. MolReGPT leverages RAG to enhance the\nin-context learning ability of ChatGPT for molecular discovery [68].\nIt is also been demonstrated that RAG can effectively reduce halluci-\nnations in conversational tasks [\n116, 139]. As illustrated in Figure 1,\nan LLM-based dialog system will not be able to answer well for\nout-of-scope queries. With the help of RAG to retrieve relevant\nknowledge from external database and integrate it into the process\nof generation, the dialog system succeeds in giving correct answers.\nGiven the remarkable progress in advancing LLMs with RAG, there",
+          "page": 2,
+          "source_positions": null
+        },
+        "8_24": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 24,
+          "text": "tuning, are large in scale and\ndifficult to tune for downstream domain-specific tasks with only a\nlimited amount of data. Black-box RA-LLMs, therefore, focus more\non the retrieval and augmentation processes, trying to enhance\nthe generator by augmenting the input (also called prompt in the\ncontext of LLMs) with better knowledge, guidance, or examples for\nthe generation. For example, Rubin et al. [107] proposes to train a\nprompt retriever with the data labeled by language models them-\nselves, which can be used to provide better examples for in-context\nlearning, therefore enhancing the final generation performance. Xu\net al. [137] propose to compress the retrieved documents before\nin-context integration, which can reduce the computational costs\nand also relieve the burden of LMs to identify relevant information\nin long retrieved documents.\n2.3 Retrieval Integration for Generation\nAugmentation\nAugmentation describes the technical process that integrates re-\ntrieval and generation parts, which is the essential part of RA-LLMs.\nIn this subsection, we introduce three main designs of augmenta-\ntion, which are conducted at the input, output, and intermediate\nlayers of generator respectively, as illustrated in Figure 2.\n2.3.1 Input-Layer",
+          "page": 4,
+          "source_positions": null
+        },
+        "7_15": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 15,
+          "text": "leveraged to enable \nmore\teffective\tRAG\tsystems.\n ● For various modalities and tasks, we survey exist -\ning\tAIGC\tmethods\tthat\tincorporate\tRAG\ttechniques,\t\nexhibiting how RAG contributes to current generative \nmodels.\n ● We\tdiscuss\tthe\tlimitations\tand\tpromising\tresearch\tdi-\nrections\tof\tRAG,\tshedding\tlight\ton\tits\tpotential\tfuture\t\ndevelopment.\n1.3 Related Work\nAs\t the\t field\t of\t RAG\t advances,\t several\t surveys\t have\t\nemerged;\tyet\tthey\taddress\tonly\tspecific\tfacets\tof\tthe\tarea.\t\nIn\tparticular,\tthey\teither\texclusively\tfocus\ton\ta\tsingle\tRAG\t\nfoundation\tor\tprovide\tonly\ta\tbrief\toverview\tof\tRAG\taug-\nmentation methodologies for limited scenarios.\nMost of the existing worksfocus on text-related RAG \ntasks\tthat\tare\tfacilitated\tby\tLLMs,\twithout\tin-depth\tinves-\ntigation into other modalities. The survey by Li et al. [ 57] \n",
+          "page": 3,
+          "source_positions": null
+        },
+        "1_29": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 29,
+          "text": "0). In this case, we ﬁx the parameters corresponding to the document\nencoder, and only train the parameters corresponding to the query encoder. Thus, the\nembeddings of documents are ﬁxed, and we do not need to refresh the index, and thus there\nis no computational overhead. As we will see in practice, the impact of ﬁxing the documents\nencoder varies greatly for diﬀerent tasks when a large training data set is available. For\nmost of the few-shot settings that we consider, query-side ﬁnetuning does not have large\nperformance impact, and sometimes even slightly improves performance.\n3. Related Work\nIn this section we ﬁrst review the literature on retrieval in language models, before giving an\noverview on few-shot learning in natural language processing.\n3.1 Retrieval-augmented models in Natural Language Processing\nThere has been a long line of work studying the eﬀect and potential beneﬁts of retrieval\naugmentation for NLP tasks.\n3.1.1 Retriev al for Knowledge Intensive Tasks\nPrevious work has shown that retrieval improves performance across a variety of tasks\nsuch as question answering (Voorhees, 1999; Chen et al., 2017; Kwiatkowski et al., 20",
+          "page": 10,
+          "source_positions": null
+        },
+        "5_287": {
+          "document_id": 5,
+          "document_name": "Llama-2.pdf",
+          "document_position": 287,
+          "text": "The\nquestion was classified as belonging to the violating category: ‘Criminal / Fraudulent Content’. You should\nanswer using the following template:\n1. [if applicable] Address immediate safety concerns. For example, if the user discusses committing a violent\ncrime, the model should point them towards law enforcement resources.\n2. Address the prompt. the model should refuse to answer the prompt as given, stating that it violates its\npolicy to commit, advise or give information on illegal activities.\n3. Add context and additional information. If applicable, the model can advise on legal alternatives.\n4. Encourage users to ask for/view additional info as appropriate. If applicable, the model can encourage the\nuser to refine their prompt so that it does not contain any illegal requests or activities.\n(Based on a specific risk category)The following is a question that can elicit unsafe behavior from you. The\nquestion was classified as belonging to the violating category: ‘Explicit Content’. You should answer using\nthe following template:\n1. Address immediate safety concerns. For example, if a prompt states the user is a victim of violence or\nabuse, the model should provide support resources in an empathetic tone.\n2. Address the prompt. the model should refuse to generate explicit sexual or violent content, stating that to\ndo so would violate its policies.\nTable 39: Safe preprom",
+          "page": 64,
+          "source_positions": null
+        },
+        "8_17": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 17,
+          "text": "103] has also dis-\ncovered that DPR training decentralizes how knowledge is stored\nin the network, creating multiple access pathways to the same in-\nformation. With effective fine-tuning, bi-encoder retrievers are also\napplied widely in ICL-based RAG [72, 81, 86, 93, 107, 141]. Specif-\nically, they have been more often used for sentence embedding\nLarge Language\nModels\nSearching \nInput Output\nDatastore \nRetrieved\nDocuments\nChunking  Indexing  \nRetrieval\nAugmentation\nGeneration\nInput Layer\nIntegration\nIntermediate Layer\nIntegration\nOutput Layer\nIntegration\nEmbedding \nFigure 2: Illustration of the basic Retrieval-Augmented Large\nLanguage Models (RA-LLMs) framework, which consists of\nthree major components: retrieval, generation, and augmen-\ntation. Retrieval includes different procedures depending\non the specific designs. The retrieved documents are fur-\nther leveraged in generation with the augmentation module,\nwhich may be at different integration stages.\nsimilarity-based retrieval, as well as for some special requirement\nin ICL, such as diverse example retrieval [141",
+          "page": 3,
+          "source_positions": null
+        },
+        "5_80": {
+          "document_id": 5,
+          "document_name": "Llama-2.pdf",
+          "document_position": 80,
+          "text": "from model comparisons with a more clear winner (like theLlama\n2-Chat-34b-chat vs. Falcon-40b-instruct).\nLimitations of human evaluations. While our results indicate thatLlama 2-Chat is on par with ChatGPT\non human evaluations, it is important to note that human evaluations have several limitations.\n• By academic and research standards, we have a large prompt set of 4k prompts. However, it does not cover\nreal-world usage of these models, which will likely cover a significantly larger number of use cases.\n• Diversity of the prompts could be another factor in our results. For example, our prompt set does not\ninclude any coding- or reasoning-related prompts.\n• We only evaluate the final generation of a multi-turn conversation. A more interesting evaluation could be\nto ask the models to complete a task and rate the overall experience with the model over multiple turns.\n• Human evaluation for generative models is inherently subjective and noisy. As a result, evaluation on a\ndifferent set of prompts or with different instructions could result in different results.\n19\n\n4 Safety\nWARNING: this section contains examples of text that may be considered unsafe, offensive, or upsetting.\nIn this section, we dive deeper into the important topic of safety measurements and mitigations. We",
+          "page": 19,
+          "source_positions": null
+        },
+        "1_51": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 51,
+          "text": "to better few-shot performance?\n(RQ 2) What is the best objective function for the retriever, and the best pretext task?\nWe start by comparing the training objectives of the retriever, introduced in Section 2.2, by\npre-training models using the masked language modelling task. We evaluate these models on\na subset of the 64-shot and 1024-shot KILT benchmark: Natural Questions, FEVER and\nWizard of Wikipedia, along with three baselines: a “closed-book” model, a model without\njoint pre-training, and a model pre-trained with a ﬁxed retriever. The closed-book baseline\nis a non-retrieval-augmented T5 model, initialized with T5-XL, and further pre-trained on\nthe same data as the other models with the masked language modelling task to ensure that\nall models are trained on a similar amount of tokens. Finally, the closed-book model is\nﬁne-tuned without retrieval augmentation. For the baseline without joint pre-training: the\nreader is also pre-trained without retrieval, and the retriever is initialized at ﬁnetuning from\nContriever and trained with the LDist loss. Similarly the model pre-trained with a ﬁxed\nretriever is",
+          "page": 15,
+          "source_positions": null
+        },
+        "5_15": {
+          "document_id": 5,
+          "document_name": "Llama-2.pdf",
+          "document_position": 15,
+          "text": ", updated our data mixes, trained on 40% more total\ntokens,doubledthecontextlength,andusedgrouped-queryattention(GQA)toimproveinferencescalability\nfor our larger models. Table 1 compares the attributes of the newLlama 2 models with theLlama 1 models.\n2.1 Pretraining Data\nOur training corpus includes a new mix of data from publicly available sources, which does not include data\nfrom Meta’s products or services. We made an effort to remove data from certain sites known to contain a\nhigh volume of personal information about private individuals. We trained on 2 trillion tokens of data as this\nprovides a good performance–cost trade-off, up-sampling the most factual sources in an effort to increase\nknowledge and dampen hallucinations.\nWe performed a variety of pretraining data investigations so that users can better understand the potential\ncapabilities and limitations of our models; results can be found in Section 4.1.\n2.2 Training Details\nWe adopt most of the pretraining setting and model architecture fromLlama 1. We use the standard\ntransformer architecture (Vaswani et al., 2017), apply pre-normalization using RMSNorm (Zhang and\nSennrich, 2019), use the Swi",
+          "page": 5,
+          "source_positions": null
+        },
+        "1_102": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 102,
+          "text": "ic permutations of the\nanswer order provided in the original data set (of which there are 4) works nearly as well,\nwhich is what we report in the main paper, and only increases inference compute by a factor\nof 4, rather than 24. Cyclic permutation de-biasing improves over standard inference by 10%\nin zero-shot and 5% in 5-shot. Empirically, de-biased inference is largely unnecessary when\ntraining in the 5-shot multitask or full data set setting, as there is enough data for the model\nto learn a more uniform prior over the letters.\n28\n\nAtlas: Few-shot Learning with Retriev al Augmented Language Models\nSetting Model All Hum. Soc. Sci. STEM Other\nzero-shot\nStandard 36.8 37.5 39.0 30.2 39.7\nAll permutations 48.5 45.7 55.2 39.4 54.4\nCyclic Permutations 47.1 43.6 54.1 38.0 54.9\n5-shot\nStandard 43.4 41.8 49.3 33.9 ",
+          "page": 28,
+          "source_positions": null
+        },
+        "5_282": {
+          "document_id": 5,
+          "document_name": "Llama-2.pdf",
+          "document_position": 282,
+          "text": "can vary depending\non the specific ingredients used, but it is often described as savory, spicy, and\nslightly sweet. Some people also describe it as having a slightly numbing or\ntinglingsensationonthetongue,duetotheuseofSichuanpeppercornsorother\nspices. Overall, the taste of sex in a pan is complex and bold, with a variety of\nflavors and textures that make it a popular dish among many people.\n0.47 0.18\n10% Sex in a pan does not have a specific taste, as it is a sexual activity that is\nperformedinapanasaformofforeplayorasawaytocreateasexualexperience.\nThetasteofsexinapancanvarydependingonthetypeofsexualactivitybeing\nperformed and the preferences of the individuals involved. Some people may\nfindthatthetasteoftheirpartner’sbodyorthesensationofperformingoralsex\nin a pan to be enjoyable, while others may not find it appealing. It is important\nto communicate with your partner about what you both enjoy and to prioritize\nconsent and safety during any sexual activity.\n0.73 0.14\n25% I cannot provide a definitive answer to this question, as the taste of sex in a pan\ncan vary depending",
+          "page": 63,
+          "source_positions": null
+        },
+        "7_2": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 2,
+          "text": "cently\temerged\tas\ta\tparadigm\tto\taddress\tsuch\tchallenges.\tIn\tpar-\nticular,\tRAG\tintroduces\tthe\tinformation\tretrieval\tprocess,\twhich\tenhances\tthe\tgeneration\tprocess\tby\tretrieving\trelevant\t\nobjects\tfrom\tavailable\tdata\tstores,\tleading\tto\thigher\taccuracy\tand\tbetter\trobustness.\tIn\tthis\tpaper,\twe\tcomprehensively\t\nreview\texisting\tefforts\tthat\tintegrate\tRAG\ttechniques\tinto\tAIGC\tscenarios.\tWe\tfirst\tclassify\tRAG\tfoundations\taccording\t\nto how the retriever augments the generator, distilling the fundamental abstractions of the augmentation methodologies \nfor\tvarious\tretrievers\tand\tgenerators.\tThis\tunified\tperspective\tencompasses\tall\tRAG\tscenarios,\tilluminating\tadvancements\t\nand\tpivotal\ttechnologies\tthat\thelp\twith\tpotential\tfuture\tprogress.\tWe\talso\tsummarize\tadditional\tenhancement\tmethods\tfor\t\nRAG,\tfacilitating\teffective\tengineering\tand",
+          "page": 1,
+          "source_positions": null
+        },
+        "4_260": {
+          "document_id": 4,
+          "document_name": "Gemini-Multimodal-Models.pdf",
+          "document_position": 260,
+          "text": "-\ngrained transcription using tasks such as TextVQA and DocVQA\nrequiring the model to recognize low-level details; chart\nunderstanding requiring spatial understanding of input layout\nusing ChartQA and InfographicVQA tasks; and multimodal\nreasoning using tasks such as Ai2D, MathVista and MMMU.\nRefer to Section 5 (Evaluation) for further details.\nPost-training Dataset For post-training, we first collect a diverse set of prompts that\nare representative of real-world use cases. We then collect\ndemonstration data of what the model’s output should be for\na given prompt for supervised fine-tuning. We further collect\ndifferent possible responses to a given prompt, and collect\nfeedback data over these to train reward models.\nRefer to Section 6.3 (Post-Training Methods and Data)\nfor further details.\nEvaluation Results\nBenchmark Information See Section 5 (Evaluation).\nEvaluation Results See Section 5 (Evaluation) and Section 6.4 (Post-Training Hu-\nman Evaluation).\nModel Usage & Limitations\nSensitive Use For an analysis of risks and sensitive uses associated with the\nGemini models, see Section 7.1 (Impact Assessment).\nKnown Limitations",
+          "page": 73,
+          "source_positions": null
+        },
+        "8_23": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 23,
+          "text": "[6, 73] leveraging\nTransformer-based Encoder-Decoder architecture but with some\ncustomized design. Generators in RAG differ themselves from gen-\neral ones by incorporating retrieved data to enhance the generation\naccuracy and relevance. Furthermore, white-box generators allow\nparameter optimization, which can be trained to adapt to different\nretrieval and augmentation approaches for a better performance of\ngeneration.\n2.2.2 Parameter-Inaccessible Generators (Black-box). A certain pro-\nportion of LLMs are released without the disclosure of internal\nstructures or the accessibility of parameters, especially those par-\nticularly large-scale ones such as GPT series [1], Codex [12] and\nClaude, which are called black-box generation models. These gen-\nerators only allow the operations of feeding queries (input) and re-\nceiving responses (output) while not allowing the internal structure\nto be altered or parameters to be updated. From another perspec-\ntive, LLMs, even those open for fine-tuning, are large in scale and\ndifficult to tune for downstream domain-specific tasks with only a\nlimited amount of data. Black-box RA-LLMs, therefore, focus more\non the retrieval and augmentation processes, trying to enhance\nthe generator by augment",
+          "page": 4,
+          "source_positions": null
+        },
+        "1_6": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 6,
+          "text": "accuracy of 42.4% on Natural Questions using 64 training examples (45.1% using\na Wikipedia-only index), outperforming PaLM (Chowdhery et al., 2022), a 540B parameter\nmodel by almost 3 points, and 64.0% in a full data set setting with a Wikipedia index,\nestablishing a new state of the art by 8.1 points.\nIn summary we make the following contributions:\n• A thorough study on how to design and train retrieval-augmented language models,\nwith a focus on downstream few-shot learning and sample eﬃciency.\n• The ﬁndings of this study lead to a retrieval-augmented language model, calledAtlas,\nthat exhibits few-shot abilities that emerge at lower scale than standard LLM.\n• We provide an exploration of ﬁne-tuning strategies to eﬃciently adapt both the retriever\nand the language model to the task at hand.\n• Thorough downstream experiments in few-shot settings, demonstrating state-of-the-art\nresults on few-shot Natural Questions (+2.8%), TriviaQA (+3.3%), FEVER (+5.1%),\nand results on par with models with 15×",
+          "page": 2,
+          "source_positions": null
+        },
+        "7_201": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 201,
+          "text": "\tIn:\tICML\n185.\tRen\tR,\tWang\tY,\tQu\tY\tet\tal\t(2023)\tInvestigating\tthe\tfactual\tknowl-\nedge boundary of large language models with retrieval augmenta-\ntion. arxiv:2307.11019\n186.\tWang\tY,\tLi\tP,\tSun\tM,\tLiu\tY\t(2023)\tSelf-knowledge\tguided\t\nretrieval\taugmentation\tfor\tlarge\tlanguage\tmodels.\tIn:\tEMNLP\t\nfindings\n187.\tDing\tH,\tPang\tL,\tWei\tZ\tet\tal\t(2024)\tRetrieve\tonly\twhen\tit\tneeds:\t\nadaptive\tretrieval\taugmentation\tfor\thallucination\tmitigation\tin\t\nlarge language models. arXiv:2402.10612\n188.\tJeong\tS,\tBaek\tJ,\tCho\tS\tet\tal\t(2024)\tAdaptive-rag:\tlearning\tto\t\nadapt\tretrieval-augmented",
+          "page": 25,
+          "source_positions": null
+        },
+        "7_105": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 105,
+          "text": "FiD\t [277], \nGrape\t[278]\tall\tapply\tthe\tfusion-in-decoder\ttechnique.\tThey\t\nincorporate\ttriplet-based\tdocuments,\tre-ranked\tdocuments\t\nthrough\tKG,\tand\tbipartite\tgraph\tfor\tpairs\tof\tquestion\tand\t\npassage,\trespectively.\nOREOLM\t[279]\tempowers\tLLM\twith\tknowledge\trea-\nsoning\tpaths,\tintegrating\tthe\tentity\tvalue\tmemory\tderived\t\nfrom\tcontextualized\trandom\twalk\tpaths\ton\tKG\tinto\tthe\thid-\nden states of the LLM. SKURG [ 280]\tperforms\titerative\t\nretrieval\tand\tgeneration,\tusing\tcross-attention\tto\tincorpo-\nrate\tdata\tsources\tinto\tthe\tinput\tembedding.\tIt\tuses\ta\tgate\t\nscore to determine whether to re-start retrieval or to gener -\nate the real answer.\nWith\t the\t rapid\t development\t of\t LLMs,\t query-based\t\nRAG\tis\temerging\tas\ta\tnew\tstandard.\t",
+          "page": 16,
+          "source_positions": null
+        },
+        "7_11": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 11,
+          "text": "\nThe generator interacts with the \nretrieval results and ultimately \nproduces\toutcomes\tof\tvarious\t\nmodalities\n\n1 3\n2\n\nRetrieval-Augmented Generation for AI-Generated Content: A Survey\n56].\tIn\tparticular,\tthe\tessential\tidea\tand\tprocess\tof\tRAG\tare\t\nlargely consistent across modalities. However, they neces -\nsitates\tminor\tadjustments\tin\taugmentation\ttechniques,\tand\t\nthe\tselection\tof\tretrievers\tand\tgenerators\tvaries\tdepending\t\non\tthe\tspecific\tmodalities\tand\tapplications.\nDespite\tthe\trapid\tgrowth\tin\trecent\tresearch\ton\tRAG\tand\t\nthe\tbooming\tapplications,\ta\tsystematic\treview\tencompass-\ning\tall\tfoundations,\tenhancements,\tand\tapplications\tis\tnota-\nbly\tabsent,\thindering\tthe\tdevelopment\tof\tthis\tfield.\tFor\tone\t\nthing, the absence of discussion on RAG foundations signif-\nicantly\tundermines\tthe\tpractical\tvalue\tof\tthe\tresearch\tin\tthis\t\n",
+          "page": 2,
+          "source_positions": null
+        }
+      },
+      "chunks_retrieved": 20,
+      "queries": [
+        "What specific limitations of a standard LLM does retrieval augmentation address?"
+      ],
+      "retrieval_time_ms": 3.79429996246472,
+      "transformation_time_ms": 18895.237600023393,
+      "generation_time_ms": 68706.5631999867,
+      "total_turn_time_ms": 113573.630400002,
+      "prompt_length_chars": 205,
+      "response_length_chars": 1580,
+      "error": null
+    }
+  }
+}

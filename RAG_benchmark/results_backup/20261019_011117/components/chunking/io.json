@@ -1,0 +1,1542 @@
+{
+  "0001": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "paragraph",
+        "params": {
+          "chunk_size": 500,
+          "chunk_overlap": 50,
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0002": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "page",
+        "params": {
+          "chunk_size": 2000,
+          "chunk_overlap": 200,
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0003": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "default",
+        "params": {
+          "chunk_size": 1000,
+          "chunk_overlap": 100,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0004": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "small",
+        "params": {
+          "chunk_size": 200,
+          "chunk_overlap": 20,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0005": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "e5-mistral",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60,
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0006": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "bert-spanish",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+          "chunk_size": 512,
+          "chunk_overlap": 50,
+          "iteration": 1,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0007": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "paragraph",
+        "params": {
+          "chunk_size": 500,
+          "chunk_overlap": 50,
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0008": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "page",
+        "params": {
+          "chunk_size": 2000,
+          "chunk_overlap": 200,
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0009": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "default",
+        "params": {
+          "chunk_size": 1000,
+          "chunk_overlap": 100,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0010": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "small",
+        "params": {
+          "chunk_size": 200,
+          "chunk_overlap": 20,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0011": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "e5-mistral",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60,
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0012": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "bert-spanish",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+          "chunk_size": 512,
+          "chunk_overlap": 50,
+          "iteration": 2,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0013": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "paragraph",
+        "params": {
+          "chunk_size": 500,
+          "chunk_overlap": 50,
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0014": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "page",
+        "params": {
+          "chunk_size": 2000,
+          "chunk_overlap": 200,
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0015": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "default",
+        "params": {
+          "chunk_size": 1000,
+          "chunk_overlap": 100,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0016": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "small",
+        "params": {
+          "chunk_size": 200,
+          "chunk_overlap": 20,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0017": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "e5-mistral",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60,
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0018": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "bert-spanish",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+          "chunk_size": 512,
+          "chunk_overlap": 50,
+          "iteration": 3,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0019": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "paragraph",
+        "params": {
+          "chunk_size": 500,
+          "chunk_overlap": 50,
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0020": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "page",
+        "params": {
+          "chunk_size": 2000,
+          "chunk_overlap": 200,
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0021": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "default",
+        "params": {
+          "chunk_size": 1000,
+          "chunk_overlap": 100,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0022": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "small",
+        "params": {
+          "chunk_size": 200,
+          "chunk_overlap": 20,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0023": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "e5-mistral",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60,
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0024": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "bert-spanish",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+          "chunk_size": 512,
+          "chunk_overlap": 50,
+          "iteration": 4,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0025": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "paragraph",
+        "params": {
+          "chunk_size": 500,
+          "chunk_overlap": 50,
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0026": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "page",
+        "params": {
+          "chunk_size": 2000,
+          "chunk_overlap": 200,
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0027": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "default",
+        "params": {
+          "chunk_size": 1000,
+          "chunk_overlap": 100,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0028": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "small",
+        "params": {
+          "chunk_size": 200,
+          "chunk_overlap": 20,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0029": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "e5-mistral",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60,
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0030": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "bert-spanish",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+          "chunk_size": 512,
+          "chunk_overlap": 50,
+          "iteration": 5,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0031": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "paragraph",
+        "params": {
+          "chunk_size": 500,
+          "chunk_overlap": 50,
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0032": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "page",
+        "params": {
+          "chunk_size": 2000,
+          "chunk_overlap": 200,
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0033": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "default",
+        "params": {
+          "chunk_size": 1000,
+          "chunk_overlap": 100,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0034": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "small",
+        "params": {
+          "chunk_size": 200,
+          "chunk_overlap": 20,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0035": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "e5-mistral",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60,
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0036": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "bert-spanish",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+          "chunk_size": 512,
+          "chunk_overlap": 50,
+          "iteration": 6,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0037": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "paragraph",
+        "params": {
+          "chunk_size": 500,
+          "chunk_overlap": 50,
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0038": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "page",
+        "params": {
+          "chunk_size": 2000,
+          "chunk_overlap": 200,
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0039": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "default",
+        "params": {
+          "chunk_size": 1000,
+          "chunk_overlap": 100,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0040": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "small",
+        "params": {
+          "chunk_size": 200,
+          "chunk_overlap": 20,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0041": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "e5-mistral",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60,
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0042": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "bert-spanish",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+          "chunk_size": 512,
+          "chunk_overlap": 50,
+          "iteration": 7,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0043": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "paragraph",
+        "params": {
+          "chunk_size": 500,
+          "chunk_overlap": 50,
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0044": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "page",
+        "params": {
+          "chunk_size": 2000,
+          "chunk_overlap": 200,
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0045": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "default",
+        "params": {
+          "chunk_size": 1000,
+          "chunk_overlap": 100,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0046": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "small",
+        "params": {
+          "chunk_size": 200,
+          "chunk_overlap": 20,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0047": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "e5-mistral",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60,
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0048": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "bert-spanish",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+          "chunk_size": 512,
+          "chunk_overlap": 50,
+          "iteration": 8,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0049": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "paragraph",
+        "params": {
+          "chunk_size": 500,
+          "chunk_overlap": 50,
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0050": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "page",
+        "params": {
+          "chunk_size": 2000,
+          "chunk_overlap": 200,
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0051": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "default",
+        "params": {
+          "chunk_size": 1000,
+          "chunk_overlap": 100,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0052": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "small",
+        "params": {
+          "chunk_size": 200,
+          "chunk_overlap": 20,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0053": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "e5-mistral",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60,
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0054": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "bert-spanish",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+          "chunk_size": 512,
+          "chunk_overlap": 50,
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0055": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "paragraph",
+        "params": {
+          "chunk_size": 500,
+          "chunk_overlap": 50,
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0056": {
+    "inputs": {
+      "config": {
+        "component_class": "CharacterChunkModel",
+        "model_name": "CharacterChunk",
+        "config_name": "page",
+        "params": {
+          "chunk_size": 2000,
+          "chunk_overlap": 200,
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0057": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "default",
+        "params": {
+          "chunk_size": 1000,
+          "chunk_overlap": 100,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0058": {
+    "inputs": {
+      "config": {
+        "component_class": "RecursiveCharacterChunkModel",
+        "model_name": "RecursiveChar",
+        "config_name": "small",
+        "params": {
+          "chunk_size": 200,
+          "chunk_overlap": 20,
+          "separators": [
+            "\n\n",
+            "\n",
+            ".",
+            " ",
+            ""
+          ],
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0059": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "e5-mistral",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60,
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0060": {
+    "inputs": {
+      "config": {
+        "component_class": "TokenChunkModel",
+        "model_name": "bert-spanish",
+        "config_name": "default",
+        "params": {
+          "tokenizer_name": "dccuchile/bert-base-spanish-wwm-uncased",
+          "chunk_size": 512,
+          "chunk_overlap": 50,
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "chunker"
+    },
+    "outputs": {
+      "status": "skipped",
+      "time_seconds": 0.0,
+      "first_load_time": 0.0,
+      "error_message": "",
+      "output_size": null
+    }
+  }
+}

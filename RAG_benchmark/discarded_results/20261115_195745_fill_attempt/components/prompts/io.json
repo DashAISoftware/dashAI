@@ -1,0 +1,929 @@
+{
+  "0001": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQueryRewritingPrompt",
+        "model_name": "rewriting",
+        "config_name": "en",
+        "params": {
+          "language": "en",
+          "template": "You are a query rewriting assistant. Rewrite the user message into exactly one self-contained search query that captures the real information need, folding in details from the conversation history only when the new message depends on earlier context.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nWrite a single, clear, self-contained search query. Use the history only when needed to resolve references. Also write a short user-facing message describing what you did and a short justification explaining why. Do not add any other explanation.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"rewrite_query\", \"arguments\": {\"query\": \"<the rewritten query>\", \"message\": \"<one short sentence for the user describing what you did>\", \"justification\": \"<one short sentence explaining why>\"}}",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 0.00014519999967887998,
+      "first_load_time": 1.4999997802078724e-05,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0002": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQueryRewritingPrompt",
+        "model_name": "rewriting",
+        "config_name": "es",
+        "params": {
+          "language": "es",
+          "template": "Eres un asistente de reescritura de consultas. Reescribe el mensaje del usuario en una única consulta de búsqueda autocontenida que capture su verdadera necesidad de información, incorporando los detalles del historial de la conversación solo cuando el nuevo mensaje dependa del contexto anterior.\n\nHistorial de la conversación (puede estar vacío):\n{history}\n\nMensaje actual del usuario:\n{input}\n\nEscribe una sola consulta de búsqueda clara y autocontenida. Usa el historial solo cuando sea necesario para resolver referencias. Escribe también un mensaje breve para el usuario describiendo lo que hiciste y una justificación breve de por qué. No añadas ninguna otra explicación.\n\nResponde ÚNICAMENTE con un objeto JSON en este formato exacto de llamada a función, sin bloques de código ni texto adicional:\n{\"name\": \"rewrite_query\", \"arguments\": {\"query\": \"<la consulta reescrita>\", \"message\": \"<una frase breve para el usuario describiendo lo que hiciste>\", \"justification\": \"<una frase breve explicando por qué>\"}}",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.009995609521866e-05,
+      "first_load_time": 1.1300027836114168e-05,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0003": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQueryRewritingPrompt",
+        "model_name": "rewriting",
+        "config_name": "pt",
+        "params": {
+          "language": "pt",
+          "template": "Você é um assistente de reescrita de consultas. Reescreva a mensagem do usuário em uma única consulta de busca autocontida que capture sua verdadeira necessidade de informação, incorporando os detalhes do histórico da conversa somente quando a nova mensagem depender do contexto anterior.\n\nHistórico da conversa (pode estar vazio):\n{history}\n\nMensagem atual do usuário:\n{input}\n\nEscreva uma única consulta de busca clara e autocontida. Use o histórico somente quando for necessário para resolver referências. Escreva também uma mensagem breve para o usuário descrevendo o que você fez e uma justificativa breve de por quê. Não adicione nenhuma outra explicação.\n\nResponda APENAS com um objeto JSON neste formato exato de chamada de função, sem blocos de código e sem texto adicional:\n{\"name\": \"rewrite_query\", \"arguments\": {\"query\": \"<a consulta reescrita>\", \"message\": \"<uma frase breve para o usuário descrevendo o que você fez>\", \"justification\": \"<uma frase breve explicando por quê>\"}}",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.120000474154949e-05,
+      "first_load_time": 8.300004992634058e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0004": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQueryExpansionPrompt",
+        "model_name": "expansion",
+        "config_name": "en",
+        "params": {
+          "language": "en",
+          "template": "You are a query expansion assistant. Rewrite the user message into exactly {n} search queries that broaden retrieval coverage so that more relevant documents can be found.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nProduce exactly {n} concise, independent search queries or keyword phrases. At least one of them must closely preserve the original request; the others should cover related terms, synonyms or angles that may appear in relevant documents. Also write a short user-facing message describing what you did and a short justification explaining why. Do not add any other explanation.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<query 1>\", \"<query 2>\"], \"message\": \"<one short sentence for the user describing what you did>\", \"justification\": \"<one short sentence explaining why>\"}}",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 0.00012360000982880592,
+      "first_load_time": 1.869996776804328e-05,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0005": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQueryExpansionPrompt",
+        "model_name": "expansion",
+        "config_name": "es",
+        "params": {
+          "language": "es",
+          "template": "Eres un asistente de expansión de consultas. Reescribe el mensaje del usuario en exactamente {n} consultas de búsqueda que amplíen la cobertura de recuperación para encontrar más documentos relevantes.\n\nHistorial de la conversación (puede estar vacío):\n{history}\n\nMensaje actual del usuario:\n{input}\n\nGenera exactamente {n} consultas de búsqueda o frases clave concisas e independientes. Al menos una debe conservar fielmente la petición original; las demás deben cubrir términos, sinónimos o enfoques relacionados que puedan aparecer en documentos relevantes. Escribe también un mensaje breve para el usuario describiendo lo que hiciste y una justificación breve de por qué. No añadas ninguna otra explicación.\n\nResponde ÚNICAMENTE con un objeto JSON en este formato exacto de llamada a función, sin bloques de código ni texto adicional:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<consulta 1>\", \"<consulta 2>\"], \"message\": \"<una frase breve para el usuario describiendo lo que hiciste>\", \"justification\": \"<una frase breve explicando por qué>\"}}",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.480005009099841e-05,
+      "first_load_time": 1.0500021744519472e-05,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0006": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQueryExpansionPrompt",
+        "model_name": "expansion",
+        "config_name": "pt",
+        "params": {
+          "language": "pt",
+          "template": "Você é um assistente de expansão de consultas. Reescreva a mensagem do usuário em exatamente {n} consultas de busca que ampliem a cobertura de recuperação para encontrar mais documentos relevantes.\n\nHistórico da conversa (pode estar vazio):\n{history}\n\nMensagem atual do usuário:\n{input}\n\nGere exatamente {n} consultas de busca ou frases-chave concisas e independentes. Pelo menos uma deve preservar fielmente a solicitação original; as demais devem cobrir termos, sinônimos ou ângulos relacionados que possam aparecer em documentos relevantes. Escreva também uma mensagem breve para o usuário descrevendo o que você fez e uma justificativa breve de por quê. Não adicione nenhuma outra explicação.\n\nResponda APENAS com um objeto JSON neste formato exato de chamada de função, sem blocos de código e sem texto adicional:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<consulta 1>\", \"<consulta 2>\"], \"message\": \"<uma frase breve para o usuário descrevendo o que você fez>\", \"justification\": \"<uma frase breve explicando por quê>\"}}",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.789999755099416e-05,
+      "first_load_time": 2.3900007363408804e-05,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0007": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQueryExpansionPrompt",
+        "model_name": "expansion",
+        "config_name": "pt",
+        "params": {
+          "language": "pt",
+          "template": "Você é um assistente de expansão de consultas. Reescreva a mensagem do usuário em exatamente {n} consultas de busca que ampliem a cobertura de recuperação para encontrar mais documentos relevantes.\n\nHistórico da conversa (pode estar vazio):\n{history}\n\nMensagem atual do usuário:\n{input}\n\nGere exatamente {n} consultas de busca ou frases-chave concisas e independentes. Pelo menos uma deve preservar fielmente a solicitação original; as demais devem cobrir termos, sinônimos ou ângulos relacionados que possam aparecer em documentos relevantes. Escreva também uma mensagem breve para o usuário descrevendo o que você fez e uma justificativa breve de por quê. Não adicione nenhuma outra explicação.\n\nResponda APENAS com um objeto JSON neste formato exato de chamada de função, sem blocos de código e sem texto adicional:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<consulta 1>\", \"<consulta 2>\"], \"message\": \"<uma frase breve para o usuário descrevendo o que você fez>\", \"justification\": \"<uma frase breve explicando por quê>\"}}",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.779999678954482e-05,
+      "first_load_time": 9.300012607127428e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0008": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQueryDecompositionPrompt",
+        "model_name": "decomposition",
+        "config_name": "en",
+        "params": {
+          "language": "en",
+          "template": "You are a query decomposition assistant. Split the user's question into the minimal set of simple, independent sub-queries, each of which can be used on its own to retrieve relevant documents.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nDecide by yourself how many sub-queries are needed and use as few as possible.\nDo not produce more than {n_max} sub-queries.\nEach sub-query must be simple, self-contained and independently retrievable. Also write a short user-facing message describing what you did and a short justification explaining why. Do not add any other explanation.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<sub-query 1>\", \"<sub-query 2>\"], \"message\": \"<one short sentence for the user describing what you did>\", \"justification\": \"<one short sentence explaining why>\"}}",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.850002005696297e-05,
+      "first_load_time": 1.1899974197149277e-05,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0009": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQueryDecompositionPrompt",
+        "model_name": "decomposition",
+        "config_name": "en",
+        "params": {
+          "language": "en",
+          "template": "You are a query decomposition assistant. Split the user's question into the minimal set of simple, independent sub-queries, each of which can be used on its own to retrieve relevant documents.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nDecide by yourself how many sub-queries are needed and use as few as possible.\nDo not produce more than {n_max} sub-queries.\nEach sub-query must be simple, self-contained and independently retrievable. Also write a short user-facing message describing what you did and a short justification explaining why. Do not add any other explanation.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<sub-query 1>\", \"<sub-query 2>\"], \"message\": \"<one short sentence for the user describing what you did>\", \"justification\": \"<one short sentence explaining why>\"}}",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.44999716617167e-05,
+      "first_load_time": 9.400013368576765e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0010": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQueryDecompositionPrompt",
+        "model_name": "decomposition",
+        "config_name": "es",
+        "params": {
+          "language": "es",
+          "template": "Eres un asistente de descomposición de consultas. Divide la pregunta del usuario en el conjunto mínimo de subconsultas simples e independientes, cada una de las cuales pueda usarse por sí sola para recuperar documentos relevantes.\n\nHistorial de la conversación (puede estar vacío):\n{history}\n\nMensaje actual del usuario:\n{input}\n\nDecide por ti mismo cuántas subconsultas hacen falta y usa las mínimas posibles.\nNo generes más de {n_max} subconsultas.\nCada subconsulta debe ser simple, autocontenida e independiente. Escribe también un mensaje breve para el usuario describiendo lo que hiciste y una justificación breve de por qué. No añadas ninguna otra explicación.\n\nResponde ÚNICAMENTE con un objeto JSON en este formato exacto de llamada a función, sin bloques de código ni texto adicional:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<subconsulta 1>\", \"<subconsulta 2>\"], \"message\": \"<una frase breve para el usuario describiendo lo que hiciste>\", \"justification\": \"<una frase breve explicando por qué>\"}}",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 5.310005508363247e-05,
+      "first_load_time": 1.090002479031682e-05,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0011": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQueryDecompositionPrompt",
+        "model_name": "decomposition",
+        "config_name": "es",
+        "params": {
+          "language": "es",
+          "template": "Eres un asistente de descomposición de consultas. Divide la pregunta del usuario en el conjunto mínimo de subconsultas simples e independientes, cada una de las cuales pueda usarse por sí sola para recuperar documentos relevantes.\n\nHistorial de la conversación (puede estar vacío):\n{history}\n\nMensaje actual del usuario:\n{input}\n\nDecide por ti mismo cuántas subconsultas hacen falta y usa las mínimas posibles.\nNo generes más de {n_max} subconsultas.\nCada subconsulta debe ser simple, autocontenida e independiente. Escribe también un mensaje breve para el usuario describiendo lo que hiciste y una justificación breve de por qué. No añadas ninguna otra explicación.\n\nResponde ÚNICAMENTE con un objeto JSON en este formato exacto de llamada a función, sin bloques de código ni texto adicional:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<subconsulta 1>\", \"<subconsulta 2>\"], \"message\": \"<una frase breve para el usuario describiendo lo que hiciste>\", \"justification\": \"<una frase breve explicando por qué>\"}}",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.969995304942131e-05,
+      "first_load_time": 9.90001717582345e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0012": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQueryDecompositionPrompt",
+        "model_name": "decomposition",
+        "config_name": "pt",
+        "params": {
+          "language": "pt",
+          "template": "Você é um assistente de decomposição de consultas. Divida a pergunta do usuário no conjunto mínimo de subconsultas simples e independentes, cada uma das quais possa ser usada por si só para recuperar documentos relevantes.\n\nHistórico da conversa (pode estar vazio):\n{history}\n\nMensagem atual do usuário:\n{input}\n\nDecida por conta própria quantas subconsultas são necessárias e use o mínimo possível.\nNão gere mais de {n_max} subconsultas.\nCada subconsulta deve ser simples, autocontida e independente. Escreva também uma mensagem breve para o usuário descrevendo o que você fez e uma justificativa breve de por quê. Não adicione nenhuma outra explicação.\n\nResponda APENAS com um objeto JSON neste formato exato de chamada de função, sem blocos de código e sem texto adicional:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<subconsulta 1>\", \"<subconsulta 2>\"], \"message\": \"<uma frase breve para o usuário descrevendo o que você fez>\", \"justification\": \"<uma frase breve explicando por quê>\"}}",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 6.009999196976423e-05,
+      "first_load_time": 1.9700033590197563e-05,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0013": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQueryDecompositionPrompt",
+        "model_name": "decomposition",
+        "config_name": "pt",
+        "params": {
+          "language": "pt",
+          "template": "Você é um assistente de decomposição de consultas. Divida a pergunta do usuário no conjunto mínimo de subconsultas simples e independentes, cada uma das quais possa ser usada por si só para recuperar documentos relevantes.\n\nHistórico da conversa (pode estar vazio):\n{history}\n\nMensagem atual do usuário:\n{input}\n\nDecida por conta própria quantas subconsultas são necessárias e use o mínimo possível.\nNão gere mais de {n_max} subconsultas.\nCada subconsulta deve ser simples, autocontida e independente. Escreva também uma mensagem breve para o usuário descrevendo o que você fez e uma justificativa breve de por quê. Não adicione nenhuma outra explicação.\n\nResponda APENAS com um objeto JSON neste formato exato de chamada de função, sem blocos de código e sem texto adicional:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<subconsulta 1>\", \"<subconsulta 2>\"], \"message\": \"<uma frase breve para o usuário descrevendo o que você fez>\", \"justification\": \"<uma frase breve explicando por quê>\"}}",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.3800024539232254e-05,
+      "first_load_time": 8.400005754083395e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0014": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultRAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "en",
+        "params": {
+          "language": "en",
+          "template": "You are a helpful AI assistant with access to a set of retrieved documents.\nUse the documents below to support your answer. Prioritize information from the documents over your own knowledge. If the documents do not contain relevant information, say so clearly rather than guessing.\n\nUser message:\n{input}\nSearch queries used for retrieval: {queries}\n\nRetrieved documents:\n{chunks}\n\nAnswer the user's message based on the documents above.",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 0.00012839998817071319,
+      "first_load_time": 6.799993570894003e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0015": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultRAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "en",
+        "params": {
+          "language": "en",
+          "template": "You are a helpful AI assistant with access to a set of retrieved documents.\nUse the documents below to support your answer. Prioritize information from the documents over your own knowledge. If the documents do not contain relevant information, say so clearly rather than guessing.\n\nUser message:\n{input}\nSearch queries used for retrieval: {queries}\n\nRetrieved documents:\n{chunks}\n\nAnswer the user's message based on the documents above.",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.909994848072529e-05,
+      "first_load_time": 5.800044164061546e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0016": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultRAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "es",
+        "params": {
+          "language": "es",
+          "template": "Eres un asistente de IA con acceso a un conjunto de documentos recuperados.\nUsa los documentos a continuación para fundamentar tu respuesta. Prioriza la información de los documentos sobre tu propio conocimiento. Si los documentos no contienen información relevante, indícalo claramente en lugar de adivinar.\n\nMensaje del usuario:\n{input}\nConsultas de búsqueda utilizadas para recuperar: {queries}\n\nDocumentos recuperados:\n{chunks}\n\nResponde al mensaje del usuario basándote en los documentos anteriores.",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.7200010158121586e-05,
+      "first_load_time": 3.1999661587178707e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0017": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultRAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "es",
+        "params": {
+          "language": "es",
+          "template": "Eres un asistente de IA con acceso a un conjunto de documentos recuperados.\nUsa los documentos a continuación para fundamentar tu respuesta. Prioriza la información de los documentos sobre tu propio conocimiento. Si los documentos no contienen información relevante, indícalo claramente en lugar de adivinar.\n\nMensaje del usuario:\n{input}\nConsultas de búsqueda utilizadas para recuperar: {queries}\n\nDocumentos recuperados:\n{chunks}\n\nResponde al mensaje del usuario basándote en los documentos anteriores.",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.559998003765941e-05,
+      "first_load_time": 3.5999692045152187e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0018": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultRAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "pt",
+        "params": {
+          "language": "pt",
+          "template": "Você é um assistente de IA com acesso a um conjunto de documentos recuperados.\nUse os documentos abaixo para fundamentar sua resposta. Priorize as informações dos documentos sobre seu próprio conhecimento. Se os documentos não contiverem informações relevantes, indique isso claramente em vez de adivinhar.\n\nMensagem do usuário:\n{input}\nConsultas de pesquisa utilizadas para recuperar: {queries}\n\nDocumentos recuperados:\n{chunks}\n\nResponda à mensagem do usuário com base nos documentos acima.",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.739999374374747e-05,
+      "first_load_time": 3.2999669201672077e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0019": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultRAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "pt",
+        "params": {
+          "language": "pt",
+          "template": "Você é um assistente de IA com acesso a um conjunto de documentos recuperados.\nUse os documentos abaixo para fundamentar sua resposta. Priorize as informações dos documentos sobre seu próprio conhecimento. Se os documentos não contiverem informações relevantes, indique isso claramente em vez de adivinhar.\n\nMensagem do usuário:\n{input}\nConsultas de pesquisa utilizadas para recuperar: {queries}\n\nDocumentos recuperados:\n{chunks}\n\nResponda à mensagem do usuário com base nos documentos acima.",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.9000005926936865e-05,
+      "first_load_time": 3.400025889277458e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0020": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQARAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "en",
+        "params": {
+          "language": "en",
+          "template": "You are a question-answering assistant with access to a set of retrieved documents.\nYour task is to answer the user's question using ONLY the information found in the documents below. If the documents do not contain enough information to answer the question, respond with \"I don't know\" and explain what information is missing.\nCite relevant passages from the documents to support your answer.\n\nUser question:\n{input}\nSearch queries used for retrieval: {queries}\n\nRetrieved documents:\n{chunks}\n\nAnswer:",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 5.5100012104958296e-05,
+      "first_load_time": 6.999995093792677e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0021": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQARAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "en",
+        "params": {
+          "language": "en",
+          "template": "You are a question-answering assistant with access to a set of retrieved documents.\nYour task is to answer the user's question using ONLY the information found in the documents below. If the documents do not contain enough information to answer the question, respond with \"I don't know\" and explain what information is missing.\nCite relevant passages from the documents to support your answer.\n\nUser question:\n{input}\nSearch queries used for retrieval: {queries}\n\nRetrieved documents:\n{chunks}\n\nAnswer:",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.130000550299883e-05,
+      "first_load_time": 3.999972250312567e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0022": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQARAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "es",
+        "params": {
+          "language": "es",
+          "template": "Eres un asistente de preguntas y respuestas con acceso a un conjunto de documentos recuperados.\nTu tarea es responder la pregunta del usuario usando SOLAMENTE la información encontrada en los documentos a continuación. Si los documentos no contienen suficiente información para responder la pregunta, responde con \"No lo sé\" y explica qué información falta.\nCita pasajes relevantes de los documentos para respaldar tu respuesta.\n\nPregunta del usuario:\n{input}\nConsultas de búsqueda utilizadas para recuperar: {queries}\n\nDocumentos recuperados:\n{chunks}\n\nRespuesta:",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.3599982745945454e-05,
+      "first_load_time": 2.8999638743698597e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0023": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQARAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "es",
+        "params": {
+          "language": "es",
+          "template": "Eres un asistente de preguntas y respuestas con acceso a un conjunto de documentos recuperados.\nTu tarea es responder la pregunta del usuario usando SOLAMENTE la información encontrada en los documentos a continuación. Si los documentos no contienen suficiente información para responder la pregunta, responde con \"No lo sé\" y explica qué información falta.\nCita pasajes relevantes de los documentos para respaldar tu respuesta.\n\nPregunta del usuario:\n{input}\nConsultas de búsqueda utilizadas para recuperar: {queries}\n\nDocumentos recuperados:\n{chunks}\n\nRespuesta:",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.950000973418355e-05,
+      "first_load_time": 3.1999661587178707e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0024": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQARAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "pt",
+        "params": {
+          "language": "pt",
+          "template": "Você é um assistente de perguntas e respostas com acesso a um conjunto de documentos recuperados.\nSua tarefa é responder à pergunta do usuário usando SOMENTE as informações encontradas nos documentos abaixo. Se os documentos não contiverem informações suficientes para responder à pergunta, responda com \"Não sei\" e explique quais informações estão faltando.\nCite passagens relevantes dos documentos para apoiar sua resposta.\n\nPergunta do usuário:\n{input}\nConsultas de pesquisa utilizadas para recuperar: {queries}\n\nDocumentos recuperados:\n{chunks}\n\nResposta:",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.9999995604157448e-05,
+      "first_load_time": 3.300025127828121e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0025": {
+    "inputs": {
+      "config": {
+        "component_class": "DefaultQARAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "pt",
+        "params": {
+          "language": "pt",
+          "template": "Você é um assistente de perguntas e respostas com acesso a um conjunto de documentos recuperados.\nSua tarefa é responder à pergunta do usuário usando SOMENTE as informações encontradas nos documentos abaixo. Se os documentos não contiverem informações suficientes para responder à pergunta, responda com \"Não sei\" e explique quais informações estão faltando.\nCite passagens relevantes dos documentos para apoiar sua resposta.\n\nPergunta do usuário:\n{input}\nConsultas de pesquisa utilizadas para recuperar: {queries}\n\nDocumentos recuperados:\n{chunks}\n\nResposta:",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.7699978090822697e-05,
+      "first_load_time": 3.00002284348011e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0026": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomQueryRewritingPrompt",
+        "model_name": "rewriting",
+        "config_name": "custom-1",
+        "params": {
+          "template": "Rewrite the current message as one self-contained search query for the document index. Fold in the conversation context only when the message depends on it.\n\nEarlier turns:\n{history}\n\nCurrent message:\n{input}\n\nReply with the query only.",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.5499961338937283e-05,
+      "first_load_time": 1.0100018698722124e-05,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0027": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomQueryRewritingPrompt",
+        "model_name": "rewriting",
+        "config_name": "custom-1",
+        "params": {
+          "template": "Rewrite the current message as one self-contained search query for the document index. Fold in the conversation context only when the message depends on it.\n\nEarlier turns:\n{history}\n\nCurrent message:\n{input}\n\nReply with the query only.",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.430002834647894e-05,
+      "first_load_time": 8.100003469735384e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0028": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomQueryRewritingPrompt",
+        "model_name": "rewriting",
+        "config_name": "custom-2",
+        "params": {
+          "template": "Condense the conversation into the single information need the user is pursuing, then phrase it as a keyword-rich query for the document index. Drop greetings, filler and anything already answered.\n\nConversation so far:\n{history}\n\nMessage to rewrite:\n{input}\n\nReturn one line: the query.",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.95999925583601e-05,
+      "first_load_time": 8.200004231184721e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0029": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomQueryRewritingPrompt",
+        "model_name": "rewriting",
+        "config_name": "custom-2",
+        "params": {
+          "template": "Condense the conversation into the single information need the user is pursuing, then phrase it as a keyword-rich query for the document index. Drop greetings, filler and anything already answered.\n\nConversation so far:\n{history}\n\nMessage to rewrite:\n{input}\n\nReturn one line: the query.",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.980001201853156e-05,
+      "first_load_time": 7.199996616691351e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0030": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomQueryExpansionPrompt",
+        "model_name": "expansion",
+        "config_name": "custom-1",
+        "params": {
+          "template": "Produce {n} search queries covering the current message from complementary angles so retrieval finds more relevant passages. Keep one query close to the original wording.\n\nEarlier turns:\n{history}\n\nCurrent message:\n{input}\n\nList the queries as plain text, one per line.",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.0099996365606785e-05,
+      "first_load_time": 1.109996810555458e-05,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0031": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomQueryExpansionPrompt",
+        "model_name": "expansion",
+        "config_name": "custom-1",
+        "params": {
+          "template": "Produce {n} search queries covering the current message from complementary angles so retrieval finds more relevant passages. Keep one query close to the original wording.\n\nEarlier turns:\n{history}\n\nCurrent message:\n{input}\n\nList the queries as plain text, one per line.",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.23000131174922e-05,
+      "first_load_time": 8.79995059221983e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0032": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomQueryExpansionPrompt",
+        "model_name": "expansion",
+        "config_name": "custom-2",
+        "params": {
+          "template": "The current message is ambiguous on its own. Write {n} alternative queries that each resolve it differently against the conversation below, ordering them from the most likely interpretation to the least.\n\nConversation so far:\n{history}\n\nCurrent message:\n{input}\n\nWrite one query per line, no numbering.",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.8999987989664078e-05,
+      "first_load_time": 2.0799983758479357e-05,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0033": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomQueryExpansionPrompt",
+        "model_name": "expansion",
+        "config_name": "custom-2",
+        "params": {
+          "template": "The current message is ambiguous on its own. Write {n} alternative queries that each resolve it differently against the conversation below, ordering them from the most likely interpretation to the least.\n\nConversation so far:\n{history}\n\nCurrent message:\n{input}\n\nWrite one query per line, no numbering.",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.980001201853156e-05,
+      "first_load_time": 1.0800024028867483e-05,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0034": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomQueryDecompositionPrompt",
+        "model_name": "decomposition",
+        "config_name": "custom-1",
+        "params": {
+          "template": "Split the current question into the smallest useful set of independent sub-questions, each answerable by a separate document search. Use at most {n_max} sub-questions.\n\nEarlier turns:\n{history}\n\nCurrent message:\n{input}\n\nList the sub-questions as plain text, one per line.",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.2600033339113e-05,
+      "first_load_time": 1.4200049918144941e-05,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0035": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomQueryDecompositionPrompt",
+        "model_name": "decomposition",
+        "config_name": "custom-1",
+        "params": {
+          "template": "Split the current question into the smallest useful set of independent sub-questions, each answerable by a separate document search. Use at most {n_max} sub-questions.\n\nEarlier turns:\n{history}\n\nCurrent message:\n{input}\n\nList the sub-questions as plain text, one per line.",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.700003096833825e-05,
+      "first_load_time": 7.00005330145359e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0036": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomQueryDecompositionPrompt",
+        "model_name": "decomposition",
+        "config_name": "custom-2",
+        "params": {
+          "template": "Break the current message into the atomic lookups a search engine must run to answer it, ordered from the most factual to the most interpretive. Emit no more than {n_max} sub-questions.\n\nConversation so far:\n{history}\n\nCurrent message:\n{input}\n\nWrite one sub-question per line, no numbering.",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.429998807609081e-05,
+      "first_load_time": 1.6300007700920105e-05,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0037": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomQueryDecompositionPrompt",
+        "model_name": "decomposition",
+        "config_name": "custom-2",
+        "params": {
+          "template": "Break the current message into the atomic lookups a search engine must run to answer it, ordered from the most factual to the most interpretive. Emit no more than {n_max} sub-questions.\n\nConversation so far:\n{history}\n\nCurrent message:\n{input}\n\nWrite one sub-question per line, no numbering.",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 3.200001083314419e-05,
+      "first_load_time": 7.099995855242014e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0038": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomRAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "custom-1",
+        "params": {
+          "template": "Answer the question using only the retrieved context below. If the context does not contain the answer, say so explicitly.\n\nRetrieved context:\n{chunks}\n\nQuestion: {input}\nSearch queries used: {queries}",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.810001701116562e-05,
+      "first_load_time": 6.999995093792677e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0039": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomRAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "custom-1",
+        "params": {
+          "template": "Answer the question using only the retrieved context below. If the context does not contain the answer, say so explicitly.\n\nRetrieved context:\n{chunks}\n\nQuestion: {input}\nSearch queries used: {queries}",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.830001853406429e-05,
+      "first_load_time": 3.200024366378784e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0040": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomRAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "custom-2",
+        "params": {
+          "template": "You are writing a short, verifiable answer for a technical audience. Use the passages below as the only source of truth and name the passage you relied on.\n\nPassages:\n{chunks}\n\nQuestion: {input}\nQueries that found these passages: {queries}\n\nAnswer in at most four sentences.",
+          "iteration": 9,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 4.140002420172095e-05,
+      "first_load_time": 2.700020559132099e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  },
+  "0041": {
+    "inputs": {
+      "config": {
+        "component_class": "CustomRAGGenerationPrompt",
+        "model_name": "generation",
+        "config_name": "custom-2",
+        "params": {
+          "template": "You are writing a short, verifiable answer for a technical audience. Use the passages below as the only source of truth and name the passage you relied on.\n\nPassages:\n{chunks}\n\nQuestion: {input}\nQueries that found these passages: {queries}\n\nAnswer in at most four sentences.",
+          "iteration": 10,
+          "total_iterations": 10
+        }
+      },
+      "component_type": "prompt"
+    },
+    "outputs": {
+      "status": "passed",
+      "time_seconds": 2.9799994081258774e-05,
+      "first_load_time": 2.6999623514711857e-06,
+      "error_message": "",
+      "output_size": null
+    }
+  }
+}

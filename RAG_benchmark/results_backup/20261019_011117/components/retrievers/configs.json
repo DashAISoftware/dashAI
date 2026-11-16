@@ -1,0 +1,4392 @@
+{
+  "0001": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "default",
+    "params": {
+      "k1": 1.5,
+      "b": 0.75,
+      "delta": 0.0,
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 1,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0002": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "custom",
+    "params": {
+      "k1": 2.0,
+      "b": 0.5,
+      "delta": 0.5,
+      "similarity_function": "euclidean",
+      "top_k": 10,
+      "iteration": 1,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0003": {
+    "component_class": "TFIDFRetriever",
+    "model_name": "TFIDF",
+    "config_name": "default",
+    "params": {
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 1,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "TFIDFVectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": "None",
+      "lowercase": true,
+      "analyzer": "word",
+      "stop_words": [],
+      "ngram_range": [
+        1,
+        1
+      ],
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": 1000,
+      "norm": "l2",
+      "use_idf": true,
+      "smooth_idf": true,
+      "sublinear_tf": false
+    }
+  },
+  "0004": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "cosine_k5",
+    "params": {
+      "similarity_metric": "cosine",
+      "top_k": 5,
+      "iteration": 1,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0005": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "euclidean_k10",
+    "params": {
+      "similarity_metric": "euclidean",
+      "top_k": 10,
+      "iteration": 1,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0006": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda05_factor3",
+    "params": {
+      "mmr_lambda": 0.5,
+      "top_k": 5,
+      "iteration": 1,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0007": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda07_factor2",
+    "params": {
+      "mmr_lambda": 0.7,
+      "top_k": 10,
+      "iteration": 1,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0008": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "config_name": "msmarco_minilm6_dense",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "top_k": 5,
+      "iteration": 1,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0009": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+    "config_name": "msmarco_minilm12_bm25",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+      "top_k": 5,
+      "iteration": 1,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "BM25Retriever",
+      "model_name": "BM25",
+      "params": {
+        "k1": 1.5,
+        "b": 0.75,
+        "delta": 0.0,
+        "similarity_function": "cosine",
+        "top_k": 15
+      },
+      "vectorizer_class": "BM25VectorizerModel",
+      "vectorizer_params": {
+        "strip_accents": null,
+        "lowercase": true,
+        "stop_words": null,
+        "max_df": 1.0,
+        "min_df": 0.0,
+        "max_features": null
+      }
+    }
+  },
+  "0010": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/stsb-distilroberta-base",
+    "config_name": "stsb_distilroberta_dense",
+    "params": {
+      "model_name": "cross-encoder/stsb-distilroberta-base",
+      "top_k": 10,
+      "iteration": 1,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0011": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+    "config_name": "mmarco_multilingual_dense",
+    "params": {
+      "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "top_k": 5,
+      "iteration": 1,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0012": {
+    "component_class": "SequentialRetriever",
+    "model_name": "BM25_x2",
+    "config_name": "cascade_top10_top5",
+    "params": {
+      "iteration": 1,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 10
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      }
+    ]
+  },
+  "0013": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "round_robin",
+    "params": {
+      "merge_strategy": "round_robin",
+      "iteration": 1,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0014": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "interleave",
+    "params": {
+      "merge_strategy": "interleave",
+      "iteration": 1,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0015": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "default",
+    "params": {
+      "k1": 1.5,
+      "b": 0.75,
+      "delta": 0.0,
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 2,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0016": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "custom",
+    "params": {
+      "k1": 2.0,
+      "b": 0.5,
+      "delta": 0.5,
+      "similarity_function": "euclidean",
+      "top_k": 10,
+      "iteration": 2,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0017": {
+    "component_class": "TFIDFRetriever",
+    "model_name": "TFIDF",
+    "config_name": "default",
+    "params": {
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 2,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "TFIDFVectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": "None",
+      "lowercase": true,
+      "analyzer": "word",
+      "stop_words": [],
+      "ngram_range": [
+        1,
+        1
+      ],
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": 1000,
+      "norm": "l2",
+      "use_idf": true,
+      "smooth_idf": true,
+      "sublinear_tf": false
+    }
+  },
+  "0018": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "cosine_k5",
+    "params": {
+      "similarity_metric": "cosine",
+      "top_k": 5,
+      "iteration": 2,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0019": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "euclidean_k10",
+    "params": {
+      "similarity_metric": "euclidean",
+      "top_k": 10,
+      "iteration": 2,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0020": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda05_factor3",
+    "params": {
+      "mmr_lambda": 0.5,
+      "top_k": 5,
+      "iteration": 2,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0021": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda07_factor2",
+    "params": {
+      "mmr_lambda": 0.7,
+      "top_k": 10,
+      "iteration": 2,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0022": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "config_name": "msmarco_minilm6_dense",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "top_k": 5,
+      "iteration": 2,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0023": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+    "config_name": "msmarco_minilm12_bm25",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+      "top_k": 5,
+      "iteration": 2,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "BM25Retriever",
+      "model_name": "BM25",
+      "params": {
+        "k1": 1.5,
+        "b": 0.75,
+        "delta": 0.0,
+        "similarity_function": "cosine",
+        "top_k": 15
+      },
+      "vectorizer_class": "BM25VectorizerModel",
+      "vectorizer_params": {
+        "strip_accents": null,
+        "lowercase": true,
+        "stop_words": null,
+        "max_df": 1.0,
+        "min_df": 0.0,
+        "max_features": null
+      }
+    }
+  },
+  "0024": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/stsb-distilroberta-base",
+    "config_name": "stsb_distilroberta_dense",
+    "params": {
+      "model_name": "cross-encoder/stsb-distilroberta-base",
+      "top_k": 10,
+      "iteration": 2,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0025": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+    "config_name": "mmarco_multilingual_dense",
+    "params": {
+      "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "top_k": 5,
+      "iteration": 2,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0026": {
+    "component_class": "SequentialRetriever",
+    "model_name": "BM25_x2",
+    "config_name": "cascade_top10_top5",
+    "params": {
+      "iteration": 2,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 10
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      }
+    ]
+  },
+  "0027": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "round_robin",
+    "params": {
+      "merge_strategy": "round_robin",
+      "iteration": 2,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0028": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "interleave",
+    "params": {
+      "merge_strategy": "interleave",
+      "iteration": 2,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0029": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "default",
+    "params": {
+      "k1": 1.5,
+      "b": 0.75,
+      "delta": 0.0,
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 3,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0030": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "custom",
+    "params": {
+      "k1": 2.0,
+      "b": 0.5,
+      "delta": 0.5,
+      "similarity_function": "euclidean",
+      "top_k": 10,
+      "iteration": 3,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0031": {
+    "component_class": "TFIDFRetriever",
+    "model_name": "TFIDF",
+    "config_name": "default",
+    "params": {
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 3,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "TFIDFVectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": "None",
+      "lowercase": true,
+      "analyzer": "word",
+      "stop_words": [],
+      "ngram_range": [
+        1,
+        1
+      ],
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": 1000,
+      "norm": "l2",
+      "use_idf": true,
+      "smooth_idf": true,
+      "sublinear_tf": false
+    }
+  },
+  "0032": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "cosine_k5",
+    "params": {
+      "similarity_metric": "cosine",
+      "top_k": 5,
+      "iteration": 3,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0033": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "euclidean_k10",
+    "params": {
+      "similarity_metric": "euclidean",
+      "top_k": 10,
+      "iteration": 3,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0034": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda05_factor3",
+    "params": {
+      "mmr_lambda": 0.5,
+      "top_k": 5,
+      "iteration": 3,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0035": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda07_factor2",
+    "params": {
+      "mmr_lambda": 0.7,
+      "top_k": 10,
+      "iteration": 3,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0036": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "config_name": "msmarco_minilm6_dense",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "top_k": 5,
+      "iteration": 3,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0037": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+    "config_name": "msmarco_minilm12_bm25",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+      "top_k": 5,
+      "iteration": 3,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "BM25Retriever",
+      "model_name": "BM25",
+      "params": {
+        "k1": 1.5,
+        "b": 0.75,
+        "delta": 0.0,
+        "similarity_function": "cosine",
+        "top_k": 15
+      },
+      "vectorizer_class": "BM25VectorizerModel",
+      "vectorizer_params": {
+        "strip_accents": null,
+        "lowercase": true,
+        "stop_words": null,
+        "max_df": 1.0,
+        "min_df": 0.0,
+        "max_features": null
+      }
+    }
+  },
+  "0038": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/stsb-distilroberta-base",
+    "config_name": "stsb_distilroberta_dense",
+    "params": {
+      "model_name": "cross-encoder/stsb-distilroberta-base",
+      "top_k": 10,
+      "iteration": 3,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0039": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+    "config_name": "mmarco_multilingual_dense",
+    "params": {
+      "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "top_k": 5,
+      "iteration": 3,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0040": {
+    "component_class": "SequentialRetriever",
+    "model_name": "BM25_x2",
+    "config_name": "cascade_top10_top5",
+    "params": {
+      "iteration": 3,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 10
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      }
+    ]
+  },
+  "0041": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "round_robin",
+    "params": {
+      "merge_strategy": "round_robin",
+      "iteration": 3,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0042": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "interleave",
+    "params": {
+      "merge_strategy": "interleave",
+      "iteration": 3,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0043": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "default",
+    "params": {
+      "k1": 1.5,
+      "b": 0.75,
+      "delta": 0.0,
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 4,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0044": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "custom",
+    "params": {
+      "k1": 2.0,
+      "b": 0.5,
+      "delta": 0.5,
+      "similarity_function": "euclidean",
+      "top_k": 10,
+      "iteration": 4,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0045": {
+    "component_class": "TFIDFRetriever",
+    "model_name": "TFIDF",
+    "config_name": "default",
+    "params": {
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 4,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "TFIDFVectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": "None",
+      "lowercase": true,
+      "analyzer": "word",
+      "stop_words": [],
+      "ngram_range": [
+        1,
+        1
+      ],
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": 1000,
+      "norm": "l2",
+      "use_idf": true,
+      "smooth_idf": true,
+      "sublinear_tf": false
+    }
+  },
+  "0046": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "cosine_k5",
+    "params": {
+      "similarity_metric": "cosine",
+      "top_k": 5,
+      "iteration": 4,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0047": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "euclidean_k10",
+    "params": {
+      "similarity_metric": "euclidean",
+      "top_k": 10,
+      "iteration": 4,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0048": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda05_factor3",
+    "params": {
+      "mmr_lambda": 0.5,
+      "top_k": 5,
+      "iteration": 4,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0049": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda07_factor2",
+    "params": {
+      "mmr_lambda": 0.7,
+      "top_k": 10,
+      "iteration": 4,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0050": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "config_name": "msmarco_minilm6_dense",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "top_k": 5,
+      "iteration": 4,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0051": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+    "config_name": "msmarco_minilm12_bm25",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+      "top_k": 5,
+      "iteration": 4,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "BM25Retriever",
+      "model_name": "BM25",
+      "params": {
+        "k1": 1.5,
+        "b": 0.75,
+        "delta": 0.0,
+        "similarity_function": "cosine",
+        "top_k": 15
+      },
+      "vectorizer_class": "BM25VectorizerModel",
+      "vectorizer_params": {
+        "strip_accents": null,
+        "lowercase": true,
+        "stop_words": null,
+        "max_df": 1.0,
+        "min_df": 0.0,
+        "max_features": null
+      }
+    }
+  },
+  "0052": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/stsb-distilroberta-base",
+    "config_name": "stsb_distilroberta_dense",
+    "params": {
+      "model_name": "cross-encoder/stsb-distilroberta-base",
+      "top_k": 10,
+      "iteration": 4,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0053": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+    "config_name": "mmarco_multilingual_dense",
+    "params": {
+      "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "top_k": 5,
+      "iteration": 4,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0054": {
+    "component_class": "SequentialRetriever",
+    "model_name": "BM25_x2",
+    "config_name": "cascade_top10_top5",
+    "params": {
+      "iteration": 4,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 10
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      }
+    ]
+  },
+  "0055": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "round_robin",
+    "params": {
+      "merge_strategy": "round_robin",
+      "iteration": 4,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0056": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "interleave",
+    "params": {
+      "merge_strategy": "interleave",
+      "iteration": 4,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0057": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "default",
+    "params": {
+      "k1": 1.5,
+      "b": 0.75,
+      "delta": 0.0,
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 5,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0058": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "custom",
+    "params": {
+      "k1": 2.0,
+      "b": 0.5,
+      "delta": 0.5,
+      "similarity_function": "euclidean",
+      "top_k": 10,
+      "iteration": 5,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0059": {
+    "component_class": "TFIDFRetriever",
+    "model_name": "TFIDF",
+    "config_name": "default",
+    "params": {
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 5,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "TFIDFVectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": "None",
+      "lowercase": true,
+      "analyzer": "word",
+      "stop_words": [],
+      "ngram_range": [
+        1,
+        1
+      ],
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": 1000,
+      "norm": "l2",
+      "use_idf": true,
+      "smooth_idf": true,
+      "sublinear_tf": false
+    }
+  },
+  "0060": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "cosine_k5",
+    "params": {
+      "similarity_metric": "cosine",
+      "top_k": 5,
+      "iteration": 5,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0061": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "euclidean_k10",
+    "params": {
+      "similarity_metric": "euclidean",
+      "top_k": 10,
+      "iteration": 5,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0062": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda05_factor3",
+    "params": {
+      "mmr_lambda": 0.5,
+      "top_k": 5,
+      "iteration": 5,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0063": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda07_factor2",
+    "params": {
+      "mmr_lambda": 0.7,
+      "top_k": 10,
+      "iteration": 5,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0064": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "config_name": "msmarco_minilm6_dense",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "top_k": 5,
+      "iteration": 5,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0065": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+    "config_name": "msmarco_minilm12_bm25",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+      "top_k": 5,
+      "iteration": 5,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "BM25Retriever",
+      "model_name": "BM25",
+      "params": {
+        "k1": 1.5,
+        "b": 0.75,
+        "delta": 0.0,
+        "similarity_function": "cosine",
+        "top_k": 15
+      },
+      "vectorizer_class": "BM25VectorizerModel",
+      "vectorizer_params": {
+        "strip_accents": null,
+        "lowercase": true,
+        "stop_words": null,
+        "max_df": 1.0,
+        "min_df": 0.0,
+        "max_features": null
+      }
+    }
+  },
+  "0066": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/stsb-distilroberta-base",
+    "config_name": "stsb_distilroberta_dense",
+    "params": {
+      "model_name": "cross-encoder/stsb-distilroberta-base",
+      "top_k": 10,
+      "iteration": 5,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0067": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+    "config_name": "mmarco_multilingual_dense",
+    "params": {
+      "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "top_k": 5,
+      "iteration": 5,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0068": {
+    "component_class": "SequentialRetriever",
+    "model_name": "BM25_x2",
+    "config_name": "cascade_top10_top5",
+    "params": {
+      "iteration": 5,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 10
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      }
+    ]
+  },
+  "0069": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "round_robin",
+    "params": {
+      "merge_strategy": "round_robin",
+      "iteration": 5,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0070": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "interleave",
+    "params": {
+      "merge_strategy": "interleave",
+      "iteration": 5,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0071": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "default",
+    "params": {
+      "k1": 1.5,
+      "b": 0.75,
+      "delta": 0.0,
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 6,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0072": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "custom",
+    "params": {
+      "k1": 2.0,
+      "b": 0.5,
+      "delta": 0.5,
+      "similarity_function": "euclidean",
+      "top_k": 10,
+      "iteration": 6,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0073": {
+    "component_class": "TFIDFRetriever",
+    "model_name": "TFIDF",
+    "config_name": "default",
+    "params": {
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 6,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "TFIDFVectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": "None",
+      "lowercase": true,
+      "analyzer": "word",
+      "stop_words": [],
+      "ngram_range": [
+        1,
+        1
+      ],
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": 1000,
+      "norm": "l2",
+      "use_idf": true,
+      "smooth_idf": true,
+      "sublinear_tf": false
+    }
+  },
+  "0074": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "cosine_k5",
+    "params": {
+      "similarity_metric": "cosine",
+      "top_k": 5,
+      "iteration": 6,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0075": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "euclidean_k10",
+    "params": {
+      "similarity_metric": "euclidean",
+      "top_k": 10,
+      "iteration": 6,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0076": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda05_factor3",
+    "params": {
+      "mmr_lambda": 0.5,
+      "top_k": 5,
+      "iteration": 6,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0077": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda07_factor2",
+    "params": {
+      "mmr_lambda": 0.7,
+      "top_k": 10,
+      "iteration": 6,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0078": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "config_name": "msmarco_minilm6_dense",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "top_k": 5,
+      "iteration": 6,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0079": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+    "config_name": "msmarco_minilm12_bm25",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+      "top_k": 5,
+      "iteration": 6,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "BM25Retriever",
+      "model_name": "BM25",
+      "params": {
+        "k1": 1.5,
+        "b": 0.75,
+        "delta": 0.0,
+        "similarity_function": "cosine",
+        "top_k": 15
+      },
+      "vectorizer_class": "BM25VectorizerModel",
+      "vectorizer_params": {
+        "strip_accents": null,
+        "lowercase": true,
+        "stop_words": null,
+        "max_df": 1.0,
+        "min_df": 0.0,
+        "max_features": null
+      }
+    }
+  },
+  "0080": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/stsb-distilroberta-base",
+    "config_name": "stsb_distilroberta_dense",
+    "params": {
+      "model_name": "cross-encoder/stsb-distilroberta-base",
+      "top_k": 10,
+      "iteration": 6,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0081": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+    "config_name": "mmarco_multilingual_dense",
+    "params": {
+      "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "top_k": 5,
+      "iteration": 6,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0082": {
+    "component_class": "SequentialRetriever",
+    "model_name": "BM25_x2",
+    "config_name": "cascade_top10_top5",
+    "params": {
+      "iteration": 6,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 10
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      }
+    ]
+  },
+  "0083": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "round_robin",
+    "params": {
+      "merge_strategy": "round_robin",
+      "iteration": 6,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0084": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "interleave",
+    "params": {
+      "merge_strategy": "interleave",
+      "iteration": 6,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0085": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "default",
+    "params": {
+      "k1": 1.5,
+      "b": 0.75,
+      "delta": 0.0,
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 7,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0086": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "custom",
+    "params": {
+      "k1": 2.0,
+      "b": 0.5,
+      "delta": 0.5,
+      "similarity_function": "euclidean",
+      "top_k": 10,
+      "iteration": 7,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0087": {
+    "component_class": "TFIDFRetriever",
+    "model_name": "TFIDF",
+    "config_name": "default",
+    "params": {
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 7,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "TFIDFVectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": "None",
+      "lowercase": true,
+      "analyzer": "word",
+      "stop_words": [],
+      "ngram_range": [
+        1,
+        1
+      ],
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": 1000,
+      "norm": "l2",
+      "use_idf": true,
+      "smooth_idf": true,
+      "sublinear_tf": false
+    }
+  },
+  "0088": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "cosine_k5",
+    "params": {
+      "similarity_metric": "cosine",
+      "top_k": 5,
+      "iteration": 7,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0089": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "euclidean_k10",
+    "params": {
+      "similarity_metric": "euclidean",
+      "top_k": 10,
+      "iteration": 7,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0090": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda05_factor3",
+    "params": {
+      "mmr_lambda": 0.5,
+      "top_k": 5,
+      "iteration": 7,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0091": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda07_factor2",
+    "params": {
+      "mmr_lambda": 0.7,
+      "top_k": 10,
+      "iteration": 7,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0092": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "config_name": "msmarco_minilm6_dense",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "top_k": 5,
+      "iteration": 7,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0093": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+    "config_name": "msmarco_minilm12_bm25",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+      "top_k": 5,
+      "iteration": 7,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "BM25Retriever",
+      "model_name": "BM25",
+      "params": {
+        "k1": 1.5,
+        "b": 0.75,
+        "delta": 0.0,
+        "similarity_function": "cosine",
+        "top_k": 15
+      },
+      "vectorizer_class": "BM25VectorizerModel",
+      "vectorizer_params": {
+        "strip_accents": null,
+        "lowercase": true,
+        "stop_words": null,
+        "max_df": 1.0,
+        "min_df": 0.0,
+        "max_features": null
+      }
+    }
+  },
+  "0094": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/stsb-distilroberta-base",
+    "config_name": "stsb_distilroberta_dense",
+    "params": {
+      "model_name": "cross-encoder/stsb-distilroberta-base",
+      "top_k": 10,
+      "iteration": 7,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0095": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+    "config_name": "mmarco_multilingual_dense",
+    "params": {
+      "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "top_k": 5,
+      "iteration": 7,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0096": {
+    "component_class": "SequentialRetriever",
+    "model_name": "BM25_x2",
+    "config_name": "cascade_top10_top5",
+    "params": {
+      "iteration": 7,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 10
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      }
+    ]
+  },
+  "0097": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "round_robin",
+    "params": {
+      "merge_strategy": "round_robin",
+      "iteration": 7,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0098": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "interleave",
+    "params": {
+      "merge_strategy": "interleave",
+      "iteration": 7,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0099": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "default",
+    "params": {
+      "k1": 1.5,
+      "b": 0.75,
+      "delta": 0.0,
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 8,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0100": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "custom",
+    "params": {
+      "k1": 2.0,
+      "b": 0.5,
+      "delta": 0.5,
+      "similarity_function": "euclidean",
+      "top_k": 10,
+      "iteration": 8,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0101": {
+    "component_class": "TFIDFRetriever",
+    "model_name": "TFIDF",
+    "config_name": "default",
+    "params": {
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 8,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "TFIDFVectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": "None",
+      "lowercase": true,
+      "analyzer": "word",
+      "stop_words": [],
+      "ngram_range": [
+        1,
+        1
+      ],
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": 1000,
+      "norm": "l2",
+      "use_idf": true,
+      "smooth_idf": true,
+      "sublinear_tf": false
+    }
+  },
+  "0102": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "cosine_k5",
+    "params": {
+      "similarity_metric": "cosine",
+      "top_k": 5,
+      "iteration": 8,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0103": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "euclidean_k10",
+    "params": {
+      "similarity_metric": "euclidean",
+      "top_k": 10,
+      "iteration": 8,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0104": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda05_factor3",
+    "params": {
+      "mmr_lambda": 0.5,
+      "top_k": 5,
+      "iteration": 8,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0105": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda07_factor2",
+    "params": {
+      "mmr_lambda": 0.7,
+      "top_k": 10,
+      "iteration": 8,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0106": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "config_name": "msmarco_minilm6_dense",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "top_k": 5,
+      "iteration": 8,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0107": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+    "config_name": "msmarco_minilm12_bm25",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+      "top_k": 5,
+      "iteration": 8,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "BM25Retriever",
+      "model_name": "BM25",
+      "params": {
+        "k1": 1.5,
+        "b": 0.75,
+        "delta": 0.0,
+        "similarity_function": "cosine",
+        "top_k": 15
+      },
+      "vectorizer_class": "BM25VectorizerModel",
+      "vectorizer_params": {
+        "strip_accents": null,
+        "lowercase": true,
+        "stop_words": null,
+        "max_df": 1.0,
+        "min_df": 0.0,
+        "max_features": null
+      }
+    }
+  },
+  "0108": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/stsb-distilroberta-base",
+    "config_name": "stsb_distilroberta_dense",
+    "params": {
+      "model_name": "cross-encoder/stsb-distilroberta-base",
+      "top_k": 10,
+      "iteration": 8,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0109": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+    "config_name": "mmarco_multilingual_dense",
+    "params": {
+      "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "top_k": 5,
+      "iteration": 8,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0110": {
+    "component_class": "SequentialRetriever",
+    "model_name": "BM25_x2",
+    "config_name": "cascade_top10_top5",
+    "params": {
+      "iteration": 8,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 10
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      }
+    ]
+  },
+  "0111": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "round_robin",
+    "params": {
+      "merge_strategy": "round_robin",
+      "iteration": 8,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0112": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "interleave",
+    "params": {
+      "merge_strategy": "interleave",
+      "iteration": 8,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0113": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "default",
+    "params": {
+      "k1": 1.5,
+      "b": 0.75,
+      "delta": 0.0,
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 9,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0114": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "custom",
+    "params": {
+      "k1": 2.0,
+      "b": 0.5,
+      "delta": 0.5,
+      "similarity_function": "euclidean",
+      "top_k": 10,
+      "iteration": 9,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0115": {
+    "component_class": "TFIDFRetriever",
+    "model_name": "TFIDF",
+    "config_name": "default",
+    "params": {
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 9,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "TFIDFVectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": "None",
+      "lowercase": true,
+      "analyzer": "word",
+      "stop_words": [],
+      "ngram_range": [
+        1,
+        1
+      ],
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": 1000,
+      "norm": "l2",
+      "use_idf": true,
+      "smooth_idf": true,
+      "sublinear_tf": false
+    }
+  },
+  "0116": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "cosine_k5",
+    "params": {
+      "similarity_metric": "cosine",
+      "top_k": 5,
+      "iteration": 9,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0117": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "euclidean_k10",
+    "params": {
+      "similarity_metric": "euclidean",
+      "top_k": 10,
+      "iteration": 9,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0118": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda05_factor3",
+    "params": {
+      "mmr_lambda": 0.5,
+      "top_k": 5,
+      "iteration": 9,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0119": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda07_factor2",
+    "params": {
+      "mmr_lambda": 0.7,
+      "top_k": 10,
+      "iteration": 9,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0120": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "config_name": "msmarco_minilm6_dense",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "top_k": 5,
+      "iteration": 9,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0121": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+    "config_name": "msmarco_minilm12_bm25",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+      "top_k": 5,
+      "iteration": 9,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "BM25Retriever",
+      "model_name": "BM25",
+      "params": {
+        "k1": 1.5,
+        "b": 0.75,
+        "delta": 0.0,
+        "similarity_function": "cosine",
+        "top_k": 15
+      },
+      "vectorizer_class": "BM25VectorizerModel",
+      "vectorizer_params": {
+        "strip_accents": null,
+        "lowercase": true,
+        "stop_words": null,
+        "max_df": 1.0,
+        "min_df": 0.0,
+        "max_features": null
+      }
+    }
+  },
+  "0122": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/stsb-distilroberta-base",
+    "config_name": "stsb_distilroberta_dense",
+    "params": {
+      "model_name": "cross-encoder/stsb-distilroberta-base",
+      "top_k": 10,
+      "iteration": 9,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0123": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+    "config_name": "mmarco_multilingual_dense",
+    "params": {
+      "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "top_k": 5,
+      "iteration": 9,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0124": {
+    "component_class": "SequentialRetriever",
+    "model_name": "BM25_x2",
+    "config_name": "cascade_top10_top5",
+    "params": {
+      "iteration": 9,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 10
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      }
+    ]
+  },
+  "0125": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "round_robin",
+    "params": {
+      "merge_strategy": "round_robin",
+      "iteration": 9,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0126": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "interleave",
+    "params": {
+      "merge_strategy": "interleave",
+      "iteration": 9,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0127": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "default",
+    "params": {
+      "k1": 1.5,
+      "b": 0.75,
+      "delta": 0.0,
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 10,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0128": {
+    "component_class": "BM25Retriever",
+    "model_name": "BM25",
+    "config_name": "custom",
+    "params": {
+      "k1": 2.0,
+      "b": 0.5,
+      "delta": 0.5,
+      "similarity_function": "euclidean",
+      "top_k": 10,
+      "iteration": 10,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "BM25VectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": null,
+      "lowercase": true,
+      "stop_words": null,
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": null
+    }
+  },
+  "0129": {
+    "component_class": "TFIDFRetriever",
+    "model_name": "TFIDF",
+    "config_name": "default",
+    "params": {
+      "similarity_function": "cosine",
+      "top_k": 5,
+      "iteration": 10,
+      "total_iterations": 10
+    },
+    "vectorizer_class": "TFIDFVectorizerModel",
+    "vectorizer_params": {
+      "strip_accents": "None",
+      "lowercase": true,
+      "analyzer": "word",
+      "stop_words": [],
+      "ngram_range": [
+        1,
+        1
+      ],
+      "max_df": 1.0,
+      "min_df": 0.0,
+      "max_features": 1000,
+      "norm": "l2",
+      "use_idf": true,
+      "smooth_idf": true,
+      "sublinear_tf": false
+    }
+  },
+  "0130": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "cosine_k5",
+    "params": {
+      "similarity_metric": "cosine",
+      "top_k": 5,
+      "iteration": 10,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0131": {
+    "component_class": "DenseEmbeddingRetriever",
+    "model_name": "all-MiniLM-L6-v2",
+    "config_name": "euclidean_k10",
+    "params": {
+      "similarity_metric": "euclidean",
+      "top_k": 10,
+      "iteration": 10,
+      "total_iterations": 10
+    },
+    "embedding_class": "SentenceTransformerEmbedding",
+    "embedding_params": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "normalize": true,
+      "overflow_strategy": "truncate"
+    }
+  },
+  "0132": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda05_factor3",
+    "params": {
+      "mmr_lambda": 0.5,
+      "top_k": 5,
+      "iteration": 10,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0133": {
+    "component_class": "MMRRerankerRetriever",
+    "model_name": "MMR",
+    "config_name": "lambda07_factor2",
+    "params": {
+      "mmr_lambda": 0.7,
+      "top_k": 10,
+      "iteration": 10,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0134": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "config_name": "msmarco_minilm6_dense",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "top_k": 5,
+      "iteration": 10,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0135": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+    "config_name": "msmarco_minilm12_bm25",
+    "params": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+      "top_k": 5,
+      "iteration": 10,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "BM25Retriever",
+      "model_name": "BM25",
+      "params": {
+        "k1": 1.5,
+        "b": 0.75,
+        "delta": 0.0,
+        "similarity_function": "cosine",
+        "top_k": 15
+      },
+      "vectorizer_class": "BM25VectorizerModel",
+      "vectorizer_params": {
+        "strip_accents": null,
+        "lowercase": true,
+        "stop_words": null,
+        "max_df": 1.0,
+        "min_df": 0.0,
+        "max_features": null
+      }
+    }
+  },
+  "0136": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/stsb-distilroberta-base",
+    "config_name": "stsb_distilroberta_dense",
+    "params": {
+      "model_name": "cross-encoder/stsb-distilroberta-base",
+      "top_k": 10,
+      "iteration": 10,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 20
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0137": {
+    "component_class": "SentenceTransformerCrossEncoderRetriever",
+    "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+    "config_name": "mmarco_multilingual_dense",
+    "params": {
+      "model_name": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "top_k": 5,
+      "iteration": 10,
+      "total_iterations": 10
+    },
+    "child_config": {
+      "component_class": "DenseEmbeddingRetriever",
+      "model_name": "all-MiniLM-L6-v2",
+      "params": {
+        "similarity_metric": "cosine",
+        "top_k": 15
+      },
+      "embedding_class": "SentenceTransformerEmbedding",
+      "embedding_params": {
+        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "normalize": true,
+        "overflow_strategy": "truncate"
+      }
+    }
+  },
+  "0138": {
+    "component_class": "SequentialRetriever",
+    "model_name": "BM25_x2",
+    "config_name": "cascade_top10_top5",
+    "params": {
+      "iteration": 10,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 10
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      }
+    ]
+  },
+  "0139": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "round_robin",
+    "params": {
+      "merge_strategy": "round_robin",
+      "iteration": 10,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  },
+  "0140": {
+    "component_class": "ParallelRetriever",
+    "model_name": "BM25_TFIDF",
+    "config_name": "interleave",
+    "params": {
+      "merge_strategy": "interleave",
+      "iteration": 10,
+      "total_iterations": 10
+    },
+    "children_configs": [
+      {
+        "component_class": "BM25Retriever",
+        "model_name": "BM25",
+        "params": {
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0,
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "BM25VectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": null,
+          "lowercase": true,
+          "stop_words": null,
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": null
+        }
+      },
+      {
+        "component_class": "TFIDFRetriever",
+        "model_name": "TFIDF",
+        "params": {
+          "similarity_function": "cosine",
+          "top_k": 5
+        },
+        "vectorizer_class": "TFIDFVectorizerModel",
+        "vectorizer_params": {
+          "strip_accents": "None",
+          "lowercase": true,
+          "analyzer": "word",
+          "stop_words": [],
+          "ngram_range": [
+            1,
+            1
+          ],
+          "max_df": 1.0,
+          "min_df": 0.0,
+          "max_features": 1000,
+          "norm": "l2",
+          "use_idf": true,
+          "smooth_idf": true,
+          "sublinear_tf": false
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "run_id": "20261019_011117",
+  "command": "components",
+  "start_time": "2026-10-19T01:11:17.840439",
+  "end_time": "2026-10-19T01:30:59.098564",
+  "completed": true,
+  "config": {
+    "iterations": 10,
+    "messages_per_conversation": 0,
+    "llm_device": "CPU",
+    "skip_passes": true,
+    "results_dir": "RAG_benchmark\\results",
+    "data_dir": "RAG_benchmark\\data",
+    "papers_dir": "RAG_benchmark\\papers",
+    "deepseek_model": "deepseek-chat",
+    "deepseek_base_url": "https://api.deepseek.com",
+    "has_openai": true,
+    "has_deepseek": true
+  },
+  "environment": {
+    "python_version": "3.12.4",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "extra": {
+    "categories": [
+      "chunking",
+      "retrieval",
+      "embedding",
+      "llm",
+      "transformation",
+      "prompt"
+    ]
+  },
+  "summary": {
+    "total_executions": 620,
+    "successful": 330,
+    "skipped": 290,
+    "failed": 0,
+    "total_duration_seconds": 1181.180054,
+    "categories_run": [
+      "chunking",
+      "retrieval",
+      "embedding",
+      "llm",
+      "transformation",
+      "prompt"
+    ]
+  }
+}

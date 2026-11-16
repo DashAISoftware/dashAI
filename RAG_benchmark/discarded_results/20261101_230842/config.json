@@ -1,0 +1,44 @@
+{
+  "run_id": "20261101_230842",
+  "command": "pipelines",
+  "start_time": "2026-11-01T23:08:42.668402",
+  "end_time": "2026-11-01T23:13:55.359765",
+  "completed": true,
+  "config": {
+    "iterations": 1,
+    "messages_per_conversation": 1,
+    "llm_device": "auto",
+    "skip_passes": false,
+    "results_dir": "RAG_benchmark\\results",
+    "data_dir": "RAG_benchmark\\data",
+    "papers_dir": "RAG_benchmark\\papers",
+    "deepseek_model": "deepseek-chat",
+    "deepseek_base_url": "https://api.deepseek.com",
+    "has_openai": true,
+    "has_deepseek": true
+  },
+  "environment": {
+    "python_version": "3.12.4",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "extra": {
+    "pipelines": [
+      "pub5a",
+      "pub5b",
+      "pub5c"
+    ],
+    "llm_device_resolved": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9"
+  },
+  "summary": {
+    "total_pipelines_run": 3,
+    "successful": 3,
+    "skipped": 0,
+    "failed": 0,
+    "total_duration_seconds": 312.524785,
+    "pipelines": [
+      "pub5a",
+      "pub5b",
+      "pub5c"
+    ]
+  }
+}

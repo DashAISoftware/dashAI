@@ -1,0 +1,64 @@
+{
+  "iter0": {
+    "model_name": "RAGPipeline",
+    "task_name": "RAGTask",
+    "name": "Pub 4a - RAGChecker Dense (run 261101222838, iter 0)",
+    "description": null,
+    "parameters": {
+      "chunking_model": {
+        "component": "TokenChunkModel",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60
+        }
+      },
+      "retriever_model": {
+        "component": "DenseEmbeddingRetriever",
+        "params": {
+          "embedding_model": {
+            "component": "E5MistralGGUFEmbedding",
+            "params": {
+              "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+              "batch_size": 32,
+              "normalize": true,
+              "overflow_strategy": "truncate"
+            }
+          },
+          "similarity_metric": "cosine",
+          "top_k": 20
+        }
+      },
+      "generation_model": {
+        "component": "Llama32_3BInstruct",
+        "params": {
+          "max_tokens": 1024,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 8192,
+          "device": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9"
+        }
+      },
+      "prompt": {
+        "component": "DefaultRAGGenerationPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a helpful AI assistant with access to a set of retrieved documents.\nUse the documents below to support your answer. Prioritize information from the documents over your own knowledge. If the documents do not contain relevant information, say so clearly rather than guessing.\n\nUser message:\n{input}\nSearch queries used for retrieval: {queries}\n\nRetrieved documents:\n{chunks}\n\nAnswer the user's message based on the documents above."
+        }
+      }
+    },
+    "device_plan": {
+      "gpu_label": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+      "budget_bytes": 8074035200,
+      "assignments": {
+        "retriever_model.embedding_model": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9",
+        "generation_model": "GPU 0: NVIDIA GeForce RTX 4060 Laptop GPU - Compute Capability 8.9"
+      },
+      "notes": [
+        "retriever_model.embedding_model: GPU (4.8 GiB weights fit the 7.5 GiB budget)",
+        "generation_model: GPU (1.9 GiB weights fit the 7.5 GiB budget)"
+      ],
+      "demoted": []
+    }
+  }
+}

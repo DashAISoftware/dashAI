@@ -1,0 +1,1802 @@
+{
+  "0001": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+    "config_name": "llama3.2-1b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 1,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0002": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+    "config_name": "llama3.2-3b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 1,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0003": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-0.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 1,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0004": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-1.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 1,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0005": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+    "config_name": "qwen2.5-3b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 1,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0006": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+    "config_name": "qwen2.5-7b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 1,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0007": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+    "config_name": "smollm2-360m",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 1,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0008": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+    "config_name": "smollm2-1.7b",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 1,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0009": {
+    "component_class": "Phi4MiniInstructModel",
+    "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+    "config_name": "phi4-mini",
+    "params": {
+      "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+      "iteration": 1,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0010": {
+    "component_class": "MistralModel",
+    "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+    "config_name": "mistral-7b",
+    "params": {
+      "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 1,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0011": {
+    "component_class": "OpenAITextToTextGenerationModel",
+    "model_name": "gpt-5-nano",
+    "config_name": "gpt-5-nano",
+    "params": {
+      "model_name": "gpt-5-nano",
+      "max_completion_tokens": 1000,
+      "reasoning_effort": "minimal",
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0012": {
+    "component_class": "DeepSeekTextToTextGenerationModel",
+    "model_name": "deepseek-v4-flash",
+    "config_name": "deepseek-v4-flash",
+    "params": {
+      "model_name": "deepseek-v4-flash",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "thinking": {
+        "type": "disabled"
+      },
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0013": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+    "config_name": "llama3.2-1b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 2,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0014": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+    "config_name": "llama3.2-3b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 2,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0015": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-0.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 2,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0016": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-1.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 2,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0017": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+    "config_name": "qwen2.5-3b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 2,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0018": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+    "config_name": "qwen2.5-7b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 2,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0019": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+    "config_name": "smollm2-360m",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 2,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0020": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+    "config_name": "smollm2-1.7b",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 2,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0021": {
+    "component_class": "Phi4MiniInstructModel",
+    "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+    "config_name": "phi4-mini",
+    "params": {
+      "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+      "iteration": 2,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0022": {
+    "component_class": "MistralModel",
+    "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+    "config_name": "mistral-7b",
+    "params": {
+      "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 2,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0023": {
+    "component_class": "OpenAITextToTextGenerationModel",
+    "model_name": "gpt-5-nano",
+    "config_name": "gpt-5-nano",
+    "params": {
+      "model_name": "gpt-5-nano",
+      "max_completion_tokens": 1000,
+      "reasoning_effort": "minimal",
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0024": {
+    "component_class": "DeepSeekTextToTextGenerationModel",
+    "model_name": "deepseek-v4-flash",
+    "config_name": "deepseek-v4-flash",
+    "params": {
+      "model_name": "deepseek-v4-flash",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "thinking": {
+        "type": "disabled"
+      },
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0025": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+    "config_name": "llama3.2-1b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 3,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0026": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+    "config_name": "llama3.2-3b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 3,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0027": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-0.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 3,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0028": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-1.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 3,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0029": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+    "config_name": "qwen2.5-3b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 3,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0030": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+    "config_name": "qwen2.5-7b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 3,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0031": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+    "config_name": "smollm2-360m",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 3,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0032": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+    "config_name": "smollm2-1.7b",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 3,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0033": {
+    "component_class": "Phi4MiniInstructModel",
+    "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+    "config_name": "phi4-mini",
+    "params": {
+      "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+      "iteration": 3,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0034": {
+    "component_class": "MistralModel",
+    "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+    "config_name": "mistral-7b",
+    "params": {
+      "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 3,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0035": {
+    "component_class": "OpenAITextToTextGenerationModel",
+    "model_name": "gpt-5-nano",
+    "config_name": "gpt-5-nano",
+    "params": {
+      "model_name": "gpt-5-nano",
+      "max_completion_tokens": 1000,
+      "reasoning_effort": "minimal",
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0036": {
+    "component_class": "DeepSeekTextToTextGenerationModel",
+    "model_name": "deepseek-v4-flash",
+    "config_name": "deepseek-v4-flash",
+    "params": {
+      "model_name": "deepseek-v4-flash",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "thinking": {
+        "type": "disabled"
+      },
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0037": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+    "config_name": "llama3.2-1b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 4,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0038": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+    "config_name": "llama3.2-3b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 4,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0039": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-0.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 4,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0040": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-1.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 4,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0041": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+    "config_name": "qwen2.5-3b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 4,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0042": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+    "config_name": "qwen2.5-7b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 4,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0043": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+    "config_name": "smollm2-360m",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 4,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0044": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+    "config_name": "smollm2-1.7b",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 4,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0045": {
+    "component_class": "Phi4MiniInstructModel",
+    "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+    "config_name": "phi4-mini",
+    "params": {
+      "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+      "iteration": 4,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0046": {
+    "component_class": "MistralModel",
+    "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+    "config_name": "mistral-7b",
+    "params": {
+      "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 4,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0047": {
+    "component_class": "OpenAITextToTextGenerationModel",
+    "model_name": "gpt-5-nano",
+    "config_name": "gpt-5-nano",
+    "params": {
+      "model_name": "gpt-5-nano",
+      "max_completion_tokens": 1000,
+      "reasoning_effort": "minimal",
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0048": {
+    "component_class": "DeepSeekTextToTextGenerationModel",
+    "model_name": "deepseek-v4-flash",
+    "config_name": "deepseek-v4-flash",
+    "params": {
+      "model_name": "deepseek-v4-flash",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "thinking": {
+        "type": "disabled"
+      },
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0049": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+    "config_name": "llama3.2-1b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 5,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0050": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+    "config_name": "llama3.2-3b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 5,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0051": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-0.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 5,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0052": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-1.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 5,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0053": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+    "config_name": "qwen2.5-3b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 5,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0054": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+    "config_name": "qwen2.5-7b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 5,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0055": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+    "config_name": "smollm2-360m",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 5,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0056": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+    "config_name": "smollm2-1.7b",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 5,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0057": {
+    "component_class": "Phi4MiniInstructModel",
+    "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+    "config_name": "phi4-mini",
+    "params": {
+      "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+      "iteration": 5,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0058": {
+    "component_class": "MistralModel",
+    "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+    "config_name": "mistral-7b",
+    "params": {
+      "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 5,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0059": {
+    "component_class": "OpenAITextToTextGenerationModel",
+    "model_name": "gpt-5-nano",
+    "config_name": "gpt-5-nano",
+    "params": {
+      "model_name": "gpt-5-nano",
+      "max_completion_tokens": 1000,
+      "reasoning_effort": "minimal",
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0060": {
+    "component_class": "DeepSeekTextToTextGenerationModel",
+    "model_name": "deepseek-v4-flash",
+    "config_name": "deepseek-v4-flash",
+    "params": {
+      "model_name": "deepseek-v4-flash",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "thinking": {
+        "type": "disabled"
+      },
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0061": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+    "config_name": "llama3.2-1b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 6,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0062": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+    "config_name": "llama3.2-3b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 6,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0063": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-0.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 6,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0064": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-1.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 6,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0065": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+    "config_name": "qwen2.5-3b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 6,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0066": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+    "config_name": "qwen2.5-7b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 6,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0067": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+    "config_name": "smollm2-360m",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 6,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0068": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+    "config_name": "smollm2-1.7b",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 6,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0069": {
+    "component_class": "Phi4MiniInstructModel",
+    "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+    "config_name": "phi4-mini",
+    "params": {
+      "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+      "iteration": 6,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0070": {
+    "component_class": "MistralModel",
+    "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+    "config_name": "mistral-7b",
+    "params": {
+      "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 6,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0071": {
+    "component_class": "OpenAITextToTextGenerationModel",
+    "model_name": "gpt-5-nano",
+    "config_name": "gpt-5-nano",
+    "params": {
+      "model_name": "gpt-5-nano",
+      "max_completion_tokens": 1000,
+      "reasoning_effort": "minimal",
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0072": {
+    "component_class": "DeepSeekTextToTextGenerationModel",
+    "model_name": "deepseek-v4-flash",
+    "config_name": "deepseek-v4-flash",
+    "params": {
+      "model_name": "deepseek-v4-flash",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "thinking": {
+        "type": "disabled"
+      },
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0073": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+    "config_name": "llama3.2-1b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 7,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0074": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+    "config_name": "llama3.2-3b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 7,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0075": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-0.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 7,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0076": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-1.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 7,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0077": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+    "config_name": "qwen2.5-3b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 7,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0078": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+    "config_name": "qwen2.5-7b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 7,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0079": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+    "config_name": "smollm2-360m",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 7,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0080": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+    "config_name": "smollm2-1.7b",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 7,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0081": {
+    "component_class": "Phi4MiniInstructModel",
+    "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+    "config_name": "phi4-mini",
+    "params": {
+      "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+      "iteration": 7,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0082": {
+    "component_class": "MistralModel",
+    "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+    "config_name": "mistral-7b",
+    "params": {
+      "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 7,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0083": {
+    "component_class": "OpenAITextToTextGenerationModel",
+    "model_name": "gpt-5-nano",
+    "config_name": "gpt-5-nano",
+    "params": {
+      "model_name": "gpt-5-nano",
+      "max_completion_tokens": 1000,
+      "reasoning_effort": "minimal",
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0084": {
+    "component_class": "DeepSeekTextToTextGenerationModel",
+    "model_name": "deepseek-v4-flash",
+    "config_name": "deepseek-v4-flash",
+    "params": {
+      "model_name": "deepseek-v4-flash",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "thinking": {
+        "type": "disabled"
+      },
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0085": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+    "config_name": "llama3.2-1b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 8,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0086": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+    "config_name": "llama3.2-3b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 8,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0087": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-0.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 8,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0088": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-1.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 8,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0089": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+    "config_name": "qwen2.5-3b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 8,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0090": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+    "config_name": "qwen2.5-7b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 8,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0091": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+    "config_name": "smollm2-360m",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 8,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0092": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+    "config_name": "smollm2-1.7b",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 8,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0093": {
+    "component_class": "Phi4MiniInstructModel",
+    "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+    "config_name": "phi4-mini",
+    "params": {
+      "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+      "iteration": 8,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0094": {
+    "component_class": "MistralModel",
+    "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+    "config_name": "mistral-7b",
+    "params": {
+      "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 8,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0095": {
+    "component_class": "OpenAITextToTextGenerationModel",
+    "model_name": "gpt-5-nano",
+    "config_name": "gpt-5-nano",
+    "params": {
+      "model_name": "gpt-5-nano",
+      "max_completion_tokens": 1000,
+      "reasoning_effort": "minimal",
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0096": {
+    "component_class": "DeepSeekTextToTextGenerationModel",
+    "model_name": "deepseek-v4-flash",
+    "config_name": "deepseek-v4-flash",
+    "params": {
+      "model_name": "deepseek-v4-flash",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "thinking": {
+        "type": "disabled"
+      },
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0097": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+    "config_name": "llama3.2-1b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 9,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0098": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+    "config_name": "llama3.2-3b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 9,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0099": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-0.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 9,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0100": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-1.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 9,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0101": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+    "config_name": "qwen2.5-3b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 9,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0102": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+    "config_name": "qwen2.5-7b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 9,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0103": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+    "config_name": "smollm2-360m",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 9,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0104": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+    "config_name": "smollm2-1.7b",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 9,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0105": {
+    "component_class": "Phi4MiniInstructModel",
+    "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+    "config_name": "phi4-mini",
+    "params": {
+      "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+      "iteration": 9,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0106": {
+    "component_class": "MistralModel",
+    "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+    "config_name": "mistral-7b",
+    "params": {
+      "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 9,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0107": {
+    "component_class": "OpenAITextToTextGenerationModel",
+    "model_name": "gpt-5-nano",
+    "config_name": "gpt-5-nano",
+    "params": {
+      "model_name": "gpt-5-nano",
+      "max_completion_tokens": 1000,
+      "reasoning_effort": "minimal",
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0108": {
+    "component_class": "DeepSeekTextToTextGenerationModel",
+    "model_name": "deepseek-v4-flash",
+    "config_name": "deepseek-v4-flash",
+    "params": {
+      "model_name": "deepseek-v4-flash",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "thinking": {
+        "type": "disabled"
+      },
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0109": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+    "config_name": "llama3.2-1b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 10,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0110": {
+    "component_class": "LlamaModel",
+    "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+    "config_name": "llama3.2-3b",
+    "params": {
+      "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Q4_K_M",
+      "iteration": 10,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0111": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-0.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 10,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0112": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "qwen2.5-1.5b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 10,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0113": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+    "config_name": "qwen2.5-3b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 10,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0114": {
+    "component_class": "QwenModel",
+    "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+    "config_name": "qwen2.5-7b",
+    "params": {
+      "model_name": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 10,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0115": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+    "config_name": "smollm2-360m",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 10,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0116": {
+    "component_class": "SmolLMModel",
+    "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+    "config_name": "smollm2-1.7b",
+    "params": {
+      "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 10,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0117": {
+    "component_class": "Phi4MiniInstructModel",
+    "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+    "config_name": "phi4-mini",
+    "params": {
+      "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "quantization": "Phi-4-mini-instruct.Q8_0.gguf",
+      "iteration": 10,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0118": {
+    "component_class": "MistralModel",
+    "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+    "config_name": "mistral-7b",
+    "params": {
+      "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "frequency_penalty": 0.0,
+      "context_window": 4096,
+      "iteration": 10,
+      "total_iterations": 10,
+      "device": "CPU"
+    }
+  },
+  "0119": {
+    "component_class": "OpenAITextToTextGenerationModel",
+    "model_name": "gpt-5-nano",
+    "config_name": "gpt-5-nano",
+    "params": {
+      "model_name": "gpt-5-nano",
+      "max_completion_tokens": 1000,
+      "reasoning_effort": "minimal",
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0120": {
+    "component_class": "DeepSeekTextToTextGenerationModel",
+    "model_name": "deepseek-v4-flash",
+    "config_name": "deepseek-v4-flash",
+    "params": {
+      "model_name": "deepseek-v4-flash",
+      "max_tokens": 100,
+      "temperature": 0.1,
+      "thinking": {
+        "type": "disabled"
+      },
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  }
+}

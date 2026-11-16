@@ -1,0 +1,184 @@
+{
+  "iter0-turn0": {
+    "inputs": {
+      "user_message": "You mentioned chunking strategies earlier — can you explain the trade-offs between using larger chunks versus smaller chunks when building the retrieval index?",
+      "turn_number": 0
+    },
+    "outputs": {
+      "assistant_response": "The trade-offs between using larger chunks versus smaller chunks when building the retrieval index are not explicitly mentioned in the provided documents. However, we can infer some general information about chunking strategies from the documents.\n\nIn the context of retrieval-augmented generation (RAG), chunking strategies are used to organize documents and queries for efficient retrieval. The documents mention various techniques for building retrieval indexes, such as dense retriever methods and sparse retrieval methods.\n\nDense retriever methods represent queries and keys using dense embedding vectors and build an Approximate Nearest Neighbor (ANN) index to speed up the search. This approach is often referred to as Dense Passage Retrieval (DPR).\n\nSparse retrieval methods, on the other hand, perform a lookup to obtain a list of candidate documents based on the query. This approach is often used in conjunction with other techniques, such as reranking and filtering.\n\nWhile the documents do not provide explicit information on chunking strategies, they do mention the importance of optimizing the retrieval process for efficient and effective retrieval-augmented generation. This suggests that chunking strategies may be an important consideration in building retrieval indexes for RAG.\n\nIn general, the choice of chunking strategy will depend on the specific use case and requirements of the application. Larger chunks may be more suitable for applications where the query is relatively simple and the documents are relatively short, while smaller chunks may be more suitable for applications where the query is complex and the documents are long.\n\nHowever, without more specific information on chunking strategies, it is difficult to provide a more detailed answer on the trade-offs between using larger chunks versus smaller chunks when building the retrieval index.",
+      "retrieved_chunks": {
+        "8_4": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 4,
+          "text": "\n(LLM), Pre-training, Fine-tuning, In-context Learning, Prompting\nACM Reference Format:\nWenqi Fan, Yujuan Ding, Liangbo Ning, Shijie Wang, Hengyun Li, Dawei\nYin, Tat-Seng Chua, and Qing Li. 2024. A Survey on RAG Meeting LLMs:\nTowards Retrieval-Augmented Large Language Models. InProceedings of\nthe 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining\n(KDD ’24), August 25–29, 2024, Barcelona, Spain. ACM, New York, NY, USA,\n11 pages. https://doi.org/10.1145/3637528.3671470\n1 INTRODUCTION\nAs one of the most fundamental data mining techniques, retrieval\naims to understand the input query and extract relevant information\nfrom external data sources [23, 29, 60, 118]. It has found extensive\napplication in various fields [8, 27, 90, 144], such as search, ques-\ntion answering, and recommender systems.",
+          "page": 1,
+          "source_positions": null
+        },
+        "7_21": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 21,
+          "text": "verted index to organize documents. Concretely, \neach\tterm\tfrom\tthe\tquery\tperforms\ta\tlookup\tto\tobtain\ta\tlist\t\nof candidate documents, which are subsequently ranked \nbased on their statistical scores.\n2.3.2 Dense Retriever\nUnlike\tsparse\tretrieval,\tdense\tretrieval\tmethods\trepresent\t\nqueries and keys using dense embedding vectors, and build \nan\tApproximate\tNearest\tNeighbor\t(ANN)\tindex\tto\tspeed\t\nup\tthe\tsearch.\tThis\tcan\tbe\tapplied\tto\tall\tmodalities.\tFor\ttext\t\ndata,\trecent\tadvancements\tin\tpre-trained\tmodels\t(such\tas\t\nBERT\t[15])\thave\tbeen\temployed\tto\tencode\tqueries\tand\tkeys\t\nindividually [20].\tThis\tapproach\tis\toften\treferred\tto\tas\tDense\t\nPassage\tRetrieval\t(DPR).\tSimilar\tto\ttext,\tmodels\thave\tbeen\t\nproposed\tto\tencode\tcode\tdata\t[25], audio data [69], image \ndata [24], video data [70",
+          "page": 4,
+          "source_positions": null
+        },
+        "7_211": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 211,
+          "text": "\tLearning\tto\tfilter\tcontext\tfor\t\nretrieval-augmented generation. arxiv:2311.08377\n163.\tHofstätter\tS,\tChen\tJ,\tRaman\tK,\tZamani\tH\t(2023)\tFid-light:\teffi-\ncient\tand\teffective\tretrieval-augmented\ttext\tgeneration.\tIn:\tSIGIR\n164.\tArora\tD,\tKini\tA,\tChowdhury\tSR\tet\tal\t(2023)\tGar-meets-rag\tpara-\ndigm for zero-shot information retrieval. arXiv:2310.20158\n165.\thttps://www.pinecone.io\n166.\tYu\tW,\tIter\tD\tet\tal\t(2022)\tGenerate\trather\tthan\tretrieve:\tlarge\tlan-\nguage models are strong context generators. arXiv:2209.10063\n167.\tAbdallah\t A,\t Jatowt\t A\t (2023)\t Generator-retriever",
+          "page": 25,
+          "source_positions": null
+        },
+        "2_30": {
+          "document_id": 2,
+          "document_name": "Dense-Passage-Retrieval.pdf",
+          "document_position": 30,
+          "text": "It produces\nmore pairs and thus increases the number of train-\ning examples, which might contribute to the good\nmodel performance. As a result, accuracy consis-\ntently improves as the batch size grows.\nFinally, we explore in-batch negative training\nwith additional “hard” negative passages that have\nhigh BM25 scores given the question, but do not\ncontain the answer string (the bottom block). These\nadditional passages are used as negative passages\nfor all questions in the same batch. We ﬁnd that\nadding a single BM25 negative passage improves\nthe result substantially while adding two does not\nhelp further.\nImpact of gold passages We use passages that\nmatch the gold contexts in the original datasets\n(when available) as positive examples (Section 4.2).\nType #N IB Top-5 Top-20 Top-100\nRandom 7 \u0017 47.0 64.3 77.8\nBM25 7 \u0017 50.0 63.3 74.8\nGold 7 \u0017 42.6 63.1 78.3\nGold 7 \u0013 51.1 69.1 80.8\nGold 31 \u0013 52.1 70.",
+          "page": 6,
+          "source_positions": null
+        },
+        "7_111": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 111,
+          "text": "relevant facts through \nentity matching. Sen et al. [ 271]\treplaced\tthe\tretrieval\twith\t\na\trelation\tdistribution\tgeneration\tmodel\tfor\tweighted\ttrip-\nlets. Retrieve-Rewrite-Answer [272]\t retrieves\t subgraphs\t\ninto\tprompts\tusing\thop\tprediction,\trelation\tpath\tprediction,\t\nand\ttriplet\tsampling.\tKeqing\t[273]\tdecomposes\ta\tcomplex\t\nquestion\t into\t simple\t sub-questions\t through\t LLM,\t then\t\nretrieves\tsub-question\ttemplates\tand\textracts\tcandidate\tenti-\nties\tfrom\tknowledge\tgraph,\tand\tfinally\tgenerates\tthe\tanswer\t\nthrough ChatGPT. Liu et al. [274]\tleveraged\tretrieved\tpairs\t\nto\texplore\tthe\tcapability\tof\tformal\tlanguage\tunderstand-\ning\tand\tgeneration.\tInteractive-KBQA\t[275]\temploys\tthe\t\nLLM as an agent, which conducts entity-linking on KG and \n1 3\n16\n\nRetrieval",
+          "page": 16,
+          "source_positions": null
+        },
+        "7_32": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 32,
+          "text": "ployed\t\nacross various modalities.\nFor\ttext\tgeneration,\tREALM\t[33]\temploys\ta\tdual-BERT\t\nframework to streamline knowledge retrieval and integra -\ntion,\tmarrying\tpre-trained\tmodels\twith\tknowledge\textrac-\ntors. Lewis et al. [ 34]\t leveraged\t DPR\t for\t information\t\nretrieval\tand\temployed\tBART\tas\tthe\tgenerator\tto\teffectively\t\nenhance\tthe\tgeneration.\tSELF-RAG\t[85] utilizes a critique \nmodule\tto\tdetermine\twhether\tthe\tretrieval\tis\trequired.\tIn\t\naddition\tto\tbeing\tcompatible\twith\tlocal\tgenerators,\tquery-\nbased\tRAG\tis\talso\tapplicable\tto\tscenarios\tthat\tuse\tLLM\t\nthrough\tAPI\tcalls.\tREPLUG\t[86] follows this methodology \nby\ttreating\tthe\tlanguage\tmodel\tas\ta\t“black\tbox”,\tand\teffec-\ntively integrates relevant external documents into the query. \nIn-Context\tRALM\t[87] uses BM25 for document retrieval",
+          "page": 6,
+          "source_positions": null
+        },
+        "7_255": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 255,
+          "text": "\tLi\tZ,\tNiu\tS\tet\tal\t(2024)\tCRUD-RAG:\ta\tcomprehensive\t\nChinese benchmark for retrieval-augmented generation of large \nlanguage models. arxiv:2401.17043\n350.\tXiong\tG,\tJin\tQ,\tLu\tZ,\tZhang\tA\t(2024)\tBenchmarking\tretrieval-\naugmented generation for medicine. arXiv:2402.13178\n351.\tPetroni\tF,\tPiktus\tA\tet\tal\t(2021)\tKilt:\ta\tbenchmark\tfor\tknowledge\t\nintensive\tlanguage\ttasks.\tIn:\tNAACL-HLT\n352.\tYang\tX,\tSun\tK,\tXin\tH,\tSun\tY,\tBhalla\tN,\tChen\tX,\tChoudhary\tS,\t\nGui\tRD,\tJiang\tZW,\tJiang\tZ\tet\tal\t(2024)\tCrag-comprehensive\trag\t\nbenchmark.\tAdv\tNeural\tInf",
+          "page": 28,
+          "source_positions": null
+        },
+        "7_117": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 117,
+          "text": "90] \nretrieves information from knowledge bases, tables, and \ntexts\tafter\tquestion\tunderstanding.\tRINK\t[291] designs a \nset-level reader-inherited re-ranker to get the relevance \nscore of table segments. TAG-QA [292] retrieves tables and \ntexts\tthrough\tGNN\t(after\ttable-to-graph\tconversion)\tand\t\nBM25,\trespectively.\nTables\tcan\tbe\tintegrated\tinto\tprompts\tfor\tquery-based\t\nRAG. Both T-RAG [293]\tand\tOmniTab\t[294] concatenates \nthe retrieved tables with the query to generate the answer. \nCARP [ 295] extracts hybrid chain of retrieved tables and \npassages\tfor\tprompt\tconstruction.\tStructGPT\t[269] retrieves \nfrom\tmultiple\tsources\tincluding\tKGs,\ttables,\tand\tdata-\nbases. cTBLS [296]\tforms\tprompts\twith\tranked\ttables\tafter\t\nretrieval. Min et al. [ 297] integrated tabular data through \ntable-to-text\ttechniques",
+          "page": 17,
+          "source_positions": null
+        },
+        "8_70": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 70,
+          "text": "2020. Entities as Experts: Sparse Memory Access with Entity\nSupervision. In EMNLP. 4937–4951.\n[39] Yunfan Gao, Yun Xiong, Xinyu Gao, Kangxiang Jia, Jinliu Pan, Yuxi Bi, Yi Dai,\nJiawei Sun, and Haofen Wang. 2023. Retrieval-augmented generation for large\nlanguage models: A survey. arXiv:2312.10997 (2023).\n[40] Izacard Gautier, Caron Mathilde, Hosseini Lucas, Riedel Sebastian, Bojanowski\nPiotr, Joulin Armand, and Grave Edouard. 2022. Unsupervised dense information\nretrieval with contrastive learning. J Mach Learn Res (2022).\n[41] Marjan Ghazvininejad, Chris Brockett, Ming-Wei Chang, Bill Dolan, Jianfeng\nGao, Wen-tau Yih, and Michel Galley. 2018. A knowledge-grounded neural\nconversation model. In AAAI, Vol. 32.\n[42]",
+          "page": 9,
+          "source_positions": null
+        },
+        "8_65": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 65,
+          "text": "actor Quantization Network for Large-scale Image Retrieval. In ICMR.\n851–859.\n[24] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2019. BERT:\nPre-training of Deep Bidirectional Transformers for Language Understanding.\nIn NAACL-HLT (1). 4171–4186.\n[25] Dario Di Palma. 2023. Retrieval-augmented recommender system: Enhancing\nrecommender systems with large language models. In RecSys. 1369–1373.\n[26] Yujuan Ding, Yunshan Ma, Wenqi Fan, Yige Yao, Tat-Seng Chua, and Qing Li.\n2024. FashionReGen: LLM-Empowered Fashion Report Generation. In WWW.\n[27] Yujuan Ding, P. Y. Mok, Yunshan Ma, and Yi Bin. 2023. Personalized fashion\noutfit generation with user coordination preference learning. IP&M 60, 5 (2023),\n103434.",
+          "page": 9,
+          "source_positions": null
+        },
+        "1_157": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 157,
+          "text": "classiﬁcation from a single example utilizing class relevance met-\nrics. In NIPS, 2005. URL https://proceedings.neurips.cc/paper/2004/file/\nef1e491a766ce3127556063d49bc2f98-Paper.pdf.\nT. Gao, A. Fisch, and D. Chen. Making pre-trained language models better few-shot learners.\nIn ACL-IJCNLP, 2021. URL https://aclanthology.org/2021.acl-long.295.\nM. Glass, G. Rossiello, M. F. M. Chowdhury, A. R. Naik, P. Cai, and A. Gliozzo. Re2g:\nRetrieve, rerank, generate, 2022. URLhttps://arxiv.org/abs/2207.06300.\nE. Grave, M. Cisse, and A. Joulin. Unbounded cache model for online language modeling\nwith open vocabulary, 2017a. URLhttps://arxiv.org/abs/1711.02604.\n",
+          "page": 37,
+          "source_positions": null
+        },
+        "7_52": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 52,
+          "text": "effectively\tgenerate\tsynthetic\tqueries\t\nthat\t train\t domain-specific\t rerankers,\t which\t then\t apply\t\nmulti-teacher\tknowledge\tdistillation\tto\tdevelop\ta\tcohesive\t\nretriever. LLM-R [ 158]\trefines\tits\tretriever\titeratively\tby\t\nemploying\ta\tstatic\tLLM\tfor\tdocument\tranking\tand\treward\t\nmodel\ttraining,\tcomplemented\tby\tknowledge\tdistillation.\t\nEach\ttraining\tcycle\tincrementally\timproves\tthe\tretriever,\t\nenabling\t progressive\t optimization.\t Finardi\t et\t al.\t [159] \nintegrated\t reciprocal\t rank\t into\t the\t retrieval\t process\t for\t\nenhanced text chunk relevance, and utilized monoT5 as a \nreranker\tto\toptimize\tthe\tresult\tquality.\tLi\tet\tal.\t[160] inte-\ngrate a reranking module into their end-to-end RAG sys -\ntem, enhancing the retrieval quality and factual accuracy \nof\tLLMs.\tEBCAR\t[161]\treranks\tpassages",
+          "page": 9,
+          "source_positions": null
+        },
+        "7_276": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 276,
+          "text": "\tthe\ttwentieth\t\nEuropean\tconference\ton\tcomputer\tsystems,\tpp\t94–109\n368.\tJin\tC,\tZhang\tZ,\tJiang\tX,\tLiu\tF,\tLiu\tS,\tLiu\tX,\tJin\tX\t(2024)\tRag-\ncache:\t efficient\t knowledge\t caching\t for\t retrieval-augmented\t\n1 3\n29",
+          "page": 29,
+          "source_positions": null
+        },
+        "3_18": {
+          "document_id": 3,
+          "document_name": "Faster-And-Lighter-LLMs.pdf",
+          "document_position": 18,
+          "text": "where they queried a pre-trained model to gen-\nerate data which was used to train a quantized student model\nusing a distillation loss. With the quantization of the KV-\ncache as well, apart from weights and activations, they can\nquantize 7B, 13B, and 30M LLaMA down to 4 bits. Bit-\nNet [Wang et al., 2023a] introduced a 1-bit LLM transformer\narchitecture. It mainly replaces the standard nn.Linear\nin PyTorch with BitLinear to train 1-bit weights. As the\nsize of the models increases, it comprehensively outperforms\ncounterparts trained on FP16. [Tao et al., 2022 ] proposed\ntoken-level contrastive distillation and used dynamic scaling\nto make quantizers adaptive to different modules.\nKnowledge distillation. Among the knowledge distillation\nmethods, both white-box as well as black-box methods have\nbeen used to compress large open-source language models.\nInstead of solely relying on a fixed set of output sequences,\nGeneralized KD [Agarwal et al., 2023] trains the student on\nits self-generated output sequences by leveraging feedback\nfrom the teacher on such sequences.",
+          "page": 3,
+          "source_positions": null
+        },
+        "5_349": {
+          "document_id": 5,
+          "document_name": "Llama-2.pdf",
+          "document_position": 349,
+          "text": ". Models sizes refer to pretrained-only models\nmay appear contaminated, by virtue of many tokens appearing in matched sequences found in the training\ndata. However, the matched sequences might be highly fragmented across the training data, in which case it\nis very unlikely the model saw the correctly-assembled contaminated sequences during training. To reduce\nthe chance of this phenomenon, we repeat our analysis with minimum match lengthL ∈ {10, 20, 30, 40, 50}.\nSinceinthelimitof L → ∞everysamplefallsintoboththe\"clean\"and\"notdirty\"(thereisnocontamination),\nwe report the largestL for each dataset that appeared to benefit from contamination to strike a balance\nbetween fragmentation and overall contamination.\nForeachdatasetandeachoftheabovesamplesubsettypes,wecomputeboththemean ¯X oftheperformance\nmetric X and the statisticZn = ( ¯X−µn)\nσn\n, wheren is the size of the sample subset type, andµn and σ2\nn are the\nmean and variance of the sampling distribution of the performance metric for samples of sizen, respectively.\nBy the Central Limit Theorem,Zn tends towards a standard normal distribution and so we consider there\nis sufficient evidence to suggest contamination has affected evaluation",
+          "page": 76,
+          "source_positions": null
+        },
+        "3_40": {
+          "document_id": 3,
+          "document_name": "Faster-And-Lighter-LLMs.pdf",
+          "document_position": 40,
+          "text": "problem. Many of these approaches\nare computationally expensive, particularly in the context of\nLarge Language Models (LLMs). There is a necessity to ex-\nplore and develop an effective strategy for searching for the\nright rank when employing low-rank approximations.\nExisting evaluation metrics may not comply well. Com-\npressing LLMs while preserving their ability to handle ex-\ntensive contextual information is a challenge, and appropriate\nevaluation metrics need to be developed to tackle this issue.\nAnother factor is the loss of fidelity. Aggressive compression\nmay lead to a significant loss of model fidelity, impacting the\nlanguage model’s ability to generate accurate and contextu-\nally relevant outputs. Several such characteristics of LLMs\nneed to be captured in their compressed variants, and this can\nonly be identified by the right choice of metrics.\nPython - an interpreted language leads to slower execution\ntimes. The Global Interpreter Lock (GIL) in CPython, the\ndefault Python interpreter, further restricts the concurrent ex-\nProceedings of the Thirty-Third International Joint Conference on Artiﬁcial Intelligence (IJCAI-24)\nSurvey Track\n7985\n\nMethod Hard\nware Support Quantization Type WM (GB) RM (GB) Tokens/sec Perplexity\n",
+          "page": 6,
+          "source_positions": null
+        },
+        "7_253": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 253,
+          "text": "omedical texts. arXiv:2405.13179\n343.\tYang\tK\tet\tal\t(2024)\tLeandojo:\ttheorem\tproving\twith\tretrieval-\naugmented\tlanguage\tmodels.\tIn:\tNeurIPS\n344.\tLevonian\tZ,\tLi\tC,\tZhu\tW\tet\tal\t(2023)\tRetrieval-augmented\tgen-\neration\tto\timprove\tmath\tquestion-answering:\ttrade-offs\tbetween\t\ngroundedness\tand\thuman\tpreference.\tarXiv:2310.03184\n345.\tChen\tJ,\tLin\tH,\tHan\tX,\tSun\tL\t(2023)\tBenchmarking\tlarge\tlanguage\t\nmodels in retrieval-augmented generation. arxiv:2309.01431\n346.\tES\tS,\tJames\tJ,\tAnke\tLE,\tSchockaert\tS\t(2023)\tRAGAS:\tautomated\t\nevaluation of retrieval augmented generation. arxiv:230",
+          "page": 28,
+          "source_positions": null
+        },
+        "7_135": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 135,
+          "text": "a hierarchical retrieval-augmented generation method that \ncombines\treport-level\tand\tsentence-level\ttemplates\tto\tpro-\nduce\tcoherent\tand\tclinically\taccurate\tmedical\treports\tfrom\t\nimages. QA-RAG [341]\temploys\ta\tdual-track\tRAG\tstrat-\negy\tto\tenhance\tpharmaceutical\tcompliance\tby\teffectively\t\nretrieving and integrating regulatory guidelines based on \n1 3\n19\n\nP . Zhao et al.\n6.1.3 The Gap Between Retrievers and Generators\nSince\tthe\tobjectives\tof\tretrievers\tand\tgenerators\tmay\tnot\t\nalign,\tand\ttheir\tlatent\tspaces\tmight\tdiffer,\tdesigning\ttheir\t\ninteraction\trequires\tmeticulous\tdesign\tand\toptimization.\t\nCurrent\tapproaches\teither\tdisentangle\tretrieval\tand\tgenera-\ntion or integrate them at an intermediate stage. While the \nformer\tis\tmore\tmodular,\tthe\tlatter\tcould\tbenefit\tfrom\tjoint\t\ntraining\tbut\thamper\tgenerality.\t",
+          "page": 19,
+          "source_positions": null
+        },
+        "2_67": {
+          "document_id": 2,
+          "document_name": "Dense-Passage-Retrieval.pdf",
+          "document_position": 67,
+          "text": "the retrieval accuracy for our “baseline”\nsettings reported in Table 5 (Gold) and Table 6\n(DP, NLL) is slightly better than those reported in\nTable 3. This is due to a better hyper-parameter\nsetting used in these analysis experiments, which\nis documented in our code release.\nC Qualitative Analysis\nAlthough DPR performs better than BM25 in gen-\neral, the retrieved passages of these two retrievers\nactually differ qualitatively. Methods like BM25\nare sensitive to highly selective keywords and\nphrases, but cannot capture lexical variations or se-\nmantic relationships well. In contrast, DPR excels\nat semantic representation, but might lack sufﬁcient\ncapacity to represent salient phrases which appear\nrarely. Table 7 illustrates this phenomenon with\ntwo examples. In the ﬁrst example, the top scor-\ning passage from BM25 is irrelevant, even though\nkeywords such as England and Ireland appear mul-\ntiple times. In comparison, DPR is able to return\nTop-1 Top-5 Top-20 Top-100\nGold 44.9 66.8 78.1 85.0\nDist. Sup. 43.9 65.3 77.1",
+          "page": 12,
+          "source_positions": null
+        },
+        "7_192": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 192,
+          "text": "790\n98.\t Li\tJ,\tLi\tY\tet\tal\t(2021)\tEditSum:\ta\tretrieve-and-edit\tframework\tfor\t\nsource\tcode\tsummarization.\tIn:\tASE\n99.\t Yu\tC,\tYang\tG,\tChen\tX\tet\tal\t(2022)\tBashExplainer:\tretrieval-\naugmented\tBash\tcode\tcomment\tgeneration\tbased\ton\tfine-tuned\t\nCodeBERT.\tIn:\tICSME\n100.\tHashimoto\tTB,\tGuu\tK\tet\tal\t(2018)\tA\tretrieve-and-edit\tframework\t\nfor\tpredicting\tstructured\toutputs.\tIn:\tNeurIPS\n101.\tWei\tB,\tLi\tY,\tLi\tG\tet\tal\t(2020)\tRetrieve\tand\trefine:\texemplar-\nbased\tneural\tcomment\tgeneration.\tIn:\tASE\n102.\tShi\tE,\tWang\tY,\tTao\tW\tet\tal\t(2022)\tRACE:\tretrieval",
+          "page": 24,
+          "source_positions": null
+        }
+      },
+      "chunks_retrieved": 20,
+      "queries": [
+        "You mentioned chunking strategies earlier — can you explain the trade-offs between using larger chunks versus smaller chunks when building the retrieval index?"
+      ],
+      "retrieval_time_ms": 3463.9363000169396,
+      "transformation_time_ms": 0.0,
+      "generation_time_ms": 56630.94179995824,
+      "total_turn_time_ms": 1723367.3746999702,
+      "prompt_length_chars": 159,
+      "response_length_chars": 1881,
+      "error": null
+    }
+  }
+}

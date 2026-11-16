@@ -1,0 +1,200 @@
+{
+  "iter0": {
+    "model_name": "RAGPipeline",
+    "task_name": "RAGTask",
+    "name": "Pub 4b - RAGChecker Sparse (run 260805211331, iter 0)",
+    "description": null,
+    "parameters": {
+      "documents": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "chunking_model": {
+        "component": "TokenChunkModel",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60
+        }
+      },
+      "retriever_model": {
+        "component": "BM25Retriever",
+        "params": {
+          "BM25Vectorizer": {
+            "component": "BM25VectorizerModel",
+            "params": {
+              "strip_accents": null,
+              "lowercase": true,
+              "stop_words": null,
+              "max_df": 1.0,
+              "min_df": 0.0,
+              "max_features": null
+            }
+          },
+          "similarity_function": "cosine",
+          "top_k": 20,
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0
+        }
+      },
+      "generation_model": {
+        "component": "LlamaModel",
+        "params": {
+          "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+          "max_tokens": 1024,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 8192,
+          "device": "CPU",
+          "quantization": "Q4_K_M"
+        }
+      },
+      "prompt": {
+        "component": "DefaultRAGGenerationPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a helpful AI assistant with access to a set of retrieved documents.\nUse the documents below to support your answer. Prioritize information from the documents over your own knowledge. If the documents do not contain relevant information, say so clearly rather than guessing.\n\nUser message:\n{input}\n\nRetrieved documents:\n{chunks}\n\nAnswer the user's message based on the documents above."
+        }
+      }
+    }
+  },
+  "iter1": {
+    "model_name": "RAGPipeline",
+    "task_name": "RAGTask",
+    "name": "Pub 4b - RAGChecker Sparse (run 260805211331, iter 1)",
+    "description": null,
+    "parameters": {
+      "documents": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "chunking_model": {
+        "component": "TokenChunkModel",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60
+        }
+      },
+      "retriever_model": {
+        "component": "BM25Retriever",
+        "params": {
+          "BM25Vectorizer": {
+            "component": "BM25VectorizerModel",
+            "params": {
+              "strip_accents": null,
+              "lowercase": true,
+              "stop_words": null,
+              "max_df": 1.0,
+              "min_df": 0.0,
+              "max_features": null
+            }
+          },
+          "similarity_function": "cosine",
+          "top_k": 20,
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0
+        }
+      },
+      "generation_model": {
+        "component": "LlamaModel",
+        "params": {
+          "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+          "max_tokens": 1024,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 8192,
+          "device": "CPU",
+          "quantization": "Q4_K_M"
+        }
+      },
+      "prompt": {
+        "component": "DefaultRAGGenerationPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a helpful AI assistant with access to a set of retrieved documents.\nUse the documents below to support your answer. Prioritize information from the documents over your own knowledge. If the documents do not contain relevant information, say so clearly rather than guessing.\n\nUser message:\n{input}\n\nRetrieved documents:\n{chunks}\n\nAnswer the user's message based on the documents above."
+        }
+      }
+    }
+  },
+  "iter2": {
+    "model_name": "RAGPipeline",
+    "task_name": "RAGTask",
+    "name": "Pub 4b - RAGChecker Sparse (run 260805211331, iter 2)",
+    "description": null,
+    "parameters": {
+      "documents": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "chunking_model": {
+        "component": "TokenChunkModel",
+        "params": {
+          "tokenizer_name": "intfloat/e5-mistral-7b-instruct",
+          "chunk_size": 300,
+          "chunk_overlap": 60
+        }
+      },
+      "retriever_model": {
+        "component": "BM25Retriever",
+        "params": {
+          "BM25Vectorizer": {
+            "component": "BM25VectorizerModel",
+            "params": {
+              "strip_accents": null,
+              "lowercase": true,
+              "stop_words": null,
+              "max_df": 1.0,
+              "min_df": 0.0,
+              "max_features": null
+            }
+          },
+          "similarity_function": "cosine",
+          "top_k": 20,
+          "k1": 1.5,
+          "b": 0.75,
+          "delta": 0.0
+        }
+      },
+      "generation_model": {
+        "component": "LlamaModel",
+        "params": {
+          "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+          "max_tokens": 1024,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 8192,
+          "device": "CPU",
+          "quantization": "Q4_K_M"
+        }
+      },
+      "prompt": {
+        "component": "DefaultRAGGenerationPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a helpful AI assistant with access to a set of retrieved documents.\nUse the documents below to support your answer. Prioritize information from the documents over your own knowledge. If the documents do not contain relevant information, say so clearly rather than guessing.\n\nUser message:\n{input}\n\nRetrieved documents:\n{chunks}\n\nAnswer the user's message based on the documents above."
+        }
+      }
+    }
+  }
+}

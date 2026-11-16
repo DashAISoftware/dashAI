@@ -1,0 +1,40 @@
+{
+  "run_id": "20260810_033539",
+  "command": "components",
+  "start_time": "2026-08-10T03:35:39.701463",
+  "end_time": "2026-08-10T03:37:01.522286",
+  "completed": true,
+  "config": {
+    "iterations": 10,
+    "messages_per_conversation": 0,
+    "llm_device": "CPU",
+    "skip_passes": true,
+    "include_api_models": true,
+    "results_dir": "RAG_benchmark\\results",
+    "data_dir": "RAG_benchmark\\data",
+    "papers_dir": "RAG_benchmark\\papers",
+    "deepseek_model": "deepseek-chat",
+    "deepseek_base_url": "https://api.deepseek.com",
+    "has_openai": true,
+    "has_deepseek": true
+  },
+  "environment": {
+    "python_version": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "extra": {
+    "categories": [
+      "llm"
+    ]
+  },
+  "summary": {
+    "total_executions": 120,
+    "successful": 20,
+    "skipped": 100,
+    "failed": 0,
+    "total_duration_seconds": 81.779963,
+    "categories_run": [
+      "llm"
+    ]
+  }
+}

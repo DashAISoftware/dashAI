@@ -1,0 +1,64 @@
+{
+  "iter0-turn0": {
+    "inputs": {
+      "user_message": "You mentioned chunking strategies earlier — could you explain the trade-offs between using smaller chunks versus larger chunks when building the retrieval index?",
+      "turn_number": 0
+    },
+    "outputs": {
+      "assistant_response": "Based on the retrieved documents, the trade-offs between using smaller chunks versus larger chunks when building the retrieval index can be understood as follows:\n\nSmaller chunks are preferred when the goal is to return richer information and finer-grained content. For instance, Sentence-window retrieval fetches small text chunks and returns a window of relevant sentences surrounding the retrieved segment. This approach is used in auto-merge retrieval, where documents are arranged in a tree structure, and the process retrieves the parent node, which encapsulates the content of its child nodes, by fetching the child node first. This process is enhanced by recursive embedding, clustering, and summarization of text chunks until further clustering becomes infeasible, thereby constructing a multi-level tree structure.\n\nOn the other hand, larger chunks are preferred when the goal is to efficiently process a large number of text chunks frequently retrieved. For example, an efficient alternative to incorporate a large number of text chunks is to use a large number of text chunks frequently retrieved, which are challenging to process with input-layer integration due to the input length limit of LLMs. However, intermediate-layer integration requires high access to the generation models, which is not feasible for most LLMs that are accessible through inference APIs.\n\nIn terms of the trade-offs, using smaller chunks can lead to richer information but may be computationally less efficient. Using larger chunks can be more efficient but may lead to less rich information. The optimal approach depends on the specific use case and the requirements of the application.\n\nIt is also worth noting that the choice of chunk size can affect the performance of the retrieval index. For instance, the document RAG-Meeting-LLMs.pdf mentions that the retriever and generator components are not specifically optimized for downstream tasks, which could easily lead to suboptimal utilization of the retrieved knowledge. Fine-tuning the retriever and generator can help to address this issue, but the choice of chunk size can also impact the effectiveness of fine-tuning.\n\nIn summary, the trade-offs between using smaller chunks versus larger chunks when building the retrieval index depend on the specific use case and the requirements of the application. Smaller chunks can lead to richer information but may be computationally less efficient, while larger chunks can be more efficient but may lead to less rich information.",
+      "retrieved_chunks": {
+        "7_54": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 54,
+          "text": "on\ta\t‘small\tto\tbig’\tprinciple.\t\nThe\tcore\tconcept\there\tis\tto\tpinpoint\tfiner-grained\tcontent\t\nbut return richer information. For instance, Sentence-win -\ndow retrieval fetches small text chunks and returns a \nwindow of relevant sentences surrounding the retrieved \nsegment.\tIn\tauto-merge\tretrieval,\tdocuments\tare\tarranged\t\nin\ta\ttree\tstructure.\tThe\tprocess\tretrieves\tthe\tparent\tnode,\t\nwhich\tencapsulates\tthe\tcontent\tof\tits\tchild\tnodes,\tby\tfetch-\ning\tthe\tchild\tnode\tfirst.\tTo\taddress\tthe\tlack\tof\tcontextual\t\ninformation,\tRAPTOR\t[137]\temploys\trecursive\tembedding,\t\nclustering, and summarization of text chunks until further \nclustering becomes infeasible, thereby constructing a multi-\nlevel\ttree\tstructure.\tPrompt-RAG\t[138] enhances retrieval \naccuracy\tby\tpre-generating\ta\ttable\tof\tcontents,\tenabling\tthe\t\nmodel\tto\tautonomously\tselect\trelevant\t",
+          "page": 9,
+          "source_positions": null
+        },
+        "1_58": {
+          "document_id": 1,
+          "document_name": "Atlas-Few-Shot-Learning.pdf",
+          "document_position": 58,
+          "text": "that Wikipedia is a higher-quality and denser source of knowledge than common\ncrawl. Second, when using a common crawl index, we observe that pre-training on Wikipedia\ndata leads to lower performance than using common crawl data. We believe that the primary\nreason is that the distribution mismatch between the two domains leads to generally-less\nrelevant retrieved documents. In turn, this probably means that the pre-training is less\neﬃcient, because the language model does not leverage as much information from the\ndocuments. In the following, we decide to combine the data from both domains for the index\nand the pre-training data to extend the coverage.\n4.4 Fine-tuning\nIn this section, we perform an ablation study on how to apply our models on downstream\ntasks, which relies on ﬁne-tuning. In particular, we want to investigate the following research\nquestion:\n(RQ 3) How to eﬃciently ﬁne-tuneAtlason tasks with limited training data?\nTo answer this question, we compare the diﬀerent strategies to ﬁne-tune the retriever module,\ndescribed in Section 2.4. We report results in Table 4. First, as for pre-training, we observe\nthat keeping the retriever ﬁxed during",
+          "page": 17,
+          "source_positions": null
+        },
+        "7_55": {
+          "document_id": 7,
+          "document_name": "RAG-For-AIGC.pdf",
+          "document_position": 55,
+          "text": "tree\tstructure.\tPrompt-RAG\t[138] enhances retrieval \naccuracy\tby\tpre-generating\ta\ttable\tof\tcontents,\tenabling\tthe\t\nmodel\tto\tautonomously\tselect\trelevant\tchapters\tbased\ton\t\nthe query. Raina et al. [ 139]\tbreak\ttext\tchunks\tinto\tfiner\t\natomic\tstatements\tto\tachieve\thigher\trecall\tand\timproved\t\nresults. MoM [ 140]\ttrains\ta\tmodel\tto\tperform\tdocument\t\nchunking,\twhich\tenables\tfiner-grained\tsemantic\toverlap\tand\t\nfacilitates subsequent retrieval.\n3.2.2.3 Retriever Finetuning The retriever, central to the \nRAG\tsystem,\trelies\ton\ta\tproficient\tembedding\tmodel\t[141–\n144]\tto\trepresent\trelated\tcontent\tand\tfeed\tthe\tgenerator,\t\nenhancing\tsystem\tperformance.\tAdditionally,\tembedding\t\nmodels\twith\tstrong\texpressive\tpower\tcan\tbe\tfine-tuned\twith\t\ndomain-specific\tor\t",
+          "page": 9,
+          "source_positions": null
+        },
+        "8_30": {
+          "document_id": 8,
+          "document_name": "RAG-Meeting-LLMs.pdf",
+          "document_position": 30,
+          "text": "an efficient alternative to\nincorporate a large number of text chunks frequently retrieved,\nwhich are challenging to process with input-layer integration due\nto the input length limit of LMs [6]. However, it also needs to be\nnoted that intermediate-layer integration requires high access to\nthe generation models, which is not feasible for most LLMs that\nare accessible through inference APIs [85].\n3 RA-LLMS TRAINING\nBased on whether training is required or not, existing RAG methods\ncan be categorized into two main classes: train-free approaches\nand training-based approaches. Training-free methods usually\ndirectly leverage the retrieved knowledge during inference time\nwithout introducing extra training by inserting the retrieved text\ninto the prompt, which is computationally efficient. However, one\npotential challenge is that the retriever and generator components\nare not specifically optimized for downstream tasks, which could\neasily lead to suboptimal utilization of the retrieved knowledge.\nTo fully exploit the external knowledge, extensive methods are\nproposed to fine-tune the retriever and generator, thereby guiding\nlarge language models to effectively adapt and integrate retrieved\ninformation. According to the training strategies, we categorize\nthese training-based approaches into three classes: 1)Independent\nTraining approaches independently train each component in",
+          "page": 5,
+          "source_positions": null
+        },
+        "2_35": {
+          "document_id": 2,
+          "document_name": "Dense-Passage-Retrieval.pdf",
+          "document_position": 35,
+          "text": "PR can be made incredibly efﬁcient, processing\n995.0 questions per second, returning top 100 pas-\nsages per question. In contrast, BM25/Lucene (im-\nplemented in Java, using ﬁle index) processes 23.7\nquestions per second per CPU thread.\nOn the other hand, the time required for building\nan index for dense vectors is much longer. Com-\nputing dense embeddings on 21-million passages\nis resource intensive, but can be easily parallelized,\ntaking roughly 8.8 hours on 8 GPUs. However,\nbuilding the FAISS index on 21-million vectors\non a single server takes 8.5 hours. In comparison,\nbuilding an inverted index using Lucene is much\ncheaper and takes only about 30 minutes in total.\n6 Experiments: Question Answering\nIn this section, we experiment with how different\npassage retrievers affect the ﬁnal QA accuracy.\n6.1 End-to-end QA System\nWe implement an end-to-end question answering\nsystem in which we can plug different retriever\nsystems directly. Besides the retriever, our QA sys-\ntem consists of a neural reader that outputs the\nanswer to the question. Given the",
+          "page": 7,
+          "source_positions": null
+        }
+      },
+      "chunks_retrieved": 5,
+      "queries": [
+        "explain the trade-offs between using smaller chunks versus larger chunks when building the retrieval index, referring to earlier discussion on chunking strategies"
+      ],
+      "retrieval_time_ms": 4379.528000019491,
+      "transformation_time_ms": 38882.38540000748,
+      "generation_time_ms": 14163.00699999556,
+      "total_turn_time_ms": 121274.17549997335,
+      "prompt_length_chars": 161,
+      "response_length_chars": 2521,
+      "error": null
+    }
+  }
+}

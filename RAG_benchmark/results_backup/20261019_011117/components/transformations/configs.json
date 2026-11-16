@@ -1,0 +1,832 @@
+{
+  "0001": {
+    "component_class": "LLMQueryRewriter",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "rewriter-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryRewritingPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query rewriting assistant. Rewrite the user message into exactly one self-contained search query that captures the real information need, folding in details from the conversation history only when the new message depends on earlier context.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nWrite a single, clear, self-contained search query. Use the history only when needed to resolve references. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"rewrite_query\", \"arguments\": {\"query\": \"<the rewritten query>\"}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0002": {
+    "component_class": "LLMQueryExpander",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "expander-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryExpansionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query expansion assistant. Rewrite the user message into exactly {n} search queries that broaden retrieval coverage so that more relevant documents can be found.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nProduce exactly {n} concise, independent search queries or keyword phrases. At least one of them must closely preserve the original request; the others should cover related terms, synonyms or angles that may appear in relevant documents. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<query 1>\", \"<query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "n_queries": 3,
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0003": {
+    "component_class": "LLMQueryDecomposer",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "decomposer-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryDecompositionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query decomposition assistant. Split the user's question into the minimal set of simple, independent sub-queries, each of which can be used on its own to retrieve relevant documents.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nDecide by yourself how many sub-queries are needed and use as few as possible.\nDo not produce more than {n_max} sub-queries.\nEach sub-query must be simple, self-contained and independently retrievable. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<sub-query 1>\", \"<sub-query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "max_subqueries": 4,
+      "iteration": 1,
+      "total_iterations": 10
+    }
+  },
+  "0004": {
+    "component_class": "LLMQueryRewriter",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "rewriter-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryRewritingPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query rewriting assistant. Rewrite the user message into exactly one self-contained search query that captures the real information need, folding in details from the conversation history only when the new message depends on earlier context.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nWrite a single, clear, self-contained search query. Use the history only when needed to resolve references. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"rewrite_query\", \"arguments\": {\"query\": \"<the rewritten query>\"}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0005": {
+    "component_class": "LLMQueryExpander",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "expander-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryExpansionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query expansion assistant. Rewrite the user message into exactly {n} search queries that broaden retrieval coverage so that more relevant documents can be found.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nProduce exactly {n} concise, independent search queries or keyword phrases. At least one of them must closely preserve the original request; the others should cover related terms, synonyms or angles that may appear in relevant documents. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<query 1>\", \"<query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "n_queries": 3,
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0006": {
+    "component_class": "LLMQueryDecomposer",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "decomposer-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryDecompositionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query decomposition assistant. Split the user's question into the minimal set of simple, independent sub-queries, each of which can be used on its own to retrieve relevant documents.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nDecide by yourself how many sub-queries are needed and use as few as possible.\nDo not produce more than {n_max} sub-queries.\nEach sub-query must be simple, self-contained and independently retrievable. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<sub-query 1>\", \"<sub-query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "max_subqueries": 4,
+      "iteration": 2,
+      "total_iterations": 10
+    }
+  },
+  "0007": {
+    "component_class": "LLMQueryRewriter",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "rewriter-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryRewritingPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query rewriting assistant. Rewrite the user message into exactly one self-contained search query that captures the real information need, folding in details from the conversation history only when the new message depends on earlier context.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nWrite a single, clear, self-contained search query. Use the history only when needed to resolve references. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"rewrite_query\", \"arguments\": {\"query\": \"<the rewritten query>\"}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0008": {
+    "component_class": "LLMQueryExpander",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "expander-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryExpansionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query expansion assistant. Rewrite the user message into exactly {n} search queries that broaden retrieval coverage so that more relevant documents can be found.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nProduce exactly {n} concise, independent search queries or keyword phrases. At least one of them must closely preserve the original request; the others should cover related terms, synonyms or angles that may appear in relevant documents. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<query 1>\", \"<query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "n_queries": 3,
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0009": {
+    "component_class": "LLMQueryDecomposer",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "decomposer-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryDecompositionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query decomposition assistant. Split the user's question into the minimal set of simple, independent sub-queries, each of which can be used on its own to retrieve relevant documents.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nDecide by yourself how many sub-queries are needed and use as few as possible.\nDo not produce more than {n_max} sub-queries.\nEach sub-query must be simple, self-contained and independently retrievable. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<sub-query 1>\", \"<sub-query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "max_subqueries": 4,
+      "iteration": 3,
+      "total_iterations": 10
+    }
+  },
+  "0010": {
+    "component_class": "LLMQueryRewriter",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "rewriter-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryRewritingPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query rewriting assistant. Rewrite the user message into exactly one self-contained search query that captures the real information need, folding in details from the conversation history only when the new message depends on earlier context.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nWrite a single, clear, self-contained search query. Use the history only when needed to resolve references. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"rewrite_query\", \"arguments\": {\"query\": \"<the rewritten query>\"}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0011": {
+    "component_class": "LLMQueryExpander",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "expander-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryExpansionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query expansion assistant. Rewrite the user message into exactly {n} search queries that broaden retrieval coverage so that more relevant documents can be found.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nProduce exactly {n} concise, independent search queries or keyword phrases. At least one of them must closely preserve the original request; the others should cover related terms, synonyms or angles that may appear in relevant documents. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<query 1>\", \"<query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "n_queries": 3,
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0012": {
+    "component_class": "LLMQueryDecomposer",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "decomposer-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryDecompositionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query decomposition assistant. Split the user's question into the minimal set of simple, independent sub-queries, each of which can be used on its own to retrieve relevant documents.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nDecide by yourself how many sub-queries are needed and use as few as possible.\nDo not produce more than {n_max} sub-queries.\nEach sub-query must be simple, self-contained and independently retrievable. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<sub-query 1>\", \"<sub-query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "max_subqueries": 4,
+      "iteration": 4,
+      "total_iterations": 10
+    }
+  },
+  "0013": {
+    "component_class": "LLMQueryRewriter",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "rewriter-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryRewritingPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query rewriting assistant. Rewrite the user message into exactly one self-contained search query that captures the real information need, folding in details from the conversation history only when the new message depends on earlier context.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nWrite a single, clear, self-contained search query. Use the history only when needed to resolve references. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"rewrite_query\", \"arguments\": {\"query\": \"<the rewritten query>\"}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0014": {
+    "component_class": "LLMQueryExpander",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "expander-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryExpansionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query expansion assistant. Rewrite the user message into exactly {n} search queries that broaden retrieval coverage so that more relevant documents can be found.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nProduce exactly {n} concise, independent search queries or keyword phrases. At least one of them must closely preserve the original request; the others should cover related terms, synonyms or angles that may appear in relevant documents. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<query 1>\", \"<query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "n_queries": 3,
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0015": {
+    "component_class": "LLMQueryDecomposer",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "decomposer-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryDecompositionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query decomposition assistant. Split the user's question into the minimal set of simple, independent sub-queries, each of which can be used on its own to retrieve relevant documents.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nDecide by yourself how many sub-queries are needed and use as few as possible.\nDo not produce more than {n_max} sub-queries.\nEach sub-query must be simple, self-contained and independently retrievable. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<sub-query 1>\", \"<sub-query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "max_subqueries": 4,
+      "iteration": 5,
+      "total_iterations": 10
+    }
+  },
+  "0016": {
+    "component_class": "LLMQueryRewriter",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "rewriter-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryRewritingPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query rewriting assistant. Rewrite the user message into exactly one self-contained search query that captures the real information need, folding in details from the conversation history only when the new message depends on earlier context.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nWrite a single, clear, self-contained search query. Use the history only when needed to resolve references. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"rewrite_query\", \"arguments\": {\"query\": \"<the rewritten query>\"}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0017": {
+    "component_class": "LLMQueryExpander",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "expander-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryExpansionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query expansion assistant. Rewrite the user message into exactly {n} search queries that broaden retrieval coverage so that more relevant documents can be found.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nProduce exactly {n} concise, independent search queries or keyword phrases. At least one of them must closely preserve the original request; the others should cover related terms, synonyms or angles that may appear in relevant documents. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<query 1>\", \"<query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "n_queries": 3,
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0018": {
+    "component_class": "LLMQueryDecomposer",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "decomposer-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryDecompositionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query decomposition assistant. Split the user's question into the minimal set of simple, independent sub-queries, each of which can be used on its own to retrieve relevant documents.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nDecide by yourself how many sub-queries are needed and use as few as possible.\nDo not produce more than {n_max} sub-queries.\nEach sub-query must be simple, self-contained and independently retrievable. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<sub-query 1>\", \"<sub-query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "max_subqueries": 4,
+      "iteration": 6,
+      "total_iterations": 10
+    }
+  },
+  "0019": {
+    "component_class": "LLMQueryRewriter",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "rewriter-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryRewritingPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query rewriting assistant. Rewrite the user message into exactly one self-contained search query that captures the real information need, folding in details from the conversation history only when the new message depends on earlier context.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nWrite a single, clear, self-contained search query. Use the history only when needed to resolve references. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"rewrite_query\", \"arguments\": {\"query\": \"<the rewritten query>\"}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0020": {
+    "component_class": "LLMQueryExpander",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "expander-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryExpansionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query expansion assistant. Rewrite the user message into exactly {n} search queries that broaden retrieval coverage so that more relevant documents can be found.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nProduce exactly {n} concise, independent search queries or keyword phrases. At least one of them must closely preserve the original request; the others should cover related terms, synonyms or angles that may appear in relevant documents. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<query 1>\", \"<query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "n_queries": 3,
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0021": {
+    "component_class": "LLMQueryDecomposer",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "decomposer-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryDecompositionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query decomposition assistant. Split the user's question into the minimal set of simple, independent sub-queries, each of which can be used on its own to retrieve relevant documents.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nDecide by yourself how many sub-queries are needed and use as few as possible.\nDo not produce more than {n_max} sub-queries.\nEach sub-query must be simple, self-contained and independently retrievable. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<sub-query 1>\", \"<sub-query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "max_subqueries": 4,
+      "iteration": 7,
+      "total_iterations": 10
+    }
+  },
+  "0022": {
+    "component_class": "LLMQueryRewriter",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "rewriter-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryRewritingPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query rewriting assistant. Rewrite the user message into exactly one self-contained search query that captures the real information need, folding in details from the conversation history only when the new message depends on earlier context.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nWrite a single, clear, self-contained search query. Use the history only when needed to resolve references. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"rewrite_query\", \"arguments\": {\"query\": \"<the rewritten query>\"}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0023": {
+    "component_class": "LLMQueryExpander",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "expander-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryExpansionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query expansion assistant. Rewrite the user message into exactly {n} search queries that broaden retrieval coverage so that more relevant documents can be found.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nProduce exactly {n} concise, independent search queries or keyword phrases. At least one of them must closely preserve the original request; the others should cover related terms, synonyms or angles that may appear in relevant documents. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<query 1>\", \"<query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "n_queries": 3,
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0024": {
+    "component_class": "LLMQueryDecomposer",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "decomposer-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryDecompositionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query decomposition assistant. Split the user's question into the minimal set of simple, independent sub-queries, each of which can be used on its own to retrieve relevant documents.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nDecide by yourself how many sub-queries are needed and use as few as possible.\nDo not produce more than {n_max} sub-queries.\nEach sub-query must be simple, self-contained and independently retrievable. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<sub-query 1>\", \"<sub-query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "max_subqueries": 4,
+      "iteration": 8,
+      "total_iterations": 10
+    }
+  },
+  "0025": {
+    "component_class": "LLMQueryRewriter",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "rewriter-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryRewritingPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query rewriting assistant. Rewrite the user message into exactly one self-contained search query that captures the real information need, folding in details from the conversation history only when the new message depends on earlier context.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nWrite a single, clear, self-contained search query. Use the history only when needed to resolve references. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"rewrite_query\", \"arguments\": {\"query\": \"<the rewritten query>\"}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0026": {
+    "component_class": "LLMQueryExpander",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "expander-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryExpansionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query expansion assistant. Rewrite the user message into exactly {n} search queries that broaden retrieval coverage so that more relevant documents can be found.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nProduce exactly {n} concise, independent search queries or keyword phrases. At least one of them must closely preserve the original request; the others should cover related terms, synonyms or angles that may appear in relevant documents. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<query 1>\", \"<query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "n_queries": 3,
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0027": {
+    "component_class": "LLMQueryDecomposer",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "decomposer-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryDecompositionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query decomposition assistant. Split the user's question into the minimal set of simple, independent sub-queries, each of which can be used on its own to retrieve relevant documents.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nDecide by yourself how many sub-queries are needed and use as few as possible.\nDo not produce more than {n_max} sub-queries.\nEach sub-query must be simple, self-contained and independently retrievable. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<sub-query 1>\", \"<sub-query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "max_subqueries": 4,
+      "iteration": 9,
+      "total_iterations": 10
+    }
+  },
+  "0028": {
+    "component_class": "LLMQueryRewriter",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "rewriter-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryRewritingPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query rewriting assistant. Rewrite the user message into exactly one self-contained search query that captures the real information need, folding in details from the conversation history only when the new message depends on earlier context.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nWrite a single, clear, self-contained search query. Use the history only when needed to resolve references. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"rewrite_query\", \"arguments\": {\"query\": \"<the rewritten query>\"}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0029": {
+    "component_class": "LLMQueryExpander",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "expander-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryExpansionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query expansion assistant. Rewrite the user message into exactly {n} search queries that broaden retrieval coverage so that more relevant documents can be found.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nProduce exactly {n} concise, independent search queries or keyword phrases. At least one of them must closely preserve the original request; the others should cover related terms, synonyms or angles that may appear in relevant documents. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"expand_query\", \"arguments\": {\"queries\": [\"<query 1>\", \"<query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "n_queries": 3,
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  },
+  "0030": {
+    "component_class": "LLMQueryDecomposer",
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "config_name": "decomposer-qwen1.5b",
+    "params": {
+      "prompt": {
+        "component": "DefaultQueryDecompositionPrompt",
+        "params": {
+          "language": "en",
+          "template": "You are a query decomposition assistant. Split the user's question into the minimal set of simple, independent sub-queries, each of which can be used on its own to retrieve relevant documents.\n\nConversation history (may be empty):\n{history}\n\nCurrent user message:\n{input}\n\nDecide by yourself how many sub-queries are needed and use as few as possible.\nDo not produce more than {n_max} sub-queries.\nEach sub-query must be simple, self-contained and independently retrievable. Do not add explanations.\n\nRespond with ONLY one JSON object in this exact OpenAI-style function call format, with no markdown fences and no extra text:\n{\"name\": \"decompose_query\", \"arguments\": {\"queries\": [\"<sub-query 1>\", \"<sub-query 2>\"]}}"
+        }
+      },
+      "llm_model": {
+        "component": "Qwen25_15BInstruct",
+        "params": {
+          "max_tokens": 256,
+          "temperature": 0.1,
+          "frequency_penalty": 0.0,
+          "context_window": 2048,
+          "device": "CPU"
+        }
+      },
+      "history_window": 2,
+      "max_subqueries": 4,
+      "iteration": 10,
+      "total_iterations": 10
+    }
+  }
+}
