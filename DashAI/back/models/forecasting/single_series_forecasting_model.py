@@ -237,6 +237,16 @@ class SingleSeriesForecastingModel(BaseModel):
         metadata["exogenous"] = cls.EXOGENOUS
         return metadata
 
+    def resolved_defaults(self) -> Dict[str, Dict[str, Any]]:
+        """The parameters left empty that this model fills in itself.
+
+        ``{name: {"value", "reason": {"key", "values"}}}``, which a run
+        records beside its parameters for the app to show
+        (``resolved_parameters``). The season is not here: the unit that
+        builds the model reads it from the frequency. None by default.
+        """
+        return {}
+
     # --- the contract --------------------------------------------------------
 
     def fit(

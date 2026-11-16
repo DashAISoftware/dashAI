@@ -1,6 +1,6 @@
 """Forecasting by reduction to regression, with skforecast."""
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -455,6 +455,21 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
         self.season_length = season_length
         self.differentiation = differentiation
         self._forecaster = None
+
+    def resolved_defaults(self) -> Dict[str, Dict[str, Any]]:
+        """Lags left empty: one season, ``lagsFromSeason``, or at least 3,
+        ``lagsAtLeast`` when the season is shorter."""
+        if self.lags is not None:
+            return {}
+        season = int(self.season_length)
+        if season < MIN_DEFAULT_LAGS:
+            reason = {
+                "key": "lagsAtLeast",
+                "values": {"season": season, "minimum": MIN_DEFAULT_LAGS},
+            }
+        else:
+            reason = {"key": "lagsFromSeason", "values": {"season": season}}
+        return {"lags": {"value": self.resolved_lags(), "reason": reason}}
 
     def resolved_lags(self) -> int:
         """The lags each prediction reads: ``lags``, or one season, at least 3."""

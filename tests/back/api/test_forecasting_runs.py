@@ -27,6 +27,11 @@ from tests.back.api.test_forecasting_acceptance import (
     _train,
 )
 
+MONTHLY_SEASON = {
+    "value": 12,
+    "reason": {"key": "seasonFromStep", "values": {"step": "M"}},
+}
+
 CUTS = {
     "horizon": 3,
     "validation_origins": [36, 39, 42],
@@ -52,8 +57,10 @@ def test_the_run_stores_its_cuts_and_the_parameters_it_used(client, run_id):
     run = _get(client, Run, run_id)
 
     assert json.loads(run.split_indexes) == CUTS
-    # The season left out of the parameters came from the monthly grid.
-    assert run.parameters == {"season_length": 12}
+    # The season left out stays left out, so a retrain reads the frequency
+    # again; the season it used is recorded apart, with where it came from.
+    assert run.parameters == {}
+    assert run.resolved_parameters == {"season_length": MONTHLY_SEASON}
 
 
 def test_the_run_has_no_partition_to_explain(client, run_id):
@@ -855,3 +862,121 @@ def test_a_grouped_hpo_plot_goes_to_the_legacy_entries_as_its_first_figure(
     leaves = [pickle.loads((tmp_path / entry).read_bytes()) for entry in plots.values()]
     assert [leaf["type"] for leaf in leaves] == ["plotly", "plotly"]
     assert [leaf["title"] for leaf in leaves] == ["history", "slice a"]
+
+
+# --------------------------------------------------------------------------- #
+# What the run's empty parameters resolved to (RECONCILING_FORECASTING §8.9)
+# --------------------------------------------------------------------------- #
+
+#: What the run form sends for the reduction model's season and lags left
+#: empty: the season as a search envelope with no fixed value, the lags None.
+EMPTY_SEASON_ENVELOPE = {
+    "optimize": False,
+    "fixed_value": None,
+    "lower_bound": 1,
+    "upper_bound": 12,
+}
+REDUCTION_LEFT_EMPTY = {
+    "lags": None,
+    "season_length": EMPTY_SEASON_ENVELOPE,
+    "differentiation": 0,
+}
+REDUCTION_RESOLVED = {
+    "season_length": MONTHLY_SEASON,
+    "lags": {
+        "value": 12,
+        "reason": {"key": "lagsFromSeason", "values": {"season": 12}},
+    },
+}
+
+
+@pytest.fixture(scope="module", name="reduction_run")
+def a_reduction_run_with_its_season_and_lags_left_empty(client, tmp_path_factory):
+    session_id = _session(client, tmp_path_factory.mktemp("resolved"), _monthly())
+    return _train(
+        client, session_id, "RecursiveRegressionForecaster", REDUCTION_LEFT_EMPTY
+    )
+
+
+def test_the_run_records_what_its_empty_parameters_resolved_to(client, reduction_run):
+    run = _get(client, Run, reduction_run)
+
+    assert run.resolved_parameters == REDUCTION_RESOLVED
+
+
+def test_the_run_keeps_its_parameters_as_the_user_left_them(client, reduction_run):
+    run = _get(client, Run, reduction_run)
+
+    assert run.parameters["lags"] is None
+    assert run.parameters["season_length"] == EMPTY_SEASON_ENVELOPE
+
+
+def test_the_run_serves_what_its_parameters_resolved_to(client, reduction_run):
+    response = client.get(f"/api/v1/run/{reduction_run}")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["resolved_parameters"] == REDUCTION_RESOLVED
+
+
+def test_a_season_and_lags_given_are_not_recorded(client, tmp_path):
+    session_id = _session(client, tmp_path, _monthly())
+    run_id = _train(
+        client,
+        session_id,
+        "RecursiveRegressionForecaster",
+        {"lags": 4, "season_length": 6, "differentiation": 0},
+    )
+
+    run = _get(client, Run, run_id)
+    assert run.resolved_parameters == {}
+    assert run.parameters["season_length"] == 6
+
+
+def test_a_searched_season_is_the_search_s_not_the_frequency_s(client, tmp_path):
+    tuned = _get(client, Run, _tuned_run(client, tmp_path))
+
+    assert tuned.resolved_parameters == {}
+
+
+def test_a_retrain_reads_the_empty_parameters_again(client, tmp_path):
+    from DashAI.back.job.model_job import ModelJob
+
+    session_id = _session(client, tmp_path, _monthly())
+    run_id = _train(
+        client, session_id, "RecursiveRegressionForecaster", REDUCTION_LEFT_EMPTY
+    )
+
+    assert client.patch(f"/api/v1/run/{run_id}/reset").status_code == 200
+    assert _get(client, Run, run_id).resolved_parameters is None
+    ModelJob(run_id=run_id).run()
+
+    run = _get(client, Run, run_id)
+    assert run.parameters["season_length"] == EMPTY_SEASON_ENVELOPE
+    assert run.resolved_parameters == REDUCTION_RESOLVED
+
+
+def test_a_session_package_carries_what_the_parameters_resolved_to(
+    client, reduction_run, tmp_path
+):
+    container = client.app.container
+    package = tmp_path / "resolved.dashai"
+    build_session_package(
+        _get(client, Run, reduction_run).model_session_id,
+        [reduction_run],
+        True,
+        package,
+        container["session_factory"],
+        container["component_registry"],
+    )
+
+    result = import_session_package(
+        package,
+        container["session_factory"],
+        container["component_registry"],
+        container["config"],
+        container["job_queue"],
+    )
+
+    with container["session_factory"]() as db:
+        (imported,) = db.query(Run).filter(Run.model_session_id == result["session_id"])
+        assert imported.resolved_parameters == REDUCTION_RESOLVED

@@ -866,3 +866,49 @@ def test_the_lags_say_what_empty_and_a_number_do(lang, sentences):
 
     for sentence in sentences:
         assert sentence in description
+
+
+# --- what a model fills in itself, for the run to show -----------------------
+
+
+@pytest.mark.parametrize(
+    ("season", "lags", "resolved"),
+    [
+        (
+            12,
+            None,
+            {
+                "value": 12,
+                "reason": {"key": "lagsFromSeason", "values": {"season": 12}},
+            },
+        ),
+        (
+            1,
+            None,
+            {
+                "value": 3,
+                "reason": {"key": "lagsAtLeast", "values": {"season": 1, "minimum": 3}},
+            },
+        ),
+    ],
+)
+def test_the_reduction_model_says_what_its_empty_lags_resolve_to(
+    season, lags, resolved
+):
+    model = RecursiveRegressionForecaster(season_length=season, lags=lags)
+
+    assert model.resolved_defaults() == {"lags": resolved}
+
+
+def test_lags_given_are_not_resolved():
+    assert (
+        RecursiveRegressionForecaster(season_length=12, lags=5).resolved_defaults()
+        == {}
+    )
+
+
+@pytest.mark.parametrize(
+    "model_class", [m for m in ALL_MODELS if m is not RecursiveRegressionForecaster]
+)
+def test_the_other_models_fill_in_nothing_themselves(model_class):
+    assert model_class().resolved_defaults() == {}

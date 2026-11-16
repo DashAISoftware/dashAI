@@ -171,6 +171,120 @@ def with_season_from_grid(parameters: Dict[str, Any], freq: str) -> Dict[str, An
     return resolved
 
 
+def season_reason(freq: str) -> Dict[str, Any]:
+    """Where a season read from the frequency came from, for the app to say.
+
+    ``{"key", "values"}``, which the app words in its own language, as
+    ``exogenous_usage`` declares its reason. A step taken once, in its largest
+    whole unit, is named by its base step (``"M"`` for ``MS``, ``"D"`` for
+    ``24h``): ``seasonFromStep``. A multiple of a step, or a step the table does
+    not know, is named by the frequency itself: ``seasonFromFrequency``.
+
+    Parameters
+    ----------
+    freq : str
+        The frequency of the series' grid.
+
+    Returns
+    -------
+    dict
+        ``{"key": "seasonFromStep", "values": {"step"}}`` or
+        ``{"key": "seasonFromFrequency", "values": {"freq"}}``.
+    """
+    import pandas as pd
+
+    step, n = _whole_step(pd.tseries.frequencies.to_offset(freq))
+    base = _base_step(step)
+    if n == 1 and base in SEASON_BY_STEP:
+        return {"key": "seasonFromStep", "values": {"step": base}}
+    return {"key": "seasonFromFrequency", "values": {"freq": freq}}
+
+
+def _season_left_to_the_frequency(value: Any) -> bool:
+    """Whether the run left its season for the frequency to set, unsearched.
+
+    Empty as ``with_season_from_grid`` reads it, except a searched envelope:
+    its season is the one the search chose, not the frequency's.
+    """
+    if value is None:
+        return True
+    return (
+        isinstance(value, dict)
+        and value.get("fixed_value") is None
+        and not value.get("optimize")
+    )
+
+
+def resolved_parameters(
+    model: Any, given: Dict[str, Any], freq: str
+) -> Dict[str, Dict[str, Any]]:
+    """What a run's parameters left empty resolved to, and where from.
+
+    The run keeps its parameters as the user left them, so a retrain resolves
+    them again; this is what the app shows beside them. The season is the
+    frequency's when the run left it empty and did not search it
+    (``season_reason``); the rest is what the model filled in itself
+    (``resolved_defaults``), such as the reduction model's lags.
+
+    Parameters
+    ----------
+    model : SingleSeriesForecastingModel
+        The model built with the parameters the run used.
+    given : dict
+        The run's parameters, as the user left them.
+    freq : str
+        The frequency of the series' grid.
+
+    Returns
+    -------
+    dict
+        ``{name: {"value", "reason": {"key", "values"}}}``, empty when the run
+        left nothing to resolve.
+    """
+    resolved = {}
+    if hasattr(model, "season_length") and _season_left_to_the_frequency(
+        given.get("season_length")
+    ):
+        resolved["season_length"] = {
+            "value": int(model.season_length),
+            "reason": season_reason(freq),
+        }
+    resolved.update(model.resolved_defaults())
+    return resolved
+
+
+def kept_parameters(
+    used: Dict[str, Any], given: Dict[str, Any], resolved: Dict[str, Any]
+) -> Dict[str, Any]:
+    """The parameters a run keeps: the ones it used, with the empty left empty.
+
+    ``used`` is what the run trained with, the best of a search or the given
+    ones with the season filled in. A parameter in ``resolved`` goes back to
+    what the user left: left out, None or an envelope with no fixed value.
+
+    Parameters
+    ----------
+    used : dict
+        The parameters the run trained with.
+    given : dict
+        The run's parameters, as the user left them.
+    resolved : dict
+        What ``resolved_parameters`` recorded for the run.
+
+    Returns
+    -------
+    dict
+        A copy of ``used``.
+    """
+    kept = dict(used)
+    for name in resolved:
+        if name in given:
+            kept[name] = given[name]
+        else:
+            kept.pop(name, None)
+    return kept
+
+
 def build_model(model_class: type, parameters: Dict[str, Any], run_id=None):
     """A fresh, unfitted model with the given parameter tree.
 

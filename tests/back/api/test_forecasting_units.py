@@ -22,7 +22,12 @@ from DashAI.back.units.backtest_forecaster_unit import BacktestForecasterUnit
 from DashAI.back.units.build_forecaster_unit import BuildForecasterUnit
 from DashAI.back.units.context import ExecutionContext
 from DashAI.back.units.fit_final_forecaster_unit import FitFinalForecasterUnit
-from DashAI.back.units.forecast_scope import season_length_for
+from DashAI.back.units.forecast_scope import (
+    kept_parameters,
+    resolved_parameters,
+    season_length_for,
+    season_reason,
+)
 from DashAI.back.units.prepare_series_unit import PrepareSeriesUnit
 from DashAI.back.units.score_forecasts_unit import ScoreForecastsUnit
 
@@ -177,6 +182,105 @@ def test_the_season_follows_the_frequency(freq, season):
 )
 def test_the_season_divides_the_cycle_by_the_step(freq, season):
     assert season_length_for(freq) == season
+
+
+@pytest.mark.parametrize(
+    ("freq", "reason"),
+    [
+        # A step the app can name, taken once: the season of that step.
+        ("MS", {"key": "seasonFromStep", "values": {"step": "M"}}),
+        ("ME", {"key": "seasonFromStep", "values": {"step": "M"}}),
+        ("D", {"key": "seasonFromStep", "values": {"step": "D"}}),
+        ("h", {"key": "seasonFromStep", "values": {"step": "h"}}),
+        ("YS", {"key": "seasonFromStep", "values": {"step": "Y"}}),
+        ("W-SUN", {"key": "seasonFromStep", "values": {"step": "W"}}),
+        ("B", {"key": "seasonFromStep", "values": {"step": "B"}}),
+        ("SMS", {"key": "seasonFromStep", "values": {"step": "SM"}}),
+        ("QS-JAN", {"key": "seasonFromStep", "values": {"step": "Q"}}),
+        # Read in its largest whole unit first, as season_length_for does.
+        ("24h", {"key": "seasonFromStep", "values": {"step": "D"}}),
+        # A multiple, or a step the table does not know: the frequency itself.
+        ("15min", {"key": "seasonFromFrequency", "values": {"freq": "15min"}}),
+        ("3D", {"key": "seasonFromFrequency", "values": {"freq": "3D"}}),
+        ("ms", {"key": "seasonFromFrequency", "values": {"freq": "ms"}}),
+    ],
+)
+def test_the_season_says_which_frequency_it_came_from(freq, reason):
+    assert season_reason(freq) == reason
+
+
+MONTHLY_SEASON = {
+    "value": 12,
+    "reason": {"key": "seasonFromStep", "values": {"step": "M"}},
+}
+EMPTY_ENVELOPE = {
+    "optimize": False,
+    "fixed_value": None,
+    "lower_bound": 1,
+    "upper_bound": 12,
+}
+
+
+@pytest.mark.parametrize(
+    "given",
+    [{}, {"season_length": None}, {"season_length": EMPTY_ENVELOPE}],
+    ids=["left_out", "none", "empty_envelope"],
+)
+def test_a_season_left_empty_is_recorded_with_where_it_came_from(given):
+    from DashAI.back.models.forecasting.seasonal_naive import (
+        SeasonalNaiveForecaster,
+    )
+
+    model = SeasonalNaiveForecaster(season_length=12)
+
+    assert resolved_parameters(model, given, "MS") == {"season_length": MONTHLY_SEASON}
+
+
+@pytest.mark.parametrize(
+    "given",
+    [
+        {"season_length": 1},
+        {"season_length": {**EMPTY_ENVELOPE, "fixed_value": 12}},
+        # Searched: the search chose it, not the frequency.
+        {"season_length": {**EMPTY_ENVELOPE, "optimize": True}},
+    ],
+    ids=["given", "given_envelope", "searched"],
+)
+def test_a_season_the_run_gives_or_searches_is_not_recorded(given):
+    from DashAI.back.models.forecasting.seasonal_naive import (
+        SeasonalNaiveForecaster,
+    )
+
+    model = SeasonalNaiveForecaster(season_length=12)
+
+    assert resolved_parameters(model, given, "MS") == {}
+
+
+def test_a_model_without_a_season_records_nothing():
+    from DashAI.back.models.forecasting.naive import NaiveForecaster
+
+    assert resolved_parameters(NaiveForecaster(), {}, "MS") == {}
+
+
+@pytest.mark.parametrize(
+    ("given", "kept"),
+    [
+        ({}, {}),
+        ({"season_length": None}, {"season_length": None}),
+        ({"season_length": EMPTY_ENVELOPE}, {"season_length": EMPTY_ENVELOPE}),
+    ],
+    ids=["left_out", "none", "empty_envelope"],
+)
+def test_the_run_keeps_the_season_left_empty(given, kept):
+    used = {"season_length": 12}
+
+    assert kept_parameters(used, given, {"season_length": MONTHLY_SEASON}) == kept
+
+
+def test_the_run_keeps_what_it_used_for_the_rest():
+    used = {"season_length": 3, "p": 2}
+
+    assert kept_parameters(used, {"season_length": 3, "p": 1}, {}) == used
 
 
 def _build(params):
