@@ -10,6 +10,10 @@ const SAMPLE = {
   photo: ["<bytes>", "<bytes>"],
   category: ["a", "b"],
 };
+const COLUMN_FIELDS = [
+  { key: "label_column", title: "Label column", multiple: false },
+  { key: "skipped_columns", title: "Skipped columns", multiple: true },
+];
 
 const renderStep = (props = {}) => {
   const handlers = {
@@ -24,8 +28,8 @@ const renderStep = (props = {}) => {
       columns={COLUMNS}
       sample={SAMPLE}
       unsupportedColumns={["photo"]}
-      target="category"
-      ignored={["id"]}
+      columnFields={COLUMN_FIELDS}
+      columnValues={{ label_column: "category", skipped_columns: ["id"] }}
       loading={false}
       error={false}
       canContinue
@@ -39,12 +43,12 @@ const renderStep = (props = {}) => {
 const reviewButton = () => screen.getByRole("button", { name: /review/i });
 
 describe("ExportMetadataStep", () => {
-  it("previews the dataset and marks each column role", () => {
+  it("marks each picked column with the title of its field", () => {
     renderStep();
 
     expect(screen.getByText("12")).toBeInTheDocument();
-    expect(screen.getByText("target")).toBeInTheDocument();
-    expect(screen.getByText("ignored")).toBeInTheDocument();
+    expect(screen.getByText("Label column")).toBeInTheDocument();
+    expect(screen.getByText("Skipped columns")).toBeInTheDocument();
     expect(screen.getByText("not sent")).toBeInTheDocument();
   });
 
@@ -75,11 +79,11 @@ describe("ExportMetadataStep", () => {
   });
 
   it("explains what is missing while the form is incomplete", () => {
-    renderStep({ canContinue: false, target: "" });
+    renderStep({ canContinue: false, columnValues: {} });
 
     expect(reviewButton()).toBeDisabled();
     expect(
-      screen.getByText(/Choose the target column and fill in the required/),
+      screen.getByText("Fill in the required fields to continue."),
     ).toBeInTheDocument();
   });
 

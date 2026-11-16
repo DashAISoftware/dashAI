@@ -19,6 +19,7 @@ from DashAI.back.dataset_exporters.base_dataset_exporter import (
     DatasetCompatibility,
     ExportPayload,
     ExportResult,
+    column_field,
 )
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_image import DashAIImage
@@ -62,7 +63,7 @@ OPENML_LICENCES: Final = [
 class OpenMLExportSchema(BaseDatasetExportSchema):
     """Parameters required to publish a dataset on OpenML."""
 
-    default_target_attribute: schema_field(
+    default_target_attribute: column_field(
         string_field(),
         "",
         description=MultilingualString(
@@ -158,9 +159,10 @@ class OpenMLExportSchema(BaseDatasetExportSchema):
             en="Language", es="Idioma", pt="Idioma", de="Sprache", zh="语言"
         ),
     )  # type: ignore
-    ignore_attribute: schema_field(
+    ignore_attribute: column_field(
         none_type(list_field(string_field())),
         None,
+        multiple=True,
         description=MultilingualString(
             en="Columns that OpenML tasks should not use as features, such as IDs.",
             es=(

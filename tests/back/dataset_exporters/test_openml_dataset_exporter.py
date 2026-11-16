@@ -11,6 +11,7 @@ from pydantic import ValidationError
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.dataset_exporters.base_dataset_exporter import (
+    COLUMN_FIELD_KEY,
     CompatibilityStatus,
     ExportPayload,
     ExportResult,
@@ -116,6 +117,20 @@ def test_schema_exposes_openml_fields():
         "licence",
         "ignore_attribute",
     } <= set(properties)
+
+
+def test_schema_marks_the_column_fields():
+    properties = OpenMLDatasetExporter.get_schema()["properties"]
+    columns = {
+        key: prop[COLUMN_FIELD_KEY]
+        for key, prop in properties.items()
+        if COLUMN_FIELD_KEY in prop
+    }
+
+    assert columns == {
+        "default_target_attribute": "single",
+        "ignore_attribute": "multiple",
+    }
 
 
 def test_validate_accepts_valid_input():

@@ -1,10 +1,7 @@
 import React from "react";
 import { fireEvent, screen, within } from "@testing-library/react";
 import { renderWithProviders } from "../../test-utils/renderWithProviders";
-import ExportMetadataPanel, {
-  IGNORED_FIELD,
-  TARGET_FIELD,
-} from "./ExportMetadataPanel";
+import ExportMetadataPanel from "./ExportMetadataPanel";
 
 // See FormSchemaRenderFields.test.jsx: react-markdown is ESM only.
 jest.mock("react-markdown", () => ({
@@ -29,19 +26,35 @@ jest.mock(
       children,
 );
 
+// Field names are made up on purpose: the panel must work from the schema
+// marks alone, whatever the platform calls its column fields.
+const LABEL = {
+  key: "label_column",
+  title: "Label column",
+  description: "Column to predict.",
+  multiple: false,
+  required: true,
+};
+const SKIPPED = {
+  key: "skipped_columns",
+  title: "Skipped columns",
+  description: "Columns left as metadata.",
+  multiple: true,
+  required: false,
+};
+
 const renderPanel = (props = {}) => {
   const handlers = {
-    onTargetChange: jest.fn(),
-    onIgnoredChange: jest.fn(),
+    onColumnChange: jest.fn(),
     onValuesChange: jest.fn(),
     setError: jest.fn(),
   };
   renderWithProviders(
     <ExportMetadataPanel
-      exporterName="OpenMLDatasetExporter"
+      exporterName="SomeExporter"
+      columnFields={[LABEL, SKIPPED]}
       columns={["id", "price", "category"]}
-      target=""
-      ignored={[]}
+      columnValues={{}}
       initialValues={{ name: "catalog" }}
       formSubmitRef={{ current: null }}
       {...handlers}
@@ -51,30 +64,51 @@ const renderPanel = (props = {}) => {
   return handlers;
 };
 
-const openSelect = (index) => {
-  fireEvent.mouseDown(screen.getAllByRole("combobox")[index]);
+const openSelect = (name) => {
+  fireEvent.mouseDown(screen.getByRole("combobox", { name }));
   return within(screen.getByRole("listbox"));
 };
 
 describe("ExportMetadataPanel", () => {
   beforeEach(() => {
-    mockFormik.values = { [TARGET_FIELD]: "", [IGNORED_FIELD]: null };
+    mockFormik.values = { label_column: "", skipped_columns: null };
     mockFormik.setFieldValue.mockClear();
     mockFormSchemaProps.mockClear();
   });
 
-  it("offers the dataset columns as target", () => {
-    const { onTargetChange } = renderPanel();
+  it("draws one selector per column field, titled as the schema says", () => {
+    renderPanel();
 
-    fireEvent.click(openSelect(0).getByRole("option", { name: "category" }));
-
-    expect(onTargetChange).toHaveBeenCalledWith("category");
+    expect(screen.getByText("Label column")).toBeInTheDocument();
+    expect(screen.getByText("Columns left as metadata.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "Skipped columns" }),
+    ).toBeInTheDocument();
   });
 
-  it("does not offer the target as an ignored column", () => {
-    renderPanel({ target: "category" });
+  it("draws no selector when the platform declares no column field", () => {
+    renderPanel({ columnFields: [] });
 
-    const options = openSelect(1).getAllByRole("option");
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(mockFormSchemaProps).toHaveBeenCalledWith(
+      expect.objectContaining({ excludeFields: [] }),
+    );
+  });
+
+  it("offers the dataset columns in a single column field", () => {
+    const { onColumnChange } = renderPanel();
+
+    fireEvent.click(
+      openSelect("Label column").getByRole("option", { name: "category" }),
+    );
+
+    expect(onColumnChange).toHaveBeenCalledWith("label_column", "category");
+  });
+
+  it("does not offer a column already picked in a single field", () => {
+    renderPanel({ columnValues: { label_column: "category" } });
+
+    const options = openSelect("Skipped columns").getAllByRole("option");
 
     expect(options.map((option) => option.textContent)).toEqual([
       "id",
@@ -82,12 +116,17 @@ describe("ExportMetadataPanel", () => {
     ]);
   });
 
-  it("drops a column from the ignored ones when it becomes the target", () => {
-    const { onIgnoredChange } = renderPanel({ ignored: ["id", "price"] });
+  it("frees a column from the multiple fields when a single field takes it", () => {
+    const { onColumnChange } = renderPanel({
+      columnValues: { skipped_columns: ["id", "price"] },
+    });
 
-    fireEvent.click(openSelect(0).getByRole("option", { name: "price" }));
+    fireEvent.click(
+      openSelect("Label column").getByRole("option", { name: "price" }),
+    );
 
-    expect(onIgnoredChange).toHaveBeenCalledWith(["id"]);
+    expect(onColumnChange).toHaveBeenCalledWith("label_column", "price");
+    expect(onColumnChange).toHaveBeenCalledWith("skipped_columns", ["id"]);
   });
 
   it("hands the column fields to the form instead of drawing them twice", () => {
@@ -95,28 +134,30 @@ describe("ExportMetadataPanel", () => {
 
     expect(mockFormSchemaProps).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: "OpenMLDatasetExporter",
-        excludeFields: [TARGET_FIELD, IGNORED_FIELD],
+        model: "SomeExporter",
+        excludeFields: ["label_column", "skipped_columns"],
         initialValues: { name: "catalog" },
       }),
     );
   });
 
-  it("mirrors the selected columns into the form values", () => {
-    renderPanel({ target: "category", ignored: ["id"] });
+  it("mirrors the picked columns into the form values", () => {
+    renderPanel({
+      columnValues: { label_column: "category", skipped_columns: ["id"] },
+    });
 
     expect(mockFormik.setFieldValue).toHaveBeenCalledWith(
-      TARGET_FIELD,
+      "label_column",
       "category",
     );
-    expect(mockFormik.setFieldValue).toHaveBeenCalledWith(IGNORED_FIELD, [
+    expect(mockFormik.setFieldValue).toHaveBeenCalledWith("skipped_columns", [
       "id",
     ]);
   });
 
   it("waits for the form schema before mirroring the columns", () => {
     mockFormik.values = {};
-    renderPanel({ target: "category" });
+    renderPanel({ columnValues: { label_column: "category" } });
 
     expect(mockFormik.setFieldValue).not.toHaveBeenCalled();
   });

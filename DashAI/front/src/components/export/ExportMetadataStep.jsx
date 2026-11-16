@@ -19,16 +19,17 @@ import ExportBreadcrumbs from "./ExportBreadcrumbs";
  * Third step of the dataset export flow: describe the dataset.
  *
  * The form lives in the right panel; this center view previews the dataset
- * and marks which columns are the target, which are ignored and which the
- * platform cannot store.
+ * and marks the columns picked in each column field of the platform's schema
+ * (labelled with the field's title) and the columns the platform cannot
+ * store. A column picked in a single column field is highlighted.
  *
  * @param {string} platformName - Display name of the chosen platform.
  * @param {string} datasetName - Name of the dataset being exported.
  * @param {Array<string>} columns - All dataset columns, in order.
  * @param {object} sample - Preview rows as ``{column: [values]}``.
  * @param {Array<string>} unsupportedColumns - Columns the platform cannot store.
- * @param {string} target - Selected target column ("" when none).
- * @param {Array<string>} ignored - Selected ignored columns.
+ * @param {Array<object>} columnFields - Column fields from ``getColumnFields``.
+ * @param {object} columnValues - Picked value of each column field.
  * @param {boolean} loading - Whether the dataset is still loading.
  * @param {boolean} error - Whether the dataset failed to load.
  * @param {boolean} canContinue - Whether the form is complete and valid.
@@ -42,8 +43,8 @@ export default function ExportMetadataStep({
   columns,
   sample,
   unsupportedColumns,
-  target,
-  ignored,
+  columnFields,
+  columnValues,
   loading,
   error,
   canContinue,
@@ -57,16 +58,24 @@ export default function ExportMetadataStep({
     ...columns.map((column) => sample?.[column]?.length ?? 0),
   );
 
+  /** The role a column plays, as ``{kind, label}``, or null if none. */
   const columnRole = (column) => {
-    if (unsupportedColumns.includes(column)) return "unsupported";
-    if (column === target) return "target";
-    if (ignored.includes(column)) return "ignored";
-    return null;
+    if (unsupportedColumns.includes(column)) {
+      return { kind: "unsupported", label: t("export:role.unsupported") };
+    }
+    const field = columnFields.find((candidate) => {
+      const value = columnValues[candidate.key];
+      return candidate.multiple
+        ? (value ?? []).includes(column)
+        : value === column;
+    });
+    if (!field) return null;
+    return { kind: field.multiple ? "multiple" : "single", label: field.title };
   };
 
   const headerSx = {
-    target: { color: "primary.main", fontWeight: 600 },
-    ignored: { color: "text.disabled" },
+    single: { color: "primary.main", fontWeight: 600 },
+    multiple: { color: "text.secondary" },
     unsupported: { color: "text.disabled", textDecoration: "line-through" },
   };
 
@@ -95,8 +104,8 @@ export default function ExportMetadataStep({
                     key={column}
                     sx={{
                       whiteSpace: "nowrap",
-                      ...(role ? headerSx[role] : {}),
-                      ...(role === "target"
+                      ...(role ? headerSx[role.kind] : {}),
+                      ...(role?.kind === "single"
                         ? { backgroundColor: "action.selected" }
                         : {}),
                     }}
@@ -108,7 +117,7 @@ export default function ExportMetadataStep({
                         variant="caption"
                         sx={{ display: "block", textDecoration: "none" }}
                       >
-                        {t(`export:role.${role}`)}
+                        {role.label}
                       </Typography>
                     )}
                   </TableCell>
@@ -128,15 +137,15 @@ export default function ExportMetadataStep({
                       sx={{
                         whiteSpace: "nowrap",
                         color:
-                          role === "ignored" || role === "unsupported"
+                          role?.kind === "unsupported"
                             ? "text.disabled"
                             : undefined,
-                        ...(role === "target"
+                        ...(role?.kind === "single"
                           ? { backgroundColor: "action.hover" }
                           : {}),
                       }}
                     >
-                      {role === "unsupported" ? "—" : String(value ?? "")}
+                      {role?.kind === "unsupported" ? "—" : String(value ?? "")}
                     </TableCell>
                   );
                 })}
@@ -205,8 +214,14 @@ ExportMetadataStep.propTypes = {
   columns: PropTypes.arrayOf(PropTypes.string).isRequired,
   sample: PropTypes.object,
   unsupportedColumns: PropTypes.arrayOf(PropTypes.string).isRequired,
-  target: PropTypes.string.isRequired,
-  ignored: PropTypes.arrayOf(PropTypes.string).isRequired,
+  columnFields: PropTypes.arrayOf(
+    PropTypes.shape({
+      key: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      multiple: PropTypes.bool.isRequired,
+    }),
+  ).isRequired,
+  columnValues: PropTypes.object.isRequired,
   loading: PropTypes.bool,
   error: PropTypes.bool,
   canContinue: PropTypes.bool,

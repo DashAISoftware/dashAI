@@ -3,7 +3,9 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Final
+from typing import TYPE_CHECKING, Annotated, Any, Callable, Final, Type, Union
+
+from pydantic import Field
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import schema_field, string_field
@@ -13,6 +15,52 @@ from DashAI.back.core.utils import MultilingualString
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
     from DashAI.back.types.dashai_data_type import DashAIDataType
+
+#: JSON schema key that marks a field whose value names dataset columns. The
+#: export form reads it to draw a selector over the real columns instead of a
+#: free text box: ``"single"`` picks one column, ``"multiple"`` several.
+COLUMN_FIELD_KEY: Final = "x-dashai-column"
+
+
+def column_field(
+    t: Any,
+    placeholder: Any,
+    description: Union[str, MultilingualString],
+    alias: Union[str, MultilingualString, None] = None,
+    multiple: bool = False,
+) -> Type:
+    """Create an export schema field whose value names dataset columns.
+
+    Behaves like ``schema_field`` and additionally tags the field with
+    :data:`COLUMN_FIELD_KEY`, so the frontend offers the dataset's columns
+    without knowing the field's name.
+
+    Parameters
+    ----------
+    t : type
+        Field type, as for ``schema_field`` (a string for one column, a list
+        of strings for several).
+    placeholder : Any
+        Value shown before the user picks one.
+    description : str or MultilingualString
+        Field description.
+    alias : str or MultilingualString, optional
+        Label shown in the form.
+    multiple : bool, optional
+        Whether the field takes several columns, by default False.
+
+    Returns
+    -------
+    type
+        A pydantic annotated type usable in a schema.
+    """
+    base = schema_field(t, placeholder, description=description, alias=alias)
+    info = base.__metadata__[0]
+    extra = {
+        **(info.json_schema_extra or {}),
+        COLUMN_FIELD_KEY: "multiple" if multiple else "single",
+    }
+    return Annotated[t, Field(description=info.description, json_schema_extra=extra)]
 
 
 class CompatibilityStatus(str, Enum):

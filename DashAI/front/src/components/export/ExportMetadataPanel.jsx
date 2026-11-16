@@ -13,28 +13,22 @@ import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import FormSchema from "../shared/FormSchema";
 import FormSchemaContainer from "../shared/FormSchemaContainer";
 import FormSchemaFieldCard from "../shared/FormSchemaFieldCard";
-
-/**
- * Schema fields that name dataset columns. The schema types them as plain
- * strings, so the generic form would show free text boxes; they are drawn
- * here as selectors over the real columns instead, to avoid typos.
- */
-export const TARGET_FIELD = "default_target_attribute";
-export const IGNORED_FIELD = "ignore_attribute";
+import { columnFieldParam } from "./columnFields";
 
 /**
  * Right panel of the export metadata step: the platform's export form.
  *
- * The target and ignored columns are selectors over the dataset columns the
- * platform can store; every other field comes from the exporter's schema
- * through the shared FormSchema.
+ * The schema fields the exporter marks as column fields are drawn as
+ * selectors over the dataset columns the platform can store, so no column
+ * name is typed by hand; every other field comes from the exporter's schema
+ * through the shared FormSchema. A column picked in a single column field is
+ * not offered in the multiple ones, so one column cannot play two roles.
  *
  * @param {string} exporterName - Registered DatasetExporter class name.
+ * @param {Array<object>} columnFields - Column fields from ``getColumnFields``.
  * @param {Array<string>} columns - Dataset columns the platform can store.
- * @param {string} target - Selected target column ("" when none).
- * @param {Array<string>} ignored - Selected ignored columns.
- * @param {function} onTargetChange - Called with the new target column.
- * @param {function} onIgnoredChange - Called with the new ignored columns.
+ * @param {object} columnValues - Picked value of each column field.
+ * @param {function} onColumnChange - Called with a field key and its value.
  * @param {object} initialValues - Initial values for the schema form.
  * @param {object} formSubmitRef - Receives the form's formik object.
  * @param {function} onValuesChange - Called with the schema form values.
@@ -42,11 +36,10 @@ export const IGNORED_FIELD = "ignore_attribute";
  */
 export default function ExportMetadataPanel({
   exporterName,
+  columnFields,
   columns,
-  target,
-  ignored,
-  onTargetChange,
-  onIgnoredChange,
+  columnValues,
+  onColumnChange,
   initialValues,
   formSubmitRef,
   onValuesChange,
@@ -55,9 +48,13 @@ export default function ExportMetadataPanel({
   const { t } = useTranslation(["export"]);
   const theme = useTheme();
 
-  const ignorableColumns = useMemo(
-    () => columns.filter((column) => column !== target),
-    [columns, target],
+  const singlePicks = useMemo(
+    () =>
+      columnFields
+        .filter((field) => !field.multiple)
+        .map((field) => columnValues[field.key])
+        .filter(Boolean),
+    [columnFields, columnValues],
   );
 
   const handleFormValuesChange = useCallback(() => {
@@ -71,27 +68,83 @@ export default function ExportMetadataPanel({
     const formik = formSubmitRef?.current;
     // Until the schema loads, the form has neither its fields nor its
     // validation, and setting a value would validate against nothing.
-    if (!formik?.setFieldValue || !(TARGET_FIELD in (formik.values ?? {}))) {
+    if (
+      !formik?.setFieldValue ||
+      !columnFields.length ||
+      !columnFields.every((field) => field.key in (formik.values ?? {}))
+    ) {
       return;
     }
-    if (formik.values?.[TARGET_FIELD] !== target) {
-      formik.setFieldValue(TARGET_FIELD, target);
-    }
-    const nextIgnored = ignored.length ? ignored : null;
-    if (
-      JSON.stringify(formik.values?.[IGNORED_FIELD] ?? null) !==
-      JSON.stringify(nextIgnored)
-    ) {
-      formik.setFieldValue(IGNORED_FIELD, nextIgnored);
-    }
+    columnFields.forEach((field) => {
+      const next = columnFieldParam(field, columnValues[field.key]);
+      if (
+        JSON.stringify(formik.values[field.key] ?? null) !==
+        JSON.stringify(next ?? null)
+      ) {
+        formik.setFieldValue(field.key, next);
+      }
+    });
   });
 
-  const handleTargetChange = (event) => {
-    const next = event.target.value;
-    onTargetChange(next);
-    if (ignored.includes(next)) {
-      onIgnoredChange(ignored.filter((column) => column !== next));
+  const handleSingleChange = (field, column) => {
+    onColumnChange(field.key, column);
+    // A column now used here leaves any multiple field that held it.
+    columnFields
+      .filter((other) => other.multiple)
+      .forEach((other) => {
+        const current = columnValues[other.key] ?? [];
+        if (current.includes(column)) {
+          onColumnChange(
+            other.key,
+            current.filter((value) => value !== column),
+          );
+        }
+      });
+  };
+
+  const renderSelect = (field) => {
+    if (!field.multiple) {
+      return (
+        <Select
+          size="small"
+          fullWidth
+          displayEmpty
+          value={columnValues[field.key] ?? ""}
+          onChange={(event) => handleSingleChange(field, event.target.value)}
+          inputProps={{ "aria-label": field.title }}
+        >
+          {columns.map((column) => (
+            <MenuItem key={column} value={column}>
+              {column}
+            </MenuItem>
+          ))}
+        </Select>
+      );
     }
+    const options = columns.filter((column) => !singlePicks.includes(column));
+    return (
+      <Select
+        size="small"
+        fullWidth
+        multiple
+        value={columnValues[field.key] ?? []}
+        onChange={(event) => onColumnChange(field.key, event.target.value)}
+        inputProps={{ "aria-label": field.title }}
+        renderValue={(selected) => (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+            {selected.map((column) => (
+              <Chip key={column} label={column} size="small" />
+            ))}
+          </Box>
+        )}
+      >
+        {options.map((column) => (
+          <MenuItem key={column} value={column}>
+            {column}
+          </MenuItem>
+        ))}
+      </Select>
+    );
   };
 
   // Same layout as the hub's dataloader panel: a fixed header, then one
@@ -115,56 +168,16 @@ export default function ExportMetadataPanel({
       </Box>
 
       <Box sx={{ flex: 1, overflowY: "auto", px: 4, pt: 2, pb: 4 }}>
-        <Box sx={{ pb: 2 }}>
-          <FormSchemaFieldCard
-            label={t("export:targetColumn")}
-            description={t("export:targetColumnHelp")}
-          >
-            <Select
-              size="small"
-              fullWidth
-              displayEmpty
-              value={target}
-              onChange={handleTargetChange}
-              inputProps={{ "aria-label": t("export:targetColumn") }}
+        {columnFields.map((field) => (
+          <Box key={field.key} sx={{ pb: 2 }}>
+            <FormSchemaFieldCard
+              label={field.title}
+              description={field.description}
             >
-              {columns.map((column) => (
-                <MenuItem key={column} value={column}>
-                  {column}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormSchemaFieldCard>
-        </Box>
-
-        <Box sx={{ pb: 2 }}>
-          <FormSchemaFieldCard
-            label={t("export:ignoredColumns")}
-            description={t("export:ignoredColumnsHelp")}
-          >
-            <Select
-              size="small"
-              fullWidth
-              multiple
-              value={ignored}
-              onChange={(event) => onIgnoredChange(event.target.value)}
-              inputProps={{ "aria-label": t("export:ignoredColumns") }}
-              renderValue={(selected) => (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                  {selected.map((column) => (
-                    <Chip key={column} label={column} size="small" />
-                  ))}
-                </Box>
-              )}
-            >
-              {ignorableColumns.map((column) => (
-                <MenuItem key={column} value={column}>
-                  {column}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormSchemaFieldCard>
-        </Box>
+              {renderSelect(field)}
+            </FormSchemaFieldCard>
+          </Box>
+        ))}
 
         <FormSchemaContainer>
           <FormSchema
@@ -175,7 +188,7 @@ export default function ExportMetadataPanel({
             formSubmitRef={formSubmitRef}
             setError={setError}
             onValuesChange={handleFormValuesChange}
-            excludeFields={[TARGET_FIELD, IGNORED_FIELD]}
+            excludeFields={columnFields.map((field) => field.key)}
             showBorder={false}
           />
         </FormSchemaContainer>
@@ -186,11 +199,18 @@ export default function ExportMetadataPanel({
 
 ExportMetadataPanel.propTypes = {
   exporterName: PropTypes.string.isRequired,
+  columnFields: PropTypes.arrayOf(
+    PropTypes.shape({
+      key: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      description: PropTypes.string,
+      multiple: PropTypes.bool.isRequired,
+      required: PropTypes.bool.isRequired,
+    }),
+  ).isRequired,
   columns: PropTypes.arrayOf(PropTypes.string).isRequired,
-  target: PropTypes.string.isRequired,
-  ignored: PropTypes.arrayOf(PropTypes.string).isRequired,
-  onTargetChange: PropTypes.func.isRequired,
-  onIgnoredChange: PropTypes.func.isRequired,
+  columnValues: PropTypes.object.isRequired,
+  onColumnChange: PropTypes.func.isRequired,
   initialValues: PropTypes.object,
   formSubmitRef: PropTypes.shape({ current: PropTypes.any }).isRequired,
   onValuesChange: PropTypes.func.isRequired,

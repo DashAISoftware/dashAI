@@ -5,13 +5,17 @@ from unittest.mock import MagicMock
 import pytest
 from pydantic import ValidationError
 
+from DashAI.back.core.schema_fields import list_field, string_field
 from DashAI.back.dataset_exporters.base_dataset_exporter import (
+    COLUMN_FIELD_KEY,
     BaseDatasetExporter,
+    BaseDatasetExportSchema,
     CompatibilityStatus,
     DatasetCompatibility,
     DatasetExportValidationError,
     ExportPayload,
     ExportResult,
+    column_field,
 )
 
 VALID_PARAMS = {"name": "Iris", "description": "Classic iris dataset."}
@@ -120,6 +124,22 @@ def test_default_validate_reports_blank_fields():
         "The dataset name cannot be blank.",
         "The dataset description cannot be blank.",
     ]
+
+
+def test_column_field_tags_the_schema_property():
+    class ColumnSchema(BaseDatasetExportSchema):
+        label: column_field(string_field(), "", description="Label column.")  # type: ignore
+        drop: column_field(  # type: ignore
+            list_field(string_field()), [], description="Columns.", multiple=True
+        )
+
+    properties = ColumnSchema.model_json_schema()["properties"]
+
+    assert properties["label"][COLUMN_FIELD_KEY] == "single"
+    # Like schema_field, the description keeps its translations.
+    assert properties["label"]["description"].en == "Label column."
+    assert properties["drop"][COLUMN_FIELD_KEY] == "multiple"
+    assert COLUMN_FIELD_KEY not in properties["name"]
 
 
 def test_get_warnings_defaults_to_none():

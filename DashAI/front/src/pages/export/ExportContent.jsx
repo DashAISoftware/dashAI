@@ -21,6 +21,11 @@ import ExportMetadataPanel from "../../components/export/ExportMetadataPanel";
 import ExportReviewStep from "../../components/export/ExportReviewStep";
 import ExportProgressStep from "../../components/export/ExportProgressStep";
 import ExportHistoryPanel from "../../components/export/ExportHistoryPanel";
+import {
+  columnFieldParam,
+  getColumnFields,
+  isColumnFieldFilled,
+} from "../../components/export/columnFields";
 import { getComponents } from "../../api/component";
 import {
   createExport,
@@ -58,7 +63,7 @@ const errorDetail = (error) => {
 export default function ExportContent() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation(["export"]);
+  const { t, i18n } = useTranslation(["export"]);
   const { exporterName, datasetId } = useParams();
   const isReview = Boolean(
     useMatch("/app/data/export/:exporterName/:datasetId/review"),
@@ -80,8 +85,8 @@ export default function ExportContent() {
   const [sample, setSample] = useState(null);
   const [datasetLoading, setDatasetLoading] = useState(false);
   const [datasetError, setDatasetError] = useState(false);
-  const [target, setTarget] = useState("");
-  const [ignored, setIgnored] = useState([]);
+  // Picked value of each column field the exporter's schema declares.
+  const [columnValues, setColumnValues] = useState({});
   const [formValues, setFormValues] = useState({});
   const [formHasErrors, setFormHasErrors] = useState(false);
   const formSubmitRef = useRef(null);
@@ -104,6 +109,10 @@ export default function ExportContent() {
   const chosenExporter = exporters.find((e) => e.name === exporterName) ?? null;
   const platformName =
     chosenExporter?.display_name || chosenExporter?.name || exporterName;
+  const columnFields = useMemo(
+    () => getColumnFields(chosenExporter?.schema),
+    [chosenExporter],
+  );
   const fieldTitles = useMemo(
     () =>
       Object.fromEntries(
@@ -114,11 +123,23 @@ export default function ExportContent() {
     [chosenExporter],
   );
 
+  // The backend translates the exporters' names, descriptions and schema
+  // titles to the request language, so they are fetched again whenever the
+  // language changes (as the data hub does with its sources).
   useEffect(() => {
     getComponents({ selectTypes: "DatasetExporter" })
       .then(setExporters)
       .catch(() => setExporters([]));
-  }, []);
+  }, [i18n.language]);
+
+  // Keep the picked platform pointing at the freshly translated entry.
+  useEffect(() => {
+    setPendingExporter((previous) =>
+      previous
+        ? (exporters.find((e) => e.name === previous.name) ?? null)
+        : null,
+    );
+  }, [exporters]);
 
   useEffect(() => {
     setSelectedDataset(null);
@@ -150,9 +171,9 @@ export default function ExportContent() {
   }, [stateParams, datasetName]);
 
   useEffect(() => {
-    // Coming back from the review restores what the user had chosen.
-    setTarget(stateParams?.default_target_attribute ?? "");
-    setIgnored(stateParams?.ignore_attribute ?? []);
+    // Coming back from the review restores what the user had chosen; the
+    // column fields read their values back from the same parameters.
+    setColumnValues(stateParams ?? {});
     setFormValues(stateParams ?? {});
     if (!datasetId) return;
     setDatasetLoading(true);
@@ -253,12 +274,19 @@ export default function ExportContent() {
 
   const metadataUrl = `/app/data/export/${exporterName}/${datasetId}`;
 
+  const handleColumnChange = (key, value) =>
+    setColumnValues((previous) => ({ ...previous, [key]: value }));
+
+  const columnFieldsComplete = columnFields.every(
+    (field) =>
+      !field.required || isColumnFieldFilled(field, columnValues[field.key]),
+  );
+
   const handleReview = () => {
-    const params = {
-      ...formValues,
-      default_target_attribute: target,
-      ignore_attribute: ignored.length ? ignored : null,
-    };
+    const params = { ...formValues };
+    columnFields.forEach((field) => {
+      params[field.key] = columnFieldParam(field, columnValues[field.key]);
+    });
     navigate(`${metadataUrl}/review`, { state: { params } });
   };
 
@@ -344,11 +372,11 @@ export default function ExportContent() {
           columns={columns}
           sample={sample}
           unsupportedColumns={unsupportedColumns}
-          target={target}
-          ignored={ignored}
+          columnFields={columnFields}
+          columnValues={columnValues}
           loading={datasetLoading || datasetsLoading}
           error={datasetError}
-          canContinue={Boolean(target) && !formHasErrors}
+          canContinue={columnFieldsComplete && !formHasErrors}
           onPlatformClick={() => navigate(`/app/data/export/${exporterName}`)}
           onBack={() => navigate(`/app/data/export/${exporterName}`)}
           onNext={handleReview}
@@ -405,11 +433,10 @@ export default function ExportContent() {
           ) : datasetId && !isReview ? (
             <ExportMetadataPanel
               exporterName={exporterName}
+              columnFields={columnFields}
               columns={storableColumns}
-              target={target}
-              ignored={ignored}
-              onTargetChange={setTarget}
-              onIgnoredChange={setIgnored}
+              columnValues={columnValues}
+              onColumnChange={handleColumnChange}
               initialValues={initialFormValues}
               formSubmitRef={formSubmitRef}
               onValuesChange={setFormValues}
