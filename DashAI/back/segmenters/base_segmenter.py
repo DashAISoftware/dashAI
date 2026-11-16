@@ -38,7 +38,7 @@ class SegmentInstance:
 class BaseSegmenter(ABC):
     """A promptable segmentation model.
 
-    Deliberately not a registry component. ``ComponentRegistry._get_base_type``
+    Deliberately not a registry component. ``ComponentRegistry.get_base_type``
     rejects a class with two ``Base`` ancestors declaring a ``TYPE``, so a
     converter that inherited from both ``BaseConverter`` and a registered
     segmenter base would fail to register. Converters hold a segmenter instead.

@@ -25,17 +25,17 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 
 
-class DummyBaseComponent(ConfigObject, metaclass=ABCMeta):
+class BaseDummyComponent(ConfigObject, metaclass=ABCMeta):
     """Dummy class representing a component"""
 
     TYPE: Final[str] = "Component"
 
 
-class DummyComponent(DummyBaseComponent):
+class DummyComponent(BaseDummyComponent):
     pass
 
 
-class DummyBaseConfigComponent(ConfigObject, metaclass=ABCMeta):
+class BaseDummyConfigComponent(ConfigObject, metaclass=ABCMeta):
     """Dummy base class for configurable components"""
 
     TYPE: Final[str] = "ConfigComponent"
@@ -43,19 +43,19 @@ class DummyBaseConfigComponent(ConfigObject, metaclass=ABCMeta):
 
 class DummyParamComponentSchema(BaseSchema):
     comp: schema_field(
-        component_field(parent="DummyBaseComponent"), placeholder={}, description=""
+        component_field(parent="BaseDummyComponent"), placeholder={}, description=""
     )  # type: ignore
     integer: schema_field(int_field(), placeholder=1, description="")  # type: ignore
 
 
-class DummyParamComponent(DummyBaseConfigComponent):
+class DummyParamComponent(BaseDummyConfigComponent):
     """A configurable component that has another component as param."""
 
     SCHEMA = DummyParamComponentSchema
 
     def __init__(self, **kwargs):
         kwargs = self.validate_and_transform(kwargs)
-        assert isinstance(kwargs["comp"], DummyBaseComponent)
+        assert isinstance(kwargs["comp"], BaseDummyComponent)
         assert isinstance(kwargs["integer"], int)
 
 
@@ -69,13 +69,13 @@ class NormalSchema(BaseSchema):
     number: schema_field(float_field(gt=0.0), placeholder=5e-5, description="")  # type: ignore
     boolean: schema_field(bool_field(), placeholder=True, description="")  # type: ignore
     obj: schema_field(
-        component_field(parent="DummyBaseConfigComponent"),
+        component_field(parent="BaseDummyConfigComponent"),
         placeholder={"component": "DummyParamComponent", "params": {}},
         description="",
     )  # type: ignore
 
 
-class NormalParamComponent(DummyBaseConfigComponent):
+class NormalParamComponent(BaseDummyConfigComponent):
     """A configurable component with normal params"""
 
     SCHEMA = NormalSchema
@@ -85,7 +85,7 @@ class NormalParamComponent(DummyBaseConfigComponent):
         assert isinstance(kwargs["integer"], int)
         assert isinstance(kwargs["string"], str)
         assert isinstance(kwargs["number"], float)
-        assert isinstance(kwargs["obj"], DummyBaseConfigComponent)
+        assert isinstance(kwargs["obj"], BaseDummyConfigComponent)
 
 
 class NullSchema(BaseSchema):
@@ -94,13 +94,13 @@ class NullSchema(BaseSchema):
         none_type(enum_field(enum=[""])), placeholder="", description=""
     )  # type: ignore
     nullable_obj: schema_field(
-        none_type(component_field(parent="DummyBaseComponent")),
+        none_type(component_field(parent="BaseDummyComponent")),
         placeholder={},
         description="",
     )  # type: ignore
 
 
-class NullParamComponent(DummyBaseConfigComponent):
+class NullParamComponent(BaseDummyConfigComponent):
     """A configurable component with nullable params"""
 
     SCHEMA = NullSchema
@@ -110,7 +110,7 @@ class NullParamComponent(DummyBaseConfigComponent):
         assert kwargs["nullable_int"] is None or isinstance(kwargs["nullable_int"], int)
         assert kwargs["nullable_str"] is None or isinstance(kwargs["nullable_str"], str)
         assert kwargs["nullable_obj"] is None or isinstance(
-            kwargs["nullable_obj"], DummyBaseComponent
+            kwargs["nullable_obj"], BaseDummyComponent
         )
 
 
@@ -123,13 +123,13 @@ class UnionSchema(BaseSchema):
         description="",
     )  # type: ignore
     int_obj: schema_field(
-        union_type(int_field(), component_field(parent="DummyBaseComponent")),
+        union_type(int_field(), component_field(parent="BaseDummyComponent")),
         placeholder=1,
         description="",
     )  # type: ignore
 
 
-class UnionParamComponent(DummyBaseConfigComponent):
+class UnionParamComponent(BaseDummyConfigComponent):
     """A configurable component with union params"""
 
     SCHEMA = UnionSchema
@@ -137,7 +137,7 @@ class UnionParamComponent(DummyBaseConfigComponent):
     def __init__(self, **kwargs):
         kwargs = self.validate_and_transform(kwargs)
         assert isinstance(kwargs["int_str"], (int, str))
-        assert isinstance(kwargs["int_obj"], (int, DummyBaseComponent))
+        assert isinstance(kwargs["int_obj"], (int, BaseDummyComponent))
 
 
 def remove_dir_with_retry(directory, max_attempts=5, sleep_seconds=1):
@@ -174,9 +174,9 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
 
     test_registry = ComponentRegistry(
         initial_components=[
-            DummyBaseComponent,
+            BaseDummyComponent,
             DummyComponent,
-            DummyBaseConfigComponent,
+            BaseDummyConfigComponent,
             DummyParamComponent,
             NormalParamComponent,
             NullParamComponent,
@@ -234,7 +234,7 @@ def test_normal_json_schema():
         "display_name",
     }
     assert isinstance(json_schema["properties"]["obj"]["properties"], dict)
-    assert json_schema["properties"]["obj"]["parent"] == "DummyBaseConfigComponent"
+    assert json_schema["properties"]["obj"]["parent"] == "BaseDummyConfigComponent"
     assert json_schema["properties"]["obj"]["placeholder"] == {
         "component": "DummyParamComponent",
         "params": {},

@@ -19,15 +19,10 @@ from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.models.base_model import BaseModel
 
 
-class _Metric:
-    """The smallest thing the scoring loop accepts: a name and a score."""
-
-    def __init__(self, name, value):
-        self.__name__ = name
-        self._value = value
-
-    def score(self, y_true, y_pred):
-        return self._value
+def _metric(name, value):
+    """The smallest thing the scoring loop accepts: a class with a name and a
+    score (the loop takes metric classes, keyed by their id)."""
+    return type(name, (), {"score": staticmethod(lambda y_true, y_pred: value)})
 
 
 class _StubModel(BaseModel):
@@ -69,7 +64,7 @@ def test_compute_metrics_drops_non_finite_scores(model, bad):
     "bad": nan}``: the mean of a fold's scores was then NaN, and NaN compares
     False against every other trial in both directions.
     """
-    model.validation_metrics = [_Metric("good", 1.0), _Metric("bad", bad)]
+    model.validation_metrics = [_metric("good", 1.0), _metric("bad", bad)]
 
     scores = model.compute_metrics(split=SplitEnum.VALIDATION, x_data=[], y_data=[])
 
@@ -86,7 +81,7 @@ def test_both_methods_agree_on_what_was_scored(model):
     on non-finite scores is, the logged metrics and the optimized metrics have
     to be the same ones, or the run is tuned on numbers nobody can see.
     """
-    model.validation_metrics = [_Metric("good", 1.0), _Metric("bad", float("nan"))]
+    model.validation_metrics = [_metric("good", 1.0), _metric("bad", float("nan"))]
 
     persisted = {}
     model._save_metrics = lambda **kwargs: persisted.update(kwargs["results"])
@@ -123,7 +118,7 @@ def test_every_metric_non_finite_is_not_the_same_as_no_metrics(model):
     and ``calculate_metrics`` relies on that to persist an empty result rather
     than skip the split silently.
     """
-    model.validation_metrics = [_Metric("bad", float("nan"))]
+    model.validation_metrics = [_metric("bad", float("nan"))]
 
     assert model._score_split(SplitEnum.VALIDATION, x_data=[], y_data=[]) == {}
 

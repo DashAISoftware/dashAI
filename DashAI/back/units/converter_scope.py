@@ -117,7 +117,7 @@ class ConverterScopeMixin:
     """Scope handling shared by the converter units.
 
     Deliberately **not** named ``Base*`` and deliberately not inheriting from
-    ``BaseUnit``. ``ComponentRegistry._get_base_type`` walks the MRO for
+    ``BaseUnit``. ``ComponentRegistry.get_base_type`` walks the MRO for
     ancestors whose name contains "Base" and that declare a ``TYPE``, and
     rejects a component with more than one candidate — an intermediate class
     called ``BaseConverterUnit`` would be a second candidate and break the

@@ -1,3 +1,4 @@
+import inspect
 import logging
 from typing import Any, Union
 
@@ -9,6 +10,36 @@ from DashAI.back.dependencies.registry.relationship_manager import RelationshipM
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+_NAMESPACE = "dashai_plugins"
+
+
+def owner_of(module: str) -> str:
+    """The plugin id a component's module belongs to, or ``"dashai"``."""
+    if not module.startswith(_NAMESPACE + ".p"):
+        return "dashai"
+    return module.split(".")[1][1:].replace("_", "-")
+
+
+def component_id(cls_or_obj) -> str:
+    """A component's id: its class name, ``<plugin-id>:Class`` for a plugin's."""
+    cls = cls_or_obj if isinstance(cls_or_obj, type) else type(cls_or_obj)
+    owner = owner_of(cls.__module__)
+    return cls.__name__ if owner == "dashai" else f"{owner}:{cls.__name__}"
+
+
+def _field_owners(schema_cls: Any) -> Dict[str, str]:
+    """Each field of ``schema_cls`` and the plugin of the class that declares
+    it (``"dashai"`` for dashAI's); a subclass's own fields win."""
+    owners: Dict[str, str] = {}
+    for klass in reversed(getattr(schema_cls, "__mro__", ())):
+        for name in inspect.get_annotations(klass):
+            owners[name] = owner_of(klass.__module__)
+    return owners
+
+
+class AmbiguousComponentError(KeyError):
+    """A short name that more than one plugin's component has."""
 
 
 class ComponentRegistry:
@@ -102,10 +133,11 @@ class ComponentRegistry:
         bool
             True if the component exists in the task registry, False otherwise.
         """
-        for base_type_container in self._registry.values():
-            if item in base_type_container:
-                return True
-        return False
+        try:
+            self.resolve(item)
+        except KeyError:
+            return False
+        return True
 
     @beartype
     def __getitem__(self, item: str) -> Dict[str, Any]:
@@ -128,19 +160,102 @@ class ComponentRegistry:
         KeyError
             If the object does not exist in the registry.
         """
-        for base_type_container in self._registry.values():
-            if item in base_type_container:
-                return base_type_container[item]
+        return self.resolve(item)
 
-        raise KeyError(f"Component '{item}' does not exists in the registry.")
+    def _exact(self, component_id: str) -> Union[Dict[str, Any], None]:
+        """The component registered as ``component_id``, or None."""
+        for base_type_container in self._registry.values():
+            if component_id in base_type_container:
+                return base_type_container[component_id]
+        return None
 
     @beartype
-    def _get_base_type(self, new_component: type) -> str:
+    def resolve(self, name: str, base_type: Union[str, None] = None) -> Dict[str, Any]:
+        """The component ``name`` refers to: the one with that id, else the only
+        plugin component with that class name. Only among ``base_type``'s
+        components, if given.
+
+        Raises
+        ------
+        AmbiguousComponentError
+            If several plugins' components have that class name.
+        KeyError
+            If no component matches.
+        """
+        containers = (
+            list(self._registry.values())
+            if base_type is None
+            else [self._registry.get(base_type, {})]
+        )
+        for base_type_container in containers:
+            if name in base_type_container:
+                return base_type_container[name]
+        if ":" not in name:
+            matches = [
+                c
+                for base_type_container in containers
+                for c in base_type_container.values()
+                if c["class"].__name__ == name
+            ]
+            if len(matches) == 1:
+                return matches[0]
+            if matches:
+                raise AmbiguousComponentError(
+                    f"Component '{name}' is ambiguous: "
+                    f"{sorted(c['name'] for c in matches)}"
+                )
+        raise KeyError(f"Component '{name}' does not exists in the registry.")
+
+    def _canonical_ref(self, ref: str, owner: str) -> str:
+        """``ref`` as an id: a plugin's short name for its own component gets
+        qualified; one of dashAI's, or already qualified, stays."""
+        if not ref or ":" in ref or owner == "dashai" or self._exact(ref) is not None:
+            return ref
+        return f"{owner}:{ref}"
+
+    def _canonical_parent(self, parent: str, owner: str) -> str:
+        """``parent`` as an id: a base of dashAI's components stays, a plugin's
+        own base gets qualified."""
+        if ":" in parent or owner == "dashai":
+            return parent
+        for base_type_container in self._registry.values():
+            for cid, entry in base_type_container.items():
+                if ":" not in cid and any(
+                    cls_.__name__ == parent for cls_ in entry["class"].__mro__
+                ):
+                    return parent
+        return f"{owner}:{parent}"
+
+    def canonical_schema(self, schema: Any, owner: str, schema_cls: Any = None) -> Any:
+        """``schema`` with the components and bases its fields name as ids.
+        A field's short names are of the plugin whose class in ``schema_cls``
+        (the pydantic model ``schema`` comes from) declares it, else ``owner``'s."""
+        if owner == "dashai" or not schema:
+            return schema
+        field_owners = _field_owners(schema_cls)
+        for name, field in schema.get("properties", {}).items():
+            field_owner = field_owners.get(name, owner)
+            # A list of components declares its base in ``items`` and its
+            # placeholder as a list.
+            for spec in (field, field.get("items")):
+                if isinstance(spec, dict) and isinstance(spec.get("parent"), str):
+                    spec["parent"] = self._canonical_parent(spec["parent"], field_owner)
+            placeholder = field.get("placeholder")
+            values = placeholder if isinstance(placeholder, list) else [placeholder]
+            for value in values:
+                if isinstance(value, dict) and "component" in value:
+                    value["component"] = self._canonical_ref(
+                        value["component"], field_owner
+                    )
+        return schema
+
+    @beartype
+    def get_base_type(self, new_component: type) -> str:
         # select only base classes ancestors
         component_base_ancestors = [
             ancestor
             for ancestor in new_component.__mro__
-            if "Base" in ancestor.__name__
+            if ancestor.__name__.startswith("Base")
         ]
 
         base_classes_cantidates = [
@@ -171,15 +286,16 @@ class ComponentRegistry:
 
         return base_classes_cantidates[0].TYPE
 
-    @staticmethod
     @beartype
-    def _collect_compatible_components(component: type) -> List[str]:
-        """Collect the union of ``COMPATIBLE_COMPONENTS`` declared along the MRO.
+    def _compatible_ids(self, component: type) -> List[str]:
+        """The union of ``COMPATIBLE_COMPONENTS`` declared along the MRO, as ids.
 
         Each class in the component's MRO contributes only the entries it
         declares itself, so mixins and base classes compose instead of the
         first declaration shadowing the rest (e.g. a task mixin declaring the
         task plus a model base class declaring its supported explainers).
+        A short name is of the plugin whose class declares it, also when
+        another plugin's class inherits it.
 
         Parameters
         ----------
@@ -189,14 +305,21 @@ class ComponentRegistry:
         Returns
         -------
         List[str]
-            Deduplicated compatible component names in MRO order.
+            Deduplicated compatible component ids in MRO order.
         """
-        compatible_components: List[str] = []
+        compatible_ids: List[str] = []
         for klass in component.__mro__:
+            owner = owner_of(klass.__module__)
             for entry in vars(klass).get("COMPATIBLE_COMPONENTS", []):
-                if entry not in compatible_components:
-                    compatible_components.append(entry)
-        return compatible_components
+                # Not a name (e.g. a class): the return type check refuses it.
+                cid = (
+                    self._canonical_ref(entry, owner)
+                    if isinstance(entry, str)
+                    else entry
+                )
+                if cid not in compatible_ids:
+                    compatible_ids.append(cid)
+        return compatible_ids
 
     @beartype
     def register_component(self, new_component: Type) -> None:
@@ -209,7 +332,7 @@ class ComponentRegistry:
 
 
         """
-        base_type = self._get_base_type(new_component)
+        base_type = self.get_base_type(new_component)
 
         is_configurable_object = "ConfigObject" in [
             _class.__name__ for _class in new_component.__mro__
@@ -246,12 +369,20 @@ class ComponentRegistry:
             getattr(new_component, "OPTIONAL_CREDENTIALS", []) or []
         )
 
+        cid = component_id(new_component)
+        owner = owner_of(new_component.__module__)
         new_register_component = {
-            "name": new_component.__name__,
+            "name": cid,
             "type": base_type,
             "class": new_component,
             "configurable_object": is_configurable_object,
-            "schema": new_component.get_schema() if is_configurable_object else None,
+            "schema": self.canonical_schema(
+                new_component.get_schema(),
+                owner,
+                getattr(new_component, "SCHEMA", None),
+            )
+            if is_configurable_object
+            else None,
             "metadata": _metadata,
             "description": getattr(new_component, "DESCRIPTION", None),
             "display_name": getattr(new_component, "DISPLAY_NAME", None),
@@ -260,32 +391,37 @@ class ComponentRegistry:
             "optional_credentials": optional_credentials,
             "credentials_satisfied": len(required_credentials) == 0,
         }
+        compatible_components = self._compatible_ids(new_component)
+
+        # Nothing below fails: a component that can't be registered leaves the
+        # registry as it was. An id already registered gets replaced: undo
+        # what it previously contributed (relationships included) first.
+        previous = self._exact(cid)
+        if previous is not None:
+            self.unregister_component(previous["class"])
 
         if base_type not in self._registry:
-            self._registry[base_type] = {new_component.__name__: new_register_component}
+            self._registry[base_type] = {cid: new_register_component}
         else:
-            self._registry[base_type][new_component.__name__] = new_register_component
+            self._registry[base_type][cid] = new_register_component
 
         self._set_download_status(new_register_component)
 
-        if hasattr(new_component, "COMPATIBLE_COMPONENTS"):
-            for compatible_component in self._collect_compatible_components(
-                new_component
-            ):
-                self._relationship_manager.add_relationship(
-                    new_component.__name__,
-                    compatible_component,
-                    "compatible_components",
-                )
+        for compatible_component in compatible_components:
+            self._relationship_manager.add_relationship(
+                cid,
+                compatible_component,
+                "compatible_components",
+            )
 
         for credential_name in required_credentials:
             self._relationship_manager.add_relationship(
-                new_component.__name__, credential_name, "required_credentials"
+                cid, credential_name, "required_credentials"
             )
 
         for credential_name in optional_credentials:
             self._relationship_manager.add_relationship(
-                new_component.__name__, credential_name, "optional_credentials"
+                cid, credential_name, "optional_credentials"
             )
 
     def seed_download_status(self) -> None:
@@ -355,32 +491,31 @@ class ComponentRegistry:
 
 
         """
-        base_type = self._get_base_type(component)
+        base_type = self.get_base_type(component)
+        cid = component_id(component)
 
         try:
-            self._registry[base_type].pop(component.__name__)
-            logger.info(f"Component removed: {component.__name__}")
+            self._registry[base_type].pop(cid)
+            logger.info(f"Component removed: {cid}")
         except KeyError as e:
             raise ValueError(
-                f"Error: Component named {component.__name__} does not exist "
+                f"Error: Component named {cid} does not exist "
                 f"in the registry. Exception: {e}"
             ) from e
 
-        for compatible_component in self._collect_compatible_components(component):
+        for compatible_component in self._compatible_ids(component):
             self._relationship_manager.remove_relationship(
-                component.__name__,
-                compatible_component,
-                "compatible_components",
+                cid, compatible_component, "compatible_components"
             )
 
         for credential_name in getattr(component, "REQUIRED_CREDENTIALS", []) or []:
             self._relationship_manager.remove_relationship(
-                component.__name__, credential_name, "required_credentials"
+                cid, credential_name, "required_credentials"
             )
 
         for credential_name in getattr(component, "OPTIONAL_CREDENTIALS", []) or []:
             self._relationship_manager.remove_relationship(
-                component.__name__, credential_name, "optional_credentials"
+                cid, credential_name, "optional_credentials"
             )
 
     @beartype
@@ -522,7 +657,7 @@ class ComponentRegistry:
         Parameters
         ----------
         parent_name : str
-            Class name of the parent component
+            Id of the parent component (see ``component_id``)
         recursive : bool
             If True, search for all child and subchild classes.
 
@@ -539,7 +674,7 @@ class ComponentRegistry:
                     if recursive
                     else component_dict["class"].__bases__
                 )
-                component_bases_names = [cls_.__name__ for cls_ in component_bases]
+                component_bases_names = [component_id(cls_) for cls_ in component_bases]
 
                 if parent_name in component_bases_names:
                     selected_components.append(component_dict)
@@ -547,7 +682,7 @@ class ComponentRegistry:
         return selected_components
 
     @beartype
-    def get_related_components(self, component_id: str) -> List[Dict[str, Any]]:
+    def get_related_components(self, name: str) -> List[Dict[str, Any]]:
         """Obtain any related component of the given component name.
 
         If the component has no related components, then the method returns an empty
@@ -556,7 +691,7 @@ class ComponentRegistry:
 
         Parameters
         ----------
-        component_id : str
+        name : str
             A registered component name.
 
         Returns
@@ -569,17 +704,18 @@ class ComponentRegistry:
         KeyError
             If component id does not exists in the registry.
         """
-        if not self.__contains__(component_id):
-            raise KeyError(
-                f"Component '{component_id}' does not exists in the registry."
+        # A subclass also takes what was declared compatible with its ancestors.
+        related = dict.fromkeys(
+            related_id
+            for klass in self.resolve(name)["class"].__mro__
+            for related_id in self._relationship_manager.get(
+                component_id(klass), "compatible_components"
             )
-
+        )
         return [
-            self.__getitem__(related_component_id)
-            for related_component_id in self._relationship_manager.get(
-                component_id, "compatible_components"
-            )
-            if self.__contains__(related_component_id)
+            self._exact(related_component_id)
+            for related_component_id in related
+            if self._exact(related_component_id) is not None
         ]
 
     @beartype

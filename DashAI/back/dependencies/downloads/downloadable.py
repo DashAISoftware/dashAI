@@ -15,6 +15,8 @@ from typing import Callable, List, Optional, Tuple, Union
 from huggingface_hub import snapshot_download
 from kink import di
 
+from DashAI.back.dependencies.registry.component_registry import owner_of
+
 logger = logging.getLogger(__name__)
 
 # report(fraction, message): fraction in [0, 1] or None for indeterminate.
@@ -44,9 +46,14 @@ class DownloadableMixin:
         Returns
         -------
         pathlib.Path
-            ``<COMPONENT_PATH>/<ClassName>``.
+            ``<COMPONENT_PATH>/<ClassName>``; a plugin's,
+            ``<COMPONENT_PATH>/<plugin-id>/<ClassName>`` (``:`` is not safe in
+            a path).
         """
-        return _components_root() / cls.__name__
+        owner = owner_of(cls.__module__)
+        if owner == "dashai":
+            return _components_root() / cls.__name__
+        return _components_root() / owner / cls.__name__
 
     @classmethod
     def is_downloaded(cls) -> bool:

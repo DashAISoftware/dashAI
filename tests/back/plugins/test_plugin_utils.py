@@ -25,17 +25,17 @@ def _isolated_plugins_directory(tmp_path, monkeypatch):
     monkeypatch.setenv("DASHAI_LOCAL_PATH", str(tmp_path))
 
 
-class DummyBaseComponent(ConfigObject, metaclass=ABCMeta):
+class BaseDummyComponent(ConfigObject, metaclass=ABCMeta):
     """Dummy base class representing a component"""
 
     TYPE: Final[str] = "Component"
 
 
-class DummyComponent1(DummyBaseComponent):
+class DummyComponent1(BaseDummyComponent):
     pass
 
 
-class DummyComponent2(DummyBaseComponent):
+class DummyComponent2(BaseDummyComponent):
     pass
 
 

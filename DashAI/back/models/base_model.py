@@ -10,6 +10,7 @@ from kink import di
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import Metric
+from DashAI.back.dependencies.registry.component_registry import component_id
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -311,7 +312,7 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                     split,
                 )
                 continue
-            results[metric.__name__] = score
+            results[component_id(metric)] = score
 
         return results
 

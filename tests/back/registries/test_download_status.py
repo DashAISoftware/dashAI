@@ -3,14 +3,14 @@ from DashAI.back.dependencies.downloads.downloadable import DownloadableMixin
 from DashAI.back.dependencies.registry import ComponentRegistry
 
 
-class _FakeBase(ConfigObject):
+class BaseFake(ConfigObject):
     TYPE = "Model"
 
 
 _STATE = {"downloaded": False}
 
 
-class _FakeDownloadable(DownloadableMixin, _FakeBase):
+class _FakeDownloadable(DownloadableMixin, BaseFake):
     DOWNLOAD_SIZE_BYTES = 10
 
     @classmethod

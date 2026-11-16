@@ -39,6 +39,12 @@ def test_component_dir_under_root(components_root):
     assert _Dummy.component_dir() == components_root / "_Dummy"
 
 
+def test_a_plugin_components_dir_is_under_its_plugin(components_root):
+    plugin = type("X", (_Dummy,), {"__module__": "dashai_plugins.pp.m"})
+
+    assert plugin.component_dir() == components_root / "p" / "X"
+
+
 def test_is_downloaded_false_when_absent(components_root):
     assert _Dummy.is_downloaded() is False
 

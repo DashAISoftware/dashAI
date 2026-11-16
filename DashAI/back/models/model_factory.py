@@ -3,6 +3,7 @@ from collections import namedtuple
 from kink import di
 
 from DashAI.back.core.schema_fields.search_space import SEARCH_DTYPE_KEY
+from DashAI.back.dependencies.registry.component_registry import component_id
 from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.metrics.classification_metric import ClassificationMetric
 
@@ -179,7 +180,7 @@ class ModelFactory:
 
         component = {
             key: value
-            for key, value in component_registry[obj.__class__.__name__].items()
+            for key, value in component_registry[component_id(obj)].items()
             if key != "class"
         }
         component_params = component.get("schema").get("properties")
@@ -325,7 +326,7 @@ class ModelFactory:
         for split in ["train", "validation", "test"]:
             split_results = {}
             if x[split].shape[0] == 0:
-                split_results = {metric.__name__: None for metric in metrics}
+                split_results = {component_id(metric): None for metric in metrics}
                 results[split] = split_results
                 continue
             predictions = self.model.predict(x[split])
@@ -346,7 +347,7 @@ class ModelFactory:
                 else:
                     score = metric.score(transformed_y, predictions)
 
-                split_results[metric.__name__] = score
+                split_results[component_id(metric)] = score
 
             results[split] = split_results
 

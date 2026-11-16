@@ -576,7 +576,9 @@ async def update_generative_session(
                 if last_used is not None:
                     new_parameters = last_used.parameters
                 else:
-                    properties = model_class.get_schema().get("properties", {})
+                    # A plugin's placeholders name components by id.
+                    schema = component_registry[model_name]["schema"]
+                    properties = schema.get("properties", {})
                     new_parameters = {
                         key: prop.get("placeholder") for key, prop in properties.items()
                     }

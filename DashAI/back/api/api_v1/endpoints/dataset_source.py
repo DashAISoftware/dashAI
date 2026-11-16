@@ -237,14 +237,15 @@ async def preview_dataset_with_params(
                 detail="dataloader is required.",
             )
 
-        dl_registry = registry._registry.get("DataLoader", {})
-        if dataloader_name not in dl_registry:
+        try:
+            reader = registry.resolve(dataloader_name, base_type="DataLoader")
+        except KeyError as error:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"DataLoader '{dataloader_name}' not found.",
-            )
+            ) from error
 
-        dataloader = dl_registry[dataloader_name]["class"]()
+        dataloader = reader["class"]()
         params = body.params or {}
 
         try:

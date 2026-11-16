@@ -8,6 +8,7 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.registry.component_registry import component_id
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 
 if TYPE_CHECKING:
@@ -191,7 +192,7 @@ def _report_epoch(trial, metric):
     import optuna
 
     def report(results, step):
-        value = results.get(metric.__name__)
+        value = results.get(component_id(metric))
         if value is None:
             return
         trial.report(value, step)
