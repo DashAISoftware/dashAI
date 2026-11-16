@@ -337,7 +337,9 @@ class OpenMLDatasetExporter(BaseDatasetExporter):
 
         # OpenML only takes plain ASCII text. Accents are converted when
         # publishing (see get_warnings); only what cannot be converted fails.
-        invalid_name = _invalid_name_characters(_openml_name(params.get("name", "")))
+        invalid_name = _invalid_name_characters(
+            _openml_identifier(params.get("name", ""))
+        )
         if invalid_name:
             errors.append(
                 f"The name has characters OpenML does not accept: {invalid_name}."
@@ -348,6 +350,28 @@ class OpenMLDatasetExporter(BaseDatasetExporter):
                 errors.append(
                     f"The {key} has characters OpenML does not accept: {leftover}."
                 )
+
+        # Column names follow the same rule as the dataset name. They are
+        # renamed when publishing; a name that cannot be converted, or two
+        # names that end up equal, would break the upload.
+        sent_columns = _sent_columns(dataset)
+        bad_columns = [
+            col
+            for col in sent_columns
+            if _invalid_name_characters(_openml_identifier(col))
+        ]
+        if bad_columns:
+            errors.append(
+                f"The columns {bad_columns} have characters OpenML does not "
+                "accept in column names."
+            )
+        renamed = [_openml_identifier(col) for col in sent_columns]
+        clashes = sorted({name for name in renamed if renamed.count(name) > 1})
+        if clashes:
+            errors.append(
+                f"Several columns would be renamed to the same name {clashes}; "
+                "rename them in DashAI first."
+            )
         return errors
 
     def get_warnings(
@@ -369,7 +393,7 @@ class OpenMLDatasetExporter(BaseDatasetExporter):
         """
         warnings = []
         name = params.get("name", "")
-        published_name = _openml_name(name)
+        published_name = _openml_identifier(name)
         if name and published_name != name:
             warnings.append(
                 f"The name will be published as '{published_name}', since "
@@ -382,6 +406,13 @@ class OpenMLDatasetExporter(BaseDatasetExporter):
                     f"Accents in the {key} will be converted to plain letters "
                     "(á to a, ñ to n), since OpenML only accepts plain text."
                 )
+        renames = _column_renames(_sent_columns(dataset))
+        if renames:
+            listed = ", ".join(f"'{old}' to '{new}'" for old, new in renames.items())
+            warnings.append(
+                f"Columns will be renamed, since OpenML does not accept spaces "
+                f"or accents in column names: {listed}."
+            )
         return warnings
 
     def prepare(
@@ -411,14 +442,20 @@ class OpenMLDatasetExporter(BaseDatasetExporter):
         import openml
 
         dropped = _unsupported_columns(dataset)
-        dataframe = _to_openml_dataframe(dataset, dropped)
+        # OpenML takes column names under the same rule as dataset names, so
+        # the columns, the target and the ignored ones are renamed together.
+        dataframe = _to_openml_dataframe(dataset, dropped).rename(
+            columns=_openml_identifier
+        )
         ignored = [
-            col for col in params.get("ignore_attribute") or [] if col not in dropped
+            _openml_identifier(col)
+            for col in params.get("ignore_attribute") or []
+            if col not in dropped
         ]
 
         citation = _optional_text(params, "citation")
         openml_dataset = openml.datasets.create_dataset(
-            name=_openml_name(params["name"]),
+            name=_openml_identifier(params["name"]),
             description=_to_ascii(params["description"]),
             creator=_optional_text(params, "creator"),
             contributor=_optional_text(params, "contributor"),
@@ -427,7 +464,9 @@ class OpenMLDatasetExporter(BaseDatasetExporter):
             licence=params["licence"],
             attributes="auto",
             data=dataframe,
-            default_target_attribute=params["default_target_attribute"],
+            default_target_attribute=_openml_identifier(
+                params["default_target_attribute"]
+            ),
             ignore_attribute=ignored or None,
             citation=_to_ascii(citation) if citation else None,
             original_data_url=_optional_text(params, "original_data_url"),
@@ -499,9 +538,28 @@ def _to_ascii(text: str) -> str:
     return "".join(char for char in decomposed if not unicodedata.combining(char))
 
 
-def _openml_name(name: str) -> str:
-    """Return the dataset name OpenML will receive: ASCII, spaces as ``_``."""
+def _openml_identifier(name: str) -> str:
+    """Return a dataset or column name as OpenML receives it.
+
+    Accents are dropped and spaces become ``_``, so ``"Energy Consumption"``
+    is sent as ``"Energy_Consumption"``.
+    """
     return re.sub(r"\s+", "_", _to_ascii(name.strip()))
+
+
+def _sent_columns(dataset: "DashAIDataset") -> list[str]:
+    """Return the columns of a dataset that will be sent to OpenML."""
+    dropped = set(_unsupported_columns(dataset))
+    return [col for col in dataset.column_names if col not in dropped]
+
+
+def _column_renames(columns: list[str]) -> dict[str, str]:
+    """Map each column OpenML needs renamed to the name it will receive."""
+    return {
+        col: _openml_identifier(col)
+        for col in columns
+        if _openml_identifier(col) != col
+    }
 
 
 def _non_ascii(text: str) -> str:

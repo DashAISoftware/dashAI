@@ -17,7 +17,11 @@ from DashAI.back.dataset_exporters.base_dataset_exporter import (
 from DashAI.back.dependencies.config_builder import get_initial_components
 from DashAI.back.dependencies.database.models import Base, Dataset, DatasetExport
 from DashAI.back.job.base_job import JobError
-from DashAI.back.job.dataset_export_job import DatasetExportJob, export_temp_dir
+from DashAI.back.job.dataset_export_job import (
+    DatasetExportJob,
+    export_temp_dir,
+    readable_error,
+)
 
 PARAMS = {"name": "iris", "description": "Classic iris dataset."}
 
@@ -225,6 +229,25 @@ def test_cancel_removes_the_scratch_directory():
     DatasetExportJob(kwargs={"export_id": 424242}).on_cancel()
 
     assert not temp_dir.exists()
+
+
+def test_a_server_error_page_is_left_out_of_the_message():
+    error = RuntimeError(
+        "Unexpected server error when calling https://test.openml.org/api/"
+        "v1/xml/data/.\nStatus code: 502\n<html>\n<head><title>502 Bad "
+        "Gateway</title></head>\n</html>"
+    )
+
+    assert readable_error(error) == (
+        "Unexpected server error when calling "
+        "https://test.openml.org/api/v1/xml/data/. Status code: 502"
+    )
+
+
+def test_a_plain_error_message_is_kept():
+    assert readable_error(ValueError("platform rejected the dataset")) == (
+        "platform rejected the dataset"
+    )
 
 
 def test_the_job_name_uses_the_dataset_name():

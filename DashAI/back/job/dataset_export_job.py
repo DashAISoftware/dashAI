@@ -26,6 +26,30 @@ _STEP_STATUS = {
 }
 
 
+def readable_error(error: Exception) -> str:
+    """Turn an exception into a message fit to show the user.
+
+    Platforms sometimes answer a failed request with a whole HTML error page
+    (a 502 from a proxy, for example). That page is dropped and the remaining
+    text collapsed onto one line.
+
+    Parameters
+    ----------
+    error : Exception
+        The error raised while exporting.
+
+    Returns
+    -------
+    str
+        The message to store on the export.
+    """
+    text = str(error)
+    html_start = text.lower().find("<html")
+    if html_start != -1:
+        text = text[:html_start]
+    return " ".join(text.split()) or type(error).__name__
+
+
 def export_temp_dir(export_id: int) -> Path:
     """Return the scratch directory used by one export.
 
@@ -176,7 +200,7 @@ class DatasetExportJob(BaseJob):
             log.debug("Dataset export %d published at %s", export_id, result.url)
 
         except Exception as e:
-            err_msg = str(e)
+            err_msg = readable_error(e)
             log.error("Dataset export %d failed: %s", export_id, err_msg)
             self.kwargs["_error_message"] = err_msg
             self.set_status_as_error()

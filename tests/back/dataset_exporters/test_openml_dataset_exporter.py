@@ -255,6 +255,71 @@ def test_get_warnings_is_empty_for_plain_text():
     assert OpenMLDatasetExporter().get_warnings(_dataset(), VALID_PARAMS) == []
 
 
+def test_get_warnings_lists_renamed_columns():
+    dataset = _dataset(columns=("Building Type", "Energía", "class"))
+
+    warnings = OpenMLDatasetExporter().get_warnings(dataset, VALID_PARAMS)
+
+    assert warnings == [
+        "Columns will be renamed, since OpenML does not accept spaces or "
+        "accents in column names: 'Building Type' to 'Building_Type', "
+        "'Energía' to 'Energia'."
+    ]
+
+
+def test_validate_rejects_column_names_it_cannot_convert():
+    dataset = _dataset(columns=("price/kg", "id", "class"))
+
+    errors = OpenMLDatasetExporter().validate(dataset, VALID_PARAMS)
+
+    assert errors == [
+        "The columns ['price/kg'] have characters OpenML does not accept in "
+        "column names."
+    ]
+
+
+def test_validate_rejects_columns_that_would_share_a_name():
+    dataset = _dataset(columns=("total cost", "total_cost", "id", "class"))
+
+    errors = OpenMLDatasetExporter().validate(dataset, VALID_PARAMS)
+
+    assert errors == [
+        "Several columns would be renamed to the same name ['total_cost']; "
+        "rename them in DashAI first."
+    ]
+
+
+def test_prepare_renames_columns_target_and_ignored_together():
+    table = pa.table(
+        {
+            "Building ID": pa.array([1, 2, 3], pa.int64()),
+            "Square Footage": pa.array([7063.0, 44372.0, 19255.0], pa.float64()),
+            "Building Type": pa.array(["Residential", "Commercial", "Industrial"]),
+        }
+    )
+    dataset = DashAIDataset(
+        table,
+        types={
+            "Building ID": Integer(pa.int64()),
+            "Square Footage": Float(pa.float64()),
+            "Building Type": Categorical(["Residential", "Commercial", "Industrial"]),
+        },
+    )
+    params = {
+        **VALID_PARAMS,
+        "default_target_attribute": "Building Type",
+        "ignore_attribute": ["Building ID"],
+    }
+
+    payload = OpenMLDatasetExporter().prepare(dataset, params, ".")
+    openml_dataset = payload.metadata["openml_dataset"]
+    attributes = dict(arff.loads(openml_dataset._dataset)["attributes"])
+
+    assert set(attributes) == {"Building_ID", "Square_Footage", "Building_Type"}
+    assert openml_dataset.default_target_attribute == "Building_Type"
+    assert openml_dataset.ignore_attribute == ["Building_ID"]
+
+
 def test_prepare_sends_converted_text():
     params = {
         **VALID_PARAMS,
