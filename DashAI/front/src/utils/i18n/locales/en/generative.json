@@ -1,4 +1,7 @@
 {
+  "textMessage": {
+    "reasoning": "Reasoning"
+  },
   "button": {
     "backToTaskSelection": "Back to Task Selection",
     "createSession": "Create a session",

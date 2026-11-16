@@ -1,4 +1,7 @@
 {
+  "textMessage": {
+    "reasoning": "Razonamiento"
+  },
   "button": {
     "backToTaskSelection": "Volver a Selección de Tarea",
     "createSession": "Crear una sesión",

@@ -50,6 +50,17 @@ Sessions are listed on the left side of the Generative section, organized by tas
 
 ---
 
+## Reasoning in text responses
+
+Some language models include a reasoning section in their output wrapped in
+`<think>...</think>` or `<thinking>...</thinking>` tags. The chat displays each
+complete model-generated section in a collapsed **Reasoning** accordion; the
+remaining response continues to render as Markdown. Expand the accordion to view
+the reasoning. Incomplete tags and tags written in user messages are not
+extracted.
+
+---
+
 ## Parameters
 
 Parameters are configured before creating a session and can be adjusted at any time during an active session. Changes take effect on the next generation, and no restart is required.
