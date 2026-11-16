@@ -18,6 +18,37 @@ EXOGENOUS_OPTIONAL = "optional"
 EXOGENOUS_REQUIRED = "required"
 
 
+#: What an empty season means, said at the end of every ``season_length``
+#: description: the unit that builds the model reads it from the series'
+#: frequency (``with_season_from_grid``, D3), so the schema's placeholder is
+#: empty rather than a number that would reach every model as it is.
+SEASON_FROM_FREQUENCY = MultilingualString(
+    en=(
+        "Left empty, the season the series' frequency implies: 12 for monthly, "
+        "7 for daily and 24 for hourly data, and 1 when it implies none."
+    ),
+    es=(
+        "Vacío, la temporada que implica la frecuencia de la serie: 12 en "
+        "datos mensuales, 7 en diarios y 24 en horarios, y 1 cuando no "
+        "implica ninguna."
+    ),
+    pt=(
+        "Vazio, a temporada que a frequência da série implica: 12 em dados "
+        "mensais, 7 em diários e 24 em horários, e 1 quando não implica "
+        "nenhuma."
+    ),
+    de=(
+        "Leer: die Saison, die die Frequenz der Reihe nahelegt: 12 bei "
+        "monatlichen, 7 bei täglichen und 24 bei stündlichen Daten, 1 wenn sie "
+        "keine nahelegt."
+    ),
+    zh=(
+        "留空时，取序列频率所对应的季节长度：月度数据为 12，日度为 7，"
+        "小时数据为 24，无对应季节时为 1。"
+    ),
+)
+
+
 def use_exogenous_field():
     """Whether a model that can read exogenous variables reads them in a run.
 

@@ -156,6 +156,49 @@ def test_a_season_given_is_kept_even_if_it_is_one():
     assert ctx.require("model").season_length == 1
 
 
+def test_a_season_left_empty_comes_from_the_grid():
+    # What the run form sends for a season the user leaves empty.
+    ctx = _build({"season_length": None})
+
+    assert ctx.require("model").season_length == 12
+    assert ctx.require("model_parameters") == {"season_length": 12}
+
+
+def test_a_season_envelope_left_empty_comes_from_the_grid():
+    # The same, for a parameter the form draws with its search switch.
+    envelope = {
+        "optimize": False,
+        "fixed_value": None,
+        "lower_bound": 1,
+        "upper_bound": 12,
+    }
+
+    ctx = _build({"season_length": envelope})
+
+    assert ctx.require("model").season_length == 12
+    assert ctx.require("model_parameters")["season_length"] == {
+        **envelope,
+        "fixed_value": 12,
+    }
+
+
+def test_a_searched_season_left_empty_starts_from_the_grid_and_is_searched():
+    envelope = {
+        "optimize": True,
+        "fixed_value": None,
+        "lower_bound": 2,
+        "upper_bound": 12,
+    }
+
+    ctx = _build({"season_length": envelope})
+
+    assert ctx.require("model_parameters")["season_length"] == {
+        **envelope,
+        "fixed_value": 12,
+    }
+    assert ctx.require("factory").optimizable_parameters
+
+
 # --- BacktestForecasterUnit --------------------------------------------------
 
 

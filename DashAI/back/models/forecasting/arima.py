@@ -1,9 +1,15 @@
 from typing import TYPE_CHECKING, Any, Optional
 
-from DashAI.back.core.schema_fields import BaseSchema, int_field, search_space
+from DashAI.back.core.schema_fields import (
+    BaseSchema,
+    int_field,
+    none_type,
+    search_space,
+)
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.forecasting.single_series_forecasting_model import (
     EXOGENOUS_OPTIONAL,
+    SEASON_FROM_FREQUENCY,
     SingleSeriesForecastingModel,
     use_exogenous_field,
 )
@@ -235,8 +241,8 @@ class ARIMASchema(BaseSchema):
         2,
     )  # type: ignore
     season_length: search_space(
-        int_field(ge=1),
-        fixed=1,
+        none_type(int_field(ge=1)),
+        fixed=None,
         low=1,
         high=12,
         description=MultilingualString(
@@ -244,30 +250,33 @@ class ARIMASchema(BaseSchema):
                 "How many steps make up one season, which the seasonal orders "
                 "count in: 12 for monthly data repeating yearly, 7 for daily "
                 "data repeating weekly. It has to be at least 2 when a "
-                "seasonal order is above 0."
+                f"seasonal order is above 0. {SEASON_FROM_FREQUENCY.en}"
             ),
             es=(
                 "Cuántos pasos forman una temporada, en la que cuentan los "
                 "órdenes estacionales: 12 para datos mensuales que se repiten "
                 "cada año, 7 para datos diarios que se repiten cada semana. "
                 "Tiene que ser al menos 2 si algún orden estacional es mayor "
-                "que 0."
+                f"que 0. {SEASON_FROM_FREQUENCY.es}"
             ),
             pt=(
                 "Quantos passos formam uma temporada, na qual contam as ordens "
                 "sazonais: 12 para dados mensais que se repetem a cada ano, 7 "
                 "para dados diários que se repetem a cada semana. Tem que ser "
-                "pelo menos 2 se alguma ordem sazonal for maior que 0."
+                "pelo menos 2 se alguma ordem sazonal for maior que 0. "
+                f"{SEASON_FROM_FREQUENCY.pt}"
             ),
             de=(
                 "Wie viele Schritte eine Saison bilden, in der die saisonalen "
                 "Ordnungen zählen: 12 für monatliche Daten mit jährlicher "
                 "Wiederholung, 7 für tägliche Daten mit wöchentlicher. "
-                "Mindestens 2, wenn eine saisonale Ordnung größer als 0 ist."
+                "Mindestens 2, wenn eine saisonale Ordnung größer als 0 ist. "
+                f"{SEASON_FROM_FREQUENCY.de}"
             ),
             zh=(
                 "一个季节包含多少步，季节阶数以此计数：按年重复的月度数据为 12，"
                 "按周重复的日数据为 7。任一季节阶数大于 0 时至少为 2。"
+                f"{SEASON_FROM_FREQUENCY.zh}"
             ),
         ),
         alias=MultilingualString(

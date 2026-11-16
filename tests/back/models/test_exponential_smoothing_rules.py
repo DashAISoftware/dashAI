@@ -164,14 +164,28 @@ def test_the_minimum_is_still_enforced_where_it_can_be():
         ExponentialSmoothing(trend="none", seasonal="add", season_length=1)
 
 
-def test_the_shipped_default_would_break_that_rule_if_seasonality_were_on():
-    """Why the two halves are not interchangeable.
+def test_the_shipped_default_leaves_the_season_to_the_frequency():
+    """Why the two halves are still not interchangeable.
 
-    The declared default is ``fixed_value: 1`` with ``seasonal: "none"``, which
-    is consistent only because the season length is irrelevant there. A user who
-    turns seasonality on without raising the length gets the ``__init__`` error,
-    and the form cannot warn them first for exactly the reason above.
+    The declared default is an empty season with ``seasonal: "none"``. The run
+    reads an empty season from the series' frequency
+    (``with_season_from_grid``), so a user who turns seasonality on gets 12 on
+    a monthly series and the model builds. On a frequency that implies no
+    season, a yearly one, the empty season reads as 1 and the ``__init__``
+    error still fires, and the form cannot warn them first for exactly the
+    reason above. Until RECONCILING_FORECASTING §8.6 (slice 7b) the default
+    was ``fixed_value: 1``, which broke on every frequency.
     """
+    from DashAI.back.units.forecast_scope import with_season_from_grid
+
     defaults = _defaults()
     assert defaults["seasonal"] == "none"
-    assert defaults["season_length"]["fixed_value"] == 1
+    assert defaults["season_length"]["fixed_value"] is None
+
+    seasonal = {**defaults, "seasonal": "add"}
+    monthly = with_season_from_grid(seasonal, "MS")["season_length"]
+    ExponentialSmoothing(seasonal="add", season_length=monthly["fixed_value"])
+
+    yearly = with_season_from_grid(seasonal, "YS")["season_length"]
+    with pytest.raises(ValueError, match="season length of at least 2"):
+        ExponentialSmoothing(seasonal="add", season_length=yearly["fixed_value"])

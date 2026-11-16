@@ -129,6 +129,26 @@ def test_only_arima_and_the_reduction_model_take_exogenous_variables():
         assert model_class.get_metadata()["exogenous"] == model_class.EXOGENOUS
 
 
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        SeasonalNaiveForecaster,
+        ARIMA,
+        ExponentialSmoothing,
+        Theta,
+        RecursiveRegressionForecaster,
+    ],
+)
+def test_a_season_is_left_empty_for_the_frequency_to_set(model_class):
+    # The run form sends the placeholder as it is. Left empty, the unit that
+    # builds the model reads the season from the series' frequency (D3); a
+    # placeholder of 1 would reach every model as a season of one step.
+    field = model_class.get_schema()["properties"]["season_length"]
+
+    assert field["placeholder"]["fixed_value"] is None
+    assert {"type": "null"} in field["anyOf"]
+
+
 def test_a_model_that_takes_exogenous_variables_can_be_told_not_to():
     # The switch compares the same model with and without them, so it is a
     # choice of the run and never something a search tunes.

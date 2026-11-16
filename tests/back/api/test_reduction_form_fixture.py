@@ -103,4 +103,14 @@ def test_the_parameters_the_form_submits_train_a_run(client, tmp_path):
     run_id = _create_run(client, session_id, MODEL, payload)
     ModelJob(run_id=run_id).run()
 
-    assert _get(client, Run, run_id).status == RunStatus.FINISHED
+    run = _get(client, Run, run_id)
+    assert run.status == RunStatus.FINISHED
+    # The form leaves the season empty, so on a monthly series the run reads
+    # it from the frequency: twelve lags by default, as through the API.
+    from DashAI.back.models.forecasting.recursive_regression import (
+        RecursiveRegressionForecaster,
+    )
+
+    model = RecursiveRegressionForecaster.load(run.run_path)
+    assert model.season_length == 12
+    assert model.resolved_lags() == 12

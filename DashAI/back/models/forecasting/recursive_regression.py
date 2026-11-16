@@ -13,6 +13,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.forecasting.single_series_forecasting_model import (
     EXOGENOUS_OPTIONAL,
+    SEASON_FROM_FREQUENCY,
     SingleSeriesForecastingModel,
     use_exogenous_field,
 )
@@ -157,35 +158,35 @@ class RecursiveRegressionForecasterSchema(BaseSchema):
         ),
     )  # type: ignore
     season_length: search_space(
-        int_field(ge=1),
-        fixed=1,
+        none_type(int_field(ge=1)),
+        fixed=None,
         low=1,
         high=12,
         description=MultilingualString(
             en=(
                 "How many steps make up one season. In this model it only "
                 "sets how many lags are read when Lags is left empty; it does "
-                "not model the seasonality."
+                f"not model the seasonality. {SEASON_FROM_FREQUENCY.en}"
             ),
             es=(
                 "Cuántos pasos forman una temporada. En este modelo solo "
                 "decide cuántos rezagos se leen cuando Rezagos queda vacío; "
-                "no modela la estacionalidad."
+                f"no modela la estacionalidad. {SEASON_FROM_FREQUENCY.es}"
             ),
             pt=(
                 "Quantos passos formam uma temporada. Neste modelo só define "
                 "quantas defasagens são lidas quando Defasagens fica vazio; "
-                "não modela a sazonalidade."
+                f"não modela a sazonalidade. {SEASON_FROM_FREQUENCY.pt}"
             ),
             de=(
                 "Wie viele Schritte eine Saison bilden. In diesem Modell legt "
                 "sie nur fest, wie viele Verzögerungen gelesen werden, wenn "
                 "Verzögerungen leer bleibt; die Saisonalität modelliert sie "
-                "nicht."
+                f"nicht. {SEASON_FROM_FREQUENCY.de}"
             ),
             zh=(
                 "一个季节包含多少步。在本模型中，它只决定滞后数留空时读取多少个滞后值，"
-                "并不对季节性建模。"
+                f"并不对季节性建模。{SEASON_FROM_FREQUENCY.zh}"
             ),
         ),
         alias=MultilingualString(

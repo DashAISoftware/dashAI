@@ -43,15 +43,22 @@
           "title": "Lags"
         },
         "season_length": {
-          "description": "How many steps make up one season. In this model it only sets how many lags are read when Lags is left empty; it does not model the seasonality.",
-          "minimum": 1,
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How many steps make up one season. In this model it only sets how many lags are read when Lags is left empty; it does not model the seasonality. Left empty, the season the series' frequency implies: 12 for monthly, 7 for daily and 24 for hourly data, and 1 when it implies none.",
           "placeholder": {
-            "fixed_value": 1,
+            "fixed_value": null,
             "lower_bound": 1,
             "optimize": false,
             "upper_bound": 12
           },
-          "type": "integer",
           "x-dashai-search-dtype": "integer",
           "title": "Season length"
         },
@@ -233,7 +240,7 @@
     },
     "lags": null,
     "season_length": {
-      "fixed_value": 1,
+      "fixed_value": null,
       "lower_bound": 1,
       "optimize": false,
       "upper_bound": 12

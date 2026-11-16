@@ -73,6 +73,35 @@ def season_length_for(freq: str) -> int:
     return SEASON_BY_STEP.get(step, 1)
 
 
+def with_season_from_grid(parameters: Dict[str, Any], freq: str) -> Dict[str, Any]:
+    """The run's parameters, with a season left empty read from the frequency.
+
+    A season is empty when the run leaves the key out, as the API may, or
+    sends it as None, or as a search envelope whose fixed value is None, as
+    the run form does with the schema's placeholder. A searched envelope keeps
+    its range and its switch: only its starting value is filled.
+
+    Parameters
+    ----------
+    parameters : dict
+        The run's parameters for a model that declares ``season_length``.
+    freq : str
+        The frequency of the series' grid.
+
+    Returns
+    -------
+    dict
+        A copy of ``parameters`` whose ``season_length`` is set.
+    """
+    resolved = dict(parameters)
+    value = resolved.get("season_length")
+    if value is None:
+        resolved["season_length"] = season_length_for(freq)
+    elif isinstance(value, dict) and value.get("fixed_value", 0) is None:
+        resolved["season_length"] = {**value, "fixed_value": season_length_for(freq)}
+    return resolved
+
+
 def build_model(model_class: type, parameters: Dict[str, Any], run_id=None):
     """A fresh, unfitted model with the given parameter tree.
 
