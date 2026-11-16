@@ -7,7 +7,7 @@ from DashAI.back.dependencies.database.models import (
     GenerativeSession,
     GenerativeSessionParameterHistory,
 )
-from tests.back.RAG.conftest import TFIDF_PARAMS
+from tests.back.RAG.conftest import RAG_WORKFLOW_PAYLOAD, TFIDF_PARAMS
 
 
 def _mark_download_required_components_present(app) -> None:
@@ -233,8 +233,7 @@ def test_update_generative_session_params_merges_and_logs_history(client: TestCl
 
     # Create session via POST to trigger prompt_id resolution
     create_payload = {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "name": "rag-session-update-test",
         "parameters": {
             "chunking_model": {

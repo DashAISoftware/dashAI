@@ -21,6 +21,7 @@ from DashAI.back.services.RAG.prompt_service import (
     PromptService,
 )
 from DashAI.back.services.RAG.utils import build_prompt_hash
+from tests.back.RAG.conftest import RAG_TEST_GENERATOR
 
 
 def _template() -> str:
@@ -270,8 +271,9 @@ def test_delete_detaches_pipelines_instead_of_deleting_them(client):
 
         session = GenerativeSession(
             name=f"scope_session_{uuid.uuid4().hex[:8]}",
-            task_name="RAGTask",
-            model_name="RAGPipeline",
+            task_name="TextToTextGenerationTask",
+            workflow_name="RAGWorkflow",
+            model_name=RAG_TEST_GENERATOR,
             parameters={},
         )
         db.add(session)
@@ -324,8 +326,9 @@ def test_delete_with_detach_repoints_pipelines_to_the_draft(client):
         prompt_id = prompt.id
         session = GenerativeSession(
             name=f"detach_pipeline_{uuid.uuid4().hex[:8]}",
-            task_name="RAGTask",
-            model_name="RAGPipeline",
+            task_name="TextToTextGenerationTask",
+            workflow_name="RAGWorkflow",
+            model_name=RAG_TEST_GENERATOR,
             parameters={},
         )
         db.add(session)

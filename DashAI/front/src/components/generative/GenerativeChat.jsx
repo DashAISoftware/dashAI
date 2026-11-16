@@ -45,11 +45,12 @@ import {
   resolveRAGProgressText,
   splitRAGOutputRows,
 } from "./utils";
+import { RAG_WORKFLOW_NAME } from "../../constants/generativeWorkflows";
 
 /**
  * Extracts the user's message text from a process's input rows.
  *
- * RAGTask stores `[(input, "str")]`, and legacy rows may also be plain strings,
+ * Text sessions store `[(input, "str")]`, and legacy rows may also be plain strings,
  * so we keep the last non-empty row whose data_type is "str".
  *
  * @param {Array<{data_type?: string, data?: unknown}>|null|undefined} input
@@ -86,6 +87,7 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
   const {
     selectedSessionId: sessionId,
     selectedTaskName: taskName,
+    selectedWorkflowName: workflowName,
     tasks,
     paramsVersion,
     setParamsVersion,
@@ -154,10 +156,8 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
   // Resolve the session model's metadata plus a reconciled download status, so
   // the chat can block input and offer a download when the weights are missing
   // (e.g. after switching to a not downloaded model or deleting its download).
-  const modelName =
-    sessionInfo?.task_name === "RAGTask"
-      ? generatorName || sessionInfo?.parameters?.generation_model?.component
-      : sessionInfo?.model_name;
+  const isRAGSession = workflowName === RAG_WORKFLOW_NAME;
+  const modelName = generatorName || sessionInfo?.model_name;
   const refreshModelStatus = () => {
     if (!modelName) {
       setModelComponent(null);
@@ -345,13 +345,13 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
 
   useEffect(() => {
     let messagesObject = messages.map((process) => {
-      // Check if there's reference data in the output (only for RAGTask)
+      // Check if there's reference data in the output (only for RAG sessions)
       let referenceOutput = null;
       let queriesOutput = null;
       let traceOutput = null;
       let mainOutput = process.output;
 
-      if (taskName === "RAGTask") {
+      if (isRAGSession) {
         // Partition rows by data_type so the new 5-row format (Queries, Dict,
         // Trace, Timings, str) and the legacy 2-row format (Dict, str) are all
         // handled and row order is irrelevant.
@@ -487,7 +487,7 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
       (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
     );
     setMessagesWithHistory(combinedMessages);
-  }, [messages, history]);
+  }, [messages, history, isRAGSession]);
 
   const formatHistoryValue = (value) => {
     if (value === null || value === undefined) {
@@ -546,7 +546,7 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
           {sessionInfo?.description ? ":" : null} {sessionInfo?.description}
         </Typography>
 
-        {taskName !== "RAGTask" && (
+        {!isRAGSession && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <ModelSwitcher
               sessionId={sessionId}
@@ -629,7 +629,7 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
                     />
                     {message.status === 3 ? (
                       <>
-                        {taskName === "RAGTask" &&
+                        {isRAGSession &&
                         (message.referenceOutput || message.traceOutput) ? (
                           // For RAG messages, we need custom layout to insert sources before timestamp
                           <>
@@ -683,7 +683,7 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
                             cannot render (unknown stage, missing queries)
                             must still fall back to the waiting bubble instead
                             of leaving the in-flight row blank. */}
-                        {taskName === "RAGTask" &&
+                        {isRAGSession &&
                         resolveRAGProgressText(message.progress) ? (
                           <RAGChatProgress progress={message.progress} />
                         ) : (
