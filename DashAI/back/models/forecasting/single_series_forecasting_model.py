@@ -25,27 +25,27 @@ EXOGENOUS_REQUIRED = "required"
 SEASON_FROM_FREQUENCY = MultilingualString(
     en=(
         "Left empty, it uses the season of the series' frequency (monthly: 12, "
-        "daily: 7, hourly: 24; 1 when it implies none). A number sets another "
-        "cycle."
+        "daily: 7, hourly: 24; 1 if the frequency has no known cycle). A "
+        "number sets another cycle."
     ),
     es=(
         "Vacío, usa la temporada según la frecuencia de la serie (mensual: 12, "
-        "diaria: 7, horaria: 24; 1 si no implica ninguna). Un número fija otro "
-        "ciclo."
+        "diaria: 7, horaria: 24; 1 si la frecuencia no tiene un ciclo "
+        "conocido). Un número fija otro ciclo."
     ),
     pt=(
         "Vazio, usa a temporada segundo a frequência da série (mensal: 12, "
-        "diária: 7, horária: 24; 1 se não implica nenhuma). Um número fixa "
-        "outro ciclo."
+        "diária: 7, horária: 24; 1 se a frequência não tem um ciclo "
+        "conhecido). Um número fixa outro ciclo."
     ),
     de=(
         "Leer: die Saison nach der Frequenz der Reihe (monatlich: 12, täglich: "
-        "7, stündlich: 24; 1, wenn sie keine nahelegt). Eine Zahl legt einen "
-        "anderen Zyklus fest."
+        "7, stündlich: 24; 1, wenn die Frequenz keinen bekannten Zyklus hat). "
+        "Eine Zahl legt einen anderen Zyklus fest."
     ),
     zh=(
         "留空时，按序列的频率取季节长度（月度：12，日度：7，小时：24；"
-        "无对应季节时为 1）。填写数字则指定其他周期。"
+        "频率没有已知周期时为 1）。填写数字则指定其他周期。"
     ),
 )
 

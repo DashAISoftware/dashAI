@@ -169,38 +169,36 @@ class RecursiveRegressionForecasterSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "How many past values the regressor reads to predict the next "
-                "one. Left empty, it reads one season: Season length, or the "
-                "season of the series' frequency when that is empty too "
-                "(monthly: 12, daily: 7, hourly: 24), and at least "
+                "one. Left empty: it uses one season of lags (the value of "
+                "Season length, or the season of the frequency when that "
+                "field is empty too), with a minimum of "
                 f"{MIN_DEFAULT_LAGS}. A number sets another count."
             ),
             es=(
                 "Cuántos valores pasados lee el regresor para predecir el "
-                "siguiente. Vacío, lee una temporada: Largo de temporada, o la "
-                "temporada según la frecuencia de la serie si también queda "
-                "vacío (mensual: 12, diaria: 7, horaria: 24), y al menos "
+                "siguiente. Vacío: usa una temporada de rezagos (el valor de "
+                "Largo de temporada, o la temporada según la frecuencia si ese "
+                "campo también está vacío), con un mínimo de "
                 f"{MIN_DEFAULT_LAGS}. Un número fija otra cantidad."
             ),
             pt=(
                 "Quantos valores passados o regressor lê para prever o "
-                "próximo. Vazio, lê uma temporada: Comprimento da temporada, "
-                "ou a temporada segundo a frequência da série se também "
-                "ficar vazio (mensal: 12, diária: 7, horária: 24), e pelo "
-                f"menos {MIN_DEFAULT_LAGS}. Um número fixa outra quantidade."
+                "próximo. Vazio: usa uma temporada de defasagens (o valor de "
+                "Comprimento da temporada, ou a temporada segundo a frequência "
+                "se esse campo também estiver vazio), com um mínimo de "
+                f"{MIN_DEFAULT_LAGS}. Um número fixa outra quantidade."
             ),
             de=(
                 "Wie viele vergangene Werte der Regressor liest, um den "
-                "nächsten vorherzusagen. Leer: eine Saison, also die "
-                "Saisonlänge oder, wenn auch diese leer ist, die Saison nach "
-                "der Frequenz der Reihe (monatlich: 12, täglich: 7, stündlich: "
-                f"24), mindestens {MIN_DEFAULT_LAGS}. Eine Zahl legt eine "
-                "andere Anzahl fest."
+                "nächsten vorherzusagen. Leer: eine Saison an Verzögerungen "
+                "(der Wert von Saisonlänge oder, wenn dieses Feld auch leer "
+                "ist, die Saison nach der Frequenz), mindestens "
+                f"{MIN_DEFAULT_LAGS}. Eine Zahl legt eine andere Anzahl fest."
             ),
             zh=(
-                "回归器读取多少个过去的值来预测下一个值。留空时读取一个季节："
-                "即季节长度；若季节长度也留空，则按序列频率取季节长度"
-                f"（月度：12，日度：7，小时：24），且至少为 {MIN_DEFAULT_LAGS}。"
-                "填写数字则指定其他数量。"
+                "回归器读取多少个过去的值来预测下一个值。留空时：使用一个季节的滞后数"
+                "（即季节长度的值；若该字段也留空，则按频率取季节长度），"
+                f"最少为 {MIN_DEFAULT_LAGS}。填写数字则指定其他数量。"
             ),
         ),
         alias=MultilingualString(

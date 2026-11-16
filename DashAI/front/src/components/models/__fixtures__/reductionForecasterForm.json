@@ -38,7 +38,7 @@
               "type": "null"
             }
           ],
-          "description": "How many past values the regressor reads to predict the next one. Left empty, it reads one season: Season length, or the season of the series' frequency when that is empty too (monthly: 12, daily: 7, hourly: 24), and at least 3. A number sets another count.",
+          "description": "How many past values the regressor reads to predict the next one. Left empty: it uses one season of lags (the value of Season length, or the season of the frequency when that field is empty too), with a minimum of 3. A number sets another count.",
           "placeholder": null,
           "title": "Lags"
         },
@@ -52,7 +52,7 @@
               "type": "null"
             }
           ],
-          "description": "How many steps make up one season. Only used for the default lags: it sets how many lags are read when Lags is left empty; it does not model the seasonality. Left empty, it uses the season of the series' frequency (monthly: 12, daily: 7, hourly: 24; 1 when it implies none). A number sets another cycle.",
+          "description": "How many steps make up one season. Only used for the default lags: it sets how many lags are read when Lags is left empty; it does not model the seasonality. Left empty, it uses the season of the series' frequency (monthly: 12, daily: 7, hourly: 24; 1 if the frequency has no known cycle). A number sets another cycle.",
           "placeholder": {
             "fixed_value": null,
             "lower_bound": 1,

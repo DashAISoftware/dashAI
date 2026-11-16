@@ -780,12 +780,12 @@ def test_a_regressor_that_is_not_scikit_learn_is_refused_when_built():
 EMPTY_SEASON = {
     "en": (
         "Left empty, it uses the season of the series' frequency (monthly: 12, "
-        "daily: 7, hourly: 24",
+        "daily: 7, hourly: 24; 1 if the frequency has no known cycle).",
         "A number sets another cycle.",
     ),
     "es": (
         "Vacío, usa la temporada según la frecuencia de la serie (mensual: 12, "
-        "diaria: 7, horaria: 24",
+        "diaria: 7, horaria: 24; 1 si la frecuencia no tiene un ciclo conocido).",
         "Un número fija otro ciclo.",
     ),
 }
@@ -844,18 +844,18 @@ def test_the_season_says_what_empty_and_a_number_do(model_class, lang):
         (
             "en",
             (
-                "Left empty, it reads one season: Season length, or the season "
-                "of the series' frequency when that is empty too (monthly: 12, "
-                "daily: 7, hourly: 24), and at least 3.",
+                "Left empty: it uses one season of lags (the value of Season "
+                "length, or the season of the frequency when that field is "
+                "empty too), with a minimum of 3.",
                 "A number sets another count.",
             ),
         ),
         (
             "es",
             (
-                "Vacío, lee una temporada: Largo de temporada, o la temporada "
-                "según la frecuencia de la serie si también queda vacío "
-                "(mensual: 12, diaria: 7, horaria: 24), y al menos 3.",
+                "Vacío: usa una temporada de rezagos (el valor de Largo de "
+                "temporada, o la temporada según la frecuencia si ese campo "
+                "también está vacío), con un mínimo de 3.",
                 "Un número fija otra cantidad.",
             ),
         ),
