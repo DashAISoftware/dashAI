@@ -19,12 +19,20 @@ import ExportDatasetStep from "../../components/export/ExportDatasetStep";
 import ExportMetadataStep from "../../components/export/ExportMetadataStep";
 import ExportMetadataPanel from "../../components/export/ExportMetadataPanel";
 import ExportReviewStep from "../../components/export/ExportReviewStep";
+import ExportProgressStep from "../../components/export/ExportProgressStep";
+import ExportHistoryPanel from "../../components/export/ExportHistoryPanel";
 import { getComponents } from "../../api/component";
 import {
   createExport,
+  getExport,
   getExportableDatasets,
+  listExports,
   validateExport,
 } from "../../api/datasetExport";
+
+/** How often a running export is checked, in milliseconds. */
+const STATUS_POLL_MS = 2000;
+const FINISHED_STATUSES = ["published", "error"];
 import { getDatasetSample, getDatasetTypes } from "../../api/datasets";
 
 /** Turn an API error into a readable message, or null to use a generic one. */
@@ -35,15 +43,17 @@ const errorDetail = (error) => {
 };
 
 /**
- * Dataset export flow (/app/data/export/[:exporterName[/:datasetId[/review]]]).
+ * Dataset export flow (/app/data/export/[:exporterName[/:datasetId[/review]]]
+ * and /app/data/export/status/:exportId).
  *
  * Mirrors the data hub: the Data module sidebar on the left, the current step
  * in the center and the platform's details or form on the right. The URL holds
  * the step: no exporter means picking the platform, an exporter means picking
- * the dataset, a dataset means filling in the export metadata, and /review
- * means reviewing and publishing. The metadata travels between the last two
- * steps in the navigation state. Like the hub, it has no card in the Data
- * module yet and is reached by URL.
+ * the dataset, a dataset means filling in the export metadata, /review means
+ * reviewing and publishing, and status/:exportId follows a publication. The
+ * metadata travels between the metadata and review steps in the navigation
+ * state. Like the hub, it has no card in the Data module yet and is reached
+ * by URL.
  */
 export default function ExportContent() {
   const navigate = useNavigate();
@@ -53,6 +63,8 @@ export default function ExportContent() {
   const isReview = Boolean(
     useMatch("/app/data/export/:exporterName/:datasetId/review"),
   );
+  const exportId = useMatch("/app/data/export/status/:exportId")?.params
+    .exportId;
   const stateParams = location.state?.params ?? null;
   const threePanelLayout = useThreePanelLayout({ storageKey: "datasets" });
 
@@ -83,6 +95,11 @@ export default function ExportContent() {
   const [confirmed, setConfirmed] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState(null);
+
+  const [exportRow, setExportRow] = useState(null);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportNotFound, setExportNotFound] = useState(false);
+  const [history, setHistory] = useState([]);
 
   const chosenExporter = exporters.find((e) => e.name === exporterName) ?? null;
   const platformName =
@@ -185,6 +202,55 @@ export default function ExportContent() {
     };
   }, [isReview, stateParams, exporterName, datasetId]);
 
+  // Follow an export: read it now and every few seconds while its job runs.
+  useEffect(() => {
+    setExportRow(null);
+    setExportNotFound(false);
+    if (!exportId) return undefined;
+    let cancelled = false;
+    let timer = null;
+
+    const poll = () => {
+      getExport(Number(exportId))
+        .then((row) => {
+          if (cancelled) return;
+          setExportRow(row);
+          if (FINISHED_STATUSES.includes(row.status)) {
+            if (row.dataset_id) {
+              listExports(row.dataset_id)
+                .then((rows) => !cancelled && setHistory(rows))
+                .catch(() => {});
+            }
+          } else {
+            timer = setTimeout(poll, STATUS_POLL_MS);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setExportNotFound(true);
+        })
+        .finally(() => !cancelled && setExportLoading(false));
+    };
+
+    setExportLoading(true);
+    poll();
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [exportId]);
+
+  useEffect(() => {
+    if (!exportRow?.dataset_id) return;
+    listExports(exportRow.dataset_id)
+      .then(setHistory)
+      .catch(() => setHistory([]));
+  }, [exportRow?.dataset_id]);
+
+  const platformLabel = (name) => {
+    const exporter = exporters.find((e) => e.name === name);
+    return exporter?.display_name || name;
+  };
+
   const metadataUrl = `/app/data/export/${exporterName}/${datasetId}`;
 
   const handleReview = () => {
@@ -214,6 +280,33 @@ export default function ExportContent() {
   };
 
   const renderCenter = () => {
+    if (exportId) {
+      const rowExporter = exportRow?.exporter_name;
+      return (
+        <ExportProgressStep
+          exportRow={exportRow}
+          platformName={platformLabel(rowExporter ?? "")}
+          loading={exportLoading}
+          notFound={exportNotFound}
+          onPlatformClick={() =>
+            navigate(
+              rowExporter
+                ? `/app/data/export/${rowExporter}`
+                : "/app/data/export",
+            )
+          }
+          onDatasetClick={() =>
+            navigate(`/app/data/datasets/${exportRow.dataset_id}`)
+          }
+          onRetry={() =>
+            navigate(
+              `/app/data/export/${rowExporter}/${exportRow.dataset_id}/review`,
+              { state: { params: exportRow.params } },
+            )
+          }
+        />
+      );
+    }
     if (isReview) {
       const totalColumns = columns.length || exportDataset?.total_columns || 0;
       return (
@@ -301,7 +394,15 @@ export default function ExportContent() {
         <CenterPanel>{renderCenter()}</CenterPanel>
 
         <RightPanel toggleButtonTop="50%">
-          {datasetId && !isReview ? (
+          {exportId ? (
+            <ExportHistoryPanel
+              datasetName={exportRow?.dataset_name ?? ""}
+              exports={history}
+              currentId={exportRow?.id}
+              platformLabel={platformLabel}
+              onSelect={(row) => navigate(`/app/data/export/status/${row.id}`)}
+            />
+          ) : datasetId && !isReview ? (
             <ExportMetadataPanel
               exporterName={exporterName}
               columns={storableColumns}

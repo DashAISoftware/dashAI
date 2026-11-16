@@ -1,4 +1,5 @@
 {
+  "backToDataset": "Voltar ao conjunto de dados",
   "backToForm": "Voltar ao formulário",
   "columnColumns": "Colunas",
   "columnCompatibility": "Compatibilidade com {{platform}}",
@@ -11,6 +12,11 @@
   "datasetsLoadError": "Não foi possível carregar a lista de conjuntos de dados.",
   "datasetsSummary_one": "{{count}} conjunto de dados · {{exportable}} pode ser exportado para {{platform}}",
   "datasetsSummary_other": "{{count}} conjuntos de dados · {{exportable}} podem ser exportados para {{platform}}",
+  "exportNotFound": "Esta exportação não foi encontrada.",
+  "failedReason": "Motivo:",
+  "failedTitle": "Não foi possível publicar no {{platform}}",
+  "historyEmpty": "Este conjunto de dados não tem exportações.",
+  "historyTitle": "Exportações de {{dataset}}",
   "ignoredColumns": "Colunas ignoradas",
   "ignoredColumnsHelp": "Colunas que não serão usadas como atributos, como identificadores.",
   "incompatibleColumns": "Não compatível: sem {{columns}} restam colunas insuficientes",
@@ -22,12 +28,28 @@
   "noDatasets": "Não há conjuntos de dados prontos para exportar.",
   "noPlatforms": "Não há plataformas de exportação disponíveis.",
   "paramsLost": "Os dados do formulário foram perdidos, por exemplo ao recarregar a página. Volte ao formulário para preenchê-los.",
+  "phase": {
+    "preparing": "Preparando",
+    "published": "Publicado",
+    "uploading": "Enviando"
+  },
+  "phaseDetail": {
+    "pending": "Aguardando na fila de tarefas...",
+    "preparing": "Convertendo o conjunto de dados para o formato do {{platform}}...",
+    "uploading": "Enviando o conjunto de dados para o {{platform}}..."
+  },
   "previewLabel": "Pré-visualização do conjunto de dados",
+  "progressSubtitle": "A exportação roda em segundo plano. Você pode sair desta página; o progresso também aparece na fila de tarefas.",
   "publicBody": "Qualquer pessoa poderá ver e baixar o conjunto de dados no {{platform}}, e ele não pode ser apagado depois.",
   "publicConfirm": "Entendo que o conjunto de dados será público",
   "publicTitle": "A publicação no {{platform}} é pública",
   "publish": "Publicar no {{platform}}",
   "publishFailed": "Não foi possível iniciar a publicação.",
+  "publishedId": "{{name}} · ID {{id}}",
+  "publishedNote": "O {{platform}} processa o conjunto de dados por alguns minutos antes de ativá-lo.",
+  "publishedTitle": "Conjunto de dados publicado no {{platform}}",
+  "publishingTitle": "Publicando no {{platform}}",
+  "retry": "Tentar novamente",
   "review": "Revisar",
   "reviewCrumb": "Revisão",
   "reviewSubtitle": "Revise os metadados e confirme antes de publicar no {{platform}}.",
@@ -43,6 +65,14 @@
   "selectDatasetTitle": "Selecionar conjunto de dados para exportar",
   "selectPlatformSubtitle": "Escolha onde publicar seu conjunto de dados. Na próxima etapa você verá quais conjuntos de dados a plataforma aceita.",
   "selectPlatformTitle": "Selecionar plataforma de destino",
+  "status": {
+    "error": "Erro",
+    "pending": "Na fila",
+    "preparing": "Preparando",
+    "published": "Publicado",
+    "uploading": "Enviando"
+  },
+  "statusCrumb": "Publicação",
   "summaryColumns": "Colunas enviadas: {{sent}} de {{total}}",
   "summaryMetadata": "Metadados",
   "summaryRows": "Linhas: {{rows}}",
@@ -54,5 +84,6 @@
   "validationErrors": "Corrija estes problemas antes de publicar:",
   "validationFailed": "Não foi possível validar a exportação. Tente novamente.",
   "validationOk": "Sem erros de validação",
-  "validationWarnings": "Ajustes feitos ao publicar no {{platform}}:"
+  "validationWarnings": "Ajustes feitos ao publicar no {{platform}}:",
+  "viewOn": "Ver no {{platform}}"
 }

@@ -1,4 +1,5 @@
 {
+  "backToDataset": "返回数据集",
   "backToForm": "返回表单",
   "columnColumns": "列数",
   "columnCompatibility": "{{platform}} 兼容性",
@@ -10,6 +11,11 @@
   "datasetLoadError": "无法加载数据集。",
   "datasetsLoadError": "无法加载数据集列表。",
   "datasetsSummary_other": "{{count}} 个数据集 · {{exportable}} 个可导出到 {{platform}}",
+  "exportNotFound": "未找到此导出。",
+  "failedReason": "原因：",
+  "failedTitle": "无法发布到 {{platform}}",
+  "historyEmpty": "此数据集没有导出记录。",
+  "historyTitle": "{{dataset}} 的导出记录",
   "ignoredColumns": "忽略的列",
   "ignoredColumnsHelp": "不作为特征使用的列，例如 ID。",
   "incompatibleColumns": "不兼容：去掉 {{columns}} 后剩余的列不足",
@@ -21,12 +27,28 @@
   "noDatasets": "没有可导出的数据集。",
   "noPlatforms": "没有可用的导出平台。",
   "paramsLost": "表单数据已丢失（例如刷新了页面）。请返回表单重新填写。",
+  "phase": {
+    "preparing": "准备中",
+    "published": "已发布",
+    "uploading": "上传中"
+  },
+  "phaseDetail": {
+    "pending": "正在任务队列中等待...",
+    "preparing": "正在将数据集转换为 {{platform}} 格式...",
+    "uploading": "正在将数据集上传到 {{platform}}..."
+  },
   "previewLabel": "数据集预览",
+  "progressSubtitle": "导出在后台运行。您可以离开此页面，进度也会显示在任务队列中。",
   "publicBody": "任何人都可以在 {{platform}} 上查看和下载该数据集，且之后无法删除。",
   "publicConfirm": "我了解该数据集将会公开",
   "publicTitle": "在 {{platform}} 上发布是公开的",
   "publish": "发布到 {{platform}}",
   "publishFailed": "无法启动发布。",
+  "publishedId": "{{name}} · ID {{id}}",
+  "publishedNote": "{{platform}} 会先处理数据集几分钟，然后才将其激活。",
+  "publishedTitle": "数据集已发布到 {{platform}}",
+  "publishingTitle": "正在发布到 {{platform}}",
+  "retry": "重试",
   "review": "审核",
   "reviewCrumb": "审核",
   "reviewSubtitle": "在发布到 {{platform}} 之前，请检查元数据并确认。",
@@ -42,6 +64,14 @@
   "selectDatasetTitle": "选择要导出的数据集",
   "selectPlatformSubtitle": "选择发布数据集的位置。下一步您将看到该平台接受哪些数据集。",
   "selectPlatformTitle": "选择目标平台",
+  "status": {
+    "error": "错误",
+    "pending": "排队中",
+    "preparing": "准备中",
+    "published": "已发布",
+    "uploading": "上传中"
+  },
+  "statusCrumb": "发布",
   "summaryColumns": "发送的列：{{sent}} / {{total}}",
   "summaryMetadata": "元数据",
   "summaryRows": "行数：{{rows}}",
@@ -53,5 +83,6 @@
   "validationErrors": "发布前请修正以下问题：",
   "validationFailed": "无法验证导出，请重试。",
   "validationOk": "没有验证错误",
-  "validationWarnings": "发布到 {{platform}} 时将进行的调整："
+  "validationWarnings": "发布到 {{platform}} 时将进行的调整：",
+  "viewOn": "在 {{platform}} 上查看"
 }

@@ -1,4 +1,5 @@
 {
+  "backToDataset": "Back to the dataset",
   "backToForm": "Back to the form",
   "columnColumns": "Columns",
   "columnCompatibility": "{{platform}} compatibility",
@@ -11,6 +12,11 @@
   "datasetsLoadError": "The dataset list could not be loaded.",
   "datasetsSummary_one": "{{count}} dataset · {{exportable}} can be exported to {{platform}}",
   "datasetsSummary_other": "{{count}} datasets · {{exportable}} can be exported to {{platform}}",
+  "exportNotFound": "This export was not found.",
+  "failedReason": "Reason:",
+  "failedTitle": "The dataset could not be published on {{platform}}",
+  "historyEmpty": "This dataset has no exports.",
+  "historyTitle": "Exports of {{dataset}}",
   "ignoredColumns": "Ignored columns",
   "ignoredColumnsHelp": "Columns that will not be used as features, such as IDs.",
   "incompatibleColumns": "Not compatible: without {{columns}} too few columns are left",
@@ -22,12 +28,28 @@
   "noDatasets": "No datasets are ready to export.",
   "noPlatforms": "No export platforms are available.",
   "paramsLost": "The form data was lost, for example by reloading the page. Go back to the form to fill it in.",
+  "phase": {
+    "preparing": "Preparing",
+    "published": "Published",
+    "uploading": "Uploading"
+  },
+  "phaseDetail": {
+    "pending": "Waiting in the job queue...",
+    "preparing": "Converting the dataset to the {{platform}} format...",
+    "uploading": "Uploading the dataset to {{platform}}..."
+  },
   "previewLabel": "Dataset preview",
+  "progressSubtitle": "The export runs in the background. You can leave this page; the progress also appears in the job queue.",
   "publicBody": "Anyone will be able to see and download the dataset on {{platform}}, and it cannot be deleted later.",
   "publicConfirm": "I understand the dataset will be public",
   "publicTitle": "Publishing on {{platform}} is public",
   "publish": "Publish on {{platform}}",
   "publishFailed": "The export could not be started.",
+  "publishedId": "{{name}} · ID {{id}}",
+  "publishedNote": "{{platform}} processes the dataset for a few minutes before making it active.",
+  "publishedTitle": "Dataset published on {{platform}}",
+  "publishingTitle": "Publishing on {{platform}}",
+  "retry": "Try again",
   "review": "Review",
   "reviewCrumb": "Review",
   "reviewSubtitle": "Check the metadata and confirm before publishing on {{platform}}.",
@@ -43,6 +65,14 @@
   "selectDatasetTitle": "Select the dataset to export",
   "selectPlatformSubtitle": "Choose where to publish your dataset. In the next step you will see which datasets the platform accepts.",
   "selectPlatformTitle": "Select target platform",
+  "status": {
+    "error": "Error",
+    "pending": "Queued",
+    "preparing": "Preparing",
+    "published": "Published",
+    "uploading": "Uploading"
+  },
+  "statusCrumb": "Publication",
   "summaryColumns": "Columns sent: {{sent}} of {{total}}",
   "summaryMetadata": "Metadata",
   "summaryRows": "Rows: {{rows}}",
@@ -54,5 +84,6 @@
   "validationErrors": "Fix these problems before publishing:",
   "validationFailed": "The export could not be validated. Try again.",
   "validationOk": "No validation errors",
-  "validationWarnings": "Adjustments made when publishing on {{platform}}:"
+  "validationWarnings": "Adjustments made when publishing on {{platform}}:",
+  "viewOn": "View on {{platform}}"
 }

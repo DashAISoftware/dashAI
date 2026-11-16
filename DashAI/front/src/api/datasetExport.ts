@@ -53,6 +53,40 @@ export const createExport = async (
   return response.data;
 };
 
+export type DatasetExportStatus =
+  "pending" | "preparing" | "uploading" | "published" | "error";
+
+export interface DatasetExport {
+  id: number;
+  dataset_id: number | null;
+  dataset_name: string;
+  exporter_name: string;
+  params: Record<string, unknown>;
+  status: DatasetExportStatus;
+  remote_id: string | null;
+  remote_url: string | null;
+  error_message: string | null;
+  huey_id: string | null;
+  created: string | null;
+  last_modified: string | null;
+}
+
+export const getExport = async (exportId: number): Promise<DatasetExport> => {
+  const response = await api.get<DatasetExport>(
+    `${datasetExportEndpoint}/${exportId}`,
+  );
+  return response.data;
+};
+
+export const listExports = async (
+  datasetId?: number,
+): Promise<DatasetExport[]> => {
+  const response = await api.get<DatasetExport[]>(`${datasetExportEndpoint}/`, {
+    params: datasetId === undefined ? {} : { dataset_id: datasetId },
+  });
+  return response.data;
+};
+
 export const getExportableDatasets = async (
   exporterName: string,
 ): Promise<ExportableDataset[]> => {

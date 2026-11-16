@@ -101,6 +101,10 @@ function App() {
                   <Route path="hub/:sourceName" element={<HubContent />} />
                   <Route path="export" element={<ExportContent />} />
                   <Route
+                    path="export/status/:exportId"
+                    element={<ExportContent />}
+                  />
+                  <Route
                     path="export/:exporterName"
                     element={<ExportContent />}
                   />

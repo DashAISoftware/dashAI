@@ -1,4 +1,5 @@
 {
+  "backToDataset": "Zurück zum Datensatz",
   "backToForm": "Zurück zum Formular",
   "columnColumns": "Spalten",
   "columnCompatibility": "Kompatibilität mit {{platform}}",
@@ -11,6 +12,11 @@
   "datasetsLoadError": "Die Liste der Datensätze konnte nicht geladen werden.",
   "datasetsSummary_one": "{{count}} Datensatz · {{exportable}} kann nach {{platform}} exportiert werden",
   "datasetsSummary_other": "{{count}} Datensätze · {{exportable}} können nach {{platform}} exportiert werden",
+  "exportNotFound": "Dieser Export wurde nicht gefunden.",
+  "failedReason": "Grund:",
+  "failedTitle": "Veröffentlichung auf {{platform}} fehlgeschlagen",
+  "historyEmpty": "Dieser Datensatz hat keine Exporte.",
+  "historyTitle": "Exporte von {{dataset}}",
   "ignoredColumns": "Ignorierte Spalten",
   "ignoredColumnsHelp": "Spalten, die nicht als Merkmale verwendet werden, zum Beispiel IDs.",
   "incompatibleColumns": "Nicht kompatibel: ohne {{columns}} bleiben zu wenige Spalten übrig",
@@ -22,12 +28,28 @@
   "noDatasets": "Keine Datensätze sind zum Export bereit.",
   "noPlatforms": "Keine Exportplattformen verfügbar.",
   "paramsLost": "Die Formulardaten gingen verloren, zum Beispiel durch Neuladen der Seite. Kehren Sie zum Formular zurück, um sie auszufüllen.",
+  "phase": {
+    "preparing": "Vorbereitung",
+    "published": "Veröffentlicht",
+    "uploading": "Hochladen"
+  },
+  "phaseDetail": {
+    "pending": "Wartet in der Auftragswarteschlange...",
+    "preparing": "Datensatz wird in das {{platform}}-Format umgewandelt...",
+    "uploading": "Datensatz wird zu {{platform}} hochgeladen..."
+  },
   "previewLabel": "Vorschau des Datensatzes",
+  "progressSubtitle": "Der Export läuft im Hintergrund. Sie können diese Seite verlassen; der Fortschritt erscheint auch in der Auftragswarteschlange.",
   "publicBody": "Jeder kann den Datensatz auf {{platform}} sehen und herunterladen, und er kann später nicht gelöscht werden.",
   "publicConfirm": "Ich verstehe, dass der Datensatz öffentlich sein wird",
   "publicTitle": "Die Veröffentlichung auf {{platform}} ist öffentlich",
   "publish": "Auf {{platform}} veröffentlichen",
   "publishFailed": "Der Export konnte nicht gestartet werden.",
+  "publishedId": "{{name}} · ID {{id}}",
+  "publishedNote": "{{platform}} verarbeitet den Datensatz einige Minuten, bevor er aktiv wird.",
+  "publishedTitle": "Datensatz auf {{platform}} veröffentlicht",
+  "publishingTitle": "Veröffentlichung auf {{platform}}",
+  "retry": "Erneut versuchen",
   "review": "Überprüfen",
   "reviewCrumb": "Überprüfung",
   "reviewSubtitle": "Prüfen Sie die Metadaten und bestätigen Sie vor der Veröffentlichung auf {{platform}}.",
@@ -43,6 +65,14 @@
   "selectDatasetTitle": "Zu exportierenden Datensatz auswählen",
   "selectPlatformSubtitle": "Wählen Sie, wo Ihr Datensatz veröffentlicht werden soll. Im nächsten Schritt sehen Sie, welche Datensätze die Plattform akzeptiert.",
   "selectPlatformTitle": "Zielplattform auswählen",
+  "status": {
+    "error": "Fehler",
+    "pending": "In Warteschlange",
+    "preparing": "Vorbereitung",
+    "published": "Veröffentlicht",
+    "uploading": "Hochladen"
+  },
+  "statusCrumb": "Veröffentlichung",
   "summaryColumns": "Gesendete Spalten: {{sent}} von {{total}}",
   "summaryMetadata": "Metadaten",
   "summaryRows": "Zeilen: {{rows}}",
@@ -54,5 +84,6 @@
   "validationErrors": "Beheben Sie diese Probleme vor der Veröffentlichung:",
   "validationFailed": "Der Export konnte nicht geprüft werden. Versuchen Sie es erneut.",
   "validationOk": "Keine Validierungsfehler",
-  "validationWarnings": "Anpassungen bei der Veröffentlichung auf {{platform}}:"
+  "validationWarnings": "Anpassungen bei der Veröffentlichung auf {{platform}}:",
+  "viewOn": "Auf {{platform}} ansehen"
 }
