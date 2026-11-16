@@ -118,7 +118,13 @@ def _read_function_call(message: Any) -> Any:
 
 
 def _clear_accelerator_cache() -> None:
-    """Ask PyTorch to return freed CUDA blocks to the driver when available."""
+    """Ask PyTorch to release freed CUDA blocks when CUDA is available.
+
+    Returns
+    -------
+    None
+        Nothing. A cache-cleanup failure is logged and swallowed.
+    """
     try:
         import torch
 
@@ -184,7 +190,20 @@ class _TemplateKwargsFormatter:
 
 
 def _special_token_text(model: Any, token_id: int) -> str:
-    """Return the text of a special token, or ``""`` when it is undefined."""
+    """Return the text of a special token, or ``""`` when it is undefined.
+
+    Parameters
+    ----------
+    model : Any
+        Loaded llama.cpp backend exposing ``detokenize``.
+    token_id : int
+        Token id to decode, or llama.cpp's ``-1`` missing-token sentinel.
+
+    Returns
+    -------
+    str
+        Decoded special token, empty for the missing-token sentinel.
+    """
     if token_id == _NO_TOKEN_ID:
         return ""
     return model.detokenize([token_id], special=True).decode("utf-8", "replace")
@@ -249,7 +268,11 @@ def _require_template_variables(
         extensions=[Jinja2ChatFormatter.IgnoreGenerationTags, jinja2.ext.loopcontrols]
     )
     referenced = jinja2.meta.find_undeclared_variables(environment.parse(template))
-    unused = sorted(name for name in names if name not in referenced)
+    unused: List[str] = []
+    for name in names:
+        if name not in referenced:
+            unused.append(name)
+    unused.sort()
     if unused:
         raise RuntimeError(
             f"The chat template of {label} does not reference {unused}, so those "
@@ -264,6 +287,20 @@ def _build_template_handler(
 
     The formatter uses the same special tokens and stop token that llama.cpp
     derives for its own GGUF template, so only the extra variables differ.
+
+    Parameters
+    ----------
+    model : Any
+        Loaded llama.cpp backend providing the checkpoint's special-token ids.
+    template : str
+        Jinja chat template stored in the GGUF metadata.
+    template_kwargs : Dict[str, Any]
+        Variables fixed for each chat-template render.
+
+    Returns
+    -------
+    LlamaChatCompletionHandler
+        Public llama.cpp chat handler using the wrapped Jinja formatter.
     """
     from llama_cpp.llama_chat_format import (
         Jinja2ChatFormatter,
@@ -589,7 +626,11 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
         """
         repo_dir = cls._repo_dir(cls.REPO_ID)
         pattern = cls.GGUF_PATTERN or "*.gguf"
-        matches = sorted(path for path in repo_dir.glob(pattern) if path.is_file())
+        matches = []
+        for path in repo_dir.glob(pattern):
+            if path.is_file():
+                matches.append(path)
+        matches.sort()
         if not matches:
             raise RuntimeError(
                 f"{cls.__name__} could not find a downloaded GGUF file for repo "
@@ -659,10 +700,11 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
             ) from e
 
         kwargs = self.validate_and_transform(kwargs)
-        self.max_tokens = kwargs.pop("max_tokens", 100)
-        self.temperature = kwargs.pop("temperature", 0.7)
-        self.frequency_penalty = kwargs.pop("frequency_penalty", 0.1)
-        self.n_ctx = kwargs.pop("context_window", 512)
+        self.max_tokens = kwargs.pop("max_tokens")
+        self.temperature = kwargs.pop("temperature")
+        self.frequency_penalty = kwargs.pop("frequency_penalty")
+        self.n_ctx = kwargs.pop("context_window")
+        self._template_kwargs = self._resolve_chat_template_kwargs(kwargs)
 
         device_val = kwargs.get("device")
         use_gpu = LLAMA_DEVICE_TO_IDX.get(device_val, -1) >= 0
@@ -688,8 +730,27 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
             self.close()
             raise
 
+    def _resolve_chat_template_kwargs(self, kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        """Return the chat-template variables for this checkpoint.
+
+        Subclasses with a schema parameter that maps to a Jinja variable
+        override this method, pop the parameter from ``kwargs`` and return it
+        as a template variable. The default returns the static class values.
+
+        Parameters
+        ----------
+        kwargs : Dict[str, Any]
+            Validated model parameters not consumed by the base class.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Variables rendered into the checkpoint's chat template.
+        """
+        return dict(self.CHAT_TEMPLATE_KWARGS)
+
     def _install_chat_template_kwargs(self) -> None:
-        """Render :attr:`CHAT_TEMPLATE_KWARGS` into the GGUF chat template.
+        """Render the checkpoint's chat-template variables into its handler.
 
         llama-cpp-python 0.3.x has no ``chat_template_kwargs`` argument on
         ``create_chat_completion``. This method rebuilds the GGUF Jinja template
@@ -710,14 +771,19 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
             template is missing, or the template does not read every variable
             (llama.cpp would otherwise ignore it silently).
         """
-        if not self.CHAT_TEMPLATE_KWARGS:
+        template_kwargs = getattr(self, "_template_kwargs", None)
+        if template_kwargs is None:
+            raise RuntimeError(
+                f"{type(self).__name__} has no resolved chat-template variables; "
+                "build it from its schema instead of bypassing __init__."
+            )
+        if not template_kwargs:
             return
         label = type(self).__name__
         model = getattr(self, "model", None)
         if model is None:
             raise RuntimeError(
-                f"{label} has no llama.cpp backend to apply "
-                f"{self.CHAT_TEMPLATE_KWARGS}."
+                f"{label} has no llama.cpp backend to apply {template_kwargs}."
             )
         if (
             self._template_chat_handler is not None
@@ -730,13 +796,11 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
                 f"add template variables to it."
             )
         template = _require_gguf_chat_template(model, label)
-        _require_template_variables(template, self.CHAT_TEMPLATE_KWARGS, label)
-        handler = _build_template_handler(model, template, self.CHAT_TEMPLATE_KWARGS)
+        _require_template_variables(template, template_kwargs, label)
+        handler = _build_template_handler(model, template, template_kwargs)
         model.chat_handler = handler
         self._template_chat_handler = handler
-        log.debug(
-            "Applied chat-template kwargs %s to %s", self.CHAT_TEMPLATE_KWARGS, label
-        )
+        log.debug("Applied chat-template kwargs %s to %s", template_kwargs, label)
 
     def close(self) -> None:
         """Release the llama.cpp backend and reclaim its accelerator memory.

@@ -150,6 +150,7 @@ _FUNCTION_CALLING_LLM_PARAMS: Dict[str, Any] = {
     "frequency_penalty": 0.1,
     "context_window": DEFAULT_FUNCTION_CALLING_LLM_CONTEXT_WINDOW,
     "device": DEFAULT_DEVICE,
+    "enable_thinking": False,
 }
 
 
