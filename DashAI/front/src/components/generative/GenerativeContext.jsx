@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useSessions } from "../../hooks/generative/useSessions";
+import { useOnPluginsChanged } from "../../hooks/usePlugins";
 const GenerativeContext = createContext(null);
 
 export const useGenerative = () => useContext(GenerativeContext);
@@ -47,6 +48,7 @@ export function GenerativeProvider({ children, sessionFilter }) {
   useEffect(() => {
     fetchTasks();
   }, [i18n.language]);
+  useOnPluginsChanged(fetchTasks);
 
   const value = {
     selectedSessionId,

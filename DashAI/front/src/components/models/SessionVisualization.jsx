@@ -33,6 +33,8 @@ import {
 } from "../reports/createAndRunReport";
 
 import { useModels } from "./ModelsContext";
+import { UnavailableNotice } from "../shared/Unavailable";
+import { unavailableText } from "../../utils/componentAvailability";
 import { useTourContext } from "../tour/TourProvider";
 
 export default function SessionVisualization() {
@@ -69,6 +71,8 @@ export default function SessionVisualization() {
     explainerRefreshTrigger,
     triggerExplainerRefresh,
     openStatisticalTest,
+    sessionMissing,
+    runMissing,
   } = useModels();
 
   const theme = useTheme();
@@ -273,13 +277,19 @@ export default function SessionVisualization() {
   const handleRunAll = () => {
     const notStarted = runs.filter((r) => r.status === 0);
     const ready = notStarted.filter(
-      (r) => isRunModelReady(r) && !isRunModelLocked(r),
+      (r) =>
+        isRunModelReady(r) && !isRunModelLocked(r) && !runMissing(r).length,
     );
     ready.forEach((run) => onTrain(run));
     if (ready.length < notStarted.length) {
-      enqueueSnackbar(t("models:message.skippedUnavailableRuns"), {
-        variant: "warning",
-      });
+      // A plugin's missing component first: its text names the plugin.
+      const missing = notStarted.flatMap((run) => runMissing(run));
+      enqueueSnackbar(
+        missing.length
+          ? unavailableText(t, missing)
+          : t("models:message.skippedUnavailableRuns"),
+        { variant: "warning" },
+      );
     }
   };
 
@@ -567,6 +577,7 @@ export default function SessionVisualization() {
                   </Button>
                 )}
               </Box>
+              <UnavailableNotice missing={sessionMissing} sx={{ mt: 2 }} />
             </Box>
 
             {/* Compact model cards: quick access to each model */}
@@ -620,6 +631,7 @@ export default function SessionVisualization() {
                       <ModelCardCompact
                         run={run}
                         models={models}
+                        missing={runMissing(run)}
                         session={session}
                         existingRuns={runs}
                         onTrain={handleTrainWithTour}

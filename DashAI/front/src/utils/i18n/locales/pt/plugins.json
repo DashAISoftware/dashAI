@@ -351,6 +351,18 @@
     "plugin_dependency_version": "Precisa do plugin “{{id}}” na versão {{required}}, e a instalada é a {{installed}}.",
     "plugin_dependency_version_store": "Precisa do plugin “{{id}}” na versão {{required}}, e a loja não oferece nenhuma nesse intervalo."
   },
+  "unavailable": {
+    "chip": "Indisponível",
+    "readOnly": "Os resultados salvos podem ser vistos e excluídos. Executar de novo requer esse componente.",
+    "goToPlugins": "Ir para Plugins",
+    "disabled_one": "{{names}} é fornecido por {{plugin}}, que está desativado.",
+    "disabled_other": "{{names}} são fornecidos por {{plugin}}, que está desativado.",
+    "problem_one": "{{names}} é fornecido por {{plugin}}, que tem um problema.",
+    "problem_other": "{{names}} são fornecidos por {{plugin}}, que tem um problema.",
+    "uninstalled_one": "Nenhum plugin instalado fornece {{names}}. Se você o desinstalou, reinstale-o para usar isto novamente.",
+    "uninstalled_other": "Nenhum plugin instalado fornece {{names}}. Se você o desinstalou, reinstale-o para usá-los novamente.",
+    "checkFailed": "Não foi possível verificar os componentes disponíveis. Tente novamente."
+  },
   "store": {
     "readFailed": "Não foi possível ler a loja de plugins. Verifique sua conexão com a internet.",
     "empty": "A loja ainda não tem plugins.",

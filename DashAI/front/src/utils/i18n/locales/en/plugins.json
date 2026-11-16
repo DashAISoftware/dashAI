@@ -351,6 +351,18 @@
     "plugin_dependency_version": "Needs the plugin “{{id}}” at version {{required}}, and version {{installed}} is installed.",
     "plugin_dependency_version_store": "Needs the plugin “{{id}}” at version {{required}}, and the store offers none in that range."
   },
+  "unavailable": {
+    "chip": "Unavailable",
+    "readOnly": "Saved results can be viewed and deleted. Running again requires that component.",
+    "goToPlugins": "Go to Plugins",
+    "disabled_one": "{{names}} is provided by {{plugin}}, which is disabled.",
+    "disabled_other": "{{names}} are provided by {{plugin}}, which is disabled.",
+    "problem_one": "{{names}} is provided by {{plugin}}, which has a problem.",
+    "problem_other": "{{names}} are provided by {{plugin}}, which has a problem.",
+    "uninstalled_one": "No installed plugin provides {{names}}. If you uninstalled it, reinstall it to use this again.",
+    "uninstalled_other": "No installed plugin provides {{names}}. If you uninstalled it, reinstall it to use them again.",
+    "checkFailed": "The available components could not be checked. Try again."
+  },
   "store": {
     "readFailed": "Could not read the plugin store. Check your internet connection.",
     "empty": "The store has no plugins yet.",

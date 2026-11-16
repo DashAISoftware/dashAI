@@ -225,7 +225,10 @@ export default function ManualPredictionPanel({
               wasCancelled
                 ? t("common:jobQueue.jobCancelled")
                 : t("prediction:error.predictionFailed", {
-                    error: result.error || t("common:unknownError"),
+                    error:
+                      result?.error_msg ||
+                      result?.error ||
+                      t("common:unknownError"),
                   }),
               { variant: wasCancelled ? "info" : "error" },
             );

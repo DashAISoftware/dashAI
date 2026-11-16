@@ -20,6 +20,8 @@ import { getComponentById } from "../../../api/component";
 import { getConverterById } from "../../../api/converter";
 import { useTranslation } from "react-i18next";
 import { useTableLocalization } from "../../../utils/useTableLocalization";
+import { useComponentAvailability } from "../../../utils/componentAvailability";
+import { UnavailableChip } from "../../shared/Unavailable";
 
 function ConverterParametersTable({ converter, t, localization }) {
   const paramColumns = [
@@ -78,8 +80,12 @@ export default function ConverterBox({
   const [converterComponent, setConverterComponent] = useState({});
   const { t } = useTranslation(["common", "datasets"]);
   const localization = useTableLocalization();
+  // A plugin no longer provides it: the result stays, marked.
+  const missing = useComponentAvailability()([converter.converter]);
+  const isMissing = missing.length > 0;
 
   useEffect(() => {
+    if (isMissing) return;
     const fetchConverterComponent = async () => {
       try {
         const component = await getComponentById(converter.converter);
@@ -90,7 +96,7 @@ export default function ConverterBox({
     };
 
     fetchConverterComponent();
-  }, [converter.converter, t]);
+  }, [converter.converter, t, isMissing]);
 
   useEffect(() => {
     let intervalId;
@@ -143,7 +149,10 @@ export default function ConverterBox({
         "@keyframes newItemHighlight": {
           "0%": { boxShadow: "none" },
           "20%": {
-            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+            boxShadow: `0 0 0 3px ${alpha(
+              theme.palette.primary.main,
+              0.65,
+            )}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
           },
           "100%": { boxShadow: "none" },
         },
@@ -173,8 +182,9 @@ export default function ConverterBox({
               sx={{ color: theme.palette.primary.main, fontSize: 20 }}
             />
             <Typography variant="h6">
-              {converterComponent.display_name}
+              {converterComponent.display_name ?? converter.converter}
             </Typography>
+            <UnavailableChip missing={missing} />
             <Tooltip title={getConverterStatus(statusLabel, t)}>
               <span>
                 <RunStatusDot

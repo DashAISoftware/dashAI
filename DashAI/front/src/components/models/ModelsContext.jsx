@@ -11,6 +11,12 @@ import { useSharedDatasets } from "../../contexts/DatasetsContext";
 import { useSessions } from "../../hooks/models/useSessions";
 import { useModelComponents } from "../../hooks/models/useModelComponents";
 import { useJobTracker } from "../../hooks/useJobPolling";
+import { useOnPluginsChanged } from "../../hooks/usePlugins";
+import {
+  runNeeds,
+  sessionComponents,
+  useComponentAvailability,
+} from "../../utils/componentAvailability";
 const ModelsContext = createContext(null);
 
 export const useModels = () => useContext(ModelsContext);
@@ -47,6 +53,8 @@ export function ModelsProvider({ children }) {
     openFolderIds,
     setOpenFolderIds,
   } = useSharedDatasets();
+
+  const unavailable = useComponentAvailability();
 
   const {
     tasks,
@@ -87,6 +95,19 @@ export function ModelsProvider({ children }) {
   const { allModels, allMetrics, getModelsForTask } = useModelComponents({
     language: i18n.language,
   });
+
+  // What the selected session, or `action` on one of its runs (NEEDS: train,
+  // predict, explain, report), needs that a plugin no longer provides: its
+  // views stay readable, nothing that would run it is offered.
+  const sessionMissing = useMemo(
+    () => unavailable(sessionComponents(selectedSession)),
+    [unavailable, selectedSession],
+  );
+  const runMissing = useCallback(
+    (run, action = "train") =>
+      unavailable(runNeeds(action, run, selectedSession)),
+    [unavailable, selectedSession],
+  );
 
   const [selectedModel, setSelectedModel] = useState(null);
   const [configOpen, setConfigOpen] = useState(false);
@@ -165,6 +186,7 @@ export function ModelsProvider({ children }) {
   useEffect(() => {
     fetchTasks();
   }, [i18n.language]);
+  useOnPluginsChanged(fetchTasks);
 
   // Track the selected session's PreprocessingJob through the same shared
   // job-polling mechanism the Job Queue widget itself uses (jobPoller.js),
@@ -234,6 +256,8 @@ export function ModelsProvider({ children }) {
       allModels,
       allMetrics,
       getModelsForTask,
+      sessionMissing,
+      runMissing,
       step,
       setStep,
       activeRunId,
@@ -323,6 +347,8 @@ export function ModelsProvider({ children }) {
       allModels,
       allMetrics,
       getModelsForTask,
+      sessionMissing,
+      runMissing,
       step,
       activeRunId,
       runs,

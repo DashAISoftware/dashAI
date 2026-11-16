@@ -13,6 +13,9 @@ import {
   getComponentCredentialState,
 } from "../credentials/credentialStatus";
 import { canTrainRun, isRunActive } from "../../utils/runStatus";
+import { UnavailableNotice } from "../shared/Unavailable";
+import { unavailableText } from "../../utils/componentAvailability";
+import { useModels } from "./ModelsContext";
 
 /**
  * Full-screen detail view for a single model run: header with the run's
@@ -50,6 +53,13 @@ export default function ModelDetailView({
   const { statuses, loaded } = useCredentialStatuses();
   const { locked: credentialsLocked, requiredPlatforms } =
     getComponentCredentialState(model || {}, statuses, loaded);
+
+  // A plugin no longer provides what the run needs: its results stay
+  // readable; retraining and editing are blocked, and predicting too if the
+  // trained model can't be used (see NEEDS).
+  const { runMissing } = useModels();
+  const missing = runMissing(run);
+  const unavailable = missing.length > 0;
 
   return (
     <Box
@@ -94,20 +104,24 @@ export default function ModelDetailView({
             {canTrain && (
               <Tooltip
                 title={
-                  credentialsLocked
-                    ? t("credentials:requiredTooltip", {
-                        platform: requiredPlatforms,
-                      })
-                    : modelNotDownloaded
-                      ? t("common:componentDownload.mustDownload")
-                      : ""
+                  unavailable
+                    ? unavailableText(t, missing)
+                    : credentialsLocked
+                      ? t("credentials:requiredTooltip", {
+                          platform: requiredPlatforms,
+                        })
+                      : modelNotDownloaded
+                        ? t("common:componentDownload.mustDownload")
+                        : ""
                 }
               >
                 <span>
                   <Button
                     variant="contained"
                     size="small"
-                    disabled={modelNotDownloaded || credentialsLocked}
+                    disabled={
+                      unavailable || modelNotDownloaded || credentialsLocked
+                    }
                     startIcon={<PlayArrow />}
                     onClick={() => onTrain(run)}
                   >
@@ -118,11 +132,19 @@ export default function ModelDetailView({
                 </span>
               </Tooltip>
             )}
-            <Tooltip title={isRunning ? "" : t("common:edit")}>
+            <Tooltip
+              title={
+                isRunning
+                  ? ""
+                  : unavailable
+                    ? unavailableText(t, missing)
+                    : t("common:edit")
+              }
+            >
               <span>
                 <IconButton
                   size="small"
-                  disabled={isRunning}
+                  disabled={isRunning || unavailable}
                   onClick={() => setEditModalOpen(true)}
                 >
                   <Edit fontSize="small" />
@@ -141,6 +163,7 @@ export default function ModelDetailView({
             </Tooltip>
           </Box>
         </Box>
+        <UnavailableNotice missing={missing} sx={{ mb: 2 }} />
       </Box>
 
       <Box
@@ -156,6 +179,7 @@ export default function ModelDetailView({
         <RunCard
           run={run}
           models={models}
+          unavailable={runMissing(run, "predict").length > 0}
           session={session}
           onTrain={onTrain}
           onDelete={onDelete}

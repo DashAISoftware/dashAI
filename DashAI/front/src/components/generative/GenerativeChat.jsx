@@ -39,6 +39,11 @@ import SourcesDisplay from "./SourcesDisplay";
 import { Trans, useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
 import { useTheme } from "@mui/material/styles";
+import {
+  generativeSessionComponents,
+  useComponentAvailability,
+} from "../../utils/componentAvailability";
+import { UnavailableNotice } from "../shared/Unavailable";
 
 /**
  * The conversation view, shared by every generative task.
@@ -193,6 +198,15 @@ export default function GenerativeChat({ indexStatus }) {
     !(liveDownloaded && !liveDownloading);
   const modelBlocked =
     Boolean(modelComponent) && (credentialsLocked || downloadNeeded);
+
+  // A plugin no longer provides the session's task or model: the history
+  // stays readable, nothing new can be sent (switching to another model of
+  // the task, from the header, makes it usable again).
+  const unavailable = useComponentAvailability();
+  const missing = useMemo(
+    () => unavailable(generativeSessionComponents(sessionInfo)),
+    [unavailable, sessionInfo],
+  );
 
   const getMessages = () => {
     getProcessesBySessionId(sessionId).then((response) => {
@@ -687,7 +701,9 @@ export default function GenerativeChat({ indexStatus }) {
       </Box>
 
       {/* Chat input, or a download prompt when the model is not available */}
-      {modelBlocked ? (
+      {missing.length ? (
+        <UnavailableNotice missing={missing} sx={{ width: "100%" }} />
+      ) : modelBlocked ? (
         <Box
           sx={{
             width: "100%",

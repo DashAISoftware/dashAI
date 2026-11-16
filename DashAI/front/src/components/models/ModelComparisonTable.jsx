@@ -22,6 +22,8 @@ import {
 } from "../credentials/credentialStatus";
 import { canTrainRun, isRunActive } from "../../utils/runStatus";
 import { useModels } from "./ModelsContext";
+import { UnavailableChip } from "../shared/Unavailable";
+import { unavailableText } from "../../utils/componentAvailability";
 
 /**
  * Compact comparison table showing all runs in a session.
@@ -43,7 +45,7 @@ function ModelComparisonTable({
   // Bump to re-render when a download finishes so the train button enables.
   const [, setDownloadVersion] = useState(0);
   // Get the selected session from context to determine if cross-validation is used.
-  const { selectedSession } = useModels();
+  const { selectedSession, runMissing } = useModels();
 
   useEffect(
     () => subscribeAnyDownloadState(() => setDownloadVersion((v) => v + 1)),
@@ -294,19 +296,22 @@ function ModelComparisonTable({
           const model = models.find((m) => m.name === row.model_name);
           return model?.display_name || row.model_name;
         },
-        Cell: ({ cell }) => (
-          <Tooltip title={cell.getValue()} placement="top" arrow>
-            <Box
-              sx={{
-                width: "120px",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {cell.getValue()}
-            </Box>
-          </Tooltip>
+        Cell: ({ cell, row }) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Tooltip title={cell.getValue()} placement="top" arrow>
+              <Box
+                sx={{
+                  width: "120px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {cell.getValue()}
+              </Box>
+            </Tooltip>
+            <UnavailableChip missing={runMissing(row.original)} />
+          </Box>
         ),
       },
       ...getMetricColumns(),
@@ -321,24 +326,27 @@ function ModelComparisonTable({
           const isRunning = isRunActive(row.original.status);
           const modelReady = isModelReady(row.original.model_name);
           const modelLocked = isModelLocked(row.original.model_name);
+          const missing = runMissing(row.original);
 
           return (
             <Box sx={{ display: "flex", gap: 1 }}>
               <Tooltip
                 title={
-                  modelLocked
-                    ? t("credentials:requiredTooltip", {
-                        platform: getComponentCredentialState(
-                          models.find(
-                            (m) => m.name === row.original.model_name,
-                          ) || {},
-                          credentialStatuses,
-                          credentialsLoaded,
-                        ).requiredPlatforms,
-                      })
-                    : modelReady
-                      ? t("common:train")
-                      : t("common:componentDownload.mustDownload")
+                  missing.length
+                    ? unavailableText(t, missing)
+                    : modelLocked
+                      ? t("credentials:requiredTooltip", {
+                          platform: getComponentCredentialState(
+                            models.find(
+                              (m) => m.name === row.original.model_name,
+                            ) || {},
+                            credentialStatuses,
+                            credentialsLoaded,
+                          ).requiredPlatforms,
+                        })
+                      : modelReady
+                        ? t("common:train")
+                        : t("common:componentDownload.mustDownload")
                 }
               >
                 <span>
@@ -348,7 +356,12 @@ function ModelComparisonTable({
                       e.stopPropagation();
                       onTrain(runs.find((r) => r.id === row.original.id));
                     }}
-                    disabled={!canTrain || !modelReady || modelLocked}
+                    disabled={
+                      !canTrain ||
+                      !modelReady ||
+                      modelLocked ||
+                      missing.length > 0
+                    }
                     color="primary"
                   >
                     <PlayArrow fontSize="small" />
@@ -402,6 +415,7 @@ function ModelComparisonTable({
     onDelete,
     credentialStatuses,
     credentialsLoaded,
+    runMissing,
   ]);
 
   const columnOrder = useMemo(

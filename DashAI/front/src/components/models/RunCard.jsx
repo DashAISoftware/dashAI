@@ -43,6 +43,7 @@ import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationMod
 function RunCard({
   run,
   models = [],
+  unavailable = false,
   session,
   onTrain,
   onDelete,
@@ -400,6 +401,7 @@ function RunCard({
         >
           <RunResults
             run={run}
+            unavailable={unavailable}
             session={session}
             onRefresh={onOperationsRefresh}
             explainerRefreshTrigger={explainerRefreshTrigger}
@@ -450,6 +452,7 @@ RunCard.propTypes = {
     model_session_id: PropTypes.number,
   }).isRequired,
   models: PropTypes.array,
+  unavailable: PropTypes.bool,
   session: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,

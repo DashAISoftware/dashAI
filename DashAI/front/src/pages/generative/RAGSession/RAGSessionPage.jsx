@@ -45,6 +45,7 @@ export default function RAGSessionPage() {
     setSelectedDisplayName,
     deleteSessionById,
     fetchSessions,
+    setParamsVersion,
   } = useGenerative();
 
   const ragTitle = useTaskDisplayName(RAG_TASK_NAME);
@@ -247,7 +248,11 @@ export default function RAGSessionPage() {
             <RAGConfigPanel
               sessionId={sessionId}
               indexStatus={indexStatus}
-              onSaved={startIndexing}
+              onSaved={() => {
+                startIndexing();
+                // The chat re-reads the session: a new generator may unblock it.
+                setParamsVersion?.((version) => version + 1);
+              }}
               onRetryIndexing={startIndexing}
               onSessionRenamed={handleSessionRenamed}
             />

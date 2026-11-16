@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { getComponents } from "../../api/component";
+import { useOnPluginsChanged } from "../usePlugins";
 
 /**
  * Shared cache for the "Model"/"Metric" component lists, used across the
@@ -27,13 +28,19 @@ export function useModelComponents({ language }) {
   }, []);
 
   // Component metadata (display_name, description) is translated server-side,
-  // so cached entries go stale when the UI language changes.
-  useEffect(() => {
+  // so cached entries go stale when the UI language changes; a plugin change
+  // adds or removes components.
+  const reload = useCallback(() => {
     fetchAllModels();
     fetchAllMetrics();
     setModelsByTask({});
     pendingTaskFetches.current = {};
-  }, [language, fetchAllModels, fetchAllMetrics]);
+  }, [fetchAllModels, fetchAllMetrics]);
+
+  useEffect(() => {
+    reload();
+  }, [language, reload]);
+  useOnPluginsChanged(reload);
 
   const getModelsForTask = useCallback(
     (taskName) => {

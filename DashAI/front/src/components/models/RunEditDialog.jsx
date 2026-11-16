@@ -16,9 +16,11 @@ import {
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
+import { useSnackbar } from "notistack";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import RunEditForm from "./RunEditForm";
 import useRunEditForm from "../../hooks/useRunEditForm";
+import { confirmAvailable, runNeeds } from "../../utils/componentAvailability";
 
 /**
  * Editable-parameters dialog for a run — the same form used to configure it
@@ -38,7 +40,29 @@ export default function RunEditDialog({
   onClose,
 }) {
   const { t } = useTranslation(["models", "common"]);
+  const { enqueueSnackbar } = useSnackbar();
   const [activeStep, setActiveStep] = useState(0);
+
+  // Saving resets the run, so there is no point editing one that could not
+  // train again: every way in (card, run view) is checked against the API
+  // when opening, and the dialog only shows if nothing is missing; otherwise
+  // the toast says why. Saving checks again (useRunEditForm).
+  const [available, setAvailable] = useState(false);
+  useEffect(() => {
+    setAvailable(false);
+    if (!open) return undefined;
+    let cancelled = false;
+    confirmAvailable(runNeeds("train", run, session), t, enqueueSnackbar).then(
+      (ok) => {
+        if (cancelled) return;
+        if (ok) setAvailable(true);
+        else onClose();
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [open]); // once per opening
 
   const formProps = useRunEditForm({
     run,
@@ -91,7 +115,7 @@ export default function RunEditDialog({
   return (
     <>
       <Dialog
-        open={open}
+        open={open && available}
         onClose={onClose}
         maxWidth="md"
         fullWidth

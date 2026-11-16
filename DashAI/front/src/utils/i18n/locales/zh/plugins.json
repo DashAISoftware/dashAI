@@ -351,6 +351,15 @@
     "plugin_dependency_version": "需要插件“{{id}}”的 {{required}} 版本，但已安装的是 {{installed}}。",
     "plugin_dependency_version_store": "需要插件“{{id}}”的 {{required}} 版本，但商店没有符合该范围的版本。"
   },
+  "unavailable": {
+    "chip": "不可用",
+    "readOnly": "已保存的结果可以查看和删除。重新运行需要该组件。",
+    "goToPlugins": "前往插件",
+    "disabled_other": "{{names}} 由 {{plugin}} 提供，该插件已停用。",
+    "problem_other": "{{names}} 由 {{plugin}} 提供，该插件存在问题。",
+    "uninstalled_other": "没有已安装的插件提供 {{names}}。如果你卸载了它，请重新安装以再次使用。",
+    "checkFailed": "无法检查可用组件。请重试。"
+  },
   "store": {
     "readFailed": "无法读取插件商店。请检查网络连接。",
     "empty": "商店中还没有插件。",

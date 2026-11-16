@@ -27,6 +27,7 @@ import { getReports } from "../../api/report";
  */
 export default function RunResults({
   run,
+  unavailable = false,
   session,
   onRefresh,
   explainerRefreshTrigger,
@@ -184,6 +185,7 @@ export default function RunResults({
       {activeTab === 2 && isFinished && (
         <PredictionResultsTab
           run={run}
+          unavailable={unavailable}
           session={session}
           predictions={predictions}
           predictionDisplayNumbers={predictionDisplayNumbers}
@@ -274,6 +276,7 @@ RunResults.propTypes = {
     model_session_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     test_metrics: PropTypes.object,
   }).isRequired,
+  unavailable: PropTypes.bool,
   session: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,

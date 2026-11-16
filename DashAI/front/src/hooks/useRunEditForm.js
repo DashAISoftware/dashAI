@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import useSchema from "./useSchema";
 import { updateRunParameters, getRunOperationsCount } from "../api/run";
 import { checkIfHaveOptimazers } from "../utils/schema";
+import { confirmAvailable, runNeeds } from "../utils/componentAvailability";
 
 /**
  * Shared editable-parameters state/logic for a run's "Edit Run" dialog
@@ -139,6 +140,25 @@ export default function useRunEditForm({
     setIsSaving(true);
 
     const optimizing = hasOptimizableParams;
+
+    // Saving resets the run (its results are deleted): only if the run, as
+    // edited, can train again. Picking an available optimizer or goal metric
+    // instead of a missing one is how it recovers.
+    const edited = {
+      ...run,
+      optimizer_name: optimizing ? editedOptimizer : "",
+      goal_metric: optimizing ? editedGoalMetric : "",
+    };
+    if (
+      !(await confirmAvailable(
+        runNeeds("train", edited, session),
+        t,
+        enqueueSnackbar,
+      ))
+    ) {
+      setIsSaving(false);
+      return;
+    }
 
     // If nested CV is enabled, construct the inner splitter configuration to
     // send to the backend. Otherwise, send null to clear any existing nested

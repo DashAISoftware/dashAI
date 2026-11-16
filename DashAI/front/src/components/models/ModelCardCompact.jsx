@@ -18,6 +18,8 @@ import {
   useCredentialStatuses,
   getComponentCredentialState,
 } from "../credentials/credentialStatus";
+import { UnavailableChip } from "../shared/Unavailable";
+import { unavailableText } from "../../utils/componentAvailability";
 
 /**
  * Compact launcher card for a single run — shows just enough to identify
@@ -26,6 +28,7 @@ import {
 function ModelCardCompact({
   run,
   models = [],
+  missing = [],
   session,
   existingRuns = [],
   onTrain,
@@ -56,6 +59,10 @@ function ModelCardCompact({
   const { locked: credentialsLocked, requiredPlatforms } =
     getComponentCredentialState(model || {}, statuses, loaded);
 
+  // Its model, optimizer, task or a metric is no longer provided by a plugin:
+  // the card stays (results are still valid), but it can't train or be edited.
+  const unavailable = missing.length > 0;
+
   const statusColorKey = getRunStatusColor(run.status);
   const statusMain =
     statusColorKey === "default"
@@ -80,6 +87,7 @@ function ModelCardCompact({
           boxShadow: `0 6px 16px ${alpha(theme.palette.common.black, 0.35)}`,
           "& .card-chevron-icon": { color: theme.palette.primary.main },
         },
+        ...(unavailable && { opacity: 0.7 }),
         ...(isHighlighted && {
           transition:
             "border-color 0.15s, box-shadow 1.2s ease-out, transform 0.15s ease-out",
@@ -131,6 +139,7 @@ function ModelCardCompact({
             >
               {modelDisplayName}
             </Typography>
+            <UnavailableChip missing={missing} />
           </Box>
         </Box>
 
@@ -141,21 +150,25 @@ function ModelCardCompact({
           {canTrain && (
             <Tooltip
               title={
-                credentialsLocked
-                  ? t("credentials:requiredTooltip", {
-                      platform: requiredPlatforms,
-                    })
-                  : modelNotDownloaded
-                    ? t("common:componentDownload.mustDownload")
-                    : run.status === 3
-                      ? t("common:retrain")
-                      : t("common:trainVerb")
+                unavailable
+                  ? unavailableText(t, missing)
+                  : credentialsLocked
+                    ? t("credentials:requiredTooltip", {
+                        platform: requiredPlatforms,
+                      })
+                    : modelNotDownloaded
+                      ? t("common:componentDownload.mustDownload")
+                      : run.status === 3
+                        ? t("common:retrain")
+                        : t("common:trainVerb")
               }
             >
               <span>
                 <IconButton
                   size="small"
-                  disabled={modelNotDownloaded || credentialsLocked}
+                  disabled={
+                    unavailable || modelNotDownloaded || credentialsLocked
+                  }
                   onClick={() => onTrain(run)}
                   data-tour={isLastRun ? "train-button" : undefined}
                 >
@@ -164,11 +177,19 @@ function ModelCardCompact({
               </span>
             </Tooltip>
           )}
-          <Tooltip title={isRunning ? "" : t("common:edit")}>
+          <Tooltip
+            title={
+              isRunning
+                ? ""
+                : unavailable
+                  ? unavailableText(t, missing)
+                  : t("common:edit")
+            }
+          >
             <span>
               <IconButton
                 size="small"
-                disabled={isRunning}
+                disabled={isRunning || unavailable}
                 onClick={() => setConfigOpen(true)}
               >
                 <Edit fontSize="small" />
@@ -260,6 +281,7 @@ ModelCardCompact.propTypes = {
     trained_models: PropTypes.array,
   }).isRequired,
   models: PropTypes.array,
+  missing: PropTypes.array,
   session: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,

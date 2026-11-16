@@ -16,6 +16,11 @@ import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
 import { useTourContext } from "../tour/TourProvider";
+import {
+  generativeSessionComponents,
+  useComponentAvailability,
+} from "../../utils/componentAvailability";
+import { UnavailableNotice } from "../shared/Unavailable";
 
 export default function ParamsBar({ onToggle }) {
   const {
@@ -29,6 +34,9 @@ export default function ParamsBar({ onToggle }) {
   const [history, setHistory] = useState([]);
 
   const [selectedModel, setSelectedModel] = useState(null);
+  const [sessionComponents, setSessionComponents] = useState([]);
+  // Without the session's task or model there is no schema to edit.
+  const missing = useComponentAvailability()(sessionComponents);
   const [validationSchema, setValidationSchema] = useState(null);
   const { t } = useTranslation(["generative", "common"]);
   const tourContext = useTourContext();
@@ -50,16 +58,19 @@ export default function ParamsBar({ onToggle }) {
 
     getGenerativeSession(selectedSessionId).then((session) => {
       setParameters(session.parameters);
+      setSessionComponents(generativeSessionComponents(session));
 
-      getRelatedComponents(session.task_name).then((relatedComponents) => {
-        const relatedModel = relatedComponents.find(
-          (component) => component.name === session.model_name,
-        );
+      getRelatedComponents(session.task_name)
+        .then((relatedComponents) => {
+          const relatedModel = relatedComponents.find(
+            (component) => component.name === session.model_name,
+          );
 
-        if (relatedModel && relatedModel.schema) {
-          setSelectedModel(relatedModel);
-        }
-      });
+          if (relatedModel && relatedModel.schema) {
+            setSelectedModel(relatedModel);
+          }
+        })
+        .catch(() => setSelectedModel(null)); // the task is gone
     });
   }, [selectedSessionId, t, paramsVersion]);
 
@@ -161,7 +172,11 @@ export default function ParamsBar({ onToggle }) {
         )}
       </Box>
 
-      {selectedSessionId ? (
+      {selectedSessionId && missing.length ? (
+        <Box sx={{ flex: 1, p: 4 }}>
+          <UnavailableNotice missing={missing} />
+        </Box>
+      ) : selectedSessionId ? (
         <Box sx={{ flex: 1, overflowY: "auto", pt: 4 }}>
           <form onSubmit={formik.handleSubmit}>
             <Box sx={{ mr: 4, ml: 4 }}>

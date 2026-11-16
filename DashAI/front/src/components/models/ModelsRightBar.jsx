@@ -113,6 +113,7 @@ import ReportsSidebar from "../reports/ReportsSidebar";
 import StatisticalTestsList from "./StatisticalTestsList";
 import StatisticalTestsModal from "./StatisticalTestsModal";
 import { REPORTS_TAB } from "./runResults/ResultsTabsHeader";
+import { UnavailableNotice } from "../shared/Unavailable";
 
 const EXPLAINERS_TAB = 1;
 
@@ -150,6 +151,8 @@ export default function ModelsRightBar({ onToggle }) {
     selectedStatisticalTest,
     statisticalTestsModalOpen,
     getModelsForTask,
+    sessionMissing,
+    runMissing,
   } = useModels();
 
   const fetchModels = React.useCallback(async () => {
@@ -160,23 +163,28 @@ export default function ModelsRightBar({ onToggle }) {
       setFilteredModels(response);
     } catch (error) {
       console.error("Error fetching models:", error);
-      enqueueSnackbar(t("models:error.fetchingModels"), {
-        variant: "error",
-      });
+      // 422: the session's task is gone; the session view says why.
+      if (error.response?.status !== 422) {
+        enqueueSnackbar(t("models:error.fetchingModels"), {
+          variant: "error",
+        });
+      }
     } finally {
       setLoading(false);
     }
   }, [session?.task_name, getModelsForTask, enqueueSnackbar, t]);
 
+  // A session whose task or a metric is gone can't train: no models to add.
+  const sessionUnavailable = sessionMissing.length > 0;
   useEffect(() => {
-    if (session) {
+    if (session && !sessionUnavailable) {
       fetchModels();
     } else {
       setModels([]);
       setFilteredModels([]);
       setSearchQuery("");
     }
-  }, [session, fetchModels]);
+  }, [session, sessionUnavailable, fetchModels]);
 
   // When any download finishes (or is deleted) update just that model's flag in
   // place. A full refetch would flip `loading`, swap the list for a spinner and
@@ -264,6 +272,24 @@ export default function ModelsRightBar({ onToggle }) {
     : null;
 
   if (isInModelDetail && activeRun) {
+    // No new explanation or report for a run whose trained model can't be
+    // used: what each one needs is in NEEDS.
+    const action =
+      runDetailTab === EXPLAINERS_TAB
+        ? "explain"
+        : runDetailTab === REPORTS_TAB
+          ? "report"
+          : null;
+    const missing = action ? runMissing(activeRun, action) : [];
+    if (missing.length && activeRun.status === 3) {
+      return (
+        <SideBar>
+          <Box sx={{ p: 4 }}>
+            <UnavailableNotice missing={missing} />
+          </Box>
+        </SideBar>
+      );
+    }
     // On the explainers tab of a finished run, offer the compatible
     // explainers to add, mirroring how the session view offers models.
     if (runDetailTab === EXPLAINERS_TAB && activeRun.status === 3) {
@@ -427,6 +453,10 @@ export default function ModelsRightBar({ onToggle }) {
             >
               {t("models:label.exitModelDetailToAddModels")}
             </Typography>
+          </Box>
+        ) : activeTab === "models" && sessionUnavailable ? (
+          <Box sx={{ p: 4 }}>
+            <UnavailableNotice missing={sessionMissing} />
           </Box>
         ) : activeTab === "models" ? (
           <>

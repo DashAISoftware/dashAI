@@ -18,6 +18,7 @@ import {
 
 import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
 import { startJobPolling } from "../../utils/jobPoller";
+import { confirmAvailable, runNeeds } from "../../utils/componentAvailability";
 
 export function useSessions({ t }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -143,7 +144,26 @@ export function useSessions({ t }) {
     }
   }, [selectedSessionId, enqueueSnackbar]);
 
+  // Whether the run's model, optimizer, task, metrics and preprocessing exist
+  // now, read from the API (a toast says what is missing).
+  const canTrain = (run) =>
+    confirmAvailable(
+      runNeeds("train", run, selectedSession),
+      t,
+      enqueueSnackbar,
+    );
+
   const executeTraining = async (run) => {
+    // Every way to train ends here (the play buttons, run all, the retrain
+    // dialog), right before the run's results are deleted. A run whose model,
+    // optimizer, task, metric or preprocessing is gone would be emptied and
+    // then fail in the worker, so it is checked against the API now.
+    if (!(await canTrain(run))) {
+      setRetrainDialogOpen(false);
+      setRunToRetrain(null);
+      setOperationsCount(null);
+      return;
+    }
     try {
       // Always silently delete any existing operations before training
       const opsCount = await getRunOperationsCount(run.id.toString());
@@ -200,7 +220,10 @@ export function useSessions({ t }) {
               ? t("common:jobQueue.jobCancelled")
               : t("models:error.runFailed", {
                   runName: run.name,
-                  error: result.error || t("common:unknownError"),
+                  error:
+                    result?.error_msg ||
+                    result?.error ||
+                    t("common:unknownError"),
                 }),
             { variant: wasCancelled ? "info" : "error" },
           );
@@ -246,6 +269,9 @@ export function useSessions({ t }) {
           opsCount.explainers > 0 || opsCount.predictions > 0;
 
         if (hasOperations) {
+          // Before asking to delete its results: confirming would be refused
+          // anyway (executeTraining checks again, things may change meanwhile).
+          if (!(await canTrain(run))) return;
           setRunToRetrain(run);
           setOperationsCount(opsCount);
           setRetrainDialogOpen(true);

@@ -22,6 +22,8 @@ import {
 import ExplorerInfoModal from "./ExplorerInfoModal";
 import { useExplorerResults } from "./useExplorerResults";
 import { useTranslation } from "react-i18next";
+import { useComponentAvailability } from "../../../utils/componentAvailability";
+import { UnavailableChip } from "../../shared/Unavailable";
 
 // Floor for the measured plot height, so a short card degrades to a scrollable
 // plot rather than a squashed, unreadable one.
@@ -42,6 +44,9 @@ export default function ExplorerBox({
     useExplorerResults(explorer);
 
   const statusLabel = explorer.status;
+  // A plugin no longer provides it: the saved results stay, marked.
+  const missing = useComponentAvailability()([explorer.exploration_type]);
+  const isMissing = missing.length > 0;
 
   // The card sits in a fixed height grid cell, so the figure cannot use the
   // renderer's default height without overflowing. Measure the space the body
@@ -109,6 +114,7 @@ export default function ExplorerBox({
   }, [explorer.id, artifact, fetchExplorerResults, enqueueSnackbar, t]);
 
   useEffect(() => {
+    if (isMissing) return;
     const fetchConverterComponent = async () => {
       try {
         const component = await getComponentById(explorer.exploration_type);
@@ -119,7 +125,7 @@ export default function ExplorerBox({
     };
 
     fetchConverterComponent();
-  }, [explorer.exploration_type, t]);
+  }, [explorer.exploration_type, t, isMissing]);
 
   useEffect(() => {
     let intervalId;
@@ -209,6 +215,7 @@ export default function ExplorerBox({
                 explorer.exploration_type ??
                 t("datasets:unknownComponent")}
             </Typography>
+            <UnavailableChip missing={missing} />
             <Tooltip title={getExplorerStatus(statusLabel, t)}>
               <span>
                 <RunStatusDot

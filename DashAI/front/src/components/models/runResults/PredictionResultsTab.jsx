@@ -33,6 +33,7 @@ import DatasetPredictionPanel from "../DatasetPredictionPanel";
  */
 export default function PredictionResultsTab({
   run,
+  unavailable = false,
   session,
   predictions,
   predictionDisplayNumbers,
@@ -95,6 +96,7 @@ export default function PredictionResultsTab({
             variant="outlined"
             size="small"
             startIcon={<AddCircleOutline />}
+            disabled={unavailable}
             onClick={() => {
               setDatasetRunState({ canRun: false, isSubmitting: false });
               setShowDatasetPanel(true);
@@ -119,7 +121,7 @@ export default function PredictionResultsTab({
             size="small"
             startIcon={<AddCircleOutline />}
             onClick={() => manualActionsRef.current?.addRow()}
-            disabled={!manualRunState.canAddRow}
+            disabled={unavailable || !manualRunState.canAddRow}
             sx={{ textTransform: "none", fontWeight: 500 }}
           >
             {t("common:addRow")}
@@ -130,7 +132,7 @@ export default function PredictionResultsTab({
             color="primary"
             startIcon={<PlayArrowIcon />}
             onClick={() => manualActionsRef.current?.runPrediction()}
-            disabled={!manualRunState.canRun}
+            disabled={unavailable || !manualRunState.canRun}
             loading={manualRunState.isRunning}
             sx={{ textTransform: "none", fontWeight: 500 }}
           >
@@ -227,7 +229,7 @@ export default function PredictionResultsTab({
             <LoadingButton
               variant="contained"
               color="primary"
-              disabled={!datasetRunState.canRun}
+              disabled={unavailable || !datasetRunState.canRun}
               loading={datasetRunState.isSubmitting}
               onClick={() => datasetRunRef.current?.()}
             >
@@ -284,6 +286,7 @@ export default function PredictionResultsTab({
 }
 
 PredictionResultsTab.propTypes = {
+  unavailable: PropTypes.bool,
   run: PropTypes.object.isRequired,
   session: PropTypes.object,
   predictions: PropTypes.array.isRequired,
