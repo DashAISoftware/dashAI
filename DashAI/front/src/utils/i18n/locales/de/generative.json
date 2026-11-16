@@ -283,6 +283,84 @@
       "configureTitle": "Generator-Modell konfigurieren (LLM)",
       "modelLabel": "Generator-Modell"
     },
+    "help": {
+      "button": "Über diesen Abschnitt",
+      "title": "Über {{section}}",
+      "component": "Komponente",
+      "howItWorks": "So funktioniert es",
+      "recommendations": "Empfehlungen",
+      "dismiss": "Verstanden",
+      "unsaved": "Dieser Abschnitt enthält ungespeicherte Änderungen. Diese Erklärung beschreibt die gespeicherte Konfiguration; speichern Sie Ihre Änderungen, um sie zu aktualisieren.",
+      "parameters": "Wichtige Parameter",
+      "noParameters": "Diese Stufe hat erst nach der Konfiguration Parameter.",
+      "noDescription": "Für diesen Parameter gibt es im Komponentenschema keine Beschreibung.",
+      "parameterHelp": {
+        "chunk_size": "Länge jedes Abschnitts. Kleinere Werte verbessern die Präzision; größere Werte erhalten mehr Kontext.",
+        "chunk_overlap": "Text, der zwischen aufeinanderfolgenden Abschnitten wiederholt wird. Halten Sie ihn unter der Chunk-Größe, damit keine Sätze übersprungen werden.",
+        "top_k": "Anzahl der abgerufenen und an das Modell gesendeten Abschnitte. Höhere Werte liefern mehr Evidenz, verbrauchen aber Kontext und können Rauschen hinzufügen.",
+        "temperature": "Zufälligkeit des generierten Textes. Niedrige Werte halten Antworten nah an den Quellen; höhere Werte machen sie variabler.",
+        "max_tokens": "Maximale Länge der generierten Antwort. Das ist nur das Budget der Antwort: Prompt und abgerufene Abschnitte belegen ebenfalls das Kontextfenster, daher muss die Summe aller drei hineinpassen.",
+        "context_window": "Gesamtzahl der Token, die das Modell auf einmal verarbeiten kann, einschließlich Prompt, abgerufener Abschnitte und Antwort.",
+        "template": "Anweisungen und Platzhalter, die dem Modell sagen, wie es Frage und abgerufene Abschnitte verwenden soll.",
+        "language": "Sprache, die in der Antwort und in der Prompt-Formulierung erwartet wird.",
+        "history_window": "Anzahl der vorherigen Konversationsnachrichten, die die Transformation zur Deutung der aktuellen Frage nutzen darf. Ein größeres Fenster klärt Rückfragen, kostet aber Token und kann veralteten Kontext mitschleppen.",
+        "n_queries": "Wie viele alternative Suchabfragen der Erweiterer pro Frage erzeugt. Mehr Varianten verbessern die Abdeckung, erhöhen aber Kosten und Rauschen der Suche.",
+        "max_subqueries": "Maximale Anzahl der Teilfragen, die der Zerleger erzeugen darf. Leer lassen für kein Limit; höhere Werte decken komplexe Fragen ab, vervielfachen aber die Suchaufrufe.",
+        "enable_retrieve_then_expand": "Nach dem Abruf der besten Chunks auch deren Nachbar-Chunks einbeziehen, damit das Modell die vollständige Passage sieht.",
+        "expand_window": "Gesamtzahl der Fragmente im erweiterten Fenster, einschließlich des abgerufenen Fragments. Ungerade Werte zentrieren das Fenster auf dem abgerufenen Fragment; gerade Werte behalten das zusätzliche Fragment danach.",
+        "prompt": "Prompt-Vorlage, die das Modell steuert, das diese Stufe ausführt.",
+        "llm_model": "Sprachmodell, das diese Stufe für ihr internes Reasoning oder Umschreiben verwendet.",
+        "device": "Gerät, auf dem das Modell läuft. Verwenden Sie CPU, wenn keine GPU verfügbar ist oder das Modell klein ist; nutzen Sie eine GPU, wenn verfügbar, um die Inferenz zu beschleunigen, sofern Modell und Treiber kompatibel sind."
+      },
+      "sections": {
+        "chunking_model": {
+          "what": "Beim Chunking wird jedes Dokument vor der Indexierung in kleinere Abschnitte aufgeteilt. Der Retriever durchsucht diese Abschnitte, und das Modell antwortet auf Basis der Abschnitte, die es erhält. Die Chunk-Größe bestimmt daher, wie viel Text mit jeder Quelle ankommt.",
+          "recommendations": [
+            "Wählen Sie die Chunk-Größe nach dem Inhalt: kleine Abschnitte (etwa 250 Zeichen) eignen sich für FAQs und präzises Nachschlagen; absatzlange Abschnitte (etwa 500) für allgemeine Prosa; Seiten- oder Abschnittsabschnitte (2000-4000) für lange Berichte, in denen jede Antwort breiten Kontext braucht.",
+            "Abwägung: Kleinere Abschnitte verbessern die Abrufpräzision und verbrauchen weniger Kontext, können Gedanken aber zerteilen; größere Abschnitte erhalten Kontext, belegen aber mehr vom Modellfenster und können den relevanten Satz überdecken.",
+            "Halten Sie die Überlappung bei 10-20% der Chunk-Größe: Sie schützt Sätze, die eine Grenze überschreiten, aber zu viel Überlappung dupliziert Text, bläht den Index auf und verbraucht Kontext.",
+            "Wählen Sie die Einheit nach Inhalt und Budget: Zeichen verhalten sich sprachübergreifend vorhersehbar; Token entsprechen dem tatsächlichen Budget des Modells, bevorzugen Sie also Token, wenn das Kontextfenster knapp ist. Indexieren Sie nach jeder Änderung neu."
+          ]
+        },
+        "query_transformation": {
+          "what": "Eine optionale Stufe, die die Frage des Nutzers vor der Suche umformuliert. Sie kann vage Fragen präzisieren, mehrere Suchvarianten erzeugen oder eine komplexe Frage in einfachere Teile zerlegen.",
+          "disabled": "Diese Stufe ist derzeit deaktiviert. Aktivieren Sie sie im Abschnitt, um eine Technik zu wählen und Prompt sowie Modell zu konfigurieren.",
+          "recommendations": [
+            "Schreiben Sie um, wenn die Frage von der Konversation abhängt oder unvollständig ist: zum Beispiel wird aus 'wie viele Schichten hat es?' eine eigenständige Frage. Das kostet einen zusätzlichen Modellaufruf, lassen Sie es daher bei eigenständigen Fragen aus.",
+            "Erweitern Sie, wenn die Formulierung nicht zu den Dokumenten passen könnte (Synonyme, Jargon, sehr kurze Abfragen): Der Erweiterer erzeugt mehrere Suchvarianten und verbessert den Recall, auf Kosten weiterer Suchaufrufe und möglichen Rauschens.",
+            "Zerlegen Sie, wenn die Frage mehrere Teile hat, die Belege aus verschiedenen Abschnitten brauchen: Sie wird in Teilabfragen aufgeteilt, was aber die Suchaufrufe vervielfacht und den Zusammenhang zwischen den Teilen verlieren kann.",
+            "Umschreiben erhält die Absicht am besten, Erweiterung verbessert die Abdeckung, Zerlegung bewältigt Komplexität. Prüfen Sie Prompt und Sprache der Transformation: Eine Umformulierung, die die Absicht ändert, ruft falsche Abschnitte ab."
+          ]
+        },
+        "retriever_model": {
+          "what": "Die Suche bewertet die indexierten Chunks anhand der Frage und liefert die besten zurück. Diese Chunks sind die einzige Evidenz, die der Generator nutzen kann; diese Stufe entscheidet also, worauf die Antwort beruhen kann.",
+          "recommendations": [
+            "Stichwort-Retriever (BM25, TF-IDF) eignen sich besser für exakte Namen, Codes und seltene Begriffe; dichte Retriever besser für Umschreibungen und Synonyme. Sparse-Verfahren sind schneller und günstiger, dichte Verfahren brauchen ein Embedding-Modell und mehr Speicher.",
+            "Top-k tauscht Abdeckung gegen Präzision: 5-10 ist ein guter Ausgangsbereich für fokussierte Antworten; erhöhen Sie den Wert bei breiten oder vergleichenden Fragen und akzeptieren Sie mehr Rauschen und Kontextverbrauch.",
+            "Zusammengesetzte Retriever (parallel, sequenziell, mit Reranking) kombinieren Stärken, vervielfachen aber Kosten und Latenz. Nutzen Sie sie, wenn ein einzelner Retriever klar Evidenz verfehlt, nicht als Standard.",
+            "Retrieve-then-expand stellt den umgebenden Kontext wieder her und reduziert fragmentierte Antworten, verbraucht aber mehr Kontextbudget. Nutzen Sie es bei kleinen Chunks; überspringen Sie es, wenn Chunks bereits vollständige Abschnitte enthalten."
+          ]
+        },
+        "generation_model": {
+          "what": "Das Generierungsmodell schreibt die endgültige Antwort aus den abgerufenen Chunks und der Prompt-Vorlage. Sein Kontextfenster und seine Ausgabegrenzen bestimmen, wie viel Evidenz hineinpasst und wie lang die Antwort sein kann.",
+          "recommendations": [
+            "Wählen Sie nach dem Deployment: kleine lokale Modelle (etwa 1-3B Parameter) sind schnell und privat, aber schwächer bei komplexem Reasoning; größere lokale oder externe Modelle verbessern die Qualität, brauchen aber mehr Speicher, Zeit oder API-Kosten.",
+            "Temperatur tauscht Treue gegen Vielfalt: 0-0,3 für faktische, dokumentgestützte Antworten; 0,7-1,0 nur für Brainstorming oder kreative Formulierungen.",
+            "Max. Token und Kontextfenster tauschen Antwortlänge und Evidenz gegen Speicher: Größere Fenster fassen mehr Chunks, verlangsamen die Generierung und können RAM oder VRAM überschreiten.",
+            "Lokale Modelle brauchen einen Download und passende Hardware; externe Anbieter brauchen Zugangsdaten und können Ihre Dokumente erhalten. Wählen Sie die Option, die zu Ihren Datenschutz- und Latenzanforderungen passt."
+          ]
+        },
+        "prompt": {
+          "what": "Die Prompt-Vorlage teilt dem Modell mit, wie es die abgerufenen Abschnitte nutzen soll. Platzhalter wie {input} und {chunks} werden zur Laufzeit ersetzt; Formulierung und Reihenfolge der Anweisungen prägen die Antwort stark.",
+          "recommendations": [
+            "Behalten Sie die erforderlichen Platzhalter: {input} und {chunks} sind die Frage und die Evidenz. Werden sie entfernt, antwortet das Modell blind.",
+            "Wählen Sie den Prompt-Stil nach der Aufgabe: Ein knapper Prompt 'antworte nur anhand der Abschnitte' verbessert die Treue; ein konversationellerer Prompt verbessert die Lesbarkeit, kann aber unbelegte Details hinzufügen.",
+            "Geben Sie an, was bei fehlender Antwort zu tun ist: Ausdrückliches Ablehnen reduziert erfundene Antworten, während Raten die Abdeckung erhöht, aber Halluzinationen riskiert.",
+            "Kurze, konkrete Anweisungen sind leichter zu befolgen und kosten weniger Token; lange Listen können mehr Regeln abbilden, verwässern aber die wichtigen und verbrauchen Kontext."
+          ]
+        }
+      }
+    },
     "index": {
       "chunkCount_one": "{{count}} Chunk",
       "chunkCount_other": "{{count}} Chunks",
