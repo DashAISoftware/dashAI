@@ -690,6 +690,16 @@ def test_the_reduction_model_is_kept_with_its_fitted_forecaster(tmp_path):
         assert list(forecast.upper[level]) == list(expected.upper[level])
 
 
+def test_the_kept_model_does_not_carry_the_binned_residuals():
+    # skforecast bins the training residuals on every fit, but the intervals
+    # draw from the unbinned ones (``use_binned_residuals=False``).
+    model = RecursiveRegressionForecaster().fit(_seasonal())
+
+    assert model._forecaster.in_sample_residuals_by_bin_ is None
+    assert len(model._forecaster.in_sample_residuals_) > 0
+    assert np.isfinite(model.predict(3, levels=[80, 95]).lower[95]).all()
+
+
 def test_the_reduction_model_gives_the_same_intervals_every_time():
     model = RecursiveRegressionForecaster().fit(_seasonal())
 

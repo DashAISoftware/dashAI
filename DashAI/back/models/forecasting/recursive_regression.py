@@ -519,6 +519,10 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
                 f"Fitting {type(self.regressor).__name__} on {rows} rows of "
                 f"{lags} lags failed: {error}"
             ) from error
+        # skforecast also keeps the residuals binned by predicted value, for
+        # ``use_binned_residuals``; the intervals here draw from the unbinned
+        # ones, so the copy would only weigh on the kept model.
+        forecaster.in_sample_residuals_by_bin_ = None
         self._forecaster = forecaster
 
     def _forecast(self, h: int, x_future: Optional[Any]) -> "np.ndarray":
