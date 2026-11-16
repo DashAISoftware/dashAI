@@ -41,12 +41,6 @@ class ConverterStatus(Enum):
     ERROR = 4
 
 
-class PluginStatus(Enum):
-    REGISTERED = 1
-    INSTALLED = 2
-    ERROR = 99
-
-
 class DatasetStatus(Enum):
     NOT_STARTED = 0
     DELIVERED = 1
