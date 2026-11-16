@@ -7,8 +7,8 @@ agentic composite retrievers:
 * the default keyword, semantic and hybrid retrievers (and the converters they
   nest: the bag-of-words word counter and the multilingual embedding model),
 * the default semantic embedding checkpoint,
-* the default RAG function-calling LLM (the registered Qwen 2.5 1.5B, with
-  the sampling parameters and context window the RAG helper stages need),
+* the default RAG function-calling LLM (the registered Qwen3 8B, with the
+  sampling parameters and context window the RAG helper stages need),
 * the RAG *LLM parameter overrides* shared by the query-transformation stage
   and the agentic retrievers, plus the merge rule that applies them.
 
@@ -88,7 +88,7 @@ DEFAULT_AGENTIC_RERANKER_PROMPT_COMPONENT = "DefaultAgenticRerankerPrompt"
 KEYWORD_RETRIEVER_COMPONENT = "BM25Retriever"
 SEMANTIC_RETRIEVER_COMPONENT = "DenseEmbeddingRetriever"
 HYBRID_RETRIEVER_COMPONENT = "ParallelRetriever"
-FUNCTION_CALLING_LLM_COMPONENT = "Qwen25_15BInstruct"
+FUNCTION_CALLING_LLM_COMPONENT = "Qwen3_8B"
 BAG_OF_WORDS_CONVERTER_COMPONENT = "BagOfWordsConverter"
 PARAPHRASE_MULTILINGUAL_EMBEDDING_COMPONENT = (
     "ParaphraseMultilingualMiniLML12V2Embedding"
@@ -266,8 +266,8 @@ def default_agentic_reranker_prompt() -> Dict[str, Any]:
 def default_function_calling_llm() -> Dict[str, Any]:
     """Return the default RAG function-calling LLM recipe.
 
-    The default is the registered Qwen 2.5 1.5B Instruct component. Its schema
-    ships conservative text-generation placeholders (512 context window, 0.7
+    The default is the registered Qwen3 8B component. Its schema ships
+    conservative text-generation placeholders (512 context window, 0.7
     temperature, 100 max tokens); the RAG default raises the context window to
     :data:`DEFAULT_FUNCTION_CALLING_LLM_CONTEXT_WINDOW`, lowers the temperature
     to :data:`DEFAULT_RAG_LLM_TEMPERATURE` and grows the budget to
@@ -278,8 +278,8 @@ def default_function_calling_llm() -> Dict[str, Any]:
     Returns
     -------
     Dict[str, Any]
-        A fresh ``{"component": "Qwen25_15BInstruct", "params": {...}}``
-        reference using the RAG sampling parameters and context window.
+        A fresh ``{"component": "Qwen3_8B", "params": {...}}`` reference using
+        the RAG sampling parameters and context window.
     """
     return {
         "component": FUNCTION_CALLING_LLM_COMPONENT,

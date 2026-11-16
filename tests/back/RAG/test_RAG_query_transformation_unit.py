@@ -1380,10 +1380,10 @@ class TestTechniqueDefaultPromptPlaceholders:
             "params": {},
         }
 
-    def test_transformation_llm_defaults_to_qwen_15b(self):
+    def test_transformation_llm_defaults_to_qwen3_8b(self):
         """The shared schema's model placeholder carries the RAG LLM recipe."""
         expected = default_function_calling_llm()
-        assert expected["component"] == "Qwen25_15BInstruct"
+        assert expected["component"] == "Qwen3_8B"
         for technique in (LLMQueryRewriter, LLMQueryExpander, LLMQueryDecomposer):
             schema = technique.get_schema()
             assert schema["properties"]["llm_model"]["placeholder"] == expected
@@ -1394,12 +1394,12 @@ class TestTechniqueDefaultPromptPlaceholders:
             name: {"class": klass, "schema": klass.get_schema()}
             for name, klass in {
                 "LLMQueryRewriter": LLMQueryRewriter,
-                "Qwen25_15BInstruct": GGUFTextGenerationModel,
+                "Qwen3_8B": GGUFTextGenerationModel,
                 "DefaultQueryRewritingPrompt": DefaultQueryRewritingPrompt,
             }.items()
         }
         resolved = resolve_component_defaults("LLMQueryRewriter", registry)
-        assert resolved["llm_model"]["component"] == "Qwen25_15BInstruct"
+        assert resolved["llm_model"]["component"] == "Qwen3_8B"
         # The RAG recipe in the placeholder overrides the GGUF schema values.
         assert resolved["llm_model"]["params"]["max_tokens"] == 300
         assert resolved["llm_model"]["params"]["temperature"] == 0.1
