@@ -9,6 +9,7 @@ from DashAI.back.converters.document.image_captioning import (
 from DashAI.back.converters.document.item_filter import DocumentItemFilter
 from DashAI.back.converters.document.language_filter import LanguageFilter
 from DashAI.back.converters.document.ocr import OCRConverter
+from DashAI.back.converters.document.surya_ocr import SuryaOCRConverter
 from DashAI.back.converters.document.text_splitter import TextSplitter
 
 # Hugging Face module
@@ -1004,6 +1005,7 @@ def get_initial_components():
         TextSplitter,
         LanguageFilter,
         OCRConverter,
+        SuryaOCRConverter,
         ImageCaptioningConverter,
         Summarizer,
         ColumnArithmetic,

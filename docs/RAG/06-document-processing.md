@@ -199,6 +199,35 @@ marks the row `ERROR` and removes the partial folder. OCR needs a loader that
 actually extracts images (for example a PDF loader with image extraction on):
 scanning a text-only parse finds no `Image` items and the step is skipped.
 
+`SuryaOCRConverter` is an alternative to `OCRConverter`. It runs Surya's
+`datalab-to/surya-ocr-2.5` checkpoint in-process with Transformers and PyTorch,
+using only the packages DashAI already installs through `pip` or `uv sync`. No
+Docker, inference server, or extra executable is needed, and it adds no packages
+of its own. Download the converter's model in DashAI's component manager before
+processing (about 1.4 GB). The download fetches only the files Transformers
+loads: the weights, the configs, the tokenizer, the processor and the chat
+template.
+
+Each page is read with Surya's whole-page OCR prompt. The page image is scaled
+to at most 6,291,456 pixels, the full-page reference size. `Maximum generated
+tokens per page` (default 12,288) caps the output. A page whose output reaches
+that cap is cut off, so the step fails with an error instead of saving partial
+text; raise the limit for dense pages. A page that degenerates into a repetition
+loop also fails the step. A failing page fails the whole document conversion;
+pages are not skipped, so inspect the document and adjust the budget before
+retrying. Each page becomes one paragraph item holding its text in reading
+order. Layout labels, coordinates, and HTML tags are not stored; prompt-like
+special tokens that occur literally in the page text are removed too.
+
+Surya's weights use the OpenRAIL-M model license (the converter only downloads
+them; DashAI's own code remains MIT). The checkpoint is about 1.4 GB and CPU
+inference is slow, so a GPU or a small page batch is strongly recommended.
+
+The device selector uses PyTorch's CUDA detection, unlike GGUF LLMs, which use
+llama.cpp's device detection. If PyTorch was installed as a CPU-only build,
+install CUDA-enabled PyTorch (with `uv sync --extra cuda`) and restart DashAI;
+then the GPU options will appear.
+
 The status moves `NOT_STARTED → DELIVERED → STARTED → FINISHED` (or `ERROR`);
 `DELIVERED` and `STARTED` are the "busy" states that block deletion. A failed
 parse leaves an `ERROR` row in the Data module so the user can inspect or delete
