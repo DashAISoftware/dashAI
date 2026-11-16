@@ -616,6 +616,38 @@ def test_a_series_too_short_for_the_lags_given_names_only_them():
     assert "Lags is left empty" not in str(error.value)
 
 
+@pytest.mark.parametrize(
+    ("lags", "n", "x", "needed"),
+    [
+        # 3 rows of 3 lags: as many rows as values each one reads.
+        (3, 6, None, 7),
+        # 3 rows of 1 lag and 2 exogenous variables.
+        (1, 4, np.ones((4, 2)), 5),
+    ],
+)
+def test_the_regression_needs_more_rows_than_values_each_row_reads(lags, n, x, needed):
+    # With fewer rows than values per row (and an intercept), a linear
+    # regression has no single solution, and scikit-learn picks one silently.
+    model = RecursiveRegressionForecaster(lags=lags, season_length=1)
+
+    with pytest.raises(ValueError, match=f"needs at least {needed} observations"):
+        model.fit(np.arange(float(n)), x=x)
+
+
+def test_a_regressor_that_fails_to_fit_is_named():
+    from DashAI.back.models.scikit_learn.k_neighbors_regression import (
+        KNeighborsRegression,
+    )
+
+    # 9 rows of 3 lags are enough rows, but not 10 neighbours.
+    model = RecursiveRegressionForecaster(
+        KNeighborsRegression(n_neighbors=10), lags=3, season_length=1
+    )
+
+    with pytest.raises(ValueError, match="Fitting KNeighborsRegression on 9 rows"):
+        model.fit(np.arange(12.0))
+
+
 def test_the_reduction_model_regresses_on_the_exogenous_variables_too():
     # The series is the exogenous column scaled and shifted, so a linear
     # regression on the lag and the column finds it, and the forecast follows

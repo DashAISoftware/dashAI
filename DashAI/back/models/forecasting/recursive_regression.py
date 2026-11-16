@@ -433,22 +433,37 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
         Raises
         ------
         ValueError
-            If the series is not longer than the lags plus the differences:
-            there would be no row left to train the regressor on.
+            If the series leaves fewer training rows than values each row
+            reads, plus one: the regression would have no single solution.
+            Also if the regressor fails to fit, named in the message.
         """
+        import numpy as np
         import pandas as pd
         from skforecast.recursive import ForecasterRecursive
 
         lags = self.resolved_lags()
         differentiation = int(self.differentiation or 0)
-        if len(y) <= lags + differentiation:
+        n_exogenous = 0 if x is None else int(np.shape(x)[1])
+        # Each row reads the lags and the exogenous values; with no more rows
+        # than that (and the intercept), a linear regression is
+        # underdetermined. It keeps the regression determined, nothing more:
+        # with few rows the training residuals, and so the intervals, can
+        # still come out narrow.
+        values_per_row = lags + n_exogenous
+        rows = len(y) - lags - differentiation
+        if rows < values_per_row + 1:
+            needed = lags + differentiation + values_per_row + 1
+            exogenous = f" and {n_exogenous} exogenous variables" if n_exogenous else ""
             raise ValueError(
                 f"A recursive regression with {lags} lags{self._lags_source()} "
-                f"and differentiation {differentiation} needs more than "
-                f"{lags + differentiation} observations, but the history it is "
-                f"fitted on has {len(y)} (in a backtest, the history before the "
-                "first origin). Set fewer lags or less differencing, or use a "
-                "longer history."
+                f"and differentiation {differentiation} needs at least {needed} "
+                f"observations: {lags + differentiation} before its first "
+                f"training row, and then one row more than the {values_per_row} "
+                f"values each row reads (the lags{exogenous}), so that the "
+                f"regression has a single solution. The history it is fitted on "
+                f"has {len(y)} (in a backtest, the history before the first "
+                "origin). Set fewer lags or less differencing, or use a longer "
+                "history."
             )
 
         forecaster = ForecasterRecursive(
@@ -456,13 +471,23 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
             lags=lags,
             differentiation=differentiation or None,
         )
-        forecaster.fit(
-            y=pd.Series(y, index=pd.RangeIndex(len(y))),
-            exog=self._exog(x, 0),
-            store_in_sample_residuals=True,
-            random_state=RANDOM_STATE,
-            suppress_warnings=True,
-        )
+        try:
+            forecaster.fit(
+                y=pd.Series(y, index=pd.RangeIndex(len(y))),
+                exog=self._exog(x, 0),
+                store_in_sample_residuals=True,
+                random_state=RANDOM_STATE,
+                suppress_warnings=True,
+            )
+        except ValueError as error:
+            # Only ValueError, which scikit-learn raises for data and
+            # parameters it cannot fit (InvalidParameterError is one): a search
+            # counts it as a trial that could not be fitted. Anything else is
+            # wiring, and stays as it is.
+            raise ValueError(
+                f"Fitting {type(self.regressor).__name__} on {rows} rows of "
+                f"{lags} lags failed: {error}"
+            ) from error
         self._forecaster = forecaster
         self._train_length = len(y)
 
