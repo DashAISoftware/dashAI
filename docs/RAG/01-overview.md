@@ -441,9 +441,17 @@ takes them as parameters):
 | `Mixtral8x7BInstructQ2K`   | `mradermacher/Mixtral-8x7B-Instruct-v0.1-GGUF` (Q2_K)        | `DashAI/back/models/hugging_face/mixtral_model.py`                           |
 | `Qwen25_05BInstruct`       | `Qwen/Qwen2.5-0.5B-Instruct-GGUF` (Q8_0)                     | `DashAI/back/models/hugging_face/qwen_model.py`                              |
 | `Qwen25_15BInstruct`       | `Qwen/Qwen2.5-1.5B-Instruct-GGUF` (Q8_0)                     | `DashAI/back/models/hugging_face/qwen_model.py`                              |
+| `Qwen3_8B`                 | `Qwen/Qwen3-8B-GGUF` (Q6_K)                                  | `DashAI/back/models/hugging_face/qwen_model.py`                              |
 | `SmolLM2_360MInstruct`     | `HuggingFaceTB/SmolLM2-360M-Instruct-GGUF` (q8_0)            | `DashAI/back/models/hugging_face/smol_lm_model.py`                           |
 | `SmolLM2_17BInstruct`      | `HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF` (q4_k_m)          | `DashAI/back/models/hugging_face/smol_lm_model.py`                           |
 | `Phi4MiniInstructModel`    | `unsloth/Phi-4-mini-instruct-GGUF` (Q8_0), both as parameters | `DashAI/back/models/hugging_face/phi_4_mini_instruct_model.py`               |
+
+`Qwen3_8B` is the default function-calling LLM for the query-transformation
+stage and the agentic retrievers. The RAG defaults raise its context window to
+10 000 tokens and keep a low sampling temperature so the structured function
+calls fit in one pass. The checkpoint is loaded with its chat template's
+`enable_thinking=False` switch, so it emits the structured call rather than a
+reasoning trace.
 
 `DeepSeekModel` (`hugging_face/deep_seek_model.py`) exists but is not registered
 in `get_initial_components()`, so it is not offered in the UI.

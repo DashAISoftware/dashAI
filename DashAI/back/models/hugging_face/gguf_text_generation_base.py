@@ -2,7 +2,7 @@
 
 import gc
 import logging
-from typing import Any, ClassVar, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Tuple
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -24,6 +24,13 @@ from DashAI.back.models.utils import (
     LLAMA_DEVICE_TO_IDX,
 )
 
+if TYPE_CHECKING:
+    from llama_cpp.llama_chat_format import (
+        ChatFormatter,
+        ChatFormatterResponse,
+        LlamaChatCompletionHandler,
+    )
+
 log = logging.getLogger(__name__)
 
 #: ``type`` discriminator of the OpenAI-style ``tools`` / ``tool_choice`` envelope.
@@ -34,6 +41,15 @@ _FUNCTION_CALL_KEY = "function_call"
 
 #: Modern multi-call envelope of a llama.cpp chat response message.
 _TOOL_CALLS_KEY = "tool_calls"
+
+#: GGUF metadata key that stores the checkpoint's Jinja chat template.
+_CHAT_TEMPLATE_METADATA_KEY = "tokenizer.chat_template"
+
+#: ``chat_format`` llama.cpp assigns when it renders the GGUF Jinja template.
+_GGUF_TEMPLATE_CHAT_FORMAT = "chat_template.default"
+
+#: llama.cpp's sentinel for a token that the vocabulary does not define.
+_NO_TOKEN_ID = -1
 
 
 def _extract_function_call(message: Any, function_name: str) -> Dict[str, Any]:
@@ -145,6 +161,125 @@ def _release_llama_model(model: Any, label: str) -> None:
         gc.collect()
 
     _clear_accelerator_cache()
+
+
+class _TemplateKwargsFormatter:
+    """Chat formatter that renders a GGUF template with fixed extra variables.
+
+    Implements llama-cpp-python's public ``ChatFormatter`` protocol. The fixed
+    variables are merged into every render and take precedence over any caller
+    argument with the same name, so the checkpoint's policy cannot be dropped.
+    """
+
+    def __init__(
+        self, formatter: "ChatFormatter", template_kwargs: Dict[str, Any]
+    ) -> None:
+        self._formatter = formatter
+        self._template_kwargs = dict(template_kwargs)
+
+    def __call__(
+        self, *, messages: List[Any], **kwargs: Any
+    ) -> "ChatFormatterResponse":
+        return self._formatter(messages=messages, **{**kwargs, **self._template_kwargs})
+
+
+def _special_token_text(model: Any, token_id: int) -> str:
+    """Return the text of a special token, or ``""`` when it is undefined."""
+    if token_id == _NO_TOKEN_ID:
+        return ""
+    return model.detokenize([token_id], special=True).decode("utf-8", "replace")
+
+
+def _require_gguf_chat_template(model: Any, label: str) -> str:
+    """Return the GGUF Jinja chat template a Qwen-style checkpoint renders with.
+
+    Parameters
+    ----------
+    model : Any
+        The loaded llama.cpp backend.
+    label : str
+        Component name used in the error message.
+
+    Returns
+    -------
+    str
+        The ``tokenizer.chat_template`` GGUF metadata value.
+
+    Raises
+    ------
+    RuntimeError
+        If llama.cpp selected a built-in ``chat_format`` (which has no Jinja
+        template to extend) or the GGUF file carries no chat template.
+    """
+    chat_format = getattr(model, "chat_format", None)
+    if chat_format != _GGUF_TEMPLATE_CHAT_FORMAT:
+        raise RuntimeError(
+            f"{label} needs the GGUF chat template ({_GGUF_TEMPLATE_CHAT_FORMAT!r}) "
+            f"to apply template variables, but llama.cpp selected chat_format "
+            f"{chat_format!r}, which cannot carry them."
+        )
+    metadata = getattr(model, "metadata", None) or {}
+    template = metadata.get(_CHAT_TEMPLATE_METADATA_KEY)
+    if not isinstance(template, str) or not template.strip():
+        raise RuntimeError(
+            f"{label} has no chat template in its GGUF metadata, so template "
+            "variables cannot be applied. Re-download the checkpoint."
+        )
+    return template
+
+
+def _require_template_variables(
+    template: str, names: Dict[str, Any], label: str
+) -> None:
+    """Verify that every variable in ``names`` is read by the Jinja template.
+
+    A variable that the template never references would be silently ignored,
+    so this check fails instead of reporting a successful configuration.
+
+    Raises
+    ------
+    RuntimeError
+        If any name in ``names`` is not an undeclared variable of ``template``.
+    """
+    import jinja2
+    import jinja2.meta
+    from llama_cpp.llama_chat_format import Jinja2ChatFormatter
+
+    environment = jinja2.Environment(
+        extensions=[Jinja2ChatFormatter.IgnoreGenerationTags, jinja2.ext.loopcontrols]
+    )
+    referenced = jinja2.meta.find_undeclared_variables(environment.parse(template))
+    unused = sorted(name for name in names if name not in referenced)
+    if unused:
+        raise RuntimeError(
+            f"The chat template of {label} does not reference {unused}, so those "
+            "template variables would be ignored."
+        )
+
+
+def _build_template_handler(
+    model: Any, template: str, template_kwargs: Dict[str, Any]
+) -> "LlamaChatCompletionHandler":
+    """Compose a public chat handler that renders ``template`` with the kwargs.
+
+    The formatter uses the same special tokens and stop token that llama.cpp
+    derives for its own GGUF template, so only the extra variables differ.
+    """
+    from llama_cpp.llama_chat_format import (
+        Jinja2ChatFormatter,
+        chat_formatter_to_chat_completion_handler,
+    )
+
+    eos_token_id = model.token_eos()
+    formatter = Jinja2ChatFormatter(
+        template=template,
+        eos_token=_special_token_text(model, eos_token_id),
+        bos_token=_special_token_text(model, model.token_bos()),
+        stop_token_ids=[eos_token_id],
+    )
+    return chat_formatter_to_chat_completion_handler(
+        _TemplateKwargsFormatter(formatter, template_kwargs)
+    )
 
 
 class GGUFTextGenerationSchema(BaseSchema):
@@ -409,6 +544,16 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
     SCHEMA = GGUFTextGenerationSchema
     SUPPORTS_FUNCTION_CALLING: ClassVar[bool] = True
 
+    #: Extra variables rendered into the checkpoint's Jinja chat template for
+    #: every chat completion, both free-form and function-call. Qwen3 sets
+    #: ``{"enable_thinking": False}``, which applies to all of its prompts.
+    #: Other checkpoints leave it empty so their prompt rendering is unchanged.
+    CHAT_TEMPLATE_KWARGS: ClassVar[Dict[str, Any]] = {}
+
+    #: Chat handler installed by :meth:`_install_chat_template_kwargs`, kept so a
+    #: repeated install is recognised as already applied.
+    _template_chat_handler: Optional["LlamaChatCompletionHandler"] = None
+
     @classmethod
     def hf_repos(
         cls,
@@ -536,6 +681,61 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
             model_path=model_path,
             device=device_val,
             context_window=self.n_ctx,
+        )
+        try:
+            self._install_chat_template_kwargs()
+        except Exception:
+            self.close()
+            raise
+
+    def _install_chat_template_kwargs(self) -> None:
+        """Render :attr:`CHAT_TEMPLATE_KWARGS` into the GGUF chat template.
+
+        llama-cpp-python 0.3.x has no ``chat_template_kwargs`` argument on
+        ``create_chat_completion``. This method rebuilds the GGUF Jinja template
+        as a public ``Jinja2ChatFormatter`` with the variables bound, and assigns
+        the resulting handler to the public ``chat_handler`` attribute. Calling
+        it again while that handler is installed is a no-op.
+
+        Returns
+        -------
+        None
+            Nothing. A checkpoint with no template variables is left untouched.
+
+        Raises
+        ------
+        RuntimeError
+            If the backend is missing, the backend already has a custom chat
+            handler, the chat format is not the GGUF Jinja template, the
+            template is missing, or the template does not read every variable
+            (llama.cpp would otherwise ignore it silently).
+        """
+        if not self.CHAT_TEMPLATE_KWARGS:
+            return
+        label = type(self).__name__
+        model = getattr(self, "model", None)
+        if model is None:
+            raise RuntimeError(
+                f"{label} has no llama.cpp backend to apply "
+                f"{self.CHAT_TEMPLATE_KWARGS}."
+            )
+        if (
+            self._template_chat_handler is not None
+            and model.chat_handler is self._template_chat_handler
+        ):
+            return
+        if model.chat_handler is not None:
+            raise RuntimeError(
+                f"{label} backend already has a custom chat handler; DashAI cannot "
+                f"add template variables to it."
+            )
+        template = _require_gguf_chat_template(model, label)
+        _require_template_variables(template, self.CHAT_TEMPLATE_KWARGS, label)
+        handler = _build_template_handler(model, template, self.CHAT_TEMPLATE_KWARGS)
+        model.chat_handler = handler
+        self._template_chat_handler = handler
+        log.debug(
+            "Applied chat-template kwargs %s to %s", self.CHAT_TEMPLATE_KWARGS, label
         )
 
     def close(self) -> None:

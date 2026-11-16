@@ -18,7 +18,7 @@ from DashAI.back.converters.hugging_face.text_embedding import (
 )
 from DashAI.back.converters.scikit_learn.bag_of_words import BagOfWordsConverter
 from DashAI.back.initial_components import get_initial_components
-from DashAI.back.models.hugging_face.qwen_model import Qwen25_15BInstruct
+from DashAI.back.models.hugging_face.qwen_model import Qwen3_8B
 from DashAI.back.models.RAG.RAG_constants import (
     AGENTIC_RETRIEVER_NAMES,
     COMPOSITE_RETRIEVER_NAMES,
@@ -226,12 +226,12 @@ class TestRetrieverFactories:
 
 
 class TestDefaultFunctionCallingLLM:
-    """The default RAG LLM is a complete, valid Qwen 1.5B recipe."""
+    """The default RAG LLM is a complete, valid Qwen3 8B recipe."""
 
     def test_default_function_calling_llm(self):
         ref = default_function_calling_llm()
 
-        assert ref["component"] == "Qwen25_15BInstruct"
+        assert ref["component"] == "Qwen3_8B"
         assert ref["params"] == {
             "max_tokens": 300,
             "temperature": 0.1,
@@ -245,15 +245,15 @@ class TestDefaultFunctionCallingLLM:
 
     def test_default_llm_overrides_the_qwen_context_window(self):
         """The registered Qwen keeps its schema default; RAG overrides it."""
-        schema = Qwen25_15BInstruct.get_schema()
+        schema = Qwen3_8B.get_schema()
         assert schema["properties"]["context_window"]["placeholder"] == 512
 
         ref = default_function_calling_llm()
         assert ref["params"]["context_window"] == 10_000
-        Qwen25_15BInstruct.SCHEMA.model_validate(ref["params"])
+        Qwen3_8B.SCHEMA.model_validate(ref["params"])
 
     def test_qwen_supports_function_calling(self):
-        assert Qwen25_15BInstruct.supports_function_calling() is True
+        assert Qwen3_8B.supports_function_calling() is True
 
     def test_default_params_validate_against_their_schemas(self):
         keyword = default_keyword_retriever()
@@ -261,9 +261,7 @@ class TestDefaultFunctionCallingLLM:
         BM25Retriever.SCHEMA.model_validate(keyword["params"])
         DenseEmbeddingRetriever.SCHEMA.model_validate(semantic["params"])
         ParallelRetriever.SCHEMA.model_validate(default_hybrid_retriever()["params"])
-        Qwen25_15BInstruct.SCHEMA.model_validate(
-            default_function_calling_llm()["params"]
-        )
+        Qwen3_8B.SCHEMA.model_validate(default_function_calling_llm()["params"])
 
         # component_field only validates the {component, params} container, so
         # the nested schemas need their own check.
@@ -276,10 +274,10 @@ class TestDefaultFunctionCallingLLM:
 
     def test_default_llm_component_is_registered(self):
         registered = {component.__name__ for component in get_initial_components()}
-        assert "Qwen25_15BInstruct" in registered
+        assert "Qwen3_8B" in registered
 
     def test_default_llm_params_cover_every_schema_field(self):
-        validated = Qwen25_15BInstruct.SCHEMA.model_validate(
+        validated = Qwen3_8B.SCHEMA.model_validate(
             default_function_calling_llm()["params"]
         )
         assert set(validated.model_dump()) == {
