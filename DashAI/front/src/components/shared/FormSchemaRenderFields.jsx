@@ -289,6 +289,7 @@ function FormSchemaRenderFields({
             field={baseField}
             disabled={disabled}
             placeholder={fieldSchema.placeholder}
+            step={fieldSchema.step}
           />,
         );
       } else if (fieldSchema.type === "object") {

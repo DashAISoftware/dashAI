@@ -117,6 +117,7 @@ class AutocorrelationPlotSchema(BaseExplorerSchema):
     confidence: schema_field(
         float_field(gt=0.0, lt=1.0),
         0.95,
+        step=0.01,
         description=MultilingualString(
             en=(
                 "The confidence level of the band drawn around the bars. A bar "

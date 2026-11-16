@@ -76,6 +76,7 @@ class NystroemSchema(BaseSchema):
     degree: schema_field(
         none_type(float_field(ge=1)),
         None,
+        step=1,
         description=MultilingualString(
             en="The degree of the polynomial kernel.",
             es="El grado del kernel polinomial.",
