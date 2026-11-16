@@ -1,4 +1,7 @@
 {
+  "textMessage": {
+    "reasoning": "Denkprozess"
+  },
   "button": {
     "backToTaskSelection": "Zurück zur Aufgabenauswahl",
     "createSession": "Sitzung erstellen",

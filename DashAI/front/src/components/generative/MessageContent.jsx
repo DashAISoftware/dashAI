@@ -29,7 +29,9 @@ export function MessageContent({ messages, isUser, isWaiting }) {
             const type = message["data_type"];
             return (
               <Box key={message.id}>
-                {type === "str" && <TextMessage message={message.data} />}
+                {type === "str" && (
+                  <TextMessage message={message.data} isUser={isUser} />
+                )}
                 {type === "Image" && <ImageMessage image={message.data} />}
                 {type === "Audio" && <AudioMessage audio={message.data} />}
                 {type === "Video" && <VideoMessage video={message.data} />}
