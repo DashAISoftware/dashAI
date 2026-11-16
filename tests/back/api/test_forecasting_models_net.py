@@ -205,20 +205,56 @@ def _trial_score(model, series: str, splitter: str, metric, x=None) -> float:
     )
 
 
-@pytest.mark.parametrize("metric", list(METRICS))
-@pytest.mark.parametrize("splitter", list(SPLITTERS))
-@pytest.mark.parametrize("series", list(SERIES))
-@pytest.mark.parametrize("case", list(TRIAL_CASES))
+#: A metric is a difference of values on the series' scale, so the platform
+#: noise in a fitted model's forecast moves it by an amount relative to that
+#: scale, not to the metric: an ETS error of 0.42 on a series that reaches 65
+#: moved by a relative 2e-4 between Windows, where the golden was recorded,
+#: and Linux. Metrics take the model's tolerance on the scale, as in
+#: ``test_forecasting_runs_net.py``.
+SCALE = {name: float(series()["sales"].abs().max()) for name, series in SERIES.items()}
+
+#: Trials whose score is where the optimiser stops, not a property of the code.
+#: ETS with an additive season of 12 fitted on the monthly rolling origins 24
+#: and 30, two and two and a half seasons, is close to undetermined: on Linux
+#: it lands elsewhere (a first step of 119.53 against 119.17 at origin 24), and
+#: the score moves by 22%. Its forecasts on the whole series, and its trials on
+#: the holdout and on the daily series, are still pinned.
+UNDETERMINED = {("ets_add_add", "monthly", "rolling")}
+
+
+def _trial_scenarios():
+    for case in TRIAL_CASES:
+        for series in SERIES:
+            for splitter in SPLITTERS:
+                for metric in METRICS:
+                    marks = (
+                        [pytest.mark.skip(reason="undetermined fit (UNDETERMINED)")]
+                        if (case, series, splitter) in UNDETERMINED
+                        else []
+                    )
+                    yield pytest.param(
+                        case,
+                        series,
+                        splitter,
+                        metric,
+                        marks=marks,
+                        id=f"{case}-{series}-{splitter}-{metric}",
+                    )
+
+
+@pytest.mark.parametrize(("case", "series", "splitter", "metric"), _trial_scenarios())
 def test_a_search_trial_scores_a_forecaster_the_same(case, series, splitter, metric):
     model_class, params = TRIAL_CASES[case]
     model = model_class(**_params(params, series))
 
     score = _trial_score(model, series, splitter, METRICS[metric])
 
+    tolerance = TOLERANCES.get(model_class, 1e-9)
     GOLDEN.pin(
         f"trial/{series}/{splitter}/{case}/{metric}",
         score,
-        rel_tol=TOLERANCES.get(model_class, 1e-9),
+        rel_tol=tolerance,
+        abs_tol=tolerance * SCALE[series],
     )
 
 
