@@ -398,6 +398,14 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
             return int(self.lags)
         return max(int(self.season_length or 1), MIN_DEFAULT_LAGS)
 
+    def _lags_source(self) -> str:
+        """Where the lags came from, for a message: empty when given."""
+        if self.lags is not None:
+            return ""
+        if int(self.season_length or 1) < MIN_DEFAULT_LAGS:
+            return " (the fewest the default gives, as Lags is left empty)"
+        return " (one season, as Lags is left empty)"
+
     def fitted_estimator(self):
         """The scikit-learn estimator the last fit trained, or None unfitted."""
         return None if self._forecaster is None else self._forecaster.estimator
@@ -425,10 +433,12 @@ class RecursiveRegressionForecaster(SingleSeriesForecastingModel):
         differentiation = int(self.differentiation or 0)
         if len(y) <= lags + differentiation:
             raise ValueError(
-                f"A recursive regression with {lags} lags and differentiation "
-                f"{differentiation} needs more than {lags + differentiation} "
-                f"observations, but the series has {len(y)}. Use fewer lags "
-                "or less differencing, or a longer history."
+                f"A recursive regression with {lags} lags{self._lags_source()} "
+                f"and differentiation {differentiation} needs more than "
+                f"{lags + differentiation} observations, but the history it is "
+                f"fitted on has {len(y)} (in a backtest, the history before the "
+                "first origin). Set fewer lags or less differencing, or use a "
+                "longer history."
             )
 
         forecaster = ForecasterRecursive(

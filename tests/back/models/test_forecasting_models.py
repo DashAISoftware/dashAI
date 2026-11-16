@@ -577,6 +577,37 @@ def test_a_series_too_short_for_the_lags_is_refused_naming_them(lags, differenti
         model.fit(np.arange(5.0))
 
 
+@pytest.mark.parametrize(
+    ("season_length", "source"),
+    [
+        (12, "12 lags (one season, as Lags is left empty)"),
+        (1, "3 lags (the fewest the default gives, as Lags is left empty)"),
+    ],
+)
+def test_a_series_too_short_for_the_default_lags_says_where_they_came_from(
+    season_length, source
+):
+    model = RecursiveRegressionForecaster(season_length=season_length)
+
+    with pytest.raises(ValueError, match="recursive regression") as error:
+        model.fit(np.arange(3.0))
+
+    # The model sees the history it is fitted on; in a backtest, the
+    # shortest one is the history before the first origin.
+    assert source in str(error.value)
+    assert "in a backtest, the history before the first origin" in str(error.value)
+
+
+def test_a_series_too_short_for_the_lags_given_names_only_them():
+    model = RecursiveRegressionForecaster(lags=5, season_length=12)
+
+    with pytest.raises(ValueError, match="recursive regression") as error:
+        model.fit(np.arange(5.0))
+
+    assert "5 lags and differentiation 0" in str(error.value)
+    assert "Lags is left empty" not in str(error.value)
+
+
 def test_the_reduction_model_regresses_on_the_exogenous_variables_too():
     # The series is the exogenous column scaled and shifted, so a linear
     # regression on the lag and the column finds it, and the forecast follows
