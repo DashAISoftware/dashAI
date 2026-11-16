@@ -208,6 +208,26 @@ def test_retrying_a_failed_turn_runs_it_again_in_place(client: TestClient):
         assert [data.data for data in process.output] == ["an answer"]
 
 
+def test_a_retried_turn_only_sees_the_turns_before_it(client: TestClient):
+    """A retried turn keeps its place in the conversation, so the turns that
+    came after it are not its history."""
+    session_id = _session(client, _RecordingModel)
+    _turn(client, session_id, "earlier question", RunStatus.FINISHED, "an answer")
+    process_id = _turn(
+        client, session_id, "failed question", RunStatus.ERROR, "Error details: x"
+    )
+    _turn(client, session_id, "later question", RunStatus.FINISHED, "an answer")
+    assert _retry(client, process_id).status_code == 200
+    _PROMPTS.clear()
+
+    _run(process_id)
+
+    prompt = str(_PROMPTS[-1])
+    assert "earlier question" in prompt
+    assert "failed question" in prompt
+    assert "later question" not in prompt
+
+
 def test_only_a_failed_turn_can_be_retried(client: TestClient):
     session_id = _session(client, _RecordingModel)
     process_id = _turn(client, session_id, "q", RunStatus.FINISHED, "an answer")

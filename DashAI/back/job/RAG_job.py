@@ -340,7 +340,9 @@ class RAGJob(BaseJob):
                     )
                     model: RAGPipeline = setup_service.build_pipeline(pipeline_config)
 
-                    # Build conversation history from prior finished processes
+                    # Build conversation history from the finished turns before
+                    # this one: a retried turn keeps its place in the
+                    # conversation (#969), so later turns are not its history.
                     input_data = generative_process.input
                     task = component_registry[generative_session.task_name]["class"]()
                     workflow = component_registry[generative_session.workflow_name][
@@ -351,6 +353,7 @@ class RAGJob(BaseJob):
                         .filter(
                             GenerativeProcess.session_id == generative_session.id,
                             GenerativeProcess.status == RunStatus.FINISHED,
+                            GenerativeProcess.id < generative_process.id,
                         )
                         .order_by(GenerativeProcess.id)
                         .all()

@@ -227,6 +227,9 @@ class GenerativeJob(BaseJob):
                 try:
                     use_history = getattr(task_class, "USE_HISTORY", False)
                     if use_history:
+                        # Only the turns before this one: a retried turn keeps
+                        # its place in the conversation (#969), so the turns
+                        # that came after it are not its history.
                         history = []
                         for proc in (
                             db.query(GenerativeProcess)
@@ -234,6 +237,7 @@ class GenerativeJob(BaseJob):
                                 GenerativeProcess.session_id == generative_session.id
                             )
                             .filter(GenerativeProcess.status == RunStatus.FINISHED)
+                            .filter(GenerativeProcess.id < generative_process.id)
                             .order_by(GenerativeProcess.id)
                             .all()
                         ):

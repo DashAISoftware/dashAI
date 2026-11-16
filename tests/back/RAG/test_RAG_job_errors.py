@@ -51,10 +51,25 @@ class _ContextOverflowLLM(TextToTextGenerationTaskModel):
         raise ValueError(CONTEXT_ERROR)
 
 
+class _RecordingLLM(TextToTextGenerationTaskModel):
+    """Answers every prompt, and records it."""
+
+    SCHEMA = _EmptySchema
+    prompts: list = []
+
+    def __init__(self, **kwargs):
+        self.parameters = {}
+
+    def generate(self, prompt):
+        _RecordingLLM.prompts.append(prompt)
+        return ["an answer"]
+
+
 @pytest.fixture(scope="module", autouse=True)
 def register_models(client: TestClient) -> None:
     registry = client.app.container["component_registry"]
     registry.register_component(_ContextOverflowLLM)
+    registry.register_component(_RecordingLLM)
 
 
 def _run_failing_turn(client: TestClient, edit_parameters) -> list:
@@ -137,3 +152,75 @@ def test_a_rag_pipeline_that_cannot_be_built_stores_its_detail(client: TestClien
     assert data_type == "str"
     assert "Error during RAG pipeline setup" in detail
     assert "retriever_model" in detail
+
+
+def test_a_retried_rag_turn_only_sees_the_turns_before_it(client: TestClient):
+    """A retried turn keeps its place in the conversation, so the turns that
+    came after it are not its history."""
+    run_tag = uuid.uuid4().hex[:8]
+    suffix = f"_{run_tag}_retry"
+    doc_id = _create_test_document(client, suffix=suffix, text=DOC_TEXT)
+    file_path = os.path.join(tempfile.gettempdir(), f"test_doc{suffix}.txt")
+    parameters = _frontend_session_parameters(
+        doc_id, "BM25Retriever", "DefaultRAGGenerationPrompt"
+    )
+    # Own parameters: the LLM service caches models by their parameters.
+    parameters["generation_model"] = {
+        "component": _RecordingLLM.__name__,
+        "params": {"capture_marker": "retry"},
+    }
+    turns = [
+        ("earlier question", RunStatus.FINISHED, "an answer"),
+        ("failed question", RunStatus.ERROR, "Error during RAG pipeline execution"),
+        ("later question", RunStatus.FINISHED, "an answer"),
+    ]
+
+    session_factory = client.app.container["session_factory"]
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(DOC_TEXT)
+        with session_factory() as db:
+            session = GenerativeSession(
+                **rag_session_columns(parameters),
+                name=f"job_retry_{run_tag}",
+                description=None,
+            )
+            db.add(session)
+            db.commit()
+            process_ids = []
+            for text, status, output in turns:
+                process = GenerativeProcess(session_id=session.id, status=status)
+                db.add(process)
+                db.commit()
+                db.add_all(
+                    [
+                        ProcessData(
+                            process_id=process.id,
+                            is_input=True,
+                            data=text,
+                            data_type="str",
+                        ),
+                        ProcessData(
+                            process_id=process.id,
+                            is_input=False,
+                            data=output,
+                            data_type="str",
+                        ),
+                    ]
+                )
+                db.commit()
+                process_ids.append(process.id)
+        failed_id = process_ids[1]
+        response = client.post(f"/api/v1/generative-process/{failed_id}/retry")
+        assert response.status_code == 200, response.text
+        _RecordingLLM.prompts.clear()
+
+        RAGJob(generative_process_id=failed_id).run()
+
+        prompt = str(_RecordingLLM.prompts[-1])
+        assert "earlier question" in prompt
+        assert "failed question" in prompt
+        assert "later question" not in prompt
+    finally:
+        with contextlib.suppress(OSError):
+            os.remove(file_path)
