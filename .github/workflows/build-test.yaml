@@ -1,7 +1,18 @@
 name: Build and Test
 on:
+  # Feature branches are tested through their pull request. Running on every
+  # push as well tested each commit twice (#1011).
   push:
+    branches: [develop, production]
   pull_request:
+  # Lets a branch without a pull request still run the suite by hand.
+  workflow_dispatch:
+
+# A new push to a pull request cancels its outdated run. Pushes to develop and
+# production are never cancelled, so every merge keeps its own result.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   react-build-test:
@@ -26,7 +37,7 @@ jobs:
         with:
           name: react-build
           path: DashAI/front/build
-          retention-days: 1
+          retention-days: 7
       - run: yarn test --passWithNoTests
 
   pytest:
