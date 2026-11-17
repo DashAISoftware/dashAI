@@ -12,6 +12,13 @@ import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
 import InfoModal from "../shared/InfoModal";
 
+function formatParameterValue(value) {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "object")
+    return value.component ?? JSON.stringify(value);
+  return String(value);
+}
+
 export default function InfoSessionModal({ sessionData, open, onClose }) {
   const { t } = useTranslation(["generative", "common"]);
   const theme = useTheme();
@@ -37,6 +44,14 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
           size="small"
           sx={{ mb: 2 }}
         />
+        {sessionData.workflow_name && (
+          <Chip
+            label={sessionData.workflow_name}
+            variant="outlined"
+            size="small"
+            sx={{ mb: 2, ml: 1 }}
+          />
+        )}
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           {t("common:model")}:{" "}
           <span style={{ color: theme.palette.text.primary }}>
@@ -64,7 +79,9 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
                   >
                     {key.replace(/_/g, " ")}
                   </TableCell>
-                  <TableCell align="right">{value}</TableCell>
+                  <TableCell align="right">
+                    {formatParameterValue(value)}
+                  </TableCell>
                 </TableRow>
               ),
             )}

@@ -1,5 +1,5 @@
 from DashAI.back.dependencies.database.models import GenerativeSession
-from tests.back.RAG.conftest import TFIDF_PARAMS
+from tests.back.RAG.conftest import TFIDF_PARAMS, rag_session_columns
 
 
 def _get_prompt_list(client):
@@ -45,9 +45,7 @@ def _create_rag_session(session_factory, prompt_id: int, name: str):
 
     with session_factory() as db:
         session = GenerativeSession(
-            model_name="RAGPipeline",
-            task_name="RAGTask",
-            parameters=params,
+            **rag_session_columns(params),
             name=name,
             description=None,
         )

@@ -12,10 +12,12 @@ from DashAI.back.dependencies.database.models import (
     ProcessData,
 )
 from DashAI.back.job.base_job import BaseJob, JobError, _release_frames
+from DashAI.back.job.generative_failure import fail_process
 from DashAI.back.models.RAG.RAG_constants import (
     RAG_OPTIONAL_MODEL_KEYS,
     RAG_OUTPUT_MESSAGE_TYPE,
     RAG_PARAM_KEYS,
+    RAG_WORKFLOW_NAME,
 )
 from DashAI.back.models.RAG.RAG_pipeline import (
     RAGPipeline,
@@ -23,7 +25,6 @@ from DashAI.back.models.RAG.RAG_pipeline import (
 )
 from DashAI.back.services.RAG.prompt_service import PromptService
 from DashAI.back.services.RAG.setup_service import SetupService
-from DashAI.back.tasks.RAG_task import RAGTask
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -195,6 +196,30 @@ class RAGJob(BaseJob):
                 log.exception(e)
 
     @inject
+    def _fail(
+        self,
+        error: JobError,
+        session_factory: "sessionmaker" = lambda di: di["session_factory"],
+    ) -> None:
+        """Mark the turn as failed and store the error as its output (#969).
+
+        The chat shows the stored detail in the failed turn's error bubble, as
+        it does for a plain chat turn. Best-effort: a database failure here is
+        logged and must never replace the error that ended the job.
+
+        Args:
+            error: The error that ended the job; its message is the detail.
+            session_factory: Injected SQLAlchemy session factory.
+        """
+        generative_process_id = self.kwargs.get("generative_process_id")
+        try:
+            with session_factory() as db:
+                process = db.get(GenerativeProcess, generative_process_id)
+                fail_process(db, process, str(error))
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+
+    @inject
     def get_job_name(self) -> str:
         """Get a descriptive name for the job.
 
@@ -276,6 +301,12 @@ class RAGJob(BaseJob):
                         raise JobError(
                             f"Session {generative_process.session_id} not found in DB."
                         )
+                    if generative_session.workflow_name != RAG_WORKFLOW_NAME:
+                        raise JobError(
+                            f"Session {generative_session.id} is run by "
+                            f"{generative_session.workflow_name}, not "
+                            f"{RAG_WORKFLOW_NAME}."
+                        )
 
                     # Whitelist-only: accept only known RAG pipeline keys.
                     # Prompts live in their own table, so materialize them
@@ -309,14 +340,20 @@ class RAGJob(BaseJob):
                     )
                     model: RAGPipeline = setup_service.build_pipeline(pipeline_config)
 
-                    # Build conversation history from prior finished processes
+                    # Build conversation history from the finished turns before
+                    # this one: a retried turn keeps its place in the
+                    # conversation (#969), so later turns are not its history.
                     input_data = generative_process.input
-                    task = RAGTask()
+                    task = component_registry[generative_session.task_name]["class"]()
+                    workflow = component_registry[generative_session.workflow_name][
+                        "class"
+                    ]()
                     finished_processes: list[GenerativeProcess] = (
                         db.query(GenerativeProcess)
                         .filter(
                             GenerativeProcess.session_id == generative_session.id,
                             GenerativeProcess.status == RunStatus.FINISHED,
+                            GenerativeProcess.id < generative_process.id,
                         )
                         .order_by(GenerativeProcess.id)
                         .all()
@@ -348,13 +385,14 @@ class RAGJob(BaseJob):
                         "Pipeline built and ready for process %d",
                         generative_process_id,
                     )
-            except JobError:
-                self.set_status_as_error()
+            except JobError as e:
+                self._fail(e)
                 raise
             except Exception as e:
                 log.exception(e)
-                self.set_status_as_error()
-                raise _job_error("Error during RAG pipeline setup", e) from e
+                error = _job_error("Error during RAG pipeline setup", e)
+                self._fail(error)
+                raise error from e
 
             # ── Generation (no DB session) ─────────────────────────────
             reporter = _make_progress_reporter(session_factory, process_id)
@@ -363,8 +401,9 @@ class RAGJob(BaseJob):
                 log.debug("Generation completed for process %d", generative_process_id)
             except Exception as e:
                 log.exception(e)
-                self.set_status_as_error()
-                raise _job_error("Error during RAG pipeline execution", e) from e
+                error = _job_error("Error during RAG pipeline execution", e)
+                self._fail(error)
+                raise error from e
 
             # ── Session 2: Save output ─────────────────────────────────
             try:
@@ -376,7 +415,7 @@ class RAGJob(BaseJob):
                             "saving output."
                         )
 
-                    output_data = task.process_output(
+                    output_data = workflow.process_output(
                         output, images_path=config["IMAGES_PATH"]
                     )
                     outputs_for_database = []
@@ -406,10 +445,11 @@ class RAGJob(BaseJob):
                     log.debug("Output saved for process %d", generative_process_id)
             except Exception as e:
                 log.exception(e)
-                self.set_status_as_error()
-                raise _job_error(
+                error = _job_error(
                     "Error processing and saving RAG generation output", e
-                ) from e
+                )
+                self._fail(error)
+                raise error from e
         except BaseException as error:
             failure = error
 

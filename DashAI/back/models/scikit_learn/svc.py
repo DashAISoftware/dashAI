@@ -86,6 +86,7 @@ class SVCSchema(BaseSchema):
     degree: search_space(
         float_field(ge=0.0),
         fixed=1.0,
+        step=1,
         low=1.0,
         high=10.0,
         description=MultilingualString(

@@ -39,6 +39,7 @@ from tests.back.RAG.conftest import (
     RAG_E2E_DOC_TEXT,
     _create_test_document,
     bm25_retriever_params,
+    rag_session_columns,
     write_test_doc_file,
 )
 
@@ -164,9 +165,7 @@ def _create_session_and_process(
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
         session = GenerativeSession(
-            task_name="RAGTask",
-            model_name="RAGPipeline",
-            parameters=session_params,
+            **rag_session_columns(session_params),
             name=f"e2e_{name_suffix}_{tag}",
             description=None,
         )
@@ -266,9 +265,7 @@ class TestRAGJobConversationHistory:
             # Create session
             with session_factory() as db:
                 session = GenerativeSession(
-                    task_name="RAGTask",
-                    model_name="RAGPipeline",
-                    parameters=params,
+                    **rag_session_columns(params),
                     name=f"e2e_history_{tag}",
                     description=None,
                 )

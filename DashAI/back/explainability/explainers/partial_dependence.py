@@ -83,6 +83,7 @@ class PartialDependenceSchema(BaseSchema):
     upper_percentile: schema_field(
         float_field(ge=0.01, le=1),
         placeholder=0.95,
+        step=0.01,
         description=MultilingualString(
             en=("Upper percentile used to limit the feature values."),
             es=("Percentil superior para limitar los valores de la característica."),

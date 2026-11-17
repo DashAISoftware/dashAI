@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict, Final, List, Tuple
+from typing import Any, Dict, Final, List, Optional, Tuple
 
 from DashAI.back.dependencies.database.models import ProcessData
 
@@ -8,11 +8,6 @@ class BaseGenerativeTask:
     """Base task for generative processes."""
 
     TYPE: Final[str] = "GenerativeTask"
-
-    #: How the task is reached in the UI. ``"generic"`` tasks are offered
-    #: through the shared "create session" model gallery; ``"standalone"``
-    #: tasks own a dedicated entry point and are kept out of that gallery.
-    ENTRY_POINT: str = "generic"
 
     @property
     @abstractmethod
@@ -43,21 +38,17 @@ class BaseGenerativeTask:
 
         ``inputs`` and ``outputs`` are dicts mapping type name to per-type
         cardinality (e.g. ``{"str": 1, "Image": 1}``) so the frontend can
-        render the correct number of inputs per modality. ``entry_point`` tells
-        the frontend whether the task belongs in the shared model gallery or
-        owns a dedicated entry point.
+        render the correct number of inputs per modality.
 
         Returns
         -------
         Dict[str, Any]
-            Dictionary with keys ``"inputs"``, ``"outputs"`` and
-            ``"entry_point"``.
+            Dictionary with keys ``"inputs"`` and ``"outputs"``.
         """
         metadata = cls.metadata
         return {
             "inputs": dict(metadata["inputs"]),
             "outputs": dict(metadata["outputs"]),
-            "entry_point": cls.ENTRY_POINT,
         }
 
     @abstractmethod
@@ -119,6 +110,29 @@ class BaseGenerativeTask:
             Processed output data as a list of tuples containing the data and its type
         """
         raise NotImplementedError
+
+    def extract_message_from_output(self, output: List[ProcessData]) -> Optional[str]:
+        """Return the message of a finished process, or ``None``.
+
+        The message is the first output row whose ``data_type`` is ``"str"``,
+        wherever it sits, so outputs that carry extra rows (a workflow's
+        retrieval trace, for instance) fold into the history the same way a
+        plain chat answer does.
+
+        Parameters
+        ----------
+        output : List[ProcessData]
+            Output rows of a finished process.
+
+        Returns
+        -------
+        Optional[str]
+            The message text, or ``None`` when no ``str`` row is present.
+        """
+        for row in output:
+            if row.data_type == "str":
+                return row.data
+        return None
 
     @abstractmethod
     def process_output_from_database(

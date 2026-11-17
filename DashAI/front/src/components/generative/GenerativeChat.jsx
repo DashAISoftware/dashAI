@@ -5,9 +5,10 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { ChatBubble } from "./ChatBubble";
 import RAGChatProgress from "./RAGChatProgress";
 import {
+  deleteProcessById,
   getProcessById,
   getProcessesBySessionId,
-  deleteProcessById,
+  retryProcessById,
 } from "../../api/process";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { postProcess } from "../../api/process";
@@ -45,11 +46,12 @@ import {
   resolveRAGProgressText,
   splitRAGOutputRows,
 } from "./utils";
+import { RAG_WORKFLOW_NAME } from "../../constants/generativeWorkflows";
 
 /**
  * Extracts the user's message text from a process's input rows.
  *
- * RAGTask stores `[(input, "str")]`, and legacy rows may also be plain strings,
+ * Text sessions store `[(input, "str")]`, and legacy rows may also be plain strings,
  * so we keep the last non-empty row whose data_type is "str".
  *
  * @param {Array<{data_type?: string, data?: unknown}>|null|undefined} input
@@ -78,14 +80,22 @@ const extractUserMessage = (input) => {
  * @param {string} [props.generatorName] - For RAG sessions, the generator
  *   selected in the configuration panel, saved or not. The composer is blocked
  *   while it is not downloaded, like a normal session's model.
+ * @param {Function} [props.onProcessSettled] - Called when a message finishes
+ *   or fails. A RAG session uses it to reread its index status, since the
+ *   chat job indexes on its own when the index is missing.
  * @returns {JSX.Element} The chat.
  */
-export default function GenerativeChat({ indexStatus, generatorName }) {
+export default function GenerativeChat({
+  indexStatus,
+  generatorName,
+  onProcessSettled,
+}) {
   const theme = useTheme();
 
   const {
     selectedSessionId: sessionId,
     selectedTaskName: taskName,
+    selectedWorkflowName: workflowName,
     tasks,
     paramsVersion,
     setParamsVersion,
@@ -154,10 +164,8 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
   // Resolve the session model's metadata plus a reconciled download status, so
   // the chat can block input and offer a download when the weights are missing
   // (e.g. after switching to a not downloaded model or deleting its download).
-  const modelName =
-    sessionInfo?.task_name === "RAGTask"
-      ? generatorName || sessionInfo?.parameters?.generation_model?.component
-      : sessionInfo?.model_name;
+  const isRAGSession = workflowName === RAG_WORKFLOW_NAME;
+  const modelName = generatorName || sessionInfo?.model_name;
   const refreshModelStatus = () => {
     if (!modelName) {
       setModelComponent(null);
@@ -232,8 +240,22 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
     setIsLoadingMessage(true);
     setShouldAutoScroll(true); // Enable auto-scroll when sending new message
 
-    postProcess(sessionId, input)
-      .then((response) => {
+    // Without the error handling the composer stays disabled forever and says
+    // nothing. A RAG session starts with no documents, so the backend refusing
+    // the first message is a routine outcome, not an exceptional one.
+    const reportFailure = (error) => {
+      console.error("Failed to send message:", error);
+      setIsLoadingMessage(false);
+      enqueueSnackbar(
+        getApiErrorMessage(error, t("generative:error.failedToSendMessage")),
+        { variant: "error" },
+      );
+    };
+
+    // Rejects only when the message never became a turn, so the composer can
+    // give it back (#969). Once the turn exists it is on screen.
+    return postProcess(sessionId, input).then(
+      (response) => {
         // Add the new message to the chat
         setMessages((prevMessages) => [...prevMessages, response]);
 
@@ -242,19 +264,46 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
           .then(() => startJobQueue(true))
           .then(() => {
             setIsLoadingMessage(false);
-          });
-      })
-      .catch((error) => {
-        // Without this the composer stays disabled forever and says nothing.
-        // A RAG session starts with no documents, so the backend refusing the
-        // first message is a routine outcome, not an exceptional one.
-        console.error("Failed to send message:", error);
-        setIsLoadingMessage(false);
+          })
+          .catch(reportFailure);
+      },
+      (error) => {
+        reportFailure(error);
+        throw error;
+      },
+    );
+  };
+
+  // A failed turn is removed, or reset and queued again with the same input
+  // (its files stay on the server), in its place in the conversation (#969).
+  const handleDismissFailed = (processId) => {
+    deleteProcessById(processId)
+      .then(() => setMessages((prev) => prev.filter((m) => m.id !== processId)))
+      .catch((error) =>
         enqueueSnackbar(
-          getApiErrorMessage(error, t("generative:error.failedToSendMessage")),
+          getApiErrorMessage(error, t("generative:error.dismissFailed")),
           { variant: "error" },
+        ),
+      );
+  };
+
+  const handleRetryFailed = (processId) => {
+    setShouldAutoScroll(true);
+    retryProcessById(processId)
+      .then((process) => {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === processId ? process : m)),
         );
-      });
+        return enqueueGenerativeProcessJob(processId).then(() =>
+          startJobQueue(true),
+        );
+      })
+      .catch((error) =>
+        enqueueSnackbar(
+          getApiErrorMessage(error, t("generative:error.retryFailed")),
+          { variant: "error" },
+        ),
+      );
   };
 
   useEffect(() => {
@@ -283,14 +332,15 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
     const POLL_INTERVAL = 1500;
 
     const intervalId = setInterval(() => {
+      // Finished (3) and failed (4) turns are done: a failed turn stays in
+      // the conversation with its error, and is not polled again (#969).
+      const isDone = (m) => m.status === 3 || m.status === 4;
       const unfinished = messages.filter(
-        (m) =>
-          m.status !== 3 && // Not Finished
-          !pollingProcessIdsRef.current.has(m.id),
+        (m) => !isDone(m) && !pollingProcessIdsRef.current.has(m.id),
       );
 
       if (unfinished.length === 0) {
-        if (messages.every((m) => m.status === 3)) {
+        if (messages.every(isDone)) {
           clearInterval(intervalId); // nothing left to poll
         }
         return;
@@ -301,28 +351,12 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
         pollingProcessIdsRef.current.add(msg.id);
         getProcessById(msg.id)
           .then((process) => {
-            const status = process.status;
-
-            // Error
-            if (status === 4) {
-              setMessages((prev) => prev.filter((m) => m.id !== process.id));
-              enqueueSnackbar(
-                t("generative:error.processError", {
-                  error: process.output?.[0]?.data
-                    ? `\n${process.output[0].data}`
-                    : "",
-                }),
-                {
-                  autoHideDuration: 8000,
-                  style: { whiteSpace: "pre-line" },
-                },
-              );
-
-              return deleteProcessById(process.id).catch((error) =>
-                console.error("Failed to delete errored process:", error),
-              );
+            // A settled turn may have reindexed the session (RAG).
+            if (process.status === 3 || process.status === 4) {
+              onProcessSettled?.();
             }
-            // Update progress or final result
+            // Update progress, the final result or the error: a failed turn
+            // keeps its input and shows its error in place (#969).
             setMessages((prev) =>
               prev.map((m) => (m.id === process.id ? process : m)),
             );
@@ -345,13 +379,13 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
 
   useEffect(() => {
     let messagesObject = messages.map((process) => {
-      // Check if there's reference data in the output (only for RAGTask)
+      // Check if there's reference data in the output (only for RAG sessions)
       let referenceOutput = null;
       let queriesOutput = null;
       let traceOutput = null;
       let mainOutput = process.output;
 
-      if (taskName === "RAGTask") {
+      if (isRAGSession) {
         // Partition rows by data_type so the new 5-row format (Queries, Dict,
         // Trace, Timings, str) and the legacy 2-row format (Dict, str) are all
         // handled and row order is irrelevant.
@@ -487,7 +521,7 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
       (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
     );
     setMessagesWithHistory(combinedMessages);
-  }, [messages, history]);
+  }, [messages, history, isRAGSession]);
 
   const formatHistoryValue = (value) => {
     if (value === null || value === undefined) {
@@ -546,7 +580,7 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
           {sessionInfo?.description ? ":" : null} {sessionInfo?.description}
         </Typography>
 
-        {taskName !== "RAGTask" && (
+        {!isRAGSession && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <ModelSwitcher
               sessionId={sessionId}
@@ -629,7 +663,7 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
                     />
                     {message.status === 3 ? (
                       <>
-                        {taskName === "RAGTask" &&
+                        {isRAGSession &&
                         (message.referenceOutput || message.traceOutput) ? (
                           // For RAG messages, we need custom layout to insert sources before timestamp
                           <>
@@ -677,13 +711,41 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
                           />
                         )}
                       </>
+                    ) : message.status === 4 ? (
+                      <ChatBubble
+                        messages={message.output}
+                        sender={"Model"}
+                        isError={true}
+                        actions={
+                          <Box sx={{ display: "flex", gap: 1, mt: 1, ml: 2 }}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => handleRetryFailed(message.id)}
+                            >
+                              {t("generative:button.retryReply")}
+                            </Button>
+                            <Button
+                              size="small"
+                              onClick={() => handleDismissFailed(message.id)}
+                            >
+                              {t("generative:button.dismissReply")}
+                            </Button>
+                          </Box>
+                        }
+                        timestamp={
+                          message.end_time
+                            ? new Date(message.end_time).toLocaleTimeString()
+                            : null
+                        }
+                      />
                     ) : (
                       <>
                         {/* Resolve here too: a truthy payload the helper
                             cannot render (unknown stage, missing queries)
                             must still fall back to the waiting bubble instead
                             of leaving the in-flight row blank. */}
-                        {taskName === "RAGTask" &&
+                        {isRAGSession &&
                         resolveRAGProgressText(message.progress) ? (
                           <RAGChatProgress progress={message.progress} />
                         ) : (
@@ -773,9 +835,7 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
         <>
           <MediaInput
             key={sessionId}
-            onSendMessage={(input) => {
-              handleSendMessage(input);
-            }}
+            onSendMessage={handleSendMessage}
             isLoading={isLoadingMessage || isIndexing}
             inputsCardinality={inputsCardinality}
           />

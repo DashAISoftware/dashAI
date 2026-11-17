@@ -41,6 +41,7 @@ function FormSchemaFieldWithOptions({
   field,
   objName,
   placeholder,
+  step = undefined,
   setError,
   disabled = false,
   ...rest
@@ -53,9 +54,11 @@ function FormSchemaFieldWithOptions({
       title,
       description,
       required,
+      placeholder,
+      step,
       ...options.find((option) => option.type === selectedType),
     }),
-    [title, description, required, options, selectedType],
+    [title, description, required, placeholder, step, options, selectedType],
   );
 
   const fieldProps = { paramJsonSchema, field, objName, disabled, ...rest };
@@ -120,6 +123,7 @@ FormSchemaFieldWithOptions.propTypes = {
   field: PropTypes.object.isRequired,
   objName: PropTypes.string,
   placeholder: PropTypes.any,
+  step: PropTypes.number,
   setError: PropTypes.func,
   disabled: PropTypes.bool,
 };
