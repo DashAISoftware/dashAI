@@ -53,9 +53,23 @@ jobs:
       matrix:
         python-version: ${{ github.event_name == 'pull_request' && fromJson('["3.11", "3.12", "3.13"]') || fromJson('["3.12"]') }}
         os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      # A known location for the models some tests download, so it can be cached.
+      HF_HOME: ${{ github.workspace }}/.hf-cache
 
     steps:
       - uses: actions/checkout@v3
+
+      # The text classification tests load ModernBERT, DeBERTa v3 and DistilBERT
+      # (about 1.5 GB). Downloading them on every run took up to five minutes on
+      # Windows (#1011). The key changes when a Hugging Face model changes;
+      # restore-keys reuses the previous cache so only new models are fetched.
+      - name: Cache Hugging Face models
+        uses: actions/cache@v4
+        with:
+          path: .hf-cache
+          key: hf-models-${{ runner.os }}-${{ hashFiles('DashAI/back/models/hugging_face/**') }}
+          restore-keys: hf-models-${{ runner.os }}-
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
