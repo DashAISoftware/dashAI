@@ -2,7 +2,9 @@
   "button": {
     "backToTaskSelection": "Back to Task Selection",
     "createSession": "Create a session",
-    "generativeHub": "Generative Hub"
+    "dismissReply": "Dismiss",
+    "generativeHub": "Generative Hub",
+    "retryReply": "Retry"
   },
   "documentsBar": {
     "addFromData": "Add from Data",
@@ -123,6 +125,7 @@
     "pipelineNoConverters": "No document converters are available."
   },
   "error": {
+    "dismissFailed": "Could not remove the reply",
     "failedToCreateSession": "Failed to create session",
     "failedToDeleteSession": "Failed to delete session",
     "failedToDeleteSessions": "Failed to delete the selected sessions",
@@ -135,7 +138,8 @@
     "failedToUpdateSession": "Failed to update session",
     "modelSwitchFailed": "Failed to change the session model",
     "nameRequired": "Name is required",
-    "processError": "The process has failed. Deleting it... {{error}}",
+    "replyFailed": "The model could not answer",
+    "retryFailed": "Could not retry the reply",
     "sessionNameEmpty": "Session name cannot be empty",
     "sessionNameExists": "A session with this name already exists"
   },
