@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { importGenerativeSession } from "../../api/session";
 import { describeSessionImportError } from "../../utils/sessionImportError";
 import { startComponentDownload } from "../models/model/ComponentDownloadControl";
-import { standaloneRouteFor } from "./standaloneEntryPoints";
+import { sessionRouteFor } from "./workflowEntryPoints";
 
 /**
  * Header button that imports a .dashai file as a new generative session.
@@ -50,12 +50,8 @@ export default function ImportGenerativeSessionButton({ onImported }) {
     if (phase === "result" && result) navigate(sessionRoute(result));
   };
 
-  const sessionRoute = (imported) => {
-    const standaloneRoute = standaloneRouteFor(imported.task_name);
-    return standaloneRoute
-      ? `${standaloneRoute}/sessions/${imported.session_id}`
-      : `/app/generative/sessions/${imported.session_id}`;
-  };
+  const sessionRoute = (imported) =>
+    sessionRouteFor(imported.workflow_name, imported.session_id);
 
   const handleFile = async (event) => {
     const file = event.target.files?.[0];

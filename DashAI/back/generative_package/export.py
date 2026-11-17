@@ -50,7 +50,14 @@ CONTENT_SESSION = "session"
 CONTENT_CONVERSATION = "conversation"
 CONTENT_DOCUMENTS = "documents"
 CONTENTS = [CONTENT_SESSION, CONTENT_CONVERSATION, CONTENT_DOCUMENTS]
-SESSION_FIELDS = ("name", "description", "task_name", "model_name", "parameters")
+SESSION_FIELDS = (
+    "name",
+    "description",
+    "workflow_name",
+    "task_name",
+    "model_name",
+    "parameters",
+)
 DOCUMENT_FIELDS = (
     "name",
     "file_name",
@@ -77,13 +84,17 @@ def generative_session_filename(session_name: str) -> str:
 
 
 def component_names(recipe_session: Dict[str, Any]) -> List[str]:
-    """Every component the session needs: task, model and nested components.
+    """Every component the session needs: workflow, task, model and nested ones.
 
     Nested components are the ``{"component": ..., "params": ...}`` values in
     the parameters, such as the retriever or the generation model of a RAG
     session. Each name appears once, in the order found.
     """
-    names = [recipe_session["task_name"], recipe_session["model_name"]]
+    names = [
+        recipe_session["workflow_name"],
+        recipe_session["task_name"],
+        recipe_session["model_name"],
+    ]
     names += [name for _, name, _ in find_component_refs(recipe_session["parameters"])]
     return list(dict.fromkeys(names))
 
@@ -190,24 +201,19 @@ def export_preview(
 
 
 def _parameters_with_prompts(db, session, component_registry: Any) -> Dict[str, Any]:
-    """The session parameters with every RAG prompt written in.
+    """The session parameters as the session API returns them.
 
-    A RAG session stores its prompts in the prompt catalog and keeps only
-    prompt-free parameters. The file carries each prompt as its component
-    reference instead of a catalog id, which means nothing in another DashAI.
+    A workflow may keep part of the configuration outside the session row:
+    RAG keeps its prompts in the prompt catalog. The workflow's session
+    service writes them back in, as their component reference, so the file
+    holds their content and not catalog ids that mean nothing in another
+    DashAI.
     """
-    from DashAI.back.services.RAG.prompt_service import PromptService
-    from DashAI.back.tasks.RAG_task import RAGTask
+    from DashAI.back.services.workflows import session_service_for
 
-    is_rag = (
-        session.task_name in component_registry
-        and component_registry[session.task_name]["class"] == RAGTask
-    )
-    if not is_rag:
-        return dict(session.parameters or {})
-    return PromptService(db, component_registry).materialize_session_parameters(
-        session.id, session.parameters
-    )
+    service = session_service_for(session.workflow_name, db, component_registry)
+    parameters, _ = service.read_parameters(session)
+    return parameters
 
 
 def _documents(session, staging: Path) -> List[Dict[str, Any]]:
@@ -344,6 +350,7 @@ def build_generative_package(
             "contents": contents,
             "info": {
                 "session_name": recipe_session["name"],
+                "workflow_name": recipe_session["workflow_name"],
                 "task_name": recipe_session["task_name"],
                 "model_name": recipe_session["model_name"],
                 "message_count": len(processes) if processes is not None else 0,

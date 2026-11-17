@@ -56,6 +56,10 @@ NOT_A_GENERATIVE_SESSION = "{path} is not a DashAI generative session file"
 CHUNK_REF = re.compile(r"^(\d+)_(\d+)$")
 # RAG output rows whose chunk references name documents.
 CITATION_TYPES = ("Dict", "Trace")
+# How files written before generative workflows stored a RAG session. They
+# are read as the database migration a7f3c9e2d5b8 converts such sessions.
+LEGACY_RAG_TASK = "RAGTask"
+TEXT_TO_TEXT_TASK = "TextToTextGenerationTask"
 
 
 class InvalidSessionParametersError(ModelPackageError):
@@ -101,7 +105,11 @@ def _read_package(path: Union[str, Path], workdir: Path):
     try:
         recipe = json.loads((workdir / SESSION_ENTRY).read_text(encoding="utf-8"))
         session = recipe["session"]
-        missing = [field for field in SESSION_FIELDS if field not in session]
+        missing = [
+            field
+            for field in SESSION_FIELDS
+            if field not in session and field != "workflow_name"
+        ]
         if missing or not isinstance(session["parameters"], dict):
             raise KeyError(missing)
         for process in recipe.get("processes") or []:
@@ -301,83 +309,90 @@ def _check_components(recipe_session: Dict[str, Any], component_registry: Any) -
             )
 
 
-def _bind_prompts(
-    prompt_service: Any,
-    session_id: int,
-    parameters: Dict[str, Any],
-    prompt_inputs: Dict[str, Any],
-    generation_default: Optional[Dict[str, Any]],
-) -> Dict[str, Any]:
-    """Bind a RAG session's prompts in the catalog and return the snapshot.
+def _upgrade_session(recipe_session: Dict[str, Any]) -> Dict[str, Any]:
+    """The session of a file written before generative workflows, upgraded.
 
-    Every prompt is also rendered once, so a prompt this DashAI cannot use
-    fails the import instead of the session's first read.
-
-    Raises
-    ------
-    InvalidSessionParametersError
-        If a prompt is not valid here.
+    Such a file names no workflow. A RAG session there runs task ``RAGTask``
+    with the placeholder model ``RAGPipeline``; it becomes a text to text
+    session run by ``RAGWorkflow`` whose model is its generation LLM, as the
+    database migration converts stored sessions. Any other session runs
+    ``InferenceWorkflow``.
     """
-    from DashAI.back.models.RAG.exceptions.prompt import RAGPromptValidationError
+    from DashAI.back.models.RAG.RAG_constants import RAG_WORKFLOW_NAME
+    from DashAI.back.workflows import INFERENCE_WORKFLOW_NAME
 
-    try:
-        snapshot = prompt_service.sync_session_bindings(
-            session_id,
-            parameters,
-            prompt_inputs,
-            generation_default=generation_default,
-        )
-        prompt_service.inject_prompt_slots(session_id, parameters)
-    except RAGPromptValidationError as e:
-        raise InvalidSessionParametersError(
-            f"The session prompts are not valid in this DashAI: {e}",
-            reason=str(e),
-        ) from e
-    return snapshot
+    session = dict(recipe_session)
+    if session.get("workflow_name"):
+        return session
+    if session["task_name"] != LEGACY_RAG_TASK:
+        session["workflow_name"] = INFERENCE_WORKFLOW_NAME
+        return session
+    generator = session["parameters"].get("generation_model")
+    component = generator.get("component") if isinstance(generator, dict) else None
+    session.update(
+        workflow_name=RAG_WORKFLOW_NAME,
+        task_name=TEXT_TO_TEXT_TASK,
+        model_name=component or session["model_name"],
+    )
+    return session
 
 
 def _validated_parameters(
     recipe_session: Dict[str, Any],
-    db: Any,
+    service: Any,
     component_registry: Any,
     language: str,
 ) -> Dict[str, Any]:
-    """The parameters as creating the session would store them.
+    """The complete parameters, as creating the session would prepare them.
 
     Runs the same checks as ``POST /generative-session/`` except the download
-    gate: the task and the model must be generative, a RAG configuration is
-    normalized and every model parameter must match its schema.
+    gate: the workflow must be generative and run the task, the model must be
+    a generative model of the task, and the workflow's session service
+    completes and validates the parameters.
 
     Raises
     ------
     InvalidSessionParametersError
-        If the task or model is not generative or a parameter is invalid.
+        If any of those checks fails.
     """
     from DashAI.back.models.base_generative_model import BaseGenerativeModel
-    from DashAI.back.models.RAG.exceptions.base import RAGWorkflowError
-    from DashAI.back.services.RAG.session_validation_service import (
-        SessionValidationService,
+    from DashAI.back.services.workflows import (
+        WorkflowConflictError,
+        WorkflowSessionError,
     )
     from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
-    from DashAI.back.tasks.RAG_task import RAGTask
+    from DashAI.back.workflows import BaseGenerativeWorkflow
 
-    model_class = component_registry[recipe_session["model_name"]]["class"]
-    task_class = component_registry[recipe_session["task_name"]]["class"]
-    if not issubclass(model_class, BaseGenerativeModel) or not issubclass(
-        task_class, BaseGenerativeTask
+    workflow_name = recipe_session["workflow_name"]
+    task_name = recipe_session["task_name"]
+    model_name = recipe_session["model_name"]
+    related = {
+        name: {c["name"] for c in component_registry.get_related_components(name)}
+        for name in (workflow_name, task_name)
+    }
+    if (
+        component_registry[workflow_name]["type"] != BaseGenerativeWorkflow.TYPE
+        or not issubclass(component_registry[task_name]["class"], BaseGenerativeTask)
+        or not issubclass(component_registry[model_name]["class"], BaseGenerativeModel)
+        or task_name not in related[workflow_name]
+        or model_name not in related[task_name]
     ):
         raise InvalidSessionParametersError(
             "This file does not describe a generative session."
         )
 
-    parameters = dict(recipe_session["parameters"])
     try:
-        if task_class == RAGTask:
-            parameters = SessionValidationService(
-                db, component_registry
-            ).prepare_RAG_params(parameters, language)
-        model_class.SCHEMA.model_validate(parameters)
-    except (ValueError, RAGWorkflowError) as e:
+        parameters = service.prepare_parameters(
+            dict(recipe_session["parameters"]), language
+        )
+        named = service.model_name_from(parameters)
+        if named is not None and named != model_name:
+            raise WorkflowSessionError(
+                f"Model {model_name} is not the model the session parameters "
+                f"name, {named}."
+            )
+        service.check_parameters(component_registry[model_name]["class"], parameters)
+    except (WorkflowSessionError, WorkflowConflictError, ValueError) as e:
         raise InvalidSessionParametersError(
             f"The session configuration is not valid in this DashAI: {e}",
             reason=str(e),
@@ -436,7 +451,8 @@ def import_generative_package(
     Returns
     -------
     dict
-        ``session_id``, its ``task_name``, the final ``session_name``, whether
+        ``session_id``, its ``workflow_name`` and ``task_name``, the final
+        ``session_name``, whether
         it was ``renamed``, version ``warnings``, the ``message_count`` it
         brought, its ``document_count`` and how many of those documents were
         already here (``reused_document_count``), and ``needs_download``: the
@@ -462,9 +478,15 @@ def import_generative_package(
         ProcessData,
         RAGSessionDocument,
     )
-    from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_DOCUMENTS
-    from DashAI.back.services.RAG.prompt_service import PromptService
-    from DashAI.back.tasks.RAG_task import RAGTask
+    from DashAI.back.models.RAG.RAG_constants import (
+        RAG_PARAM_DOCUMENTS,
+        RAG_WORKFLOW_NAME,
+    )
+    from DashAI.back.services.workflows import (
+        WorkflowConflictError,
+        WorkflowSessionError,
+        session_service_for,
+    )
 
     language = language or "en"
     workdir = Path(tempfile.mkdtemp(prefix="dashai-import-"))
@@ -473,10 +495,10 @@ def import_generative_package(
     created: List[Path] = []
     try:
         recipe, notes = _read_package(path, workdir)
-        recipe_session = recipe["session"]
+        recipe_session = _upgrade_session(recipe["session"])
         _check_components(recipe_session, component_registry)
         processes = recipe.get("processes") or []
-        is_rag = component_registry[recipe_session["task_name"]]["class"] == RAGTask
+        is_rag = recipe_session["workflow_name"] == RAG_WORKFLOW_NAME
         documents = (recipe.get("documents") or []) if is_rag else []
         reused = _reusable_documents(documents, session_factory)
 
@@ -507,8 +529,11 @@ def import_generative_package(
 
             with session_factory() as db:
                 try:
+                    service = session_service_for(
+                        recipe_session["workflow_name"], db, component_registry
+                    )
                     parameters = _validated_parameters(
-                        recipe_session, db, component_registry, language
+                        recipe_session, service, component_registry, language
                     )
                     taken = {name for (name,) in db.query(GenerativeSession.name)}
                     session_name = unique_name(recipe_session["name"], taken)
@@ -543,19 +568,17 @@ def import_generative_package(
                     citation_map = {
                         str(ref): new_id for ref, new_id in document_ids.items()
                     }
-                    # As creating a session does, a RAG session stores
-                    # prompt-free parameters and binds its prompts in the
-                    # catalog, reusing a prompt with the same content.
-                    stored_parameters = parameters
-                    prompt_inputs: Dict[str, Any] = {}
-                    if is_rag:
-                        prompt_service = PromptService(db, component_registry)
-                        stored_parameters, prompt_inputs = prompt_service.split_prompts(
-                            parameters
-                        )
+                    try:
+                        stored_parameters = service.stored_parameters(parameters)
+                    except (WorkflowSessionError, WorkflowConflictError) as e:
+                        raise InvalidSessionParametersError(
+                            f"The session configuration is not valid here: {e}",
+                            reason=str(e),
+                        ) from e
                     session = GenerativeSession(
                         name=session_name,
                         description=recipe_session["description"],
+                        workflow_name=recipe_session["workflow_name"],
                         task_name=recipe_session["task_name"],
                         model_name=recipe_session["model_name"],
                         parameters=stored_parameters,
@@ -573,17 +596,18 @@ def import_generative_package(
                         )
                         for document_id in sorted(set(document_ids.values()))
                     )
-                    prompt_snapshot = (
-                        _bind_prompts(
-                            prompt_service,
-                            session.id,
-                            stored_parameters,
-                            prompt_inputs,
-                            parameters.get("prompt"),
-                        )
-                        if is_rag
-                        else None
-                    )
+                    # What the workflow keeps outside the row, RAG prompts
+                    # say, is bound as creating a session does. Reading the
+                    # parameters back makes an unusable prompt fail here and
+                    # not on the session's first read.
+                    try:
+                        prompt_snapshot = service.bind_new_session(session, parameters)
+                        service.client_parameters(session, stored_parameters)
+                    except (WorkflowSessionError, WorkflowConflictError) as e:
+                        raise InvalidSessionParametersError(
+                            f"The session configuration is not valid here: {e}",
+                            reason=str(e),
+                        ) from e
                     db.add(
                         GenerativeSessionParameterHistory(
                             session_id=session.id,
@@ -644,6 +668,7 @@ def import_generative_package(
 
     return {
         "session_id": session_id,
+        "workflow_name": recipe_session["workflow_name"],
         "task_name": recipe_session["task_name"],
         "session_name": session_name,
         "renamed": session_name != recipe_session["name"],

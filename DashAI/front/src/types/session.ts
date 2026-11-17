@@ -20,6 +20,7 @@ export interface ISessionParameterHistory {
 
 export interface IGenerativeSessionImportResult {
   session_id: number;
+  workflow_name: string;
   task_name: string;
   session_name: string;
   renamed: boolean;

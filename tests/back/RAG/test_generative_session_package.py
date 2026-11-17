@@ -56,7 +56,8 @@ def test_rag_session_round_trip_reuses_the_same_document(client: TestClient):
     result = response.json()
     assert result["session_name"] == "Package Round Trip (2)"
     assert result["renamed"] is True
-    assert result["task_name"] == "RAGTask"
+    assert result["workflow_name"] == "RAGWorkflow"
+    assert result["task_name"] == "TextToTextGenerationTask"
     assert result["document_count"] == 1
     assert result["reused_document_count"] == 1
 
@@ -363,3 +364,40 @@ def test_custom_prompt_travels_with_the_session(client: TestClient):
     # Bound through the prompt catalog, as a session created by hand.
     with client.app.container["session_factory"]() as db:
         assert "prompt" not in db.get(GenerativeSession, imported_id).parameters
+
+
+def _rewrite_session(content: bytes, change) -> bytes:
+    """Return the file with its session entry passed through ``change``."""
+    source = zipfile.ZipFile(io.BytesIO(content))
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, "w") as target:
+        for item in source.infolist():
+            data = source.read(item.filename)
+            if item.filename == "generative_session.json":
+                recipe = json.loads(data)
+                change(recipe["session"])
+                data = json.dumps(recipe).encode()
+            target.writestr(item, data)
+    return output.getvalue()
+
+
+def test_rag_file_from_before_workflows_imports_as_rag_workflow(
+    client: TestClient,
+):
+    payload = {**_base_session_params(), "name": "Package Legacy"}
+    session_id, _ = _create_session_with_document(client, payload)
+    generator = payload["parameters"]["generation_model"]["component"]
+
+    def as_before_workflows(session):
+        del session["workflow_name"]
+        session["task_name"] = "RAGTask"
+        session["model_name"] = "RAGPipeline"
+
+    content = _rewrite_session(_export(client, session_id), as_before_workflows)
+    response = _import(client, content)
+    assert response.status_code == 201, response.text
+    result = response.json()
+    assert result["workflow_name"] == "RAGWorkflow"
+    assert result["task_name"] == "TextToTextGenerationTask"
+    imported = client.get(f"/api/v1/generative-session/{result['session_id']}").json()
+    assert imported["model_name"] == generator

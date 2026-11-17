@@ -26,6 +26,7 @@ beforeEach(() => jest.clearAllMocks());
 test("a session with notices opens only once the report is closed", async () => {
   importGenerativeSession.mockResolvedValue({
     session_id: 4,
+    workflow_name: "InferenceWorkflow",
     task_name: "TextToImageGenerationTask",
     session_name: "Images (2)",
     renamed: true,
