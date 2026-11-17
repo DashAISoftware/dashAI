@@ -89,7 +89,7 @@ class Component(BaseModel):
 
     @property
     def name(self) -> str:
-        """Class name: the component's name in the registry."""
+        """Class name; the registry lists the component as ``<plugin-id>:<name>``."""
         return self.class_ref.split(":")[-1]
 
 
