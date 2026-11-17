@@ -213,6 +213,36 @@ def test_patch_plugin(client: TestClient):
         assert plugin["status"] == 2
 
 
+def test_upgrade_plugin_stores_the_new_version(client: TestClient):
+    pypi_mock = Mock()
+    pypi_mock.json.return_value = {
+        "info": {
+            "author": "DashAI team",
+            "version": "0.0.9",
+            "keywords": "DashAI,Model",
+            "description": "",
+            "description_content_type": "text/markdown",
+            "name": "dashai-svc-plugin",
+            "summary": "SVC Model Plugin v2.0",
+        },
+    }
+
+    with (
+        patch("requests.get", return_value=pypi_mock),
+        patch("DashAI.back.plugins.utils.uninstall_requirement") as mock_uninstall,
+        patch("DashAI.back.plugins.utils.install_requirement") as mock_install,
+    ):
+        response = client.patch("/api/v1/plugin/1/upgrade")
+
+    assert response.status_code == 200, response.text
+    mock_uninstall.assert_called_once_with("dashai-svc-plugin")
+    mock_install.assert_called_once_with("dashai-svc-plugin")
+    plugin = client.get("/api/v1/plugin/1").json()
+    assert plugin["installed_version"] == "0.0.9"
+    assert plugin["lastest_version"] == "0.0.9"
+    assert plugin["status"] == 2
+
+
 def test_get_filtered_plugins(client: TestClient):
     response = client.get("/api/v1/plugin/?plugin_status=NONE")
     assert response.status_code == 200, response.text
