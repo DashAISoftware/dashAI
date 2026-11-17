@@ -46,6 +46,9 @@ from DashAI.back.models.forecasting.exponential_smoothing import (
     ExponentialSmoothing,
     ExponentialSmoothingSchema,
 )
+from DashAI.back.models.forecasting.single_series_forecasting_model import (
+    SEASON_ONLY_WHEN_SEASONAL,
+)
 
 ENVELOPE = {
     "optimize": False,
@@ -94,15 +97,21 @@ def test_the_rule_reaches_the_wire_localized():
     assert "componente estacional" in rules[0]["reason"]
 
 
-def test_the_prose_no_longer_carries_the_dependency():
-    """It was a sentence in five languages that nothing enforced."""
+def test_the_prose_says_what_the_rule_enforces():
+    """The rule disables the field; the description says when it is used.
+
+    The sentence was once dropped as prose nothing enforced. The rule enforces
+    it now, and the description says it again, as ARIMA's does, so the field
+    reads the same before a seasonal component is picked
+    (RECONCILING_FORECASTING §8.9).
+    """
     description = ExponentialSmoothing.get_schema()["properties"]["season_length"][
         "description"
     ]
     for language in ("en", "es", "pt", "de", "zh"):
-        text = getattr(description, language)
-        assert "nly used when" not in text
-        assert "Solo se usa" not in text
+        assert getattr(SEASON_ONLY_WHEN_SEASONAL, language) in getattr(
+            description, language
+        )
 
 
 # --------------------------------------------------------------------------- #
@@ -164,14 +173,28 @@ def test_the_minimum_is_still_enforced_where_it_can_be():
         ExponentialSmoothing(trend="none", seasonal="add", season_length=1)
 
 
-def test_the_shipped_default_would_break_that_rule_if_seasonality_were_on():
-    """Why the two halves are not interchangeable.
+def test_the_shipped_default_leaves_the_season_to_the_frequency():
+    """Why the two halves are still not interchangeable.
 
-    The declared default is ``fixed_value: 1`` with ``seasonal: "none"``, which
-    is consistent only because the season length is irrelevant there. A user who
-    turns seasonality on without raising the length gets the ``__init__`` error,
-    and the form cannot warn them first for exactly the reason above.
+    The declared default is an empty season with ``seasonal: "none"``. The run
+    reads an empty season from the series' frequency
+    (``with_season_from_grid``), so a user who turns seasonality on gets 12 on
+    a monthly series and the model builds. On a frequency that implies no
+    season, a yearly one, the empty season reads as 1 and the ``__init__``
+    error still fires, and the form cannot warn them first for exactly the
+    reason above. Until RECONCILING_FORECASTING §8.6 (slice 7b) the default
+    was ``fixed_value: 1``, which broke on every frequency.
     """
+    from DashAI.back.units.forecast_scope import with_season_from_grid
+
     defaults = _defaults()
     assert defaults["seasonal"] == "none"
-    assert defaults["season_length"]["fixed_value"] == 1
+    assert defaults["season_length"]["fixed_value"] is None
+
+    seasonal = {**defaults, "seasonal": "add"}
+    monthly = with_season_from_grid(seasonal, "MS")["season_length"]
+    ExponentialSmoothing(seasonal="add", season_length=monthly["fixed_value"])
+
+    yearly = with_season_from_grid(seasonal, "YS")["season_length"]
+    with pytest.raises(ValueError, match="season length of at least 2"):
+        ExponentialSmoothing(seasonal="add", season_length=yearly["fixed_value"])

@@ -280,6 +280,9 @@ from DashAI.back.models.forecasting.drift import DriftForecaster
 from DashAI.back.models.forecasting.exponential_smoothing import ExponentialSmoothing
 from DashAI.back.models.forecasting.mean import MeanForecaster
 from DashAI.back.models.forecasting.naive import NaiveForecaster
+from DashAI.back.models.forecasting.recursive_regression import (
+    RecursiveRegressionForecaster,
+)
 from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
 from DashAI.back.models.forecasting.theta import Theta
 from DashAI.back.models.hugging_face.albert_transformer import AlbertTransformer
@@ -711,6 +714,7 @@ def get_initial_components():
         ARIMA,
         ExponentialSmoothing,
         Theta,
+        RecursiveRegressionForecaster,
         FaissDBSCANClustering,
         FaissKMeansClustering,
         AdaBoostClassifier,

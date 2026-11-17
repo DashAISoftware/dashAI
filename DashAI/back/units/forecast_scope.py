@@ -6,7 +6,7 @@ parses each unit's own source (ATOMIZING_JOBS §9).
 """
 
 import math
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 from DashAI.back.core.schema_fields import component_field, schema_field
 from DashAI.back.core.utils import MultilingualString
@@ -36,22 +36,92 @@ def forecasts_file(runs_path, artifact_prefix: str):
     return Path(runs_path) / f"{artifact_prefix}_forecasts.json"
 
 
-#: Steps per season, by the kind of step a frequency names. A series whose
-#: step is not here has no season assumed (1).
+#: Steps in one cycle of each base step: a day repeats weekly, an hour daily,
+#: a month yearly, a second every minute. "SM" is the semi-month (twice a
+#: month) and "B" the business day (five a week). A step that is not here has
+#: no season (1).
 SEASON_BY_STEP = {
     "Y": 1,
     "Q": 4,
     "M": 12,
+    "SM": 24,
     "W": 52,
     "D": 7,
     "B": 5,
     "h": 24,
     "min": 60,
+    "s": 60,
 }
+
+#: The units a fixed step is counted in, from the largest: a step is read in
+#: the first one that divides it whole.
+WHOLE_UNITS = (("W", "7D"), ("D", "1D"), ("h", "1h"), ("min", "1min"), ("s", "1s"))
+
+
+def _whole_step(offset) -> Tuple[str, int]:
+    """A pandas offset as its rule code and multiple, in its largest unit.
+
+    A fixed step can be spelled in a smaller unit than it spans: 24 hours are
+    a day, 60 minutes an hour and 7 days a week. Read in the largest unit that
+    divides it whole, the multiple then divides that unit's cycle. Calendar
+    steps (months, business days, anchored weeks) are left as they are.
+
+    Parameters
+    ----------
+    offset : pandas.DateOffset
+        The offset of the grid's frequency.
+
+    Returns
+    -------
+    tuple of (str, int)
+        The rule code and its multiple.
+    """
+    import pandas as pd
+
+    if isinstance(offset, pd.offsets.Tick):
+        for name, unit in WHOLE_UNITS:
+            size = pd.Timedelta(unit).value
+            if offset.nanos % size == 0:
+                return name, offset.nanos // size
+    return offset.name, offset.n
+
+
+def _base_step(rule_code: str) -> str:
+    """The base step of a pandas rule code, without its anchors.
+
+    ``"QS-JAN"`` is a quarter anchored at its start, ``"ME"`` a month at its
+    end, ``"SMS-15"`` a semi-month split on the 15th and ``"BMS"`` a month
+    starting on its first business day. The anchors say where a step begins,
+    not how long it is, so all four count as their base step.
+
+    Parameters
+    ----------
+    rule_code : str
+        The ``name`` of a pandas offset, without its multiple.
+
+    Returns
+    -------
+    str
+        The base step, or the code unchanged when it has none the table knows.
+    """
+    step = rule_code.split("-")[0]
+    if step in SEASON_BY_STEP:
+        return step
+    if step[-1:] in ("S", "E"):
+        step = step[:-1]
+    if step not in SEASON_BY_STEP and step[:1] == "B" and step[1:] in SEASON_BY_STEP:
+        step = step[1:]
+    return step
 
 
 def season_length_for(freq: str) -> int:
     """The season a frequency usually implies: 12 for months, 7 for days.
+
+    A fixed step is first read in its largest whole unit (``_whole_step``):
+    every 24 hours is daily, every 7 days weekly. A multiple of the step then
+    divides its cycle when it can: every 2 hours is 12 steps a day, every 15
+    minutes 4 an hour. When it cannot, as every 3 days in a 7-day week, no
+    season is assumed. Neither is one for a step the table does not know.
 
     Parameters
     ----------
@@ -65,12 +135,154 @@ def season_length_for(freq: str) -> int:
     """
     import pandas as pd
 
-    # "QS-JAN" is a quarter anchored at its start, "ME" a month at its end:
-    # the anchor says where a step begins, not how long it is.
-    step = pd.tseries.frequencies.to_offset(freq).name.split("-")[0]
-    if step not in SEASON_BY_STEP and step[-1:] in ("S", "E"):
-        step = step[:-1]
-    return SEASON_BY_STEP.get(step, 1)
+    step, n = _whole_step(pd.tseries.frequencies.to_offset(freq))
+    cycle = SEASON_BY_STEP.get(_base_step(step), 1)
+    if n < 1 or cycle % n:
+        return 1
+    return cycle // n
+
+
+def with_season_from_grid(parameters: Dict[str, Any], freq: str) -> Dict[str, Any]:
+    """The run's parameters, with a season left empty read from the frequency.
+
+    A season is empty when the run leaves the key out, as the API may, or
+    sends it as None, or as a search envelope whose fixed value is None, as
+    the run form does with the schema's placeholder, or missing. A searched
+    envelope keeps its range and its switch: only its starting value is filled.
+
+    Parameters
+    ----------
+    parameters : dict
+        The run's parameters for a model that declares ``season_length``.
+    freq : str
+        The frequency of the series' grid.
+
+    Returns
+    -------
+    dict
+        A copy of ``parameters`` whose ``season_length`` is set.
+    """
+    resolved = dict(parameters)
+    value = resolved.get("season_length")
+    if value is None:
+        resolved["season_length"] = season_length_for(freq)
+    elif isinstance(value, dict) and value.get("fixed_value") is None:
+        resolved["season_length"] = {**value, "fixed_value": season_length_for(freq)}
+    return resolved
+
+
+def season_reason(freq: str) -> Dict[str, Any]:
+    """Where a season read from the frequency came from, for the app to say.
+
+    ``{"key", "values"}``, which the app words in its own language, as
+    ``exogenous_usage`` declares its reason. A step taken once, in its largest
+    whole unit, is named by its base step (``"M"`` for ``MS``, ``"D"`` for
+    ``24h``): ``seasonFromStep``. A multiple of a step, or a step the table does
+    not know, is named by the frequency itself: ``seasonFromFrequency``.
+
+    Parameters
+    ----------
+    freq : str
+        The frequency of the series' grid.
+
+    Returns
+    -------
+    dict
+        ``{"key": "seasonFromStep", "values": {"step"}}`` or
+        ``{"key": "seasonFromFrequency", "values": {"freq"}}``.
+    """
+    import pandas as pd
+
+    step, n = _whole_step(pd.tseries.frequencies.to_offset(freq))
+    base = _base_step(step)
+    if n == 1 and base in SEASON_BY_STEP:
+        return {"key": "seasonFromStep", "values": {"step": base}}
+    return {"key": "seasonFromFrequency", "values": {"freq": freq}}
+
+
+def _season_left_to_the_frequency(value: Any) -> bool:
+    """Whether the run left its season for the frequency to set, unsearched.
+
+    Empty as ``with_season_from_grid`` reads it, except a searched envelope:
+    its season is the one the search chose, not the frequency's.
+    """
+    if value is None:
+        return True
+    return (
+        isinstance(value, dict)
+        and value.get("fixed_value") is None
+        and not value.get("optimize")
+    )
+
+
+def resolved_parameters(
+    model: Any, given: Dict[str, Any], freq: str
+) -> Dict[str, Dict[str, Any]]:
+    """What a run's parameters left empty resolved to, and where from.
+
+    The run keeps its parameters as the user left them, so a retrain resolves
+    them again; this is what the app shows beside them. The season is the
+    frequency's when the run left it empty and did not search it
+    (``season_reason``); the rest is what the model filled in itself
+    (``resolved_defaults``), such as the reduction model's lags.
+
+    Parameters
+    ----------
+    model : SingleSeriesForecastingModel
+        The model built with the parameters the run used.
+    given : dict
+        The run's parameters, as the user left them.
+    freq : str
+        The frequency of the series' grid.
+
+    Returns
+    -------
+    dict
+        ``{name: {"value", "reason": {"key", "values"}}}``, empty when the run
+        left nothing to resolve.
+    """
+    resolved = {}
+    if hasattr(model, "season_length") and _season_left_to_the_frequency(
+        given.get("season_length")
+    ):
+        resolved["season_length"] = {
+            "value": int(model.season_length),
+            "reason": season_reason(freq),
+        }
+    resolved.update(model.resolved_defaults())
+    return resolved
+
+
+def kept_parameters(
+    used: Dict[str, Any], given: Dict[str, Any], resolved: Dict[str, Any]
+) -> Dict[str, Any]:
+    """The parameters a run keeps: the ones it used, with the empty left empty.
+
+    ``used`` is what the run trained with, the best of a search or the given
+    ones with the season filled in. A parameter in ``resolved`` goes back to
+    what the user left: left out, None or an envelope with no fixed value.
+
+    Parameters
+    ----------
+    used : dict
+        The parameters the run trained with.
+    given : dict
+        The run's parameters, as the user left them.
+    resolved : dict
+        What ``resolved_parameters`` recorded for the run.
+
+    Returns
+    -------
+    dict
+        A copy of ``used``.
+    """
+    kept = dict(used)
+    for name in resolved:
+        if name in given:
+            kept[name] = given[name]
+        else:
+            kept.pop(name, None)
+    return kept
 
 
 def build_model(model_class: type, parameters: Dict[str, Any], run_id=None):

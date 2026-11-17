@@ -14,6 +14,9 @@ from DashAI.back.models.forecasting.drift import DriftForecaster
 from DashAI.back.models.forecasting.exponential_smoothing import ExponentialSmoothing
 from DashAI.back.models.forecasting.mean import MeanForecaster
 from DashAI.back.models.forecasting.naive import NaiveForecaster
+from DashAI.back.models.forecasting.recursive_regression import (
+    RecursiveRegressionForecaster,
+)
 from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
 from DashAI.back.models.forecasting.single_series_forecasting_model import (
     Forecast,
@@ -29,6 +32,7 @@ ALL_MODELS = [
     ARIMA,
     ExponentialSmoothing,
     Theta,
+    RecursiveRegressionForecaster,
 ]
 SERIES = np.arange(1.0, 31.0)
 
@@ -115,13 +119,34 @@ def test_train_fits_on_the_series_and_ignores_the_dates(model_class):
 # --- what each model declares ------------------------------------------------
 
 
-def test_only_arima_takes_exogenous_variables():
+def test_only_arima_and_the_reduction_model_take_exogenous_variables():
     assert ARIMA.EXOGENOUS == "optional"
+    assert RecursiveRegressionForecaster.EXOGENOUS == "optional"
     for model_class in (NaiveForecaster, SeasonalNaiveForecaster, ExponentialSmoothing):
         assert model_class.EXOGENOUS == "none"
     # Published, so the session can mark the models that will not use them.
     for model_class in ALL_MODELS:
         assert model_class.get_metadata()["exogenous"] == model_class.EXOGENOUS
+
+
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        SeasonalNaiveForecaster,
+        ARIMA,
+        ExponentialSmoothing,
+        Theta,
+        RecursiveRegressionForecaster,
+    ],
+)
+def test_a_season_is_left_empty_for_the_frequency_to_set(model_class):
+    # The run form sends the placeholder as it is. Left empty, the unit that
+    # builds the model reads the season from the series' frequency (D3); a
+    # placeholder of 1 would reach every model as a season of one step.
+    field = model_class.get_schema()["properties"]["season_length"]
+
+    assert field["placeholder"]["fixed_value"] is None
+    assert {"type": "null"} in field["anyOf"]
 
 
 def test_a_model_that_takes_exogenous_variables_can_be_told_not_to():
@@ -248,9 +273,14 @@ def test_every_model_gives_nested_intervals_around_its_forecast(model_class):
     params = {"season_length": 12} if model_class is SeasonalNaiveForecaster else {}
     forecast = model_class(**params).fit(_seasonal()).predict(6, levels=[80, 95])
 
-    for level in (80, 95):
-        assert (forecast.lower[level] <= forecast.point).all()
-        assert (forecast.point <= forecast.upper[level]).all()
+    # The reduction model bootstraps signed residuals: a regressor biased on
+    # its training data shifts every path the same way, and the point forecast
+    # can fall outside its own interval. Only the nesting holds by
+    # construction there (RECONCILING_FORECASTING §2.15, detail 8).
+    if model_class is not RecursiveRegressionForecaster:
+        for level in (80, 95):
+            assert (forecast.lower[level] <= forecast.point).all()
+            assert (forecast.point <= forecast.upper[level]).all()
     assert (forecast.lower[95] < forecast.lower[80]).all()
     assert (forecast.upper[95] > forecast.upper[80]).all()
 
@@ -434,3 +464,451 @@ def test_drift_extends_the_line_from_the_first_value_to_the_last():
 def test_drift_needs_two_observations_to_measure_a_slope():
     with pytest.raises(ValueError, match="at least 2 observations"):
         DriftForecaster().fit([5.0])
+
+
+# --- the reduction model: the scikit-learn estimator it regresses with --------
+
+
+def test_the_extracted_estimator_keeps_the_regressors_hyperparameters():
+    # A DashAI regressor takes ``**kwargs``, so scikit-learn's ``get_params``
+    # sees none and ``clone`` rebuilds it with the defaults: 100 trees, no
+    # depth limit. skforecast clones the estimator it is handed.
+    from sklearn.base import clone
+
+    from DashAI.back.models.forecasting.recursive_regression import (
+        sklearn_estimator,
+    )
+    from DashAI.back.models.scikit_learn.random_forest_regression import (
+        RandomForestRegression,
+    )
+
+    estimator = sklearn_estimator(RandomForestRegression(n_estimators=7, max_depth=3))
+
+    assert (estimator.n_estimators, estimator.max_depth) == (7, 3)
+    assert (clone(estimator).n_estimators, clone(estimator).max_depth) == (7, 3)
+    assert type(estimator).__module__.startswith("sklearn.")
+
+
+def test_extracting_the_estimator_leaves_the_regressor_untouched():
+    from DashAI.back.models.forecasting.recursive_regression import (
+        sklearn_estimator,
+    )
+    from DashAI.back.models.scikit_learn.random_forest_regression import (
+        RandomForestRegression,
+    )
+
+    regressor = RandomForestRegression(n_estimators=7, max_depth=3)
+    before = {k: v for k, v in vars(regressor).items() if not k.startswith("_")}
+
+    sklearn_estimator(regressor)
+
+    after = {k: v for k, v in vars(regressor).items() if not k.startswith("_")}
+    assert after == before
+
+
+def test_a_regressor_without_a_scikit_learn_estimator_is_refused():
+    from DashAI.back.models.forecasting.recursive_regression import (
+        sklearn_estimator,
+    )
+    from DashAI.back.models.scikit_learn.mlp_regression import MLPRegression
+    from DashAI.back.models.scikit_learn.svc import SVC
+
+    for model in (MLPRegression(), SVC()):
+        with pytest.raises(TypeError, match="scikit-learn regressor"):
+            sklearn_estimator(model)
+
+
+# --- the reduction model -----------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("lags", "season_length", "expected"),
+    [(None, 12, 12), (None, 7, 7), (None, 1, 3), (None, 2, 3), (5, 12, 5)],
+)
+def test_the_lags_default_to_a_season_and_at_least_three(lags, season_length, expected):
+    model = RecursiveRegressionForecaster(lags=lags, season_length=season_length)
+
+    assert model.resolved_lags() == expected
+
+
+def test_a_season_left_empty_without_the_unit_is_a_wiring_error():
+    # The unit that builds the model fills an empty season from the
+    # frequency; a None that reaches the model skipped it, and would give 3
+    # lags without a word.
+    with pytest.raises(ValueError, match="season_length is None"):
+        RecursiveRegressionForecaster(season_length=None)
+
+
+def test_the_reduction_model_regresses_on_the_lags():
+    # y[t] = 0.5 y[t-1] + 2, exactly: a linear regression on one lag finds it.
+    series = [10.0]
+    for _ in range(29):
+        series.append(0.5 * series[-1] + 2.0)
+
+    forecast = RecursiveRegressionForecaster(lags=1).fit(series).predict(3)
+
+    expected = [0.5 * series[-1] + 2.0]
+    for _ in range(2):
+        expected.append(0.5 * expected[-1] + 2.0)
+    assert forecast.point == pytest.approx(expected, rel=1e-9)
+
+
+def test_differencing_lets_a_forest_follow_a_trend():
+    # A forest cannot forecast above the values it was trained on; on the
+    # differences of a line it predicts the constant step, and the forecast
+    # keeps climbing.
+    from DashAI.back.models.scikit_learn.random_forest_regression import (
+        RandomForestRegression,
+    )
+
+    line = 2.0 * np.arange(30.0)
+    forest = RandomForestRegression(n_estimators=10, random_state=0)
+
+    flat = RecursiveRegressionForecaster(forest, lags=3).fit(line).predict(3)
+    trended = (
+        RecursiveRegressionForecaster(forest, lags=3, differentiation=1)
+        .fit(line)
+        .predict(3)
+    )
+
+    assert flat.point.max() <= line.max()
+    assert trended.point == pytest.approx([60.0, 62.0, 64.0])
+
+
+@pytest.mark.parametrize(("lags", "differentiation"), [(5, 0), (4, 1)])
+def test_a_series_too_short_for_the_lags_is_refused_naming_them(lags, differentiation):
+    model = RecursiveRegressionForecaster(lags=lags, differentiation=differentiation)
+
+    with pytest.raises(
+        ValueError, match=rf"{lags} lags and differentiation {differentiation}"
+    ):
+        model.fit(np.arange(5.0))
+
+
+@pytest.mark.parametrize(
+    ("season_length", "source"),
+    [
+        (12, "12 lags (one season, as Lags is left empty)"),
+        (1, "3 lags (the fewest the default gives, as Lags is left empty)"),
+    ],
+)
+def test_a_series_too_short_for_the_default_lags_says_where_they_came_from(
+    season_length, source
+):
+    model = RecursiveRegressionForecaster(season_length=season_length)
+
+    with pytest.raises(ValueError, match="recursive regression") as error:
+        model.fit(np.arange(3.0))
+
+    # The model sees the history it is fitted on; in a backtest, the
+    # shortest one is the history before the first origin.
+    assert source in str(error.value)
+    assert "in a backtest, the history before the first origin" in str(error.value)
+
+
+def test_a_series_too_short_for_the_lags_given_names_only_them():
+    model = RecursiveRegressionForecaster(lags=5, season_length=12)
+
+    with pytest.raises(ValueError, match="recursive regression") as error:
+        model.fit(np.arange(5.0))
+
+    assert "5 lags and differentiation 0" in str(error.value)
+    assert "Lags is left empty" not in str(error.value)
+
+
+@pytest.mark.parametrize(
+    ("lags", "n", "x", "needed"),
+    [
+        # 3 rows of 3 lags: as many rows as values each one reads.
+        (3, 6, None, 7),
+        # 3 rows of 1 lag and 2 exogenous variables.
+        (1, 4, np.ones((4, 2)), 5),
+    ],
+)
+def test_the_regression_needs_more_rows_than_values_each_row_reads(lags, n, x, needed):
+    # With fewer rows than values per row (and an intercept), a linear
+    # regression has no single solution, and scikit-learn picks one silently.
+    model = RecursiveRegressionForecaster(lags=lags, season_length=1)
+
+    with pytest.raises(ValueError, match=f"needs at least {needed} observations"):
+        model.fit(np.arange(float(n)), x=x)
+
+
+def test_a_regressor_that_fails_to_fit_is_named():
+    from DashAI.back.models.scikit_learn.k_neighbors_regression import (
+        KNeighborsRegression,
+    )
+
+    # 9 rows of 3 lags are enough rows, but not 10 neighbours.
+    model = RecursiveRegressionForecaster(
+        KNeighborsRegression(n_neighbors=10), lags=3, season_length=1
+    )
+
+    with pytest.raises(ValueError, match="Fitting KNeighborsRegression on 9 rows"):
+        model.fit(np.arange(12.0))
+
+
+def test_the_reduction_model_regresses_on_the_exogenous_variables_too():
+    # The series is the exogenous column scaled and shifted, so a linear
+    # regression on the lag and the column finds it, and the forecast follows
+    # the future values of the column.
+    x = np.random.RandomState(1).normal(size=(40, 1))
+    y = 5.0 + 3.0 * x[:, 0]
+    model = RecursiveRegressionForecaster(lags=1).fit(y, x=x)
+
+    future = np.array([[1.0], [-1.0], [0.5]])
+    forecast = model.predict(3, x_future=future, levels=[80])
+
+    assert forecast.point == pytest.approx([8.0, 2.0, 6.5], abs=1e-6)
+    assert np.isfinite(forecast.lower[80]).all()
+
+
+def test_the_reduction_model_can_be_told_not_to_use_exogenous_variables():
+    field = RecursiveRegressionForecaster.get_schema()["properties"]["use_exogenous"]
+
+    assert field["type"] == "boolean"
+    assert RecursiveRegressionForecaster(use_exogenous=False).use_exogenous is False
+
+
+def test_the_reduction_model_is_kept_with_its_fitted_forecaster(tmp_path):
+    from skforecast.recursive import ForecasterRecursive
+
+    x = np.random.RandomState(2).normal(size=(48, 1))
+    model = RecursiveRegressionForecaster().fit(_seasonal(), x=x)
+    future = np.ones((4, 1))
+    expected = model.predict(4, x_future=future, levels=[80, 95])
+
+    path = tmp_path / "model.joblib"
+    model.save(str(path))
+    restored = RecursiveRegressionForecaster.load(str(path))
+
+    assert isinstance(restored._forecaster, ForecasterRecursive)
+    forecast = restored.predict(4, x_future=future, levels=[80, 95])
+    assert list(forecast.point) == list(expected.point)
+    for level in (80, 95):
+        assert list(forecast.lower[level]) == list(expected.lower[level])
+        assert list(forecast.upper[level]) == list(expected.upper[level])
+
+
+def test_the_kept_model_does_not_carry_the_binned_residuals():
+    # skforecast bins the training residuals on every fit, but the intervals
+    # draw from the unbinned ones (``use_binned_residuals=False``).
+    model = RecursiveRegressionForecaster().fit(_seasonal())
+
+    assert model._forecaster.in_sample_residuals_by_bin_ is None
+    assert len(model._forecaster.in_sample_residuals_) > 0
+    assert np.isfinite(model.predict(3, levels=[80, 95]).lower[95]).all()
+
+
+def test_the_reduction_model_gives_the_same_intervals_every_time():
+    model = RecursiveRegressionForecaster().fit(_seasonal())
+
+    first = model.predict(6, levels=[80, 95])
+    second = model.predict(6, levels=[80, 95])
+
+    for level in (80, 95):
+        assert list(first.lower[level]) == list(second.lower[level])
+        assert list(first.upper[level]) == list(second.upper[level])
+
+
+def test_the_reduction_intervals_widen_along_the_horizon():
+    # The recursion adds a residual at every step and feeds it forward, so
+    # the spread of the paths grows with the step, as in Naive or ARIMA.
+    forecast = (
+        RecursiveRegressionForecaster(lags=1).fit(_seasonal()).predict(6, levels=[95])
+    )
+
+    width = forecast.upper[95] - forecast.lower[95]
+    assert width[-1] > width[0]
+
+
+def _plugin_regression(**params):
+    """A DashAI regressor over a scikit-learn compatible class from elsewhere.
+
+    The shape a plugin would give one: the DashAI wrapper lives outside the
+    DashAI package, and so does the estimator it wraps.
+    """
+    from sklearn.base import BaseEstimator, RegressorMixin
+
+    from DashAI.back.models.regression_model import RegressionModel
+    from DashAI.back.models.scikit_learn.sklearn_like_regressor import (
+        SklearnLikeRegressor,
+    )
+
+    class ThirdPartyMean(RegressorMixin, BaseEstimator):
+        def __init__(self, shift=0.0):
+            self.shift = shift
+
+        # scikit-learn's names: skforecast passes ``X`` by keyword.
+        def fit(self, X, y):  # noqa: N803
+            self.mean_ = float(np.mean(y))
+            return self
+
+        def predict(self, X):  # noqa: N803
+            return np.full(len(X), self.mean_ + self.shift)
+
+    class PluginRegression(RegressionModel, SklearnLikeRegressor, ThirdPartyMean):
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+
+    return PluginRegression(**params), ThirdPartyMean
+
+
+def test_a_scikit_learn_compatible_regressor_from_outside_dashai_is_taken():
+    regressor, estimator_class = _plugin_regression(shift=2.0)
+
+    model = RecursiveRegressionForecaster(regressor, lags=1, season_length=1)
+    forecast = model.fit(np.ones(10)).predict(1)
+
+    # The estimator is the plugin's own class, not its DashAI wrapper, whose
+    # ``**kwargs`` would hide the shift from ``get_params``.
+    assert type(model.fitted_estimator()) is estimator_class
+    assert model.fitted_estimator().shift == 2.0
+    assert forecast.point == pytest.approx([3.0])
+
+
+def test_a_regressor_that_is_not_scikit_learn_is_refused_when_built():
+    from DashAI.back.models.scikit_learn.mlp_regression import MLPRegression
+
+    with pytest.raises(TypeError, match="scikit-learn regressor"):
+        RecursiveRegressionForecaster(MLPRegression())
+
+
+# --- what an empty season and empty lags mean, as the form says it ----------
+
+#: The sentence every season field ends with: what empty does, and a number.
+EMPTY_SEASON = {
+    "en": (
+        "Left empty, it uses the season of the series' frequency (monthly: 12, "
+        "daily: 7, hourly: 24; 1 if the frequency has no known cycle).",
+        "A number sets another cycle.",
+    ),
+    "es": (
+        "Vacío, usa la temporada según la frecuencia de la serie (mensual: 12, "
+        "diaria: 7, horaria: 24; 1 si la frecuencia no tiene un ciclo conocido).",
+        "Un número fija otro ciclo.",
+    ),
+}
+
+#: Where each model uses its season, when not always.
+SEASON_USED = {
+    ARIMA: {
+        "en": "Only used when the seasonal part is on",
+        "es": "Solo se usa si la parte estacional está activada",
+    },
+    ExponentialSmoothing: {
+        "en": "Only used when the seasonal part is on",
+        "es": "Solo se usa si la parte estacional está activada",
+    },
+    Theta: {
+        "en": "Only used when the seasonal part is on",
+        "es": "Solo se usa si la parte estacional está activada",
+    },
+    RecursiveRegressionForecaster: {
+        "en": "Only used for the default lags",
+        "es": "Solo se usa para los rezagos por defecto",
+    },
+}
+
+
+def _described(model_class, field, lang):
+    from DashAI.back.core.utils import localize
+
+    schema = localize(model_class.get_schema(), lang)
+    return schema["properties"][field]["description"]
+
+
+@pytest.mark.parametrize("lang", ["en", "es"])
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        SeasonalNaiveForecaster,
+        ARIMA,
+        ExponentialSmoothing,
+        Theta,
+        RecursiveRegressionForecaster,
+    ],
+)
+def test_the_season_says_what_empty_and_a_number_do(model_class, lang):
+    description = _described(model_class, "season_length", lang)
+
+    for sentence in EMPTY_SEASON[lang]:
+        assert sentence in description
+    if model_class in SEASON_USED:
+        assert SEASON_USED[model_class][lang] in description
+
+
+@pytest.mark.parametrize(
+    ("lang", "sentences"),
+    [
+        (
+            "en",
+            (
+                "Left empty: it uses one season of lags (the value of Season "
+                "length, or the season of the frequency when that field is "
+                "empty too), with a minimum of 3.",
+                "A number sets another count.",
+            ),
+        ),
+        (
+            "es",
+            (
+                "Vacío: usa una temporada de rezagos (el valor de Largo de "
+                "temporada, o la temporada según la frecuencia si ese campo "
+                "también está vacío), con un mínimo de 3.",
+                "Un número fija otra cantidad.",
+            ),
+        ),
+    ],
+)
+def test_the_lags_say_what_empty_and_a_number_do(lang, sentences):
+    description = _described(RecursiveRegressionForecaster, "lags", lang)
+
+    for sentence in sentences:
+        assert sentence in description
+
+
+# --- what a model fills in itself, for the run to show -----------------------
+
+
+@pytest.mark.parametrize(
+    ("season", "lags", "resolved"),
+    [
+        (
+            12,
+            None,
+            {
+                "value": 12,
+                "reason": {"key": "lagsFromSeason", "values": {"season": 12}},
+            },
+        ),
+        (
+            1,
+            None,
+            {
+                "value": 3,
+                "reason": {"key": "lagsAtLeast", "values": {"season": 1, "minimum": 3}},
+            },
+        ),
+    ],
+)
+def test_the_reduction_model_says_what_its_empty_lags_resolve_to(
+    season, lags, resolved
+):
+    model = RecursiveRegressionForecaster(season_length=season, lags=lags)
+
+    assert model.resolved_defaults() == {"lags": resolved}
+
+
+def test_lags_given_are_not_resolved():
+    assert (
+        RecursiveRegressionForecaster(season_length=12, lags=5).resolved_defaults()
+        == {}
+    )
+
+
+@pytest.mark.parametrize(
+    "model_class", [m for m in ALL_MODELS if m is not RecursiveRegressionForecaster]
+)
+def test_the_other_models_fill_in_nothing_themselves(model_class):
+    assert model_class().resolved_defaults() == {}

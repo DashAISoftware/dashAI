@@ -456,5 +456,23 @@
       "modelTakesNoExogenous": "{{model}} 不使用外生变量：仅根据序列预测。",
       "exogenousSwitchedOff": "“使用外生变量”已关闭：{{model}} 不使用它们进行预测。"
     }
+  },
+  "resolved": {
+    "seasonFromStep": "按{{frequency}}频率",
+    "seasonFromFrequency": "按序列的 {{freq}} 频率",
+    "lagsFromSeason": "一个季节，{{season}}",
+    "lagsAtLeast": "最小值 {{minimum}}：季节长度为 {{season}}"
+  },
+  "frequencyStep": {
+    "Y": "年度",
+    "Q": "季度",
+    "M": "月度",
+    "SM": "半月",
+    "W": "每周",
+    "D": "每日",
+    "B": "工作日",
+    "h": "每小时",
+    "min": "每分钟",
+    "s": "每秒"
   }
 }

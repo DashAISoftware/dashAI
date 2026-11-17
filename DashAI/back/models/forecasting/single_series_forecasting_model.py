@@ -18,6 +18,60 @@ EXOGENOUS_OPTIONAL = "optional"
 EXOGENOUS_REQUIRED = "required"
 
 
+#: What an empty season means, said at the end of every ``season_length``
+#: description: the unit that builds the model reads it from the series'
+#: frequency (``with_season_from_grid``, D3), so the schema's placeholder is
+#: empty rather than a number that would reach every model as it is.
+SEASON_FROM_FREQUENCY = MultilingualString(
+    en=(
+        "Left empty, it uses the season of the series' frequency (monthly: 12, "
+        "daily: 7, hourly: 24; 1 if the frequency has no known cycle). A "
+        "number sets another cycle."
+    ),
+    es=(
+        "Vacío, usa la temporada según la frecuencia de la serie (mensual: 12, "
+        "diaria: 7, horaria: 24; 1 si la frecuencia no tiene un ciclo "
+        "conocido). Un número fija otro ciclo."
+    ),
+    pt=(
+        "Vazio, usa a temporada segundo a frequência da série (mensal: 12, "
+        "diária: 7, horária: 24; 1 se a frequência não tem um ciclo "
+        "conhecido). Um número fixa outro ciclo."
+    ),
+    de=(
+        "Leer: die Saison nach der Frequenz der Reihe (monatlich: 12, täglich: "
+        "7, stündlich: 24; 1, wenn die Frequenz keinen bekannten Zyklus hat). "
+        "Eine Zahl legt einen anderen Zyklus fest."
+    ),
+    zh=(
+        "留空时，按序列的频率取季节长度（月度：12，日度：7，小时：24；"
+        "频率没有已知周期时为 1）。填写数字则指定其他周期。"
+    ),
+)
+
+#: Where ExponentialSmoothing and Theta use their season: only with a seasonal
+#: component, and then it has to be at least 2 (their ``__init__`` checks it).
+SEASON_ONLY_WHEN_SEASONAL = MultilingualString(
+    en=(
+        "Only used when the seasonal part is on, with Seasonal other than "
+        "none, and then at least 2."
+    ),
+    es=(
+        "Solo se usa si la parte estacional está activada, con Estacional "
+        "distinto de none, y entonces tiene que ser al menos 2."
+    ),
+    pt=(
+        "Só é usada se a parte sazonal estiver ativada, com Sazonal diferente "
+        "de none, e então tem que ser pelo menos 2."
+    ),
+    de=(
+        "Nur verwendet, wenn der saisonale Teil aktiv ist (Saisonal nicht "
+        "none), und dann mindestens 2."
+    ),
+    zh="仅在启用季节部分（季节性不为 none）时使用，此时至少为 2。",
+)
+
+
 def use_exogenous_field():
     """Whether a model that can read exogenous variables reads them in a run.
 
@@ -182,6 +236,16 @@ class SingleSeriesForecastingModel(BaseModel):
         metadata = super().get_metadata()
         metadata["exogenous"] = cls.EXOGENOUS
         return metadata
+
+    def resolved_defaults(self) -> Dict[str, Dict[str, Any]]:
+        """The parameters left empty that this model fills in itself.
+
+        ``{name: {"value", "reason": {"key", "values"}}}``, which a run
+        records beside its parameters for the app to show
+        (``resolved_parameters``). The season is not here: the unit that
+        builds the model reads it from the frequency. None by default.
+        """
+        return {}
 
     # --- the contract --------------------------------------------------------
 

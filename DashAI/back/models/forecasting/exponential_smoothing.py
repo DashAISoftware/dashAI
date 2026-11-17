@@ -7,11 +7,14 @@ from DashAI.back.core.schema_fields import (
     Relevance,
     enum_field,
     int_field,
+    none_type,
     schema_field,
     search_space,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.forecasting.single_series_forecasting_model import (
+    SEASON_FROM_FREQUENCY,
+    SEASON_ONLY_WHEN_SEASONAL,
     SingleSeriesForecastingModel,
 )
 
@@ -99,37 +102,43 @@ class ExponentialSmoothingSchema(BaseSchema):
         ),
     )  # type: ignore
     season_length: search_space(
-        int_field(ge=1),
-        fixed=1,
+        none_type(int_field(ge=1)),
+        fixed=None,
         low=2,
         high=12,
         description=MultilingualString(
-            # The "only used when a seasonal component is selected" sentence
-            # this carried in five languages is the Relevance rule below now,
-            # so the renderer disables the control and says why instead of
-            # asking the user to read about it.
+            # The Relevance rule below disables the control and says why while
+            # no seasonal component is selected. The description says it too
+            # (SEASON_ONLY_WHEN_SEASONAL), so the field reads the same as
+            # ARIMA's before the user picks one, and says what empty means.
             en=(
                 "How many observations make up one full cycle: 12 for monthly "
-                "data repeating yearly, 7 for daily data repeating weekly."
+                "data repeating yearly, 7 for daily data repeating weekly. "
+                f"{SEASON_ONLY_WHEN_SEASONAL.en} "
+                f"{SEASON_FROM_FREQUENCY.en}"
             ),
             es=(
                 "Cuántas observaciones forman un ciclo completo: 12 para datos "
                 "mensuales que se repiten cada año, 7 para datos diarios que se "
-                "repiten cada semana."
+                f"repiten cada semana. {SEASON_ONLY_WHEN_SEASONAL.es} "
+                f"{SEASON_FROM_FREQUENCY.es}"
             ),
             pt=(
                 "Quantas observações formam um ciclo completo: 12 para dados "
                 "mensais que se repetem a cada ano, 7 para dados diários que se "
-                "repetem a cada semana."
+                f"repetem a cada semana. {SEASON_ONLY_WHEN_SEASONAL.pt} "
+                f"{SEASON_FROM_FREQUENCY.pt}"
             ),
             de=(
                 "Wie viele Beobachtungen einen vollen Zyklus bilden: 12 für "
                 "monatliche Daten mit jährlicher Wiederholung, 7 für "
-                "tägliche mit wöchentlicher."
+                f"tägliche mit wöchentlicher. {SEASON_ONLY_WHEN_SEASONAL.de} "
+                f"{SEASON_FROM_FREQUENCY.de}"
             ),
             zh=(
                 "一个完整周期包含多少个观测值：月度数据按年重复为 12，"
                 "日度数据按周重复为 7。"
+                f"{SEASON_ONLY_WHEN_SEASONAL.zh}{SEASON_FROM_FREQUENCY.zh}"
             ),
         ),
         alias=MultilingualString(

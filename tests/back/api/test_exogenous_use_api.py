@@ -68,16 +68,18 @@ def test_every_offered_model_is_marked_in_a_session_with_exogenous(client, tmp_p
         "ExponentialSmoothing",
         "MeanForecaster",
         "NaiveForecaster",
+        "RecursiveRegressionForecaster",
         "SeasonalNaiveForecaster",
         "Theta",
     ]
     by_model = {m["model"]: m for m in declared["models"]}
-    assert by_model["ARIMA"] == {
-        "model": "ARIMA",
-        "uses": True,
-        "reason": None,
-        "switch": "use_exogenous",
-    }
+    for name in ("ARIMA", "RecursiveRegressionForecaster"):
+        assert by_model[name] == {
+            "model": name,
+            "uses": True,
+            "reason": None,
+            "switch": "use_exogenous",
+        }
     assert by_model["ExponentialSmoothing"] == {
         "model": "ExponentialSmoothing",
         "uses": False,

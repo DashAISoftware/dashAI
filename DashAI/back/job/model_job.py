@@ -31,6 +31,11 @@ from DashAI.back.units.fit_model_over_nested_folds_unit import (
 )
 from DashAI.back.units.fit_model_unit import FitModelUnit
 from DashAI.back.units.fit_without_target_unit import FitWithoutTargetUnit
+from DashAI.back.units.forecast_scope import (
+    build_model,
+    kept_parameters,
+    resolved_parameters,
+)
 from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
 from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
@@ -254,7 +259,15 @@ class ModelJob(BaseJob):
                             artifact_prefix=str(run_id),
                         )(ctx)
                         plots_path = ctx.require("hyperparameter_plots_path")
-                        run.parameters = ctx.require("best_parameters")
+                        given = dict(run.parameters or {})
+                        used = ctx.require("best_parameters")
+                        run.resolved_parameters = self._resolved_record(
+                            run, given, used, ctx, component_registry
+                        )
+                        # The empty stays empty, so a retrain resolves it again.
+                        run.parameters = kept_parameters(
+                            used, given, run.resolved_parameters
+                        )
                         flag_modified(run, "parameters")
                         run.exogenous = self._exogenous_record(
                             run, model_session, cut_unit, ctx, component_registry
@@ -693,6 +706,20 @@ class ModelJob(BaseJob):
                 },
             },
         )
+
+    @staticmethod
+    def _resolved_record(run, given, used, ctx, component_registry):
+        """What the run's parameters left empty resolved to, and where from.
+
+        The model is built with the parameters the run used, so it reads the
+        season the unit filled in and the lags it derives from it. The season
+        is named by the grid's frequency (``resolved_parameters``).
+        """
+        from DashAI.back.tasks.time_grid import TimeGrid
+
+        model = build_model(component_registry[run.model_name]["class"], used)
+        freq = TimeGrid.from_ref(ctx.require("grid")).freq
+        return resolved_parameters(model, given, freq)
 
     @staticmethod
     def _exogenous_record(run, model_session, cut_unit, ctx, component_registry):

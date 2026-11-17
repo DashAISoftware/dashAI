@@ -270,6 +270,11 @@ class Run(Base):
     # {"used", "columns": [{"name", "type"}], "reason"}, the raw columns a
     # prediction has to bring. NULL for a session without them.
     exogenous: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    # What a forecasting run's parameters left empty resolved to when it
+    # trained, and where from: {name: {"value", "reason": {"key", "values"}}}.
+    # The parameters keep the empty value, so a retrain resolves it again.
+    # NULL until a forecasting run trains.
+    resolved_parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
     # optimizer
     optimizer_name: Mapped[str] = mapped_column(String)
     optimizer_parameters: Mapped[JSON] = mapped_column(JSON)
