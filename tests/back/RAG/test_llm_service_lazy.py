@@ -49,6 +49,7 @@ from tests.back.RAG.conftest import (
     RAG_E2E_DOC_TEXT,
     _create_test_document,
     bm25_retriever_params,
+    rag_session_columns,
     write_test_doc_file,
 )
 
@@ -314,9 +315,7 @@ def test_build_pipeline_rejects_invalid_nested_llm_without_constructing(
 
         with session_factory() as db:
             session = GenerativeSession(
-                task_name="RAGTask",
-                model_name="RAGPipeline",
-                parameters={"documents": [document_id]},
+                **rag_session_columns({"documents": [document_id]}),
                 name=f"lazy_validation_{tag}",
                 description=None,
             )

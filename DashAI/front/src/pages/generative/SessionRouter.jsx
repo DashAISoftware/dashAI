@@ -3,15 +3,16 @@ import { Navigate, useParams } from "react-router-dom";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { getGenerativeSession } from "../../api/generativeTask";
-import { RAG_TASK_NAME } from "../../api/rag";
+import { sessionRouteFor } from "../../components/generative/workflowEntryPoints";
+import { INFERENCE_WORKFLOW_NAME } from "../../constants/generativeWorkflows";
 import Generative from "./Generative";
 
 /**
  * Route a generic session URL to the right view.
  *
- * Tasks with their own entry point live under that entry point's URL, so a RAG
- * session reached through the shared `/sessions/:id` path is redirected to its
- * canonical address rather than rendered here. Older links therefore keep
+ * Workflows with their own entry point live under that entry point's URL, so
+ * a RAG session reached through the shared `/sessions/:id` path is redirected
+ * to its canonical address rather than rendered here. Older links therefore keep
  * working while there is only one URL per session.
  *
  * @returns {JSX.Element} The session view, a redirect, or a loading indicator.
@@ -19,13 +20,13 @@ import Generative from "./Generative";
 export default function SessionRouter() {
   const { id } = useParams();
   const { t } = useTranslation(["generative"]);
-  const [taskName, setTaskName] = useState(null);
+  const [workflowName, setWorkflowName] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const sessionId = Number(id);
     if (!Number.isFinite(sessionId) || sessionId <= 0) {
-      setTaskName(null);
+      setWorkflowName(null);
       setLoading(false);
       return;
     }
@@ -35,10 +36,10 @@ export default function SessionRouter() {
 
     getGenerativeSession(sessionId)
       .then((session) => {
-        if (!cancelled) setTaskName(session?.task_name || null);
+        if (!cancelled) setWorkflowName(session?.workflow_name || null);
       })
       .catch(() => {
-        if (!cancelled) setTaskName(null);
+        if (!cancelled) setWorkflowName(null);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -62,7 +63,7 @@ export default function SessionRouter() {
     );
   }
 
-  if (!taskName) {
+  if (!workflowName) {
     return (
       <Box
         display="flex"
@@ -77,8 +78,9 @@ export default function SessionRouter() {
     );
   }
 
-  if (taskName === RAG_TASK_NAME) {
-    return <Navigate to={`/app/generative/rag/sessions/${id}`} replace />;
+  const target = sessionRouteFor(workflowName, id);
+  if (target !== sessionRouteFor(INFERENCE_WORKFLOW_NAME, id)) {
+    return <Navigate to={target} replace />;
   }
 
   return <Generative key={id} />;

@@ -27,7 +27,7 @@ from fastapi.testclient import TestClient
 
 from DashAI.back.dependencies.database.models import RAGPrompt
 from DashAI.back.services.RAG.utils import build_prompt_hash
-from tests.back.RAG.conftest import BOW_PARAMS
+from tests.back.RAG.conftest import BOW_PARAMS, RAG_WORKFLOW_PAYLOAD
 
 COMPLETE_BM25_VECTORIZER_PARAMS = dict(BOW_PARAMS)
 
@@ -40,8 +40,7 @@ COMPLETE_BM25_VECTORIZER_PARAMS = dict(BOW_PARAMS)
 def _complete_params(name="strict_valid"):
     """Return a fully-valid RAG session payload for the given document."""
     return {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "name": name,
         "description": None,
         "parameters": {

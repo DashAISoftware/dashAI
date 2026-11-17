@@ -26,7 +26,7 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.services.RAG.prompt_service import PromptService
 from DashAI.back.services.RAG.utils import build_prompt_hash
-from tests.back.RAG.conftest import BOW_PARAMS
+from tests.back.RAG.conftest import BOW_PARAMS, RAG_TEST_GENERATOR, RAG_WORKFLOW_PAYLOAD
 
 
 def _unique_name(prefix: str = "prompt") -> str:
@@ -40,8 +40,7 @@ def _generation_template(prefix: str = "hardening") -> str:
 def _base_session_params(name: str | None = None) -> dict:
     """Return the minimal valid RAG session payload."""
     return {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "parameters": {
             "chunking_model": {
                 "component": "CharacterChunkModel",
@@ -216,8 +215,9 @@ def _create_legacy_session(client: TestClient, prompt_id: int | None) -> int:
     with session_factory() as db:
         session = GenerativeSession(
             name=_unique_name("legacy"),
-            task_name="RAGTask",
-            model_name="RAGPipeline",
+            task_name="TextToTextGenerationTask",
+            workflow_name="RAGWorkflow",
+            model_name=RAG_TEST_GENERATOR,
             parameters=parameters,
         )
         db.add(session)
