@@ -10,7 +10,7 @@ installed, and which library versions it was trained with.
 import importlib.metadata
 import sys
 import warnings
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Mapping, Optional
 
 FORMAT_VERSION = 1
 # What a DashAI file holds. Files written before kinds existed are models.
@@ -101,12 +101,17 @@ def plugin_distributions(classes: Iterable[type]) -> List[Dict[str, Optional[str
     from an installed distribution (a plugin) that whoever loads the package
     must also have.
     """
-    providers = importlib.metadata.packages_distributions()
+    # Mapping modules to distributions scans every installed package, which
+    # takes about a second, so it only runs once a class outside DashAI shows
+    # up. An export without plugins never needs it (#1011).
+    providers: Optional[Mapping[str, List[str]]] = None
     found: Dict[str, Optional[str]] = {}
     for cls in classes:
         top_level = cls.__module__.split(".")[0]
         if top_level == "DashAI":
             continue
+        if providers is None:
+            providers = importlib.metadata.packages_distributions()
         for distribution in providers.get(top_level, []):
             found[distribution] = installed_version(distribution)
     return [{"name": name, "version": found[name]} for name in sorted(found)]
