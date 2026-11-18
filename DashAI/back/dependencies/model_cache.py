@@ -304,6 +304,7 @@ class ModelCache:
                 return
             entry.in_use = False
             entry.last_used = self._clock()
+            self._report("on_use", entry)
 
     def discard(self, entry: CacheEntry, reason: str = "error") -> None:
         """Unload an entry, for example after its model failed."""

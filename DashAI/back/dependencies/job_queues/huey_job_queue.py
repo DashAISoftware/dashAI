@@ -126,6 +126,19 @@ def _worker_loop(in_q, out_q) -> None:
 
     # The cache reads its settings from the DI container built above
     _cache = get_model_cache()
+    try:
+        from kink import di as _di
+
+        from DashAI.back.dependencies.model_cache_status import (
+            SqlCacheReporter,
+            clear_loaded_models,
+        )
+
+        _cache.reporter = SqlCacheReporter(_di["session_factory"], _os.getpid())
+        # Rows of other (dead) workers are stale
+        clear_loaded_models(_di["session_factory"], except_pid=_os.getpid())
+    except Exception:
+        log.exception("Could not set up the loaded model reporter")
 
     # Job loop. While idle, the poll timeout lets the worker evict idle models.
     while True:
@@ -433,6 +446,18 @@ class HueyJobQueue(BaseJobQueue):
         """
         if self._worker_proc is not None and self._worker_proc.is_alive():
             return
+
+        # A worker killed by a cancel or a crash leaves its rows behind
+        try:
+            from kink import di
+
+            from DashAI.back.dependencies.model_cache_status import (
+                clear_loaded_models,
+            )
+
+            clear_loaded_models(di["session_factory"])
+        except Exception:
+            log.exception("Could not clear stale loaded model rows")
 
         ctx = multiprocessing.get_context("spawn")
         self._worker_in_q = ctx.Queue()

@@ -146,3 +146,56 @@ def test_prepare_for_job_clears_cache_for_other_jobs():
     prepare_cache_for_job(object(), cache)
     assert obj.closed == 1
     assert cache.entries() == []
+
+
+class FakeReporter:
+    def __init__(self):
+        self.pending = []
+        self.unloads = []
+
+    def on_load(self, entry):
+        pass
+
+    def on_use(self, entry):
+        pass
+
+    def on_unload(self, entry, reason):
+        self.unloads.append((entry.key, reason))
+
+    def pending_unloads(self):
+        return list(self.pending)
+
+
+def test_unload_request_closes_idle_entry():
+    reporter = FakeReporter()
+    cache = ModelCache(enabled=True, idle_seconds=300, reporter=reporter)
+    entry = _acquire(cache, {"context_window": 512})
+    obj, key = entry.obj, entry.key
+    cache.release(entry)
+
+    cache.apply_pending_unloads()
+    assert obj.closed == 0
+
+    reporter.pending = [key]
+    cache.apply_pending_unloads()
+    assert obj.closed == 1
+    assert cache.entries() == []
+    assert reporter.unloads == [(key, "panel")]
+
+
+def test_unload_request_deferred_while_in_use():
+    reporter = FakeReporter()
+    cache = ModelCache(enabled=True, idle_seconds=300, reporter=reporter)
+    entry = _acquire(cache, {"context_window": 512})
+    obj, key = entry.obj, entry.key
+    reporter.pending = [key]
+
+    cache.apply_pending_unloads()
+    assert obj.closed == 0
+    assert len(cache.entries()) == 1
+
+    cache.release(entry)
+    cache.apply_pending_unloads()
+    assert obj.closed == 1
+    assert cache.entries() == []
+    assert reporter.unloads == [(key, "panel")]
