@@ -116,10 +116,31 @@ def _worker_loop(in_q, out_q) -> None:
     if _sys.platform != "win32":
         _signal.signal(_signal.SIGTERM, _signal.SIG_DFL)
 
-    # Job loop — one blocking iteration per job
+    import queue as _queue
+
+    from DashAI.back.dependencies.model_cache import (
+        WORKER_POLL_SECONDS,
+        get_model_cache,
+        prepare_cache_for_job,
+    )
+
+    # The cache reads its settings from the DI container built above
+    _cache = get_model_cache()
+
+    # Job loop. While idle, the poll timeout lets the worker evict idle models.
     while True:
         try:
-            job_bytes = in_q.get()
+            job_bytes = in_q.get(timeout=WORKER_POLL_SECONDS)
+        except _queue.Empty:
+            try:
+                _cache.evict_idle()
+            except Exception:
+                log.exception("Model cache idle eviction failed")
+            try:
+                _cache.apply_pending_unloads()
+            except Exception:
+                log.exception("Model cache pending unloads failed")
+            continue
         except (EOFError, OSError):
             break  # Parent closed the queue — shut down
 
@@ -128,6 +149,10 @@ def _worker_loop(in_q, out_q) -> None:
 
         try:
             job = _dill.loads(job_bytes)
+            try:
+                prepare_cache_for_job(job, _cache)
+            except Exception:
+                log.exception("Model cache preparation failed")
             result = job.run()
             out_q.put(_dill.dumps({"ok": True, "result": result}))
         except Exception as _exc:
@@ -410,7 +435,7 @@ class HueyJobQueue(BaseJobQueue):
             return
 
         ctx = multiprocessing.get_context("spawn")
-        self._worker_in_q = ctx.SimpleQueue()
+        self._worker_in_q = ctx.Queue()
         self._worker_out_q = ctx.Queue()
         proc = ctx.Process(
             target=_worker_loop,

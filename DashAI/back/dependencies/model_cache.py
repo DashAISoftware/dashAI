@@ -15,6 +15,8 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Protocol, Tupl
 
 log = logging.getLogger(__name__)
 
+WORKER_POLL_SECONDS = 2.0
+
 
 def split_params(model_class: type, params: dict) -> Tuple[dict, dict]:
     """Split parameters into load parameters and generation parameters.
@@ -374,6 +376,20 @@ class ModelCache:
             for entry in acquired:
                 if entry.in_use:
                     self.release(entry)
+
+
+def prepare_cache_for_job(job: Any, cache: ModelCache) -> None:
+    """Unload cached models before a job that does not use the cache.
+
+    Parameters
+    ----------
+    job : Any
+        The job about to run. Jobs with ``USES_MODEL_CACHE`` keep the cache.
+    cache : ModelCache
+        The worker's cache.
+    """
+    if not getattr(job, "USES_MODEL_CACHE", False):
+        cache.clear("other_job")
 
 
 _model_cache: Optional[ModelCache] = None

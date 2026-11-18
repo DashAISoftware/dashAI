@@ -5,6 +5,7 @@ import pytest
 from DashAI.back.dependencies.model_cache import (
     ModelCache,
     cache_key,
+    prepare_cache_for_job,
     split_params,
 )
 
@@ -127,3 +128,21 @@ def test_in_use_entry_not_evicted_second_key_bypasses():
     b_obj = b.obj
     cache.release(b)
     assert b_obj.closed == 1
+
+
+def test_prepare_for_job_clears_cache_for_other_jobs():
+    class ChatJob:
+        USES_MODEL_CACHE = True
+
+    cache = ModelCache(enabled=True, idle_seconds=300)
+    entry = _acquire(cache, {"context_window": 512})
+    obj = entry.obj
+    cache.release(entry)
+
+    prepare_cache_for_job(ChatJob(), cache)
+    assert obj.closed == 0
+    assert len(cache.entries()) == 1
+
+    prepare_cache_for_job(object(), cache)
+    assert obj.closed == 1
+    assert cache.entries() == []
