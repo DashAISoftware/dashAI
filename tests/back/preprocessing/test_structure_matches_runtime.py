@@ -25,7 +25,9 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     transform_dataset_with_schema,
 )
 from DashAI.back.initial_components import get_initial_components
+from DashAI.back.preprocessing.column_ref import ConverterStep, RawColumnRef
 from DashAI.back.preprocessing.session_preprocessor import SessionPreprocessor
+from DashAI.back.preprocessing.structure import infer_structure
 from DashAI.back.preprocessing.structure_types import (
     BlockItem,
     ColumnItem,
@@ -185,11 +187,9 @@ def _is_rows(cls):
     return cls.COLUMN_OPERATION == "rows"
 
 
-def _unsupported_rows(cls):
-    return _is_rows(cls) and getattr(cls, "ROWS_APPLY_TO", None) not in (
-        "train",
-        "splits",
-    )
+def _not_in_sessions(cls):
+    """A converter no session runs: notebook only, or rows on no split."""
+    return not cls.runs_in_session()
 
 
 def _dataset():
@@ -351,7 +351,7 @@ def test_every_converter_is_covered():
     uncovered = {
         name
         for name, cls in _converter_classes().items()
-        if not _unsupported_rows(cls) and name not in covered
+        if not _not_in_sessions(cls) and name not in covered
     }
     assert uncovered == set(), "add a CASES entry for every new converter"
 
@@ -361,11 +361,28 @@ def test_rows_operation_matches_changes_row_count():
         assert _is_rows(cls) == bool(cls.CHANGES_ROW_COUNT), name
 
 
-def test_unsupported_rows_converters_are_rejected_in_sessions():
-    for cls in _converter_classes().values():
-        if not _unsupported_rows(cls):
+def test_converters_no_session_runs_are_rejected_in_sessions():
+    classes = _converter_classes()
+    registry = {name: {"class": cls} for name, cls in classes.items()}
+    rejected = []
+    for name, cls in classes.items():
+        if not _not_in_sessions(cls):
             continue
-        with pytest.raises(RowsNotSupportedError):
-            BaseConverter.infer_output_columns(
-                cls.__new__(cls), _scope_items(_dataset(), ["i_full"])
-            )
+        rejected.append(name)
+        if _is_rows(cls):
+            # The estimate's own defense, under the shared rule.
+            with pytest.raises(RowsNotSupportedError):
+                BaseConverter.infer_output_columns(
+                    cls.__new__(cls), _scope_items(_dataset(), ["i_full"])
+                )
+        result = infer_structure(
+            dataset_types=_dataset().types,
+            candidates=["i_full", "f1"],
+            target=["target"],
+            steps=[ConverterStep(converter=name, scope=[RawColumnRef(name="i_full")])],
+            component_registry=registry,
+        )
+        expected = "notebook_only" if cls.NOTEBOOK_ONLY else "rows_not_supported"
+        assert result.steps[0].error is not None, name
+        assert result.steps[0].error.code == expected, name
+    assert rejected, "the walk must reach the converters no session runs"

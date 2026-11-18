@@ -140,6 +140,17 @@ def _apply_step(
         # Before the converter's own rules: whatever rows it would drop or
         # add, and on whichever split, this task cannot take it.
         raise StructureError("changes_rows", converter=step.converter)
+    runs_in_session = getattr(converter_class, "runs_in_session", None)
+    if callable(runs_in_session) and not runs_in_session():
+        # The rule the session's converter catalog reads too
+        # (BaseConverter.runs_in_session), so a step the catalog hides is
+        # refused here even when it arrives through the API.
+        code = (
+            "notebook_only"
+            if getattr(converter_class, "NOTEBOOK_ONLY", False)
+            else "rows_not_supported"
+        )
+        raise StructureError(code, converter=step.converter)
     converter = _instantiate(converter_class, step.params)
 
     scope = resolve_state_refs(step.scope, state, target)

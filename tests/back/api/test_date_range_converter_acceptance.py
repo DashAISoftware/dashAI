@@ -170,7 +170,6 @@ def _converter_names(client, **params) -> set:
     return {component["name"] for component in response.json()}
 
 
-@pending("2", "in_session does not exist, so FastAPI ignores it and returns all")
 def test_the_session_catalog_leaves_out_what_only_runs_in_a_notebook(client):
     offered = _converter_names(client, in_session=True)
 
@@ -179,7 +178,6 @@ def test_the_session_catalog_leaves_out_what_only_runs_in_a_notebook(client):
     assert {"NanRemover", "SMOTEConverter"} <= offered
 
 
-@pending("2", "NOTEBOOK_ONLY does not exist, so nothing reads it")
 def test_a_notebook_only_converter_is_out_of_sessions(client):
     from DashAI.back.converters.simple_converters.column_remover import (
         ColumnRemover,

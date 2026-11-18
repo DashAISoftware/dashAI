@@ -16,8 +16,6 @@ Lives under ``tests/back/api`` to reuse the ``client`` fixture, whose registry
 is the real one.
 """
 
-import pytest
-
 SESSION_CATALOG = {
     "AdditiveChi2Sampler", "AllMiniLML6V2Embedding", "AllMpnetBaseV2Embedding",
     "BagOfWordsConverter", "Binarizer", "CharacterReplacer", "Clustering",
@@ -62,11 +60,33 @@ def test_the_catalog_without_in_session_is_every_dataset_converter(client):
     assert _converter_names(client) == sorted(SESSION_CATALOG | NOT_IN_SESSIONS)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="slice 2: in_session does not exist, so FastAPI ignores it and "
-    "returns every dataset converter",
-)
 def test_the_session_catalog_is_what_the_wizard_showed(client):
     """R2: moving the filter to the backend leaves the session list as it was."""
     assert _converter_names(client, in_session=True) == sorted(SESSION_CATALOG)
+
+
+def test_the_two_rules_of_what_runs_in_a_session_stay_one(client):
+    """Guard: the row rule and the notebook-only rule are two reasons for one
+    predicate. Touching either must not let the converters the other keeps
+    out back into a session, neither in the catalog nor in the structure."""
+    from DashAI.back.preprocessing.column_ref import ConverterStep, RawColumnRef
+    from DashAI.back.preprocessing.structure import infer_structure
+    from tests.back.api.test_date_range_converter_acceptance import (
+        load_dataset_types,
+    )
+
+    offered = set(_converter_names(client, in_session=True))
+    assert not NOT_IN_SESSIONS & offered
+    assert {"NanRemover", "SMOTEConverter"} <= offered
+
+    registry = client.app.container["component_registry"]
+    for name in sorted(NOT_IN_SESSIONS):
+        result = infer_structure(
+            dataset_types=load_dataset_types(),
+            candidates=["a", "b"],
+            target=[],
+            steps=[ConverterStep(converter=name, scope=[RawColumnRef(name="a")])],
+            component_registry=registry,
+        )
+        assert result.steps[0].error is not None, name
+        assert result.steps[0].error.code in ("rows_not_supported", "notebook_only")

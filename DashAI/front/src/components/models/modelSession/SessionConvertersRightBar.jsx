@@ -29,10 +29,9 @@ import { buildStepDisplayNames, stateToOptions } from "./sessionColumnRefs";
  * A new converter always lands at the end of the chain, so it is offered
  * (and scoped) against the estimated final dataset state: the surviving
  * candidate columns plus everything earlier steps produced, never the
- * output column. Converters that change the number of rows are hidden,
- * except training-only resamplers (rows_apply_to "train", e.g. SMOTE) and
- * row removers that run on every split (rows_apply_to "splits", e.g.
- * NanRemover): sessions do not support the others yet.
+ * output column. The catalog is the backend's session catalog
+ * (`inSession`): the backend leaves out the converters a session cannot
+ * run, so nothing is filtered here.
  */
 export default function SessionConvertersRightBar({
   newExp,
@@ -49,7 +48,11 @@ export default function SessionConvertersRightBar({
 
   useEffect(() => {
     let cancelled = false;
-    getComponents({ selectTypes: ["Converter"], dataKind: "dataset" })
+    getComponents({
+      selectTypes: ["Converter"],
+      dataKind: "dataset",
+      inSession: true,
+    })
       .then((data) => {
         if (!cancelled) setConverters(Array.isArray(data) ? data : []);
       })
@@ -132,16 +135,10 @@ export default function SessionConvertersRightBar({
 
   const validatedConverters = useMemo(
     () =>
-      converters
-        .filter(
-          (converter) =>
-            converter.metadata?.column_operation !== "rows" ||
-            ["train", "splits"].includes(converter.metadata?.rows_apply_to),
-        )
-        .map((converter) => {
-          const validation = validateConverter(converter);
-          return { ...converter, ...validation };
-        }),
+      converters.map((converter) => {
+        const validation = validateConverter(converter);
+        return { ...converter, ...validation };
+      }),
     [converters, datasetColumns, t],
   );
 

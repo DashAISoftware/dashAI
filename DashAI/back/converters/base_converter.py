@@ -95,6 +95,11 @@ class BaseConverter(ConfigObject, ABC):
     #   (row removal; the converter must implement rows_to_keep).
     # None means sessions do not support it yet.
     ROWS_APPLY_TO: Optional[str] = None
+    # True for a converter that only makes sense on a whole dataset in file
+    # order, which a notebook has and a session never does: a session fits and
+    # transforms each split on its own. Read through runs_in_session(), not
+    # published in the metadata.
+    NOTEBOOK_ONLY: bool = False
     # Defaults a model session uses instead of the schema's, for parameters
     # whose right value depends on where the converter runs. A session fits on
     # the training rows only, so an encoder there treats a category it did
@@ -121,6 +126,26 @@ class BaseConverter(ConfigObject, ABC):
             wins.
         """
         return {**cls.SESSION_PARAMS, **(params or {})}
+
+    @classmethod
+    def runs_in_session(cls) -> bool:
+        """Whether a model session can take this converter as a step.
+
+        The one rule both the session's converter catalog and its estimated
+        structure read. A notebook-only converter never runs in a session,
+        and neither does one that changes the row count without saying on
+        which splits (``ROWS_APPLY_TO``).
+
+        Returns
+        -------
+        bool
+            True when a session can run it.
+        """
+        if cls.NOTEBOOK_ONLY:
+            return False
+        if cls.COLUMN_OPERATION == "rows":
+            return cls.ROWS_APPLY_TO in ("train", "splits")
+        return True
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:

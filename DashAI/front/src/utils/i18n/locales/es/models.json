@@ -425,6 +425,7 @@
     "cardinalityMax": "Este converter acepta como máximo {{max}} columnas, pero hay {{selected}} seleccionadas.",
     "rows_not_supported": "Los converters que cambian la cantidad de filas todavía no están disponibles en sesiones.",
     "changes_rows": "Esta tarea lee sus filas en orden temporal, así que no admite un convertidor que quite o agregue filas. Completa los vacíos con un imputador.",
+    "notebook_only": "Este convertidor solo funciona en un cuaderno: una sesión transforma cada partición por separado. Aplícalo antes al dataset en un cuaderno.",
     "n_components_exceeds": "Pide {{n_components}} componentes, pero solo hay {{columns}} columnas seleccionadas.",
     "unknown_converter": "El converter \"{{converter}}\" no está disponible.",
     "invalid_params": "Parámetros inválidos: {{detail}}",
