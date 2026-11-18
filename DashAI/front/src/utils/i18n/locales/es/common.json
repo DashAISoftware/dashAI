@@ -92,6 +92,15 @@
     "connecting": "Conectando al monitor de hardware...",
     "cpu": "CPU",
     "gpu": "GPU",
+    "loadedModels": {
+      "empty": "No hay modelos cargados",
+      "error": "No se pudo descargar el modelo",
+      "inUse": "En uso",
+      "lastUsed": "Último uso: {{time}}",
+      "title": "Modelos cargados",
+      "unload": "Descargar",
+      "unloading": "Descargando..."
+    },
     "overall": "General",
     "ram": "RAM",
     "title": "Monitor de Hardware",

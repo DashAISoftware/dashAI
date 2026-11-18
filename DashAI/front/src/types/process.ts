@@ -3,7 +3,8 @@
  * answer is being produced. The backend advances it through these values and
  * resets the field to null once the process finishes or errors.
  */
-export type RAGProgressStage = "transforming" | "retrieving" | "generating";
+export type RAGProgressStage =
+  "loading_model" | "transforming" | "retrieving" | "generating";
 
 export type RAGProgressPayload = {
   stage?: RAGProgressStage;

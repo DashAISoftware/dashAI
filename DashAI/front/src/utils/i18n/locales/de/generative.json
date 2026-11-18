@@ -233,6 +233,7 @@
     },
     "chatProgress": {
       "generatingAnswer": "Quellen werden zum Generieren der Antwort verwendet",
+      "loadingModel": "Modell wird geladen...",
       "searchingSources": "Suche Quellen mit der Abfrage: {{queries}}",
       "transformingQuery": "Abfrage wird umgewandelt…"
     },

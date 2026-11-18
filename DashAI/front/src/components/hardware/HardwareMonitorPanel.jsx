@@ -4,14 +4,8 @@ import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import Chip from "@mui/material/Chip";
 import { useTranslation } from "react-i18next";
-
-function formatBytes(bytes) {
-  if (bytes === null || bytes === undefined) return "N/A";
-  const gb = bytes / (1024 * 1024 * 1024);
-  if (gb >= 1) return `${gb.toFixed(1)} GB`;
-  const mb = bytes / (1024 * 1024);
-  return `${mb.toFixed(0)} MB`;
-}
+import { formatBytes } from "./formatBytes";
+import LoadedModelsSection from "./LoadedModelsSection";
 
 function UsageBar({ label, value, detail, color = "primary" }) {
   const percent = value ?? 0;
@@ -125,7 +119,9 @@ export default function HardwareMonitorPanel({ stats, connected }) {
               />
               {gpu.memory_percent != null && (
                 <UsageBar
-                  label={`VRAM · ${formatBytes(gpu.memory_used)} / ${formatBytes(gpu.memory_total)}`}
+                  label={`VRAM · ${formatBytes(
+                    gpu.memory_used,
+                  )} / ${formatBytes(gpu.memory_total)}`}
                   value={gpu.memory_percent}
                   color="warning"
                 />
@@ -134,6 +130,9 @@ export default function HardwareMonitorPanel({ stats, connected }) {
           ))}
         </>
       )}
+
+      <Divider sx={{ my: 6 }} />
+      <LoadedModelsSection tick={stats} />
     </Box>
   );
 }

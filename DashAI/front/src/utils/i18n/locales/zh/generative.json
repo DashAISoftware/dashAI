@@ -228,6 +228,7 @@
     },
     "chatProgress": {
       "generatingAnswer": "正在根据来源生成回答",
+      "loadingModel": "正在加载模型...",
       "searchingSources": "正在使用查询搜索来源：{{queries}}",
       "transformingQuery": "正在转换查询…"
     },
