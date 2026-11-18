@@ -10,7 +10,8 @@ catalog (``SessionConvertersRightBar``) rendered on 2026-11-18, develop
 ``energy`` dataset, with the JSX filter still in place, from the
 ``/component/image/<name>/`` of each card. The backend served 76 converters
 for datasets and the catalog rendered 74: the two it hid are
-``NOT_IN_SESSIONS``.
+``ROWS_NOT_IN_SESSIONS``. ``DateRangeConverter`` came later, with this PR,
+and is offered to a notebook only.
 
 Lives under ``tests/back/api`` to reuse the ``client`` fixture, whose registry
 is the real one.
@@ -42,8 +43,12 @@ SESSION_CATALOG = {
     "TruncatedSVD", "TypeCast", "VarianceThreshold",
 }  # fmt: skip
 
-#: Offered to a notebook, hidden from a session.
-NOT_IN_SESSIONS = {"TimeResamplerConverter", "TimeSeriesWindowConverter"}
+#: Offered to a notebook, hidden from a session: they change the row count
+#: with no split to apply to.
+ROWS_NOT_IN_SESSIONS = {"TimeResamplerConverter", "TimeSeriesWindowConverter"}
+#: Offered to a notebook, hidden from a session: NOTEBOOK_ONLY.
+NOTEBOOK_ONLY = {"DateRangeConverter"}
+NOT_IN_SESSIONS = ROWS_NOT_IN_SESSIONS | NOTEBOOK_ONLY
 
 
 def _converter_names(client, **params) -> list:

@@ -2,9 +2,8 @@
 
 Each case states what the PR (RECONCILING_FORECASTING §9) has to deliver: a
 dataset that only holds a series of values gets a date column in the notebook,
-and can then be forecast. Each is a strict ``xfail`` until the slice that
-delivers it, made to fail for the reason it names first. Its marker comes off
-with the fix.
+and can then be forecast. Each was a strict ``xfail`` until the slice that
+delivered it, made to fail first for the reason it named (§9.7).
 
 Lives under ``tests/back/api`` to reuse the ``client`` fixture.
 """
@@ -33,13 +32,6 @@ from tests.back.api.test_forecasting_exogenous_acceptance import _train
 _NAMES = itertools.count()
 
 N_STEPS = 48
-
-
-def pending(slice_name: str, reason: str):
-    return pytest.mark.xfail(strict=True, reason=f"slice {slice_name}: {reason}")
-
-
-NOT_REGISTERED = "DateRangeConverter is not registered, so POST /converter/ 404s"
 
 
 # --------------------------------------------------------------------------- #
@@ -232,7 +224,6 @@ def load_dataset_types():
 # --------------------------------------------------------------------------- #
 
 
-@pending("3", NOT_REGISTERED)
 def test_a_series_of_values_gets_a_date_column(client, tmp_path):
     frame = _values()
     notebook = _dated_notebook(client, tmp_path, frame)
@@ -250,7 +241,6 @@ def test_a_series_of_values_gets_a_date_column(client, tmp_path):
     assert table["date"].tolist() == list(expected.strftime("%Y-%m-%d"))
 
 
-@pending("3", NOT_REGISTERED)
 def test_a_name_already_taken_is_numbered(client, tmp_path):
     frame = _values(5).assign(date=["a", "b", "c", "d", "e"])
     notebook = _dated_notebook(
@@ -265,7 +255,6 @@ def test_a_name_already_taken_is_numbered(client, tmp_path):
     assert spec["date_1"]["type"] == "Date"
 
 
-@pending("3", NOT_REGISTERED)
 def test_milliseconds_come_back_on_their_grid(client, tmp_path):
     from DashAI.back.tasks.time_grid import validate_grid
     from DashAI.back.types.date_utils import parse_date_column
@@ -284,7 +273,6 @@ def test_milliseconds_come_back_on_their_grid(client, tmp_path):
     assert grid.first == pd.Timestamp("2024-01-01")
 
 
-@pending("3", NOT_REGISTERED)
 @pytest.mark.parametrize(
     ("n_rows", "params", "message"),
     [
@@ -310,7 +298,6 @@ def test_a_refusal_reaches_the_job_with_its_reason(
     assert load_dataset(_notebook_path(notebook)).column_names == ["sales"]
 
 
-@pending("3", NOT_REGISTERED)
 def test_a_dated_series_is_forecast_and_dates_its_future(client, tmp_path):
     notebook = _dated_notebook(
         client, tmp_path, start_date="2020-01-01", frequency="MS"
