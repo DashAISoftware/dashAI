@@ -8,6 +8,10 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.generation_result import (
+    GenerationResult,
+    result_from_chat_completion,
+)
 from DashAI.back.models.hugging_face.gguf_text_generation_base import (
     _release_llama_model,
 )
@@ -507,11 +511,51 @@ class Phi4MiniInstructModel(TextToTextGenerationTaskModel):
             return
         _release_llama_model(model, type(self).__name__)
 
-    def generate(self, prompt: list[dict[str, str]]) -> List[str]:
-        output = self.model.create_chat_completion(
+    def _chat_completion_result(self, prompt: list[dict[str, str]]) -> GenerationResult:
+        """Run the chat completion and build the typed result."""
+        response = self.model.create_chat_completion(
             messages=prompt,
             max_tokens=self.max_tokens,
             temperature=self.temperature,
             frequency_penalty=self.frequency_penalty,
         )
-        return [output["choices"][0]["message"]["content"]]
+        return result_from_chat_completion(response)
+
+    def generate_result(self, prompt: list[dict[str, str]]) -> GenerationResult:
+        """Generate a reply and report usage and finish reason.
+
+        Parameters
+        ----------
+        prompt : list of dict
+            Conversation history in OpenAI chat format.
+
+        Returns
+        -------
+        GenerationResult
+            Reply text with token usage and finish reason. A subclass that
+            overrides ``generate`` is served through the base wrapper.
+        """
+        if type(self).generate is not Phi4MiniInstructModel.generate:
+            return super().generate_result(prompt)
+        return self._chat_completion_result(prompt)
+
+    def generate(self, prompt: list[dict[str, str]]) -> List[str]:
+        """Generate a reply for the given chat prompt.
+
+        Parameters
+        ----------
+        prompt : list of dict
+            Conversation history in OpenAI chat format. Each dict must contain
+            at least ``"role"`` (``"system"``, ``"user"``, or ``"assistant"``)
+            and ``"content"`` (the message text).
+
+        Returns
+        -------
+        list of str
+            A single-element list containing the model's reply text, extracted
+            from ``choices[0]["message"]["content"]``.
+        """
+        if type(self).generate is not Phi4MiniInstructModel.generate:
+            # Reached through super() from a subclass override of generate.
+            return self._chat_completion_result(prompt).to_outputs()
+        return self.generate_result(prompt).to_outputs()
