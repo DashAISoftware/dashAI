@@ -480,6 +480,9 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
                 return False
         return True
 
+    CACHEABLE = True
+    GENERATION_PARAMS = frozenset({"max_tokens", "temperature", "frequency_penalty"})
+
     def __init__(self, **kwargs):
         """Load a GGUF checkpoint from disk and initialise the llama.cpp model.
 
@@ -537,6 +540,18 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
             device=device_val,
             context_window=self.n_ctx,
         )
+
+    def set_generation_params(self, **params) -> None:
+        """Update the generation parameters of an already loaded model.
+
+        Parameters
+        ----------
+        **params
+            Generation parameters. Keys outside ``GENERATION_PARAMS`` are ignored.
+        """
+        for name, value in params.items():
+            if name in self.GENERATION_PARAMS:
+                setattr(self, name, value)
 
     def close(self) -> None:
         """Release the llama.cpp backend and reclaim its accelerator memory.

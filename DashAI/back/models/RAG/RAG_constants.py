@@ -95,6 +95,7 @@ RAG_PROGRESS_JUSTIFICATION_KEY = "justification"
 RAG_PROGRESS_STAGE_TRANSFORMING = "transforming"
 RAG_PROGRESS_STAGE_RETRIEVING = "retrieving"
 RAG_PROGRESS_STAGE_GENERATING = "generating"
+RAG_PROGRESS_STAGE_LOADING_MODEL = "loading_model"
 
 # Infrastructure / internal keys (not user-visible components)
 ENV_RAG_PATH = "env_RAG_path"
