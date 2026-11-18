@@ -266,7 +266,8 @@ class GenerativeJob(BaseJob):
                     raise JobError(message) from e
 
                 try:
-                    output: Any = model.generate(input_data)
+                    result = model.generate_result(input_data)
+                    output: Any = result.to_outputs()
                 except Exception as e:
                     log.exception(e)
                     message = "Error during model generation."
@@ -295,6 +296,7 @@ class GenerativeJob(BaseJob):
                         )
                         outputs_for_database.append(process_data)
 
+                    generative_process.generation_metadata = result.metadata()
                     db.add_all(outputs_for_database)
                     db.commit()
 
@@ -315,6 +317,7 @@ class GenerativeJob(BaseJob):
         # is propagating its traceback still references the model. gc.collect()
         # goes first so empty_cache() can hand the freed blocks back to CUDA.
         model = None
+        result = None
         if failure is not None:
             _release_frames(failure)
         gc.collect()

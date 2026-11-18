@@ -623,6 +623,8 @@ class GenerativeProcess(Base):
     # Live pipeline stage payload while the process runs (see RAG_constants);
     # set back to None when the process finishes or errors.
     progress: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    # Usage, finish reason and non-text parts of the reply (see generation_result.py).
+    generation_metadata: Mapped[JSON] = mapped_column(JSON, nullable=True)
 
     session = relationship("GenerativeSession", back_populates="processes")
     input = relationship(
