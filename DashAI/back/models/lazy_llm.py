@@ -41,6 +41,9 @@ class LazyLLM(TextToTextGenerationTaskModel):
     supports_function_calling : bool, optional
         Whether the real backend supports function calling. Captured at
         construction time so callers can choose a route without loading it.
+    release : Callable[[Any], None] | None, optional
+        Hook that takes over the real model on :meth:`close` instead of closing
+        it, for example to hand it back to the model cache.
     """
 
     def __init__(
@@ -49,12 +52,14 @@ class LazyLLM(TextToTextGenerationTaskModel):
         *,
         label: str,
         supports_function_calling: bool = False,
+        release: Callable[[Any], None] | None = None,
     ) -> None:
         # Deliberately skip the abstract base ``__init__``: this proxy owns no
         # backend state until the factory runs.
         self._factory = factory
         self._label = label
         self._supports_function_calling = supports_function_calling
+        self._release = release
         self._model: TextToTextGenerationTaskModel | None = None
 
     @property
@@ -147,9 +152,12 @@ class LazyLLM(TextToTextGenerationTaskModel):
 
         close_method = None
         try:
-            close_method = getattr(model, "close", None)
-            if callable(close_method):
-                close_method()
+            if self._release is not None:
+                self._release(model)
+            else:
+                close_method = getattr(model, "close", None)
+                if callable(close_method):
+                    close_method()
         except Exception:
             log.warning("Error closing lazy LLM %s.", self._label, exc_info=True)
         finally:

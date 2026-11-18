@@ -355,6 +355,10 @@ class ModelCache:
         with self._lock:
             return list(self._entries.values())
 
+    def in_job_scope(self) -> bool:
+        """Whether the calling thread is inside an active :meth:`job_scope`."""
+        return getattr(self._scope, "entries", None) is not None
+
     @contextlib.contextmanager
     def job_scope(self) -> Iterator[None]:
         """Track entries acquired inside the block.
