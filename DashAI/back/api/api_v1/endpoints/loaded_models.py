@@ -2,9 +2,10 @@
 
 import logging
 
+import psutil
 from fastapi import APIRouter, Depends, HTTPException, status
 from kink import di
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.dependencies.database.models import LoadedModel
@@ -41,7 +42,18 @@ async def list_loaded_models(
     """
     with session_factory() as db:
         rows = db.scalars(select(LoadedModel).order_by(LoadedModel.id)).all()
-        return [_serialize(row) for row in rows]
+        alive = []
+        stale = []
+        for row in rows:
+            if row.worker_pid is None or psutil.pid_exists(row.worker_pid):
+                alive.append(row)
+            else:
+                stale.append(row.id)
+        if stale:
+            # The worker died without cleaning up (crash, OOM, kill)
+            db.execute(delete(LoadedModel).where(LoadedModel.id.in_(stale)))
+            db.commit()
+        return [_serialize(row) for row in alive]
 
 
 @router.post("/{loaded_model_id}/unload", status_code=status.HTTP_202_ACCEPTED)
@@ -64,12 +76,16 @@ async def unload_loaded_model(
         404 if the row does not exist.
     """
     with session_factory() as db:
-        row = db.get(LoadedModel, loaded_model_id)
+        result = db.execute(
+            update(LoadedModel)
+            .where(LoadedModel.id == loaded_model_id)
+            .values(unload_requested=True)
+        )
+        db.commit()
+        row = db.get(LoadedModel, loaded_model_id) if result.rowcount else None
         if row is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Loaded model not found",
             )
-        row.unload_requested = True
-        db.commit()
         return _serialize(row)

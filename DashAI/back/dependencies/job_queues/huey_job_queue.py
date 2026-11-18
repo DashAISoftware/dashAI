@@ -316,11 +316,26 @@ class HueyJobQueue(BaseJobQueue):
                 with suppress(Exception):
                     if self._worker_proc is not None:
                         self._terminate_worker(self._worker_proc, self._worker_pid)
+                self._clear_model_rows()
             if self._cancel_requested(huey_id):
                 self._finalize_interrupted(job, huey_id)
                 raise _JobCancelledError(f"Job {huey_id} was cancelled while running")
             return result
         return self._run_in_subprocess(job, huey_id)
+
+    @staticmethod
+    def _clear_model_rows() -> None:
+        """Delete the loaded model rows of a worker that was just reset."""
+        try:
+            from kink import di
+
+            from DashAI.back.dependencies.model_cache_status import (
+                clear_loaded_models,
+            )
+
+            clear_loaded_models(di["session_factory"])
+        except Exception:
+            log.exception("Could not clear loaded model rows")
 
     def _cancel_requested(self, huey_id: str) -> bool:
         """Tell whether the job with *huey_id* was cancelled or killed.
@@ -461,6 +476,7 @@ class HueyJobQueue(BaseJobQueue):
 
         ctx = multiprocessing.get_context("spawn")
         self._worker_in_q = ctx.Queue()
+        self._worker_in_q.cancel_join_thread()
         self._worker_out_q = ctx.Queue()
         proc = ctx.Process(
             target=_worker_loop,
@@ -630,6 +646,7 @@ class HueyJobQueue(BaseJobQueue):
                 pass
 
         if killed_externally:
+            self._clear_model_rows()
             self._finalize_interrupted(job, huey_id)
             if self._cancel_requested(huey_id):
                 raise _JobCancelledError(f"Job {huey_id} was cancelled or killed")
@@ -646,6 +663,7 @@ class HueyJobQueue(BaseJobQueue):
             with suppress(Exception):
                 self._terminate_worker(proc, worker_pid)
                 proc.join(timeout=5)
+            self._clear_model_rows()
             self._finalize_interrupted(job, huey_id)
             raise _JobCancelledError(f"Job {huey_id} was cancelled while finishing")
 

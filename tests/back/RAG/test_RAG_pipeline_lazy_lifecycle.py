@@ -464,13 +464,19 @@ def test_lifecycle_probe_prints_construction_and_close_order() -> None:
 def test_lazy_llm_reuses_cached_instance_with_own_generation_params() -> None:
     """Two stages with the same load params share one model, each with its own
     generation parameters."""
+    from pydantic import BaseModel
+
     from DashAI.back.dependencies.model_cache import (
         get_model_cache,
         reset_model_cache,
     )
     from DashAI.back.services.RAG.llm_service import _build_lazy_factory
 
+    class _FakeSchema(BaseModel):
+        temperature: float = 0.0
+
     class _CacheableBackend(_RecordingBackend):
+        SCHEMA = _FakeSchema
         CACHEABLE = True
         GENERATION_PARAMS = frozenset({"temperature"})
         temperatures: List[float] = []

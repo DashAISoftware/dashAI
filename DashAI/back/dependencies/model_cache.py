@@ -39,6 +39,38 @@ def split_params(model_class: type, params: dict) -> Tuple[dict, dict]:
     return load_params, generation_params
 
 
+def validated_generation_params(model_class: type, params: dict) -> dict:
+    """Validate the full parameters like ``__init__`` and keep generation ones.
+
+    A reused model skips ``__init__``, so its generation parameters would
+    otherwise reach it unvalidated and without type coercion.
+
+    Parameters
+    ----------
+    model_class : type
+        Model class with a ``SCHEMA`` and optionally ``GENERATION_PARAMS``.
+    params : dict
+        All the parameters of the model.
+
+    Returns
+    -------
+    dict
+        Validated and coerced generation parameters.
+
+    Raises
+    ------
+    ValidationError
+        If the parameters do not follow the model schema.
+    """
+    from DashAI.back.core.schema_fields.utils import fill_objects
+
+    schema = getattr(model_class, "SCHEMA", None)
+    if schema is None:
+        return split_params(model_class, params)[1]
+    validated = fill_objects(schema.model_validate(params))
+    return split_params(model_class, validated)[1]
+
+
 def cache_key(model_class: type, load_params: dict) -> str:
     """Build the cache key of a model class loaded with the given parameters.
 
@@ -118,12 +150,18 @@ def reclaim_memory() -> None:
         log.debug("Could not empty the CUDA cache", exc_info=True)
 
 
-def _free_gpu_bytes() -> Optional[int]:
+def _free_gpu_bytes(load_params: Optional[dict] = None) -> Optional[int]:
+    """Free memory of the GPU the model loads on, None for CPU models."""
     try:
+        from DashAI.back.models.utils import LLAMA_DEVICE_TO_IDX
+
+        idx = LLAMA_DEVICE_TO_IDX.get((load_params or {}).get("device"), -1)
+        if idx < 0:
+            return None
         import torch
 
         if torch.cuda.is_available():
-            return torch.cuda.mem_get_info()[0]
+            return torch.cuda.mem_get_info(idx)[0]
     except Exception:
         log.debug("Could not read GPU memory", exc_info=True)
     return None
@@ -187,12 +225,12 @@ class ModelCache:
         cached: bool,
     ) -> CacheEntry:
         ram_before = _rss_bytes()
-        gpu_before = _free_gpu_bytes()
+        gpu_before = _free_gpu_bytes(load_params)
         started = self._clock()
         obj = build()
         elapsed = self._clock() - started
         ram_after = _rss_bytes()
-        gpu_after = _free_gpu_bytes()
+        gpu_after = _free_gpu_bytes(load_params)
         now = self._clock()
         entry = CacheEntry(
             slot=slot,
@@ -339,7 +377,7 @@ class ModelCache:
 
     def apply_pending_unloads(self) -> None:
         """Unload the entries the reporter asks to unload (for example from a panel)."""
-        if self.reporter is None:
+        if self.reporter is None or not self._entries:
             return
         try:
             keys = set(self.reporter.pending_unloads())

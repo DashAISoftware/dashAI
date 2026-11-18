@@ -94,12 +94,12 @@
     "gpu": "GPU",
     "loadedModels": {
       "empty": "No hay modelos cargados",
-      "error": "No se pudo descargar el modelo",
+      "error": "No se pudo liberar el modelo",
       "inUse": "En uso",
       "lastUsed": "Último uso: {{time}}",
       "title": "Modelos cargados",
-      "unload": "Descargar",
-      "unloading": "Descargando..."
+      "unload": "Liberar",
+      "unloading": "Liberando..."
     },
     "overall": "General",
     "ram": "RAM",

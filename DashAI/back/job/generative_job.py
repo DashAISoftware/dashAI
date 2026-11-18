@@ -14,6 +14,7 @@ from DashAI.back.dependencies.model_cache import (
     cache_key,
     get_model_cache,
     split_params,
+    validated_generation_params,
 )
 from DashAI.back.job.base_job import BaseJob, JobError, _release_frames
 from DashAI.back.job.generative_failure import fail_process
@@ -210,9 +211,7 @@ class GenerativeJob(BaseJob):
                             )
                         params = generative_session.parameters
                         if getattr(model_class, "CACHEABLE", False):
-                            load_params, generation_params = split_params(
-                                model_class, params
-                            )
+                            load_params, _ = split_params(model_class, params)
                             loading = False
 
                             def _report_loading() -> None:
@@ -239,7 +238,9 @@ class GenerativeJob(BaseJob):
                                 generative_process.set_progress(None)
                                 db.commit()
                             model: BaseGenerativeModel = entry.obj
-                            model.set_generation_params(**generation_params)
+                            model.set_generation_params(
+                                **validated_generation_params(model_class, params)
+                            )
                         else:
                             cache.clear("non_cacheable_model", slot="llm")
                             model: BaseGenerativeModel = model_class(**params)

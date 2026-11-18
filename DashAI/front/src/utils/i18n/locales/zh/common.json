@@ -90,12 +90,12 @@
     "gpu": "GPU",
     "loadedModels": {
       "empty": "没有已加载的模型",
-      "error": "无法卸载模型",
+      "error": "无法释放模型",
       "inUse": "使用中",
       "lastUsed": "最近使用：{{time}}",
       "title": "已加载的模型",
-      "unload": "卸载",
-      "unloading": "正在卸载..."
+      "unload": "释放",
+      "unloading": "正在释放..."
     },
     "overall": "整体",
     "ram": "内存",

@@ -199,3 +199,22 @@ def test_unload_request_deferred_while_in_use():
     assert obj.closed == 1
     assert cache.entries() == []
     assert reporter.unloads == [(key, "panel")]
+
+
+def test_validated_generation_params_coerces_reused_values():
+    from pydantic import BaseModel
+
+    from DashAI.back.dependencies.model_cache import validated_generation_params
+
+    class Schema(BaseModel):
+        temperature: float = 0.7
+        context_window: int = 512
+
+    class Model:
+        SCHEMA = Schema
+        GENERATION_PARAMS = {"temperature"}
+
+    result = validated_generation_params(
+        Model, {"temperature": "0.3", "context_window": 512}
+    )
+    assert result == {"temperature": 0.3}

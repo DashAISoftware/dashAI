@@ -20,6 +20,7 @@ from DashAI.back.dependencies.model_cache import (
     close_object,
     get_model_cache,
     split_params,
+    validated_generation_params,
 )
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.lazy_llm import LazyLLM
@@ -100,7 +101,7 @@ def _build_lazy_factory(
         if not cacheable:
             cache.clear("non_cacheable_model", slot="llm")
             return _build()
-        load_params, generation_params = split_params(model_class, captured_params)
+        load_params, _ = split_params(model_class, captured_params)
         entry = cache.acquire(
             "llm",
             cache_key(model_class, load_params),
@@ -108,7 +109,9 @@ def _build_lazy_factory(
             label=class_name,
             load_params=load_params,
         )
-        entry.obj.set_generation_params(**generation_params)
+        entry.obj.set_generation_params(
+            **validated_generation_params(model_class, captured_params)
+        )
         entries[id(entry.obj)] = entry
         return entry.obj
 
