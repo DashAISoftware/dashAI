@@ -37,3 +37,8 @@ class DefaultSettings(BaseSettings):
     # at a fork with test releases (UPDATE_CHECK_REPOSITORY=me/DashAI) lets the
     # updater be tried end to end without touching the official releases.
     UPDATE_CHECK_REPOSITORY: str = "DashAISoftware/DashAI"
+
+    # Keep generative models loaded in the job worker between chat messages.
+    MODEL_CACHE_ENABLED: bool = True
+    # Seconds a cached model may stay unused before it is unloaded.
+    MODEL_CACHE_IDLE_SECONDS: int = 300
