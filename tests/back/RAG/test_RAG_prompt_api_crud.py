@@ -8,6 +8,7 @@ from DashAI.back.dependencies.database.models import (
     RAGPrompt,
     RAGSessionPrompt,
 )
+from tests.back.RAG.conftest import RAG_TEST_GENERATOR
 
 
 def _unique_name(prefix: str = "prompt") -> str:
@@ -40,8 +41,9 @@ def _create_session_with_prompt(client, prompt_id: int, template: str) -> int:
     with client.app.container["session_factory"]() as db:
         session = GenerativeSession(
             name=_unique_name("session"),
-            task_name="RAGTask",
-            model_name="RAGPipeline",
+            task_name="TextToTextGenerationTask",
+            workflow_name="RAGWorkflow",
+            model_name=RAG_TEST_GENERATOR,
             parameters={
                 "documents": [],
                 "prompt": {

@@ -10,6 +10,7 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.services.RAG.prompt_service import PromptService
 from DashAI.back.services.RAG.utils import build_prompt_hash
+from tests.back.RAG.conftest import RAG_TEST_GENERATOR
 
 
 def _unique_name(prefix: str = "prompt") -> str:
@@ -37,8 +38,9 @@ def _create_session_with_prompt(client, prompt_id: int, template: str) -> int:
     with client.app.container["session_factory"]() as db:
         session = GenerativeSession(
             name=_unique_name("session"),
-            task_name="RAGTask",
-            model_name="RAGPipeline",
+            task_name="TextToTextGenerationTask",
+            workflow_name="RAGWorkflow",
+            model_name=RAG_TEST_GENERATOR,
             parameters={
                 "documents": [],
                 "prompt": {
@@ -322,8 +324,9 @@ def test_sessions_using_ignores_language_only_differences(client):
     with client.app.container["session_factory"]() as db:
         session = GenerativeSession(
             name=_unique_name("no-language"),
-            task_name="RAGTask",
-            model_name="RAGPipeline",
+            task_name="TextToTextGenerationTask",
+            workflow_name="RAGWorkflow",
+            model_name=RAG_TEST_GENERATOR,
             parameters={
                 "documents": [],
                 "prompt": {
@@ -363,8 +366,9 @@ def test_sessions_using_finds_nested_transformation_prompts(client):
     with client.app.container["session_factory"]() as db:
         session = GenerativeSession(
             name=_unique_name("nested"),
-            task_name="RAGTask",
-            model_name="RAGPipeline",
+            task_name="TextToTextGenerationTask",
+            workflow_name="RAGWorkflow",
+            model_name=RAG_TEST_GENERATOR,
             parameters={
                 "documents": [],
                 "query_transformation": {
@@ -420,14 +424,16 @@ def test_sessions_using_reads_session_bindings(client):
     with client.app.container["session_factory"]() as db:
         matching = GenerativeSession(
             name=_unique_name("matching"),
-            task_name="RAGTask",
-            model_name="RAGPipeline",
+            task_name="TextToTextGenerationTask",
+            workflow_name="RAGWorkflow",
+            model_name=RAG_TEST_GENERATOR,
             parameters={"documents": []},
         )
         other = GenerativeSession(
             name=_unique_name("other"),
-            task_name="RAGTask",
-            model_name="RAGPipeline",
+            task_name="TextToTextGenerationTask",
+            workflow_name="RAGWorkflow",
+            model_name=RAG_TEST_GENERATOR,
             parameters={"documents": []},
         )
         db.add_all([matching, other])

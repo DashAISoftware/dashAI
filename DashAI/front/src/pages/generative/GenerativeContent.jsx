@@ -26,6 +26,7 @@ export default function GenerativeContent() {
     selectedSessionId,
     setSelectedSessionId,
     setSelectedTaskName,
+    setSelectedWorkflowName,
     setSelectedDisplayName,
     setStepIndex,
     sessions,
@@ -54,6 +55,7 @@ export default function GenerativeContent() {
     if (isCreating) {
       setSelectedSessionId(null);
       setSelectedTaskName("");
+      setSelectedWorkflowName(null);
       setSelectedDisplayName(null);
       setStepIndex(1);
       return;
@@ -66,6 +68,7 @@ export default function GenerativeContent() {
       if (!session) return;
       const task = tasks.find((tk) => tk.name === session.task_name);
       setSelectedTaskName(session.task_name);
+      setSelectedWorkflowName(session.workflow_name);
       setSelectedDisplayName(task?.display_name ?? null);
       setSelectedSessionId(id);
       setStepIndex(0);
@@ -75,6 +78,7 @@ export default function GenerativeContent() {
     if (path === "/app/generative" || path === "/app/generative/") {
       setSelectedSessionId(null);
       setSelectedTaskName("");
+      setSelectedWorkflowName(null);
       setSelectedDisplayName(null);
       setStepIndex(0);
     }

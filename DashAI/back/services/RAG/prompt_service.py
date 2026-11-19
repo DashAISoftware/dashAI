@@ -27,6 +27,7 @@ from DashAI.back.models.RAG.prompts.generation.RAG_generation_prompt import (
 from DashAI.back.models.RAG.prompts.transformation.transformation_prompt import (
     QueryTransformationPrompt,
 )
+from DashAI.back.models.RAG.RAG_constants import RAG_WORKFLOW_NAME
 from DashAI.back.services.RAG.exceptions import (
     RAGDatabaseError,
     RAGPromptValidationError,
@@ -69,12 +70,6 @@ _PARAMS_KEY = "params"
 _TEMPLATE_KEY = "template"
 _TEMPLATES_KEY = "templates"
 _LANGUAGE_KEY = "language"
-
-#: Task name of the RAG generative task. Legacy sessions only declare it
-#: through ``GenerativeSession.task_name``, so the dependency scan filters on
-#: the stored value instead of importing the task class (which would create an
-#: import cycle through the RAG models).
-_RAG_TASK_NAME = "RAGTask"
 
 #: Prompt base classes in the order used to infer a slot's expected base from
 #: the default component declared by its schema placeholder.
@@ -1214,7 +1209,7 @@ class PromptService:
         # for prompt 1.
         candidates = (
             self.db.query(GenerativeSession)
-            .filter(GenerativeSession.task_name == _RAG_TASK_NAME)
+            .filter(GenerativeSession.workflow_name == RAG_WORKFLOW_NAME)
             .order_by(GenerativeSession.id)
             .all()
         )

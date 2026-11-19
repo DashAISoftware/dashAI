@@ -14,7 +14,8 @@ import { getComponents } from "../../api/component";
  * @param {object} params
  * @param {Function} params.t - i18next translator.
  * @param {object} [params.sessionFilter] - Narrows which sessions this view
- *   owns, e.g. `{ taskName: "RAGTask" }` to scope a task's own views to it.
+ *   owns, e.g. `{ workflowName: "RAGWorkflow" }` to scope a workflow's own
+ *   views to it.
  *   Unset lists every session. The backend applies the filter, so no session is
  *   ever filtered out client-side.
  */
@@ -22,8 +23,10 @@ export function useSessions({ t, sessionFilter }) {
   const { enqueueSnackbar } = useSnackbar();
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [workflows, setWorkflows] = useState([]);
   // TODO: Combine selectedTaskName and selectedDisplayName into a single selectedTask State
   const [selectedTaskName, setSelectedTaskName] = useState("");
+  const [selectedWorkflowName, setSelectedWorkflowName] = useState(null);
   const [selectedDisplayName, setSelectedDisplayName] = useState("");
   const [sessions, setSessions] = useState([]);
   const [paramsVersion, setParamsVersion] = useState(0);
@@ -55,6 +58,18 @@ export function useSessions({ t, sessionFilter }) {
         variant: "error",
       });
       console.error("Failed to fetch generative tasks:", error);
+    }
+  }, [enqueueSnackbar, t]);
+
+  const fetchWorkflows = useCallback(async () => {
+    try {
+      const data = await getComponents({ selectTypes: ["GenerativeWorkflow"] });
+      setWorkflows(data);
+    } catch (error) {
+      enqueueSnackbar(t("generative:error.failedToFetchTasks"), {
+        variant: "error",
+      });
+      console.error("Failed to fetch generative workflows:", error);
     }
   }, [enqueueSnackbar, t]);
 
@@ -143,8 +158,11 @@ export function useSessions({ t, sessionFilter }) {
     setSelectedSessionId,
     tasks,
     setTasks,
+    workflows,
     selectedTaskName,
     setSelectedTaskName,
+    selectedWorkflowName,
+    setSelectedWorkflowName,
     selectedDisplayName,
     setSelectedDisplayName,
     sessions,
@@ -153,6 +171,7 @@ export function useSessions({ t, sessionFilter }) {
     setParamsVersion,
     fetchSessions,
     fetchTasks,
+    fetchWorkflows,
     deleteSessionById,
     deleteSessionsByIds,
     editSession,

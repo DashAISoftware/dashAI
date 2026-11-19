@@ -1204,8 +1204,9 @@ def reset_run(run) -> list:
     setattr(run, "start_time", None)
     setattr(run, "delivery_time", None)
     setattr(run, "end_time", None)
-    # Recorded by the training it undoes, so it goes with it.
+    # Recorded by the training it undoes, so they go with it.
     setattr(run, "exogenous", None)
+    setattr(run, "resolved_parameters", None)
 
     # Delete metrics from DB
     with di["session_factory"]() as db:

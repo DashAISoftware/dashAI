@@ -11,7 +11,11 @@ from fastapi.testclient import TestClient
 
 from DashAI.back.dependencies.database.models import RAGPrompt
 from DashAI.back.services.RAG.prompt_service import PromptService
-from tests.back.RAG.conftest import BOW_PARAMS
+from tests.back.RAG.conftest import (
+    BOW_PARAMS,
+    RAG_WORKFLOW_PAYLOAD,
+    assert_rag_identity,
+)
 
 # ---------------------------------------------------------------------------
 # helpers — matching test_rag_component_api_configs.py patterns
@@ -21,8 +25,7 @@ from tests.back.RAG.conftest import BOW_PARAMS
 def _base_session_params() -> dict:
     """Return the minimal default RAG session payload."""
     return {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "parameters": {
             "chunking_model": {
                 "component": "CharacterChunkModel",
@@ -68,8 +71,7 @@ def _post_and_get(client: TestClient, params: dict):
     assert response.status_code == 201, f"Session creation failed: {response.text}"
     data = response.json()
     assert data["id"] is not None
-    assert data["model_name"] == "RAGPipeline"
-    assert data["task_name"] == "RAGTask"
+    assert_rag_identity(data, data["parameters"]["generation_model"]["component"])
     assert data["name"] == params["name"]
     session_id = data["id"]
     get_resp = client.get(f"/api/v1/generative-session/{session_id}")

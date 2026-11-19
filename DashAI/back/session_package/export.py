@@ -78,7 +78,7 @@ RUN_FIELDS = (
 )
 # Run fields a file may leave out: written since format 3 had shipped, so a
 # file without them still imports, as NULL.
-OPTIONAL_RUN_FIELDS = ("exogenous",)
+OPTIONAL_RUN_FIELDS = ("exogenous", "resolved_parameters")
 # Encoders whose stored steps meant sklearn's "error" when they left
 # ``handle_unknown`` out, before sessions treated a category unseen in fit by
 # default. A file always says which one a step uses (``with_session_params``),

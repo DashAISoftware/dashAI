@@ -42,6 +42,7 @@ from tests.back.RAG.conftest import (
     BOW_PARAMS,
     TFIDF_PARAMS,
     _create_test_document,
+    rag_session_columns,
 )
 
 # ---------------------------------------------------------------------------
@@ -162,9 +163,9 @@ def test_rag_job_completes_full_flow(
         session_factory = client.app.container["session_factory"]
         with session_factory() as db:
             session = GenerativeSession(
-                task_name="RAGTask",
-                model_name="RAGPipeline",
-                parameters=_frontend_session_parameters(doc_id, retriever, prompt),
+                **rag_session_columns(
+                    _frontend_session_parameters(doc_id, retriever, prompt)
+                ),
                 name=f"job_flow_{retriever}_{run_tag}",
                 description=None,
             )

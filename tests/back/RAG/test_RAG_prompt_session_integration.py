@@ -17,14 +17,18 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.services.RAG.prompt_service import PromptService
 from DashAI.back.services.RAG.utils import build_prompt_hash
-from tests.back.RAG.conftest import BOW_PARAMS, _create_data_document
+from tests.back.RAG.conftest import (
+    BOW_PARAMS,
+    RAG_TEST_GENERATOR,
+    RAG_WORKFLOW_PAYLOAD,
+    _create_data_document,
+)
 
 
 def _base_session_params() -> dict:
     """Return the minimal valid RAG session payload."""
     return {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "parameters": {
             "chunking_model": {
                 "component": "CharacterChunkModel",
@@ -248,8 +252,9 @@ def test_legacy_session_with_prompt_in_parameters_round_trips(client):
     with session_factory() as db:
         session = GenerativeSession(
             name=f"legacy_{uuid.uuid4().hex[:8]}",
-            task_name="RAGTask",
-            model_name="RAGPipeline",
+            task_name="TextToTextGenerationTask",
+            workflow_name="RAGWorkflow",
+            model_name=RAG_TEST_GENERATOR,
             parameters=legacy_parameters,
         )
         db.add(session)
@@ -445,7 +450,7 @@ def test_editing_only_the_generation_prompt_does_not_invalidate_the_index(
         captured["new"] = dict(new_parameters or {})
 
     monkeypatch.setattr(
-        "DashAI.back.api.api_v1.endpoints.generative_session."
+        "DashAI.back.services.workflows.RAG_workflow_session_service."
         "CleanupService.cleanup_orphaned_resources",
         _capture,
     )

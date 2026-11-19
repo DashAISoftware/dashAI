@@ -105,8 +105,9 @@ def register_stub_llm_setup(client: TestClient) -> None:
 def _create_session(db, name: str, doc_ids: list[int]) -> int:
     """Create a RAG generative session in the DB and return its ID."""
     session = GenerativeSession(
-        task_name="RAGTask",
-        model_name="RAGPipeline",
+        task_name="TextToTextGenerationTask",
+        workflow_name="RAGWorkflow",
+        model_name="StubLLMSetup",
         parameters={
             "documents": doc_ids,
             "chunking_model": {

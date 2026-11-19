@@ -17,6 +17,7 @@ from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
+from tests.back.RAG.conftest import RAG_WORKFLOW_PAYLOAD
 
 
 class StubTransformationLLMSchema(BaseSchema):
@@ -43,8 +44,7 @@ def register_stub_llm(client: TestClient) -> None:
 
 def _base_session_params() -> dict:
     return {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "name": f"transformation_{uuid.uuid4().hex}",
         "description": None,
         "parameters": {

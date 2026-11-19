@@ -29,7 +29,11 @@ from DashAI.back.models.text_to_text_generation_model import (
 )
 from DashAI.back.services.RAG.prompt_service import PromptService
 from DashAI.back.services.RAG.setup_service import SetupService
-from tests.back.RAG.conftest import RAG_E2E_DOC_TEXT, _add_document_to_session
+from tests.back.RAG.conftest import (
+    RAG_E2E_DOC_TEXT,
+    RAG_WORKFLOW_PAYLOAD,
+    _add_document_to_session,
+)
 
 
 class StubIndexLLMSchema(BaseSchema):
@@ -87,8 +91,7 @@ def _create_session(client: TestClient, name: str) -> int:
     response = client.post(
         "/api/v1/generative-session/",
         json={
-            "model_name": "RAGPipeline",
-            "task_name": "RAGTask",
+            **RAG_WORKFLOW_PAYLOAD,
             "name": f"{name}_{uuid.uuid4().hex[:8]}",
             "parameters": {
                 "generation_model": {"component": "StubIndexLLM", "params": {}},

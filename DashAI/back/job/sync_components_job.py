@@ -4,6 +4,7 @@ from kink import inject
 
 from DashAI.back.job.base_job import BaseJob
 from DashAI.back.plugins.utils import (
+    forget_plugin_modules,
     get_available_plugins,
     register_plugin_components,
     unregister_plugin_components,
@@ -36,21 +37,29 @@ class SyncComponentsJob(BaseJob):
 
         component_registry = di["component_registry"]
 
-        basic_components = set(get_initial_components())
-        available_plugins = set(get_available_plugins())
-
         all_registered = {
             component_registry[c["name"]]["class"]
             for c in component_registry.get_components_by_types()
         }
+        # This process imported the plugins before they changed (e.g. an
+        # upgrade done by the API process): drop the cached plugin modules
+        # before anything imports them again, so the installed code is loaded
+        # instead of the old one. Only modules from the plugins directory are
+        # dropped. get_initial_components also imports the plugins.
+        forget_plugin_modules(all_registered)
+
+        basic_components = set(get_initial_components())
         registered_plugins = all_registered - basic_components
+        available_plugins = set(get_available_plugins())
         to_add = list(available_plugins - registered_plugins)
         to_remove = list(registered_plugins - available_plugins)
 
-        if to_add:
-            register_plugin_components(to_add, component_registry)
+        # Remove first: the registry is keyed by class name, so a re-imported
+        # class must not be dropped together with its stale predecessor.
         if to_remove:
             unregister_plugin_components(to_remove, component_registry)
+        if to_add:
+            register_plugin_components(to_add, component_registry)
 
         return {
             "added": [cls.__name__ for cls in to_add],

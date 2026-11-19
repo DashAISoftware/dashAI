@@ -15,7 +15,28 @@ function ModelConfigurationContent({ run, model }) {
   const paramProperties = model?.schema?.properties ?? {};
   const getParamLabel = (key) => paramProperties[key]?.title ?? key;
 
-  const hasParams = run.parameters && Object.keys(run.parameters).length > 0;
+  // What the parameters left empty resolved to when the run trained, and
+  // where from, as the backend recorded it (Run.resolved_parameters). The
+  // parameters keep the empty value, so a retrain resolves it again.
+  const resolved = run.resolved_parameters ?? {};
+  const parameters = { ...(run.parameters ?? {}) };
+  Object.keys(resolved).forEach((key) => {
+    if (!(key in parameters)) parameters[key] = null;
+  });
+  const shown = (key, value) => {
+    const entry = resolved[key];
+    if (!entry) return value;
+    const values = entry.reason?.values ?? {};
+    const reason = t(`models:resolved.${entry.reason?.key}`, {
+      ...values,
+      frequency: values.step
+        ? t(`models:frequencyStep.${values.step}`)
+        : undefined,
+    });
+    return `${entry.value} (${reason})`;
+  };
+
+  const hasParams = Object.keys(parameters).length > 0;
   const hasOptimizer = run.optimizer_name && run.goal_metric;
   // What a forecasting run did with its session's exogenous variables, as
   // its training recorded it (Run.exogenous); null for any other run.
@@ -37,9 +58,9 @@ function ModelConfigurationContent({ run, model }) {
             {t("models:label.modelConfiguration")}
           </Typography>
           <ParamInfoList
-            rows={Object.entries(run.parameters).map(([key, value]) => [
+            rows={Object.entries(parameters).map(([key, value]) => [
               getParamLabel(key),
-              value,
+              shown(key, value),
             ])}
           />
         </Box>
@@ -93,6 +114,15 @@ ModelConfigurationContent.propTypes = {
     optimizer_name: PropTypes.string,
     optimizer_parameters: PropTypes.object,
     goal_metric: PropTypes.string,
+    resolved_parameters: PropTypes.objectOf(
+      PropTypes.shape({
+        value: PropTypes.number,
+        reason: PropTypes.shape({
+          key: PropTypes.string,
+          values: PropTypes.object,
+        }),
+      }),
+    ),
     exogenous: PropTypes.shape({
       used: PropTypes.bool,
       columns: PropTypes.arrayOf(PropTypes.shape({ name: PropTypes.string })),

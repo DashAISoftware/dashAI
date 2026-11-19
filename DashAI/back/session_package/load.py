@@ -426,6 +426,7 @@ def import_session_package(
                             # What the training recorded; a recipe imports
                             # as never trained, so it has none.
                             run.exogenous = entry.get("exogenous")
+                            run.resolved_parameters = entry.get("resolved_parameters")
                         if files is None:
                             recipe_runs.append(entry["name"])
                             db.add(run)

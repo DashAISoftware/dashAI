@@ -68,6 +68,23 @@ export function useMediaFiles(inputsCardinality) {
     });
   };
 
+  // What the composer holds, to put back with restore() if a send fails.
+  const snapshot = () => ({ text, filesByKind });
+
+  // reset() revoked the old previews, so the files get new ones.
+  const restore = (draft) => {
+    setText(draft.text);
+    setFilesByKind(draft.filesByKind);
+    setPreviewsByKind(
+      Object.fromEntries(
+        Object.entries(draft.filesByKind).map(([kind, files]) => [
+          kind,
+          files.map((file) => URL.createObjectURL(file)),
+        ]),
+      ),
+    );
+  };
+
   const collectPayload = () => {
     const allFiles = activeKinds.flatMap((kind) => filesByKind[kind] || []);
     return wantsText ? [...allFiles, text] : allFiles;
@@ -87,6 +104,8 @@ export function useMediaFiles(inputsCardinality) {
     removeFile,
     requirementsMet,
     reset,
+    snapshot,
+    restore,
     collectPayload,
   };
 }

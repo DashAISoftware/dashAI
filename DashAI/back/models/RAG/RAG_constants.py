@@ -55,6 +55,8 @@ RAG_OUTPUT_TRACE_TYPE = "Trace"
 RAG_OUTPUT_TIMINGS_TYPE = "Timings"
 RAG_OUTPUT_MESSAGE_TYPE = "str"
 
+RAG_WORKFLOW_NAME = "RAGWorkflow"
+
 # Live stage progress
 # -------------------
 # While a RAG process runs, ``GenerativeProcess.progress`` holds exactly one of

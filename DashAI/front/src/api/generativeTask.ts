@@ -14,7 +14,7 @@ export const getRelatedComponents = async (
 ): Promise<IGenerativeTask[]> => {
   try {
     const response = await api.get<IGenerativeTask[]>(
-      `/v1/component/?related_component=${encodeURIComponent(relatedComponent)}`,
+      `/v1/component/?related_component=${encodeURIComponent(relatedComponent)}&select_types=GenerativeModel`,
     );
     console.log("Related components:", response.data);
     return response.data;

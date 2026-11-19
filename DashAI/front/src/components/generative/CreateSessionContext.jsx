@@ -24,7 +24,8 @@ import {
   preprocessSchema,
 } from "./utils";
 import { useGenerative } from "./GenerativeContext";
-import { isStandaloneTask } from "./standaloneEntryPoints";
+import { getComponents } from "../../api/component";
+import { INFERENCE_WORKFLOW_NAME } from "../../constants/generativeWorkflows";
 import { useTourContext } from "../tour/TourProvider";
 
 const CreateSessionContext = createContext(null);
@@ -51,21 +52,24 @@ export function CreateSessionProvider({ children }) {
   // changes so display_name/description are translated.
   const loadModels = useCallback(() => {
     if (!tasks || tasks.length === 0) return Promise.resolve();
-    // Tasks with their own entry point are reached from the module landing, so
-    // their models must not appear in this gallery. The backend marks them.
-    const galleryTasks = tasks.filter((task) => !isStandaloneTask(task));
     setLoadingModels(true);
-    return Promise.all(
-      galleryTasks.map((task) =>
-        getRelatedComponents(task.name).then((components) =>
-          components.map((c) => ({
-            ...c,
-            task_name: task.name,
-            task_display_name: task.display_name || task.name,
-          })),
+    return getComponents({
+      selectTypes: ["GenerativeTask"],
+      relatedComponent: INFERENCE_WORKFLOW_NAME,
+    })
+      .then((galleryTasks) =>
+        Promise.all(
+          galleryTasks.map((task) =>
+            getRelatedComponents(task.name).then((components) =>
+              components.map((c) => ({
+                ...c,
+                task_name: task.name,
+                task_display_name: task.display_name || task.name,
+              })),
+            ),
+          ),
         ),
-      ),
-    )
+      )
       .then((perTaskLists) => {
         // Deduplicate by model name (a model may appear under several tasks).
         const seen = new Set();
@@ -129,6 +133,7 @@ export function CreateSessionProvider({ children }) {
           created = await createGenerativeSession({
             name: effectiveName,
             description: values.description,
+            workflow_name: INFERENCE_WORKFLOW_NAME,
             task_name: selectedModel.task_name,
             model_name: selectedModel.name,
             parameters: values,
@@ -143,6 +148,7 @@ export function CreateSessionProvider({ children }) {
             created = await createGenerativeSession({
               name: effectiveName,
               description: values.description,
+              workflow_name: INFERENCE_WORKFLOW_NAME,
               task_name: selectedModel.task_name,
               model_name: selectedModel.name,
               parameters: { ...values, name: effectiveName },
@@ -190,7 +196,9 @@ export function CreateSessionProvider({ children }) {
         }`,
         items: existingSessions,
         getName: (session) => session.name,
-        filter: (session) => session.task_name === model.task_name,
+        filter: (session) =>
+          session.task_name === model.task_name &&
+          session.workflow_name === INFERENCE_WORKFLOW_NAME,
       });
       formik.resetForm({
         values: {

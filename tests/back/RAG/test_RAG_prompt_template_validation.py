@@ -13,7 +13,7 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 
-from tests.back.RAG.conftest import BOW_PARAMS
+from tests.back.RAG.conftest import BOW_PARAMS, RAG_WORKFLOW_PAYLOAD
 
 
 def _unique_name(prefix: str = "prompt") -> str:
@@ -43,8 +43,7 @@ INVALID_TEMPLATE_PAYLOADS = {
 def _base_session_params(name: str | None = None) -> dict:
     """Return the minimal valid RAG session payload."""
     return {
-        "model_name": "RAGPipeline",
-        "task_name": "RAGTask",
+        **RAG_WORKFLOW_PAYLOAD,
         "parameters": {
             "chunking_model": {
                 "component": "CharacterChunkModel",
