@@ -81,20 +81,42 @@ test("writes edits back as a self-contained component ref", async () => {
   expect(written.params).toHaveProperty("template");
 });
 
-test("changing the seed language does not touch the prompt", async () => {
-  const template = "Hand-written: {chunks} {input}";
-  const { setPromptModel } = renderEditor(template);
+test("hides the language select until a default prompt is selected", async () => {
+  renderEditor("Hand-written: {chunks} {input}");
   await waitFor(() => expect(getDefaultPrompts).toHaveBeenCalled());
 
-  // The select only decides which template "Start from" would copy in. It used
-  // to reseed as a side effect, discarding whatever the user had written, and
-  // it used to store a `language` on a component that never reads one.
-  const selects = screen.getAllByRole("combobox");
-  await userEvent.click(selects[selects.length - 1]);
-  const option = await screen.findByRole("option", { name: "es" });
-  await userEvent.click(option);
+  expect(screen.getAllByRole("combobox")).toHaveLength(1);
 
-  expect(setPromptModel).not.toHaveBeenCalled();
+  await userEvent.click(screen.getByRole("combobox"));
+  await userEvent.click(
+    await screen.findByRole("option", { name: "DefaultRAGGenerationPrompt" }),
+  );
+
+  expect(screen.getAllByRole("combobox")).toHaveLength(2);
+});
+
+test("selecting a saved prompt loads its template without a language select", async () => {
+  getLibraryPrompts.mockResolvedValue([
+    {
+      id: 7,
+      name: "Mi prompt",
+      is_library: true,
+      prompt_type: "generation",
+      parameters: { template: "Saved {chunks} {input}" },
+    },
+  ]);
+  const { setPromptModel } = renderEditor("Hand-written: {chunks} {input}");
+  await waitFor(() => expect(getLibraryPrompts).toHaveBeenCalled());
+
+  await userEvent.click(screen.getByRole("combobox"));
+  await userEvent.click(
+    await screen.findByRole("option", { name: "Mi prompt" }),
+  );
+
+  expect(setPromptModel.mock.calls.at(-1)[0].params.template).toBe(
+    "Saved {chunks} {input}",
+  );
+  expect(screen.getAllByRole("combobox")).toHaveLength(1);
 });
 
 test("writes only what the prompt component actually reads", async () => {

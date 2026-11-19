@@ -422,6 +422,8 @@
         "seedLanguage": "Idioma de la plantilla",
         "sessionOnlyHelp": "Los cambios aquí solo afectan a esta sesión. Edita los prompts compartidos desde la biblioteca de prompts.",
         "startFrom": "Partir de",
+        "selectPrompt": "Prompt",
+        "defaultPrompts": "Prompts por defecto",
         "startFromHelp": "Reemplaza la plantilla de abajo. La tuya se conserva hasta que elijas una.",
         "template": "Plantilla",
         "templatePlaceholder": "Cada mensaje del usuario llega como {input}\nLos fragmentos recuperados llegan como {chunks}"
