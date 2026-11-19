@@ -396,6 +396,8 @@
         "seedLanguage": "Vorlagensprache",
         "sessionOnlyHelp": "Änderungen hier gelten nur für diese Sitzung. Bearbeiten Sie gemeinsame Prompts in der Prompt-Bibliothek.",
         "startFrom": "Ausgehen von",
+        "selectPrompt": "Prompt",
+        "defaultPrompts": "Standard-Prompts",
         "startFromHelp": "Ersetzt die Vorlage unten. Ihre bleibt erhalten, bis Sie eine auswählen.",
         "template": "Vorlage",
         "templatePlaceholder": "Jede Nutzernachricht kommt als {input} an\nDie gefundenen Textabschnitte als {chunks}"

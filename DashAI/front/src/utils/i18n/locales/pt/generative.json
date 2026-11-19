@@ -398,6 +398,8 @@
         "seedLanguage": "Idioma do modelo",
         "sessionOnlyHelp": "As alterações aqui aplicam-se apenas a esta sessão. Edite prompts compartilhados na biblioteca de prompts.",
         "startFrom": "Partir de",
+        "selectPrompt": "Prompt",
+        "defaultPrompts": "Prompts padrão",
         "startFromHelp": "Substitui o modelo abaixo. O seu é mantido até você escolher um.",
         "template": "Modelo",
         "templatePlaceholder": "Cada mensagem do usuário chega como {input}\nOs trechos recuperados chegam como {chunks}"

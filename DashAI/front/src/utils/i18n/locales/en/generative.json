@@ -396,6 +396,8 @@
         "seedLanguage": "Seed language",
         "sessionOnlyHelp": "Changes here apply to this session only. Edit shared prompts from the prompt library.",
         "startFrom": "Start from",
+        "selectPrompt": "Prompt",
+        "defaultPrompts": "Default prompts",
         "startFromHelp": "Replaces the template below. Yours is kept until you pick one.",
         "template": "Template",
         "templatePlaceholder": "Each user message arrives as {input}\nThe retrieved passages arrive as {chunks}"

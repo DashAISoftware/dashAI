@@ -394,6 +394,8 @@
         "seedLanguage": "模板语言",
         "sessionOnlyHelp": "此处的更改仅应用于当前会话。共享提示词请在提示词库中编辑。",
         "startFrom": "以此为起点",
+        "selectPrompt": "提示词",
+        "defaultPrompts": "默认提示词",
         "startFromHelp": "会替换下方的模板。在你选择之前，你的内容会保留。",
         "template": "模板",
         "templatePlaceholder": "每条用户消息以 {input} 传入\n检索到的片段以 {chunks} 传入"
