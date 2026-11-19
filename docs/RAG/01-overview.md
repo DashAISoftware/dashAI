@@ -219,11 +219,19 @@ parsed by the tolerant text parser. Both routes share the same tolerant
 contract: an invalid operation inside a verdict is dropped individually, valid
 ones are preserved, and only a verdict with no usable operation left (or an
 invalid `sufficient` field) is rejected. An insufficient verdict has three
-optional action fields — `call_retrievers`, `request_specific_chunks` and
-`discard_specific_chunks` — and at least one valid operation must remain.
+optional action fields — `call_retrievers` (each value is the number of
+*additional* chunks to fetch from that retriever next, not an absolute `top_k`),
+`request_specific_chunks` and `discard_specific_chunks` — and at least one valid
+operation must remain.
+
+Both retrievers call a child cumulatively — the identities it already
+contributed plus the new request — and pool only the highest-ranked identities
+it had not contributed before; the ensemble also clamps each per-child request
+to the slots the round can still fill.
+
 llama.cpp's GBNF converter enforces `type`, `required` and
 `minItems` but not numeric `minimum`, so the runtime validator remains the
-authoritative guard for `top_k >= 1` and chunk positions `>= 0`.
+authoritative guard for additional-chunk counts `>= 1` and chunk positions `>= 0`.
 
 Both retrievers share the `function_call_max_trials` parameter (default `3`,
 capped at `10`), the maximum number of evaluation attempts including the first.
