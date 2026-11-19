@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Callable, ClassVar, Dict, List, Set, Tuple
 
 from DashAI.back.core.utils import MultilingualString
@@ -99,6 +99,34 @@ _PARAM_FUNCTION_CALL_MAX_TRIALS = "function_call_max_trials"
 #: Trace round-entry keys hoisted to avoid magic strings.
 _ENTRY_VERDICT_KEY = "verdict"
 _ENTRY_APPLIED_KEY = "applied"
+
+
+class _NoCapacityForRetrieverCallError(RAGRetrieverEvaluationError):
+    """A decision that asks for retrievers although the pool is already full.
+
+    It is raised inside the evaluation retry loop like any other rejected
+    decision, so the model receives the capacity feedback and may correct
+    itself. When the rest of the decision is valid it also carries that
+    decision without its retriever call and the pool it leaves, so a round whose
+    every attempt insists on a call can continue with the current pool instead
+    of failing the whole retrieval.
+
+    Parameters
+    ----------
+    message : str
+        The capacity error reported to the model.
+    fallback : Tuple[RetrievalVerdict, RetrievalPool] | None
+        The decision without its retriever call and the prepared pool, or
+        ``None`` when the rest of the decision is invalid too.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        fallback: Tuple[RetrievalVerdict, RetrievalPool] | None,
+    ) -> None:
+        super().__init__(message)
+        self.fallback = fallback
 
 
 @dataclass(frozen=True)
@@ -376,7 +404,9 @@ class AgenticRetriever(CompositeRetriever, ABC):
         capacity for the requested retrievers, requested chunk that does not fit
         the cap, or empty-refill-less decision raises
         :class:`RAGRetrieverEvaluationError`; the caller runs this inside the
-        evaluation retry loop.
+        evaluation retry loop. Missing capacity raises the
+        :class:`_NoCapacityForRetrieverCallError` subclass, which also carries the
+        decision without its retriever call when that remainder is valid.
 
         Parameters
         ----------
@@ -404,10 +434,13 @@ class AgenticRetriever(CompositeRetriever, ABC):
                 + "; ".join(cap_errors(drops))
             )
         if verdict.call_retrievers and candidate.size() >= self.max_chunks:
-            raise RAGRetrieverEvaluationError(
+            message = (
                 "The decision leaves no capacity to consult the requested "
                 f"retrievers: the pool already holds {candidate.size()} of "
                 f"{self.max_chunks} chunks."
+            )
+            raise _NoCapacityForRetrieverCallError(
+                message, self._without_retriever_call(candidate, verdict, message)
             )
         materialized = candidate.materialized_keys()
         for document_id, positions in verdict.request_specific_chunks.items():
@@ -427,6 +460,52 @@ class AgenticRetriever(CompositeRetriever, ABC):
                 "The decision leaves the pool empty and requests no retriever or chunk."
             )
         return candidate
+
+    def _without_retriever_call(
+        self,
+        candidate: RetrievalPool,
+        verdict: RetrievalVerdict,
+        reason: str,
+    ) -> Tuple[RetrievalVerdict, RetrievalPool] | None:
+        """Return a full-pool decision without its retriever call, if valid.
+
+        Used only as a last resort, after every attempt asked for retrievers
+        with the pool already full. The call is dropped and recorded in
+        ``dropped_operations``; the discards and chunk requests are kept. A pool
+        that is full cannot be empty, so the only remaining check is that every
+        requested chunk fits the cap.
+
+        Parameters
+        ----------
+        candidate : RetrievalPool
+            The clone with the decision's discards and requests applied.
+        verdict : RetrievalVerdict
+            The finalized insufficient verdict.
+        reason : str
+            Why the retriever call cannot run, recorded with the drop.
+
+        Returns
+        -------
+        Tuple[RetrievalVerdict, RetrievalPool] | None
+            The decision without its retriever call and the prepared pool, or
+            ``None`` when a requested chunk does not fit the cap either.
+        """
+        materialized = candidate.materialized_keys()
+        for document_id, positions in verdict.request_specific_chunks.items():
+            for position in positions:
+                if (document_id, position) not in materialized:
+                    return None
+        dropped = (
+            f"{CALL_RETRIEVERS_KEY} {dict(verdict.call_retrievers)} dropped: {reason}"
+        )
+        return (
+            replace(
+                verdict,
+                call_retrievers={},
+                dropped_operations=(*verdict.dropped_operations, dropped),
+            ),
+            candidate,
+        )
 
     def _report_verdict_progress(self, verdict: RetrievalVerdict) -> None:
         """Report a verdict's optional narrative on the retrieving channel.
@@ -580,6 +659,15 @@ class AgenticRetriever(CompositeRetriever, ABC):
         RAGRetrieverEvaluationError
             If the decision stays unusable after the retry budget, or an
             insufficient verdict produced no applied pool.
+
+        Notes
+        -----
+        When the last attempt still asks for retrievers with the pool full and
+        the rest of its decision is valid, that decision is adopted without its
+        retriever call (recorded in ``dropped_operations``) instead of failing
+        the retrieval: neither subclass consults a child once the pool is full,
+        so the round continues with the pool it has. Ensemble planning, which
+        requires a retriever call, keeps failing in that case.
         """
         prepared: List[RetrievalPool] = []
 
@@ -589,15 +677,26 @@ class AgenticRetriever(CompositeRetriever, ABC):
                 return
             prepared.append(self._prepare_insufficient_verdict(pool, verdict))
 
-        verdict = self._evaluate(
-            query,
-            pool,
-            context,
-            round_number=round_number,
-            max_rounds=max_rounds,
-            require_retriever_call=require_retriever_call,
-            apply_verdict=apply,
-        )
+        try:
+            verdict = self._evaluate(
+                query,
+                pool,
+                context,
+                round_number=round_number,
+                max_rounds=max_rounds,
+                require_retriever_call=require_retriever_call,
+                apply_verdict=apply,
+            )
+        except _NoCapacityForRetrieverCallError as err:
+            if err.fallback is None or require_retriever_call:
+                raise
+            log.warning(
+                "%s: every evaluation attempt asked for retrievers with a full "
+                "pool; continuing without the retriever call. %s",
+                type(self).__name__,
+                err,
+            )
+            return err.fallback
         if verdict.sufficient:
             return verdict, None
         if not prepared:

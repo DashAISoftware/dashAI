@@ -167,6 +167,14 @@
   rejected for lack of capacity. Keep the child's configured result count at or
   below the agentic retriever's `max_chunks` when relying on discard-and-refill.
 
+- **A retriever call with the pool full is retried, then dropped.** A decision
+  that asks for retrievers while the pool is full is rejected and the model is
+  asked again with that feedback. Small judge models often insist, so when the
+  last attempt still asks, the retriever keeps the rest of that decision, drops
+  the call (recorded in the round's `dropped_operations`) and continues with the
+  pool it has instead of failing the answer. Ensemble planning, which must call
+  a retriever, still fails in that case.
+
 - **`prompt` and `llm_model` refs are mandatory.** A transformer is built only
   from an explicit prompt component and an explicit text-to-text model
   reference; neither has an implicit default.

@@ -467,5 +467,23 @@
       "modelTakesNoExogenous": "{{model}} não usa variáveis exógenas: prevê apenas com a série.",
       "exogenousSwitchedOff": "\"Usar variáveis exógenas\" está desativado: {{model}} prevê sem elas."
     }
+  },
+  "resolved": {
+    "seasonFromStep": "segundo a frequência {{frequency}}",
+    "seasonFromFrequency": "segundo a frequência {{freq}} da série",
+    "lagsFromSeason": "uma temporada de {{season}}",
+    "lagsAtLeast": "o mínimo, {{minimum}}: a temporada é {{season}}"
+  },
+  "frequencyStep": {
+    "Y": "anual",
+    "Q": "trimestral",
+    "M": "mensal",
+    "SM": "semimensal",
+    "W": "semanal",
+    "D": "diária",
+    "B": "de dias úteis",
+    "h": "horária",
+    "min": "por minuto",
+    "s": "por segundo"
   }
 }

@@ -6,7 +6,7 @@ from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.job.base_job import JobError
 from DashAI.back.units.base_unit import BaseUnit
 from DashAI.back.units.context import ExecutionContext
-from DashAI.back.units.forecast_scope import forecaster_field, season_length_for
+from DashAI.back.units.forecast_scope import forecaster_field, with_season_from_grid
 
 log = logging.getLogger(__name__)
 
@@ -18,11 +18,13 @@ class BuildForecasterSchema(BaseSchema):
 class BuildForecasterUnit(BaseUnit):
     """Instantiate an unfitted forecaster, with the season its grid implies.
 
-    A forecaster with a ``season_length`` that the run leaves out gets the
+    A forecaster with a ``season_length`` that the run leaves empty gets the
     season the series' frequency implies: 12 for a monthly series, 7 for a
-    daily one, 24 for an hourly one (D3). The model receives only the number;
-    the frequency is this unit's to read. A season the run gives, even 1, is
-    kept.
+    daily one, 24 for an hourly one (D3). Empty is left out, None, or a search
+    envelope with no fixed value, which is what the run form sends for the
+    schema's placeholder (``with_season_from_grid``). The model receives only
+    the number; the frequency is this unit's to read. A season the run gives,
+    even 1, is kept.
 
     The sibling for the x/y tasks is ``BuildModelUnit``, which sizes a model by
     its label count and attaches the metrics it logs while training. A
@@ -67,8 +69,8 @@ class BuildForecasterUnit(BaseUnit):
 
         parameters = dict(self.config["model"]["params"])
         declared = model_class.SCHEMA.model_json_schema().get("properties", {})
-        if "season_length" in declared and "season_length" not in parameters:
-            parameters["season_length"] = season_length_for(grid.freq)
+        if "season_length" in declared:
+            parameters = with_season_from_grid(parameters, grid.freq)
 
         try:
             factory = ModelFactory(model_class, parameters, self.config["run_id"])

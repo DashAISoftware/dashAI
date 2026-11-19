@@ -34,6 +34,8 @@ export function MediaInput({
     removeFile,
     requirementsMet,
     reset,
+    snapshot,
+    restore,
     collectPayload,
   } = useMediaFiles(inputsCardinality);
 
@@ -44,7 +46,12 @@ export function MediaInput({
 
   const handleSend = () => {
     if (!requirementsMet) return;
-    onSendMessage(collectPayload());
+    // The composer empties right away. If onSendMessage rejects, the message
+    // never became a turn and is nowhere else on screen, so it comes back.
+    const draft = snapshot();
+    Promise.resolve(onSendMessage(collectPayload())).catch(() =>
+      restore(draft),
+    );
     reset();
     const currentTarget = tourContext?.steps?.[tourContext?.stepIndex]?.target;
     if (tourContext?.run && currentTarget === '[data-tour="chat-input"]') {

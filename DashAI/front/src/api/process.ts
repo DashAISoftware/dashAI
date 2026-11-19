@@ -21,6 +21,19 @@ export const deleteProcessById = async (processId: string): Promise<void> => {
   await api.delete(`/v1/generative-process/${processId}`);
 };
 
+/**
+ * Reset a failed turn so it runs again with the same input. The caller
+ * enqueues its job, as for a new turn.
+ */
+export const retryProcessById = async (
+  processId: string,
+): Promise<IProcess> => {
+  const response = await api.post<IProcess>(
+    `/v1/generative-process/${processId}/retry`,
+  );
+  return response.data;
+};
+
 export const postProcess = async (
   sessionId: number,
   input: Array<File | string>,

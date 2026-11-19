@@ -124,8 +124,11 @@ class RetrievalVerdict:
         Optional short rationale for the verdict. Empty when the model did not
         supply one.
     dropped_operations : Tuple[str, ...]
-        Kept for trace compatibility. Always empty: an invalid operation rejects
-        the whole verdict and is retried instead of being dropped.
+        Empty as parsed: an invalid operation rejects the whole verdict and is
+        retried instead of being dropped. The one exception is applied by the
+        agentic retrievers after the retries: when the last attempt still asks
+        for retrievers with the pool full, that call is dropped and recorded
+        here so the round can continue with the pool it has.
     """
 
     sufficient: bool

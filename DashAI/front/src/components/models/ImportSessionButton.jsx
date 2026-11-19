@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 import { importModelSession } from "../../api/modelSession";
-import { getApiErrorMessage } from "../../utils/apiError";
+import { describeSessionImportError } from "../../utils/sessionImportError";
 import { startComponentDownload } from "./model/ComponentDownloadControl";
 
 /**
@@ -86,53 +86,7 @@ export default function ImportSessionButton({ onImported }) {
     }
   };
 
-  // The backend refuses a file with a code and the values its English
-  // message was built from, so the reason can be shown in the app language.
-  const describeImportError = (error) => {
-    const detail = error?.response?.data?.detail;
-    const code = detail?.code;
-    const params = detail?.params || {};
-    if (code === "missing_plugin") {
-      // published: false means PyPI does not have it (a private plugin the
-      // plugins module will never list); null means PyPI could not be asked.
-      const isPrivate = params.published === false;
-      const unchecked = params.published === null;
-      const key = isPrivate
-        ? "missingPluginPrivate"
-        : unchecked
-          ? "missingPluginUnchecked"
-          : "missingPlugin";
-      let pluginsLink = "/app/plugins/browse";
-      if (isPrivate) pluginsLink = null;
-      else if (params.plugin_id)
-        pluginsLink = `/app/plugins/browse/details/${params.plugin_id}`;
-      return {
-        message: t(
-          `models:importError.${key}${params.version ? "Version" : ""}`,
-          params,
-        ),
-        pluginsLink,
-      };
-    }
-    if (code === "missing_component") {
-      return {
-        message: t("models:importError.missingComponent", params),
-        pluginsLink: "/app/plugins/browse",
-      };
-    }
-    const known = {
-      invalid_file: "invalidFile",
-      wrong_kind: "wrongKind",
-      newer_format: "newerFormat",
-      unsafe_file: "unsafeFile",
-    };
-    if (known[code]) {
-      return { message: t(`models:importError.${known[code]}`, params) };
-    }
-    const reason = getApiErrorMessage(error);
-    const message = t("models:error.importSession");
-    return { message: reason ? `${message}: ${reason}` : message };
-  };
+  const describeImportError = (error) => describeSessionImportError(error, t);
 
   const goToPlugins = () => {
     const link = importError?.pluginsLink;

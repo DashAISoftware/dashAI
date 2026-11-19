@@ -109,6 +109,7 @@ def add_plugin_to_db(
             raise exc.SQLAlchemyError("Error storing plugin.") from e
 
 
+@inject
 def upgrade_plugin_info_in_db(
     raw_plugin: PluginParams,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),

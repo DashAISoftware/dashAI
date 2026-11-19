@@ -1,0 +1,256 @@
+{
+  "model": {
+    "name": "RecursiveRegressionForecaster",
+    "type": "Model",
+    "configurable_object": true,
+    "schema": {
+      "description": "Schema that configures the recursive regression forecaster.",
+      "properties": {
+        "regressor": {
+          "description": "The regression model that predicts the next value from the previous ones, along with its own configuration. A linear regression extends a trend; trees and forests cannot forecast past the values they were trained on.",
+          "parent": "SklearnLikeRegressor",
+          "placeholder": {
+            "component": "LinearRegression",
+            "params": {}
+          },
+          "properties": {
+            "component": {
+              "title": "Component",
+              "type": "string"
+            },
+            "params": {
+              "additionalProperties": true,
+              "title": "Params",
+              "type": "object"
+            }
+          },
+          "required": ["component", "params"],
+          "title": "Regressor",
+          "type": "object"
+        },
+        "lags": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How many past values the regressor reads to predict the next one. Left empty: it uses one season of lags (the value of Season length, or the season of the frequency when that field is empty too), with a minimum of 3. A number sets another count.",
+          "placeholder": null,
+          "title": "Lags"
+        },
+        "season_length": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How many steps make up one season. Only used for the default lags: it sets how many lags are read when Lags is left empty; it does not model the seasonality. Left empty, it uses the season of the series' frequency (monthly: 12, daily: 7, hourly: 24; 1 if the frequency has no known cycle). A number sets another cycle.",
+          "placeholder": {
+            "fixed_value": null,
+            "lower_bound": 1,
+            "optimize": false,
+            "upper_bound": 12
+          },
+          "x-dashai-search-dtype": "integer",
+          "title": "Season length"
+        },
+        "differentiation": {
+          "description": "How many times to difference the series before regressing on it. Use 1 on a series with a trend: the regressor then predicts the changes, which a tree can do where it cannot predict values it has never seen. 0 leaves the series as it is.",
+          "minimum": 0,
+          "placeholder": {
+            "fixed_value": 0,
+            "lower_bound": 0,
+            "optimize": false,
+            "upper_bound": 2
+          },
+          "type": "integer",
+          "x-dashai-search-dtype": "integer",
+          "title": "Differencing"
+        },
+        "use_exogenous": {
+          "description": "Read the session's exogenous variables. Turn it off to compare the same model without them.",
+          "placeholder": true,
+          "title": "Use exogenous variables",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "regressor",
+        "lags",
+        "season_length",
+        "differentiation",
+        "use_exogenous"
+      ],
+      "title": "RecursiveRegressionForecasterSchema",
+      "type": "object"
+    },
+    "metadata": {
+      "icon": "Insights",
+      "requires_download": false,
+      "download_size_bytes": null,
+      "exogenous": "optional"
+    },
+    "description": "Turns forecasting into regression: a regression model learns each value from the previous ones and forecasts one step at a time. The intervals bootstrap the training errors, so with trees they come out too narrow; the backtest coverage shows it. With exogenous variables, the backtest error and coverage are optimistic.",
+    "display_name": "Recursive regression",
+    "color": "#AB47BC",
+    "required_credentials": [],
+    "optional_credentials": [],
+    "credentials_satisfied": true,
+    "downloaded": true
+  },
+  "regressor": {
+    "name": "LinearRegression",
+    "type": "Model",
+    "configurable_object": true,
+    "schema": {
+      "description": "Schema that configures the Ordinary Least-Squares Linear Regression model.\n\nLinear Regression fits a linear model by minimising the residual sum of squares\nbetween observed targets and predicted values. It is used for tabular regression\ntasks. The underlying implementation is\n``sklearn.linear_model.LinearRegression``.",
+      "properties": {
+        "fit_intercept": {
+          "description": "Whether to calculate the intercept for this model. If set to False, no intercept will be used in calculations (e.g., data is expected to be centered).",
+          "placeholder": true,
+          "title": "Fit intercept",
+          "type": "boolean"
+        },
+        "copy_X": {
+          "description": "If True, X will be copied; else, it may be overwritten.",
+          "placeholder": true,
+          "title": "Copy X",
+          "type": "boolean"
+        },
+        "n_jobs": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The number of jobs to use for the computation. None means 1 job, while -1 means using all processors.",
+          "placeholder": null,
+          "title": "N jobs"
+        },
+        "positive": {
+          "description": "When set to True, forces the coefficients to be positive.",
+          "placeholder": false,
+          "title": "Positive",
+          "type": "boolean"
+        }
+      },
+      "required": ["fit_intercept", "copy_X", "n_jobs", "positive"],
+      "title": "LinearRegressionSchema",
+      "type": "object"
+    },
+    "metadata": {
+      "icon": "ShowChart",
+      "requires_download": false,
+      "download_size_bytes": null
+    },
+    "description": "Ordinary least squares linear regression.",
+    "display_name": "Linear Regression",
+    "color": "#3F51B5",
+    "required_credentials": [],
+    "optional_credentials": [],
+    "credentials_satisfied": true,
+    "downloaded": true
+  },
+  "parents": [
+    {
+      "name": "AdaBoostRegression",
+      "display_name": "AdaBoost Regression"
+    },
+    {
+      "name": "BayesianRidgeRegression",
+      "display_name": "Bayesian Ridge Regression"
+    },
+    {
+      "name": "DecisionTreeRegression",
+      "display_name": "Decision Tree Regression"
+    },
+    {
+      "name": "ElasticNetRegression",
+      "display_name": "Elastic Net Regression"
+    },
+    {
+      "name": "ExtraTreesRegression",
+      "display_name": "Extra-Trees Regression"
+    },
+    {
+      "name": "GradientBoostingR",
+      "display_name": "Gradient Boosting Regression"
+    },
+    {
+      "name": "HistGradientBoostingRegression",
+      "display_name": "Histogram Gradient Boosting Regression"
+    },
+    {
+      "name": "KNeighborsRegression",
+      "display_name": "K-Nearest Neighbours Regression"
+    },
+    {
+      "name": "LassoRegression",
+      "display_name": "Lasso Regression"
+    },
+    {
+      "name": "LinearRegression",
+      "display_name": "Linear Regression"
+    },
+    {
+      "name": "LinearSVR",
+      "display_name": "Linear Support Vector Regression"
+    },
+    {
+      "name": "RandomForestRegression",
+      "display_name": "Random Forest"
+    },
+    {
+      "name": "RidgeRegression",
+      "display_name": "Ridge Regression"
+    },
+    {
+      "name": "SVR",
+      "display_name": "Support Vector Regression"
+    }
+  ],
+  "payload": {
+    "regressor": {
+      "properties": {
+        "component": "SklearnLikeRegressor",
+        "params": {
+          "comp": {
+            "component": "LinearRegression",
+            "params": {
+              "fit_intercept": true,
+              "copy_X": true,
+              "n_jobs": null,
+              "positive": false
+            }
+          }
+        }
+      }
+    },
+    "lags": null,
+    "season_length": {
+      "fixed_value": null,
+      "lower_bound": 1,
+      "optimize": false,
+      "upper_bound": 12
+    },
+    "differentiation": {
+      "fixed_value": 0,
+      "lower_bound": 0,
+      "optimize": false,
+      "upper_bound": 2
+    },
+    "use_exogenous": true
+  }
+}

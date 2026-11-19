@@ -48,3 +48,7 @@ class GenerativeSessionParams(BaseModel):
 
 class GenerativeSessionBulkDeleteParams(BaseModel):
     ids: List[int]
+
+
+class GenerativeSessionExportParams(BaseModel):
+    include_conversation: bool = False
