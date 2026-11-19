@@ -255,20 +255,20 @@ def test_a_name_already_taken_is_numbered(client, tmp_path):
     assert spec["date_1"]["type"] == "Date"
 
 
-def test_milliseconds_come_back_on_their_grid(client, tmp_path):
+def test_hours_come_back_on_their_grid(client, tmp_path):
     from DashAI.back.tasks.time_grid import validate_grid
     from DashAI.back.types.date_utils import parse_date_column
 
     notebook = _dated_notebook(
-        client, tmp_path, _values(10), start_date="2024-01-01", frequency="ms"
+        client, tmp_path, _values(10), start_date="2024-01-01", frequency="h"
     )
 
     spec = get_columns_spec(_notebook_path(notebook))
     date_format = spec["date"]["dtype"]
-    assert date_format == "%Y-%m-%d %H:%M:%S.%f"
+    assert date_format == "%Y-%m-%d %H:%M:%S"
     table = load_dataset(_notebook_path(notebook)).to_pandas()
     grid = validate_grid(parse_date_column(table["date"], date_format), table["sales"])
-    assert grid.freq == "ms"
+    assert grid.freq == "h"
     assert grid.n_steps == 10
     assert grid.first == pd.Timestamp("2024-01-01")
 
@@ -278,9 +278,9 @@ def test_milliseconds_come_back_on_their_grid(client, tmp_path):
     [
         (2, {}, "at least 3 rows"),
         (10, {"frequency": "MS", "start_date": "2024-01-15"}, "2024-02-01"),
-        (10, {"frequency": "-1D"}, "forward in time"),
+        (10, {"frequency": "-1D"}, "'frequency' must be one of"),
     ],
-    ids=["two-rows", "off-anchor", "backwards"],
+    ids=["two-rows", "off-anchor", "unlisted"],
 )
 def test_a_refusal_reaches_the_job_with_its_reason(
     client, tmp_path, n_rows, params, message

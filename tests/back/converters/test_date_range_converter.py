@@ -12,7 +12,10 @@ import pytest
 from DashAI.back.converters.dataset_columns import (
     rebuild_dataset_with_transformed_columns,
 )
-from DashAI.back.converters.simple_converters.date_range import DateRangeConverter
+from DashAI.back.converters.simple_converters.date_range import (
+    FREQUENCIES,
+    DateRangeConverter,
+)
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     to_dashai_dataset,
     transform_dataset_with_schema,
@@ -84,10 +87,9 @@ def test_the_new_column_is_a_date_with_its_format():
         ("2024-01-01", "MS", "%Y-%m-%d"),
         ("2024-01-01 08:30", "D", "%Y-%m-%d %H:%M:%S"),
         ("2024-01-01", "h", "%Y-%m-%d %H:%M:%S"),
-        ("2024-01-01", "ms", "%Y-%m-%d %H:%M:%S.%f"),
-        ("2024-01-01", "us", "%Y-%m-%d %H:%M:%S.%f"),
+        ("2024-01-01", "15min", "%Y-%m-%d %H:%M:%S"),
     ],
-    ids=["midnight", "daily-from-08:30", "hourly", "milliseconds", "microseconds"],
+    ids=["midnight", "daily-from-08:30", "hourly", "quarter-hourly"],
 )
 def test_the_format_keeps_every_part_the_dates_have(start, frequency, date_format):
     converter, result = _apply(_dataset(10), start_date=start, frequency=frequency)
@@ -96,26 +98,10 @@ def test_the_format_keeps_every_part_the_dates_have(start, frequency, date_forma
     assert converter.get_output_type().format == date_format
 
 
-@pytest.mark.parametrize(
-    "frequency",
-    [
-        "D",
-        "h",
-        "15min",
-        "s",
-        "ms",
-        "us",
-        "W-MON",
-        "7D",
-        "MS",
-        "ME",
-        "QS",
-        "YS",
-        "B",
-        "2MS",
-    ],
-)
-def test_what_it_writes_sits_on_the_grid_a_forecast_checks(frequency):
+@pytest.mark.parametrize("frequency", list(FREQUENCIES))
+def test_every_offered_frequency_sits_on_the_grid_a_forecast_checks(frequency):
+    """The list is closed, so the guarantee is checked here, once per option:
+    the dates written in the stored format and read back pass the grid."""
     import pandas.tseries.frequencies as frequencies
 
     offset = frequencies.to_offset(frequency)
@@ -139,17 +125,20 @@ def test_what_it_writes_sits_on_the_grid_a_forecast_checks(frequency):
     [
         ({"start_date": "01/02/2024"}, "is not in the form YYYY-MM-DD"),
         ({"start_date": "2024-13-01"}, "is not in the form YYYY-MM-DD"),
-        ({"frequency": "foo"}, "'foo' is not a pandas frequency. Examples: D"),
-        ({"frequency": ""}, "is not a pandas frequency"),
-        ({"frequency": "-1D"}, "must move forward in time; got '-1D'"),
-        ({"frequency": "0D"}, "must move forward in time; got '0D'"),
+        ({"frequency": "foo"}, "'frequency' must be one of .*, got 'foo'"),
+        ({"frequency": "2MS"}, "'frequency' must be one of .*, got '2MS'"),
+        ({"frequency": "-1D"}, "'frequency' must be one of .*, got '-1D'"),
         (
             {"frequency": "MS", "start_date": "2024-01-15"},
             "2024-01-15 is not one. The next one is 2024-02-01",
         ),
         (
-            {"frequency": "W-SUN", "start_date": "2024-01-03"},
-            "The next one is 2024-01-07",
+            {"frequency": "W-MON", "start_date": "2024-01-03"},
+            "The next one is 2024-01-08",
+        ),
+        (
+            {"frequency": "ME", "start_date": "2024-01-01"},
+            "The next one is 2024-01-31",
         ),
         ({"column_name": "  "}, "The new column needs a name."),
     ],
@@ -157,11 +146,11 @@ def test_what_it_writes_sits_on_the_grid_a_forecast_checks(frequency):
         "day-first-start",
         "impossible-start",
         "unknown-frequency",
-        "empty-frequency",
-        "backwards",
-        "no-step",
+        "unlisted-multiple",
+        "unlisted-backwards",
         "off-month-anchor",
         "off-week-anchor",
+        "off-month-end-anchor",
         "blank-name",
     ],
 )
@@ -192,25 +181,6 @@ def test_it_refuses_dates_past_the_last_one_pandas_holds():
     converter = DateRangeConverter(start_date="2000-01-01", frequency="YS").fit(dataset)
 
     with pytest.raises(ValueError, match="reach past 2262-04-11"):
-        converter.transform(dataset)
-
-
-def test_it_refuses_steps_finer_than_a_microsecond():
-    dataset = _dataset(10)
-    converter = DateRangeConverter(frequency="ns").fit(dataset)
-
-    with pytest.raises(ValueError, match="finer than a microsecond"):
-        converter.transform(dataset)
-
-
-def test_it_refuses_a_frequency_a_forecast_cannot_read_back():
-    dataset = _dataset(24)
-    converter = DateRangeConverter(frequency="SMS").fit(dataset)
-
-    with pytest.raises(
-        ValueError,
-        match="pandas can generate frequency 'SMS' but a forecast cannot read it back",
-    ):
         converter.transform(dataset)
 
 
@@ -277,6 +247,14 @@ def test_it_runs_in_a_notebook_only_and_reads_no_column():
     assert metadata["learns_from_data"] is False
     assert "notebook_only" not in metadata
     assert "runs_in_session" not in metadata
+
+
+def test_the_frequency_is_a_list_with_a_name_per_option():
+    field = DateRangeConverter.get_schema()["properties"]["frequency"]
+    branch = next(b for b in field.get("anyOf", [field]) if "enum" in b)
+
+    assert branch["enum"] == list(FREQUENCIES)
+    assert len(branch["enumNames"]) == len(branch["enum"])
 
 
 def test_its_schema_shows_the_three_defaults():

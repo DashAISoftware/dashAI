@@ -1,10 +1,10 @@
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Dict, Union
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.basic_preprocessing import (
     BasicPreprocessingConverter,
 )
-from DashAI.back.core.schema_fields import schema_field, string_field
+from DashAI.back.core.schema_fields import enum_field, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -19,11 +19,102 @@ if TYPE_CHECKING:
 #: be either month first.
 START_FORMATS = ("%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S")
 
-#: What a frequency's error message offers instead.
-FREQUENCY_EXAMPLES = (
-    "D (daily), h (hourly), W-MON (weekly on Mondays), MS (month start), "
-    "ME (month end), QS, YS"
-)
+#: The frequencies offered, as pandas aliases, with what the form shows. Each
+#: one sits on the grid a forecast checks once written and read back
+#: (``test_every_offered_frequency_sits_on_the_grid_a_forecast_checks``).
+FREQUENCIES: Dict[str, MultilingualString] = {
+    "min": MultilingualString(
+        en="Every minute",
+        es="Cada minuto",
+        pt="A cada minuto",
+        de="Jede Minute",
+        zh="每分钟",
+    ),
+    "15min": MultilingualString(
+        en="Every 15 minutes",
+        es="Cada 15 minutos",
+        pt="A cada 15 minutos",
+        de="Alle 15 Minuten",
+        zh="每 15 分钟",
+    ),
+    "30min": MultilingualString(
+        en="Every 30 minutes",
+        es="Cada 30 minutos",
+        pt="A cada 30 minutos",
+        de="Alle 30 Minuten",
+        zh="每 30 分钟",
+    ),
+    "h": MultilingualString(
+        en="Hourly",
+        es="Por hora",
+        pt="Por hora",
+        de="Stündlich",
+        zh="每小时",
+    ),
+    "D": MultilingualString(
+        en="Daily",
+        es="Diaria",
+        pt="Diária",
+        de="Täglich",
+        zh="每天",
+    ),
+    "B": MultilingualString(
+        en="Business days (Monday to Friday)",
+        es="Días hábiles (lunes a viernes)",
+        pt="Dias úteis (segunda a sexta)",
+        de="Werktage (Montag bis Freitag)",
+        zh="工作日（周一至周五）",
+    ),
+    "W-MON": MultilingualString(
+        en="Weekly, on Mondays",
+        es="Semanal, los lunes",
+        pt="Semanal, às segundas-feiras",
+        de="Wöchentlich, montags",
+        zh="每周（周一）",
+    ),
+    "MS": MultilingualString(
+        en="Monthly, first day of the month",
+        es="Mensual, primer día del mes",
+        pt="Mensal, primeiro dia do mês",
+        de="Monatlich, erster Tag des Monats",
+        zh="每月（月初）",
+    ),
+    "ME": MultilingualString(
+        en="Monthly, last day of the month",
+        es="Mensual, último día del mes",
+        pt="Mensal, último dia do mês",
+        de="Monatlich, letzter Tag des Monats",
+        zh="每月（月末）",
+    ),
+    "QS": MultilingualString(
+        en="Quarterly, first day of the quarter",
+        es="Trimestral, primer día del trimestre",
+        pt="Trimestral, primeiro dia do trimestre",
+        de="Vierteljährlich, erster Tag des Quartals",
+        zh="每季度（季初）",
+    ),
+    "QE": MultilingualString(
+        en="Quarterly, last day of the quarter",
+        es="Trimestral, último día del trimestre",
+        pt="Trimestral, último dia do trimestre",
+        de="Vierteljährlich, letzter Tag des Quartals",
+        zh="每季度（季末）",
+    ),
+    "YS": MultilingualString(
+        en="Yearly, January 1",
+        es="Anual, 1 de enero",
+        pt="Anual, 1º de janeiro",
+        de="Jährlich, 1. Januar",
+        zh="每年（1 月 1 日）",
+    ),
+    "YE": MultilingualString(
+        en="Yearly, December 31",
+        es="Anual, 31 de diciembre",
+        pt="Anual, 31 de dezembro",
+        de="Jährlich, 31. Dezember",
+        zh="每年（12 月 31 日）",
+    ),
+}
 
 #: A forecast infers the frequency from the dates, and it takes three.
 MIN_ROWS = 3
@@ -39,27 +130,30 @@ class DateRangeSchema(BaseSchema):
             en=(
                 "The date of the first row of the file, as YYYY-MM-DD or "
                 "YYYY-MM-DD HH:MM[:SS]. It has to fall on the frequency's "
-                "grid: the first of the month for MS, a Monday for W-MON."
+                "grid: the last day of the month for the monthly one at the "
+                "end of the month, a Monday for the weekly one."
             ),
             es=(
                 "La fecha de la primera fila del archivo, como AAAA-MM-DD o "
                 "AAAA-MM-DD HH:MM[:SS]. Tiene que caer en la grilla de la "
-                "frecuencia: el primero del mes para MS, un lunes para W-MON."
+                "frecuencia: el último día del mes para la mensual a fin de "
+                "mes, un lunes para la semanal."
             ),
             pt=(
                 "A data da primeira linha do arquivo, como AAAA-MM-DD ou "
                 "AAAA-MM-DD HH:MM[:SS]. Ela precisa cair na grade da "
-                "frequência: o primeiro dia do mês para MS, uma segunda-feira "
-                "para W-MON."
+                "frequência: o último dia do mês para a mensal no fim do mês, "
+                "uma segunda-feira para a semanal."
             ),
             de=(
                 "Das Datum der ersten Zeile der Datei, als JJJJ-MM-TT oder "
                 "JJJJ-MM-TT HH:MM[:SS]. Es muss auf dem Raster der Frequenz "
-                "liegen: der Monatserste für MS, ein Montag für W-MON."
+                "liegen: der letzte Tag des Monats für die monatliche zum "
+                "Monatsende, ein Montag für die wöchentliche."
             ),
             zh=(
                 "文件第一行的日期，格式为 YYYY-MM-DD 或 YYYY-MM-DD HH:MM[:SS]。"
-                "它必须落在频率的网格上：MS 为每月第一天，W-MON 为星期一。"
+                "它必须落在频率的网格上：月末频率需为当月最后一天，每周频率需为星期一。"
             ),
         ),
         alias=MultilingualString(
@@ -71,42 +165,14 @@ class DateRangeSchema(BaseSchema):
         ),
     )  # type: ignore
     frequency: schema_field(
-        string_field(),
+        enum_field(list(FREQUENCIES), labels=FREQUENCIES),
         "D",
         description=MultilingualString(
-            en=(
-                "The step between two rows, as a pandas frequency: D (daily), "
-                "h (hourly), 15min, W-MON (weekly on Mondays), MS (month "
-                "start), ME (month end), QS (quarter start), YS (year start), "
-                "B (business day). A number in front repeats the step: 2MS is "
-                "every two months."
-            ),
-            es=(
-                "El paso entre dos filas, como frecuencia de pandas: D "
-                "(diaria), h (por hora), 15min, W-MON (semanal, los lunes), MS "
-                "(inicio de mes), ME (fin de mes), QS (inicio de trimestre), "
-                "YS (inicio de año), B (día hábil). Un número delante repite "
-                "el paso: 2MS es cada dos meses."
-            ),
-            pt=(
-                "O passo entre duas linhas, como frequência do pandas: D "
-                "(diária), h (por hora), 15min, W-MON (semanal, às "
-                "segundas-feiras), MS (início do mês), ME (fim do mês), QS "
-                "(início do trimestre), YS (início do ano), B (dia útil). Um "
-                "número na frente repete o passo: 2MS é a cada dois meses."
-            ),
-            de=(
-                "Der Schritt zwischen zwei Zeilen, als pandas-Frequenz: D "
-                "(täglich), h (stündlich), 15min, W-MON (wöchentlich, "
-                "montags), MS (Monatsanfang), ME (Monatsende), QS "
-                "(Quartalsanfang), YS (Jahresanfang), B (Werktag). Eine Zahl "
-                "davor wiederholt den Schritt: 2MS ist alle zwei Monate."
-            ),
-            zh=(
-                "两行之间的步长，使用 pandas 频率：D（每天）、h（每小时）、"
-                "15min、W-MON（每周一）、MS（月初）、ME（月末）、QS（季初）、"
-                "YS（年初）、B（工作日）。前面的数字表示重复步长：2MS 表示每两个月。"
-            ),
+            en="The step between two rows.",
+            es="El paso entre dos filas.",
+            pt="O passo entre duas linhas.",
+            de="Der Schritt zwischen zwei Zeilen.",
+            zh="两行之间的步长。",
         ),
         alias=MultilingualString(
             en="Frequency",
@@ -163,12 +229,10 @@ class DateRangeConverter(BasicPreprocessingConverter, BaseConverter):
     sorted or filled: the rows stay as they are, and the dataset gains one
     column.
 
-    What it writes always sits on the grid a forecast checks
-    (``validate_grid``): the dates are read back with the stored format and
-    checked the way ``SingleSeriesForecastingTask.prepare_series`` checks
-    them. A frequency pandas can generate but not infer back (``SMS``), a
-    start off the frequency's anchor, a step that goes backwards and fewer
-    rows than a frequency can be inferred from are refused, never corrected.
+    The frequency is one of ``FREQUENCIES``, each of which sits on the grid a
+    forecast checks (``validate_grid``) once written in the stored format and
+    read back. A start off the frequency's anchor and fewer rows than a
+    frequency can be inferred from are refused, never corrected.
 
     It only runs in a notebook (``NOTEBOOK_ONLY``): a session transforms each
     split on its own, and each would start again at the start date. It reads
@@ -254,7 +318,7 @@ class DateRangeConverter(BasicPreprocessingConverter, BaseConverter):
             The date of the first row, as ``YYYY-MM-DD`` or
             ``YYYY-MM-DD HH:MM[:SS]``. Defaults to ``"2024-01-01"``.
         frequency : str, optional
-            A pandas frequency alias. Defaults to ``"D"``.
+            One of ``FREQUENCIES``. Defaults to ``"D"``.
         column_name : str, optional
             The name of the new column. Defaults to ``"date"``.
         """
@@ -287,21 +351,21 @@ class DateRangeConverter(BasicPreprocessingConverter, BaseConverter):
         ------
         ValueError
             If the start date is not in one of ``START_FORMATS``, the
-            frequency is not a pandas alias, its step is not forward in time,
-            the start does not fall on the frequency's anchor, or the name is
-            empty.
+            frequency is not one of ``FREQUENCIES``, the start does not fall
+            on the frequency's anchor, or the name is empty.
         """
         import pandas as pd
 
         from DashAI.back.tasks.time_grid import sample_dates
 
         self._start = _parse_start(self.start_date)
-        self._offset = _parse_frequency(self.frequency)
-
-        if self._offset.n <= 0:
+        if self.frequency not in FREQUENCIES:
             raise ValueError(
-                f"The frequency must move forward in time; got '{self.frequency}'."
+                f"'frequency' must be one of {list(FREQUENCIES)}, got "
+                f"'{self.frequency}'."
             )
+        self._offset = pd.tseries.frequencies.to_offset(self.frequency)
+
         if not self._offset.is_on_offset(self._start):
             following = self._offset.rollforward(self._start)
             raise ValueError(
@@ -336,20 +400,16 @@ class DateRangeConverter(BasicPreprocessingConverter, BaseConverter):
         Raises
         ------
         ValueError
-            If there are fewer rows than a frequency can be inferred from,
-            the dates reach past the last one pandas holds or are finer than
-            a microsecond, or a forecast could not read them back on their
-            grid.
+            If there are fewer rows than a frequency can be inferred from, or
+            the dates reach past the last one pandas holds.
         """
-        import numpy as np
         import pandas as pd
         import pyarrow as pa
         from pandas.errors import OutOfBoundsDatetime
 
         from DashAI.back.converters.dataset_columns import plan_new_column_names
         from DashAI.back.dataloaders.classes.dashai_dataset import modify_table
-        from DashAI.back.tasks.time_grid import sample_dates, validate_grid
-        from DashAI.back.types.date_utils import parse_date_column
+        from DashAI.back.tasks.time_grid import sample_dates
 
         n_rows = len(x)
         if n_rows == 0:
@@ -370,31 +430,13 @@ class DateRangeConverter(BasicPreprocessingConverter, BaseConverter):
                 "start earlier or use a coarser frequency."
             ) from e
 
-        if (dates.nanosecond != 0).any():
-            raise ValueError(
-                f"Frequency '{self.frequency}' is finer than a microsecond, "
-                "which a Date column cannot store."
-            )
         self._format = _format_for(dates)
-        text = list(dates.strftime(self._format))
-
-        try:
-            validate_grid(
-                parse_date_column(pd.Series(text), self._format),
-                pd.Series(np.zeros(n_rows)),
-            )
-        except ValueError as e:
-            raise ValueError(
-                f"pandas can generate frequency '{self.frequency}' but a "
-                f"forecast cannot read it back: {e}"
-            ) from e
-
         name = plan_new_column_names(x.column_names, [self.column_name])[
             self.column_name
         ]
         return modify_table(
             x,
-            {name: pa.array(text, type=pa.string())},
+            {name: pa.array(list(dates.strftime(self._format)), type=pa.string())},
             types={**x.types, name: self.get_output_type()},
         )
 
@@ -436,30 +478,14 @@ def _parse_start(text: str) -> "pd.Timestamp":
     )
 
 
-def _parse_frequency(alias: str):
-    """The pandas offset a frequency alias names."""
-    import warnings
-
-    import pandas as pd
-
-    try:
-        # A deprecated alias ("M", "H") still names its offset; the warning
-        # pandas raises about it says nothing the user acts on here.
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", FutureWarning)
-            return pd.tseries.frequencies.to_offset(str(alias or "").strip())
-    except (ValueError, TypeError) as e:
-        raise ValueError(
-            f"'{alias}' is not a pandas frequency. Examples: {FREQUENCY_EXAMPLES}."
-        ) from e
-
-
 def _format_for(dates: "pd.DatetimeIndex") -> str:
-    """The shortest layout that writes every date without losing a part."""
+    """The date alone when every date falls at midnight, the time too if not.
+
+    The finest frequency offered is a minute, and a start date has at most
+    seconds, so no date has a fraction of a second.
+    """
     from DashAI.back.types.date_utils import DEFAULT_DATE_FORMAT
 
     if (dates == dates.normalize()).all():
         return DEFAULT_DATE_FORMAT
-    if (dates.microsecond == 0).all():
-        return "%Y-%m-%d %H:%M:%S"
-    return "%Y-%m-%d %H:%M:%S.%f"
+    return "%Y-%m-%d %H:%M:%S"
