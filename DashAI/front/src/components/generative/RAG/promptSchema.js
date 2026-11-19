@@ -15,6 +15,9 @@ export const PROMPT_TEMPLATE_PARAM = "template";
 /** Param key holding the template language. */
 export const PROMPT_LANGUAGE_PARAM = "language";
 
+/** Param key holding a saved prompt's template map, keyed by language. */
+export const PROMPT_TEMPLATES_PARAM = "templates";
+
 /** Schema type a prompt field declares. */
 const PROMPT_FIELD_TYPE = "object";
 
@@ -108,6 +111,109 @@ export function promptTemplateLanguages(component) {
   const templates = component?.metadata?.templates;
   if (!templates || typeof templates !== "object") return [];
   return Object.keys(templates);
+}
+
+/**
+ * Whether a stored template value is text a user would see.
+ *
+ * @param {*} value - One entry of a saved prompt's template map.
+ * @returns {boolean} True for a string with visible content.
+ */
+function isTemplateText(value) {
+  return typeof value === "string" && Boolean(value.trim());
+}
+
+/**
+ * The template map a saved prompt stores in its parameters.
+ *
+ * Unlike `promptTemplateLanguages`, which lists what a component ships, these
+ * helpers read what a library row saved: `parameters` holds either one
+ * explicit `template` or a `templates` map keyed by language.
+ *
+ * @param {object} [parameters] - A library prompt's stored parameters.
+ * @returns {object} Language code to template text, empty when it stores none.
+ */
+export function storedPromptTemplates(parameters) {
+  const templates = parameters?.[PROMPT_TEMPLATES_PARAM];
+  if (!templates || typeof templates !== "object" || Array.isArray(templates)) {
+    return {};
+  }
+  return templates;
+}
+
+/**
+ * List the languages a saved prompt stores a usable template for.
+ *
+ * A variant only counts when it holds text: an empty string is not something
+ * the user can read or pick.
+ *
+ * @param {object} [parameters] - A library prompt's stored parameters.
+ * @returns {string[]} The language codes with a non-blank template.
+ */
+export function storedPromptLanguages(parameters) {
+  const templates = storedPromptTemplates(parameters);
+  return Object.keys(templates).filter((code) =>
+    isTemplateText(templates[code]),
+  );
+}
+
+/**
+ * Read how a saved prompt stores its templates and which variant it points at.
+ *
+ * A non-blank explicit `template` wins over the map, matching the resolution
+ * below. Otherwise the row is a multi-language prompt: the stored `language`
+ * when the map has that key, the first variant with text when it does not. The
+ * stored key is kept even when its text is still empty, because that is the
+ * variant an editor has to write and inherited rows point at it; the options a
+ * user can pick come from `storedPromptLanguages` instead.
+ *
+ * @param {object} [parameters] - A library prompt's stored parameters.
+ * @returns {{usesTemplates: boolean, language: (string|null)}} The stored shape
+ *   and the language it is configured with.
+ */
+export function storedPromptShape(parameters) {
+  const explicit = parameters?.[PROMPT_TEMPLATE_PARAM];
+  const templates = storedPromptTemplates(parameters);
+  const keys = Object.keys(templates);
+  if (isTemplateText(explicit) || keys.length === 0) {
+    return { usesTemplates: false, language: null };
+  }
+  const stored = parameters?.[PROMPT_LANGUAGE_PARAM];
+  if (
+    typeof stored === "string" &&
+    Object.prototype.hasOwnProperty.call(templates, stored)
+  ) {
+    return { usesTemplates: true, language: stored };
+  }
+  return {
+    usesTemplates: true,
+    language: storedPromptLanguages(parameters)[0] ?? keys[0] ?? null,
+  };
+}
+
+/**
+ * Resolve the template a saved prompt stores in its parameters.
+ *
+ * A non-blank explicit `template` wins because it is what the pipeline runs.
+ * Otherwise the requested language is used, then English, then the first
+ * non-blank variant. `resolvePromptTemplate` above resolves a component's
+ * built-in templates and is not interchangeable with this function.
+ *
+ * @param {object} [parameters] - A library prompt's stored parameters.
+ * @param {string} [language] - The language to prefer.
+ * @returns {string} The template, or an empty string when there is none.
+ */
+export function resolveStoredPromptTemplate(parameters, language) {
+  const explicit = parameters?.[PROMPT_TEMPLATE_PARAM];
+  if (isTemplateText(explicit)) return explicit;
+
+  const templates = storedPromptTemplates(parameters);
+  for (const code of [language, DEFAULT_PROMPT_LANGUAGE]) {
+    if (code && isTemplateText(templates[code])) return templates[code];
+  }
+
+  const first = Object.values(templates).find(isTemplateText);
+  return first ?? "";
 }
 
 /**
