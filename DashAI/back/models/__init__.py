@@ -5,7 +5,11 @@ from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTra
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
 )
-from DashAI.back.models.hugging_face.qwen_model import Qwen25_05BInstruct, Qwen25_15BInstruct
+from DashAI.back.models.hugging_face.qwen_model import (
+    Qwen25_05BInstruct,
+    Qwen25_15BInstruct,
+    Qwen3_8B,
+)
 from DashAI.back.models.hugging_face.stable_diffusion_v1_depth_controlnet import (
     StableDiffusionXLV1ControlNet,
 )
@@ -48,4 +52,6 @@ from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRe
 from DashAI.back.models.scikit_learn.svc import SVC
 
 from DashAI.back.models.RAG import RAGPipeline
-from DashAI.back.models.hugging_face.phi_4_mini_instruct_model import Phi4MiniInstructModel
+from DashAI.back.models.hugging_face.phi_4_mini_instruct_model import (
+    Phi4MiniInstructModel,
+)
