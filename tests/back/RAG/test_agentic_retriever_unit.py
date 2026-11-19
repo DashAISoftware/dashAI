@@ -1770,6 +1770,127 @@ def test_ensemble_call_with_full_pool_is_retried_then_sufficient():
     assert trace["rounds"][0][DROPPED_OPERATIONS_KEY] == []
 
 
+def _assert_dropped_full_pool_call(entry: Dict[str, Any]) -> None:
+    """The round dropped its retriever call for lack of capacity."""
+    assert entry["verdict"] is False
+    assert entry[CALL_RETRIEVERS_KEY] == {}
+    assert len(entry[DROPPED_OPERATIONS_KEY]) == 1
+    assert CALL_RETRIEVERS_KEY in entry[DROPPED_OPERATIONS_KEY][0]
+    assert "no capacity" in entry[DROPPED_OPERATIONS_KEY][0]
+
+
+def test_depth_call_with_full_pool_on_every_attempt_continues_without_it():
+    """A model that keeps calling retrievers with a full pool does not fail.
+
+    Every attempt is still rejected with the capacity feedback, but when the
+    last one insists the call is dropped and recorded, and the next round
+    evaluates the pool it has instead of the whole retrieval failing.
+    """
+    child = _FakeChild(_chunks(5), top_k=5, default_size=2)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 4}}',
+            '{"sufficient": false, "call_retrievers": {"1": 4}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _depth(
+        child,
+        llm,
+        _RecordingPrompt(),
+        max_iters=3,
+        max_chunks=2,
+        function_call_max_trials=2,
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    assert child.retrieve_calls == [None]
+    assert len(llm.calls) == 3
+    assert len(pool) == 2
+    _assert_dropped_full_pool_call(trace["rounds"][0])
+    assert trace["rounds"][1]["verdict"] is True
+
+
+def test_ensemble_call_with_full_pool_on_every_attempt_continues_without_it():
+    """A post-round call that never leaves capacity is dropped, not fatal."""
+    child0 = _FakeChild(_chunks(5, document_id=1), top_k=2)
+    child1 = _FakeChild(_chunks(5, document_id=2), top_k=2)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 2}}',
+            '{"sufficient": false, "call_retrievers": {"2": 2}}',
+            '{"sufficient": false, "call_retrievers": {"2": 2}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _ensemble(
+        [child0, child1],
+        llm,
+        _RecordingPrompt(),
+        max_iters=3,
+        max_chunks=2,
+        function_call_max_trials=2,
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    assert len(llm.calls) == 4
+    assert child0.retrieve_calls == [2]
+    assert child1.retrieve_calls == []
+    assert len(pool) == 2
+    _assert_dropped_full_pool_call(trace["rounds"][0])
+    assert trace["rounds"][1]["calls"] == []
+    assert trace["rounds"][1]["verdict"] is True
+
+
+def test_full_pool_call_is_dropped_only_when_the_last_attempt_fails_on_capacity():
+    """A last attempt that fails for another reason still fails the retrieval."""
+    child = _FakeChild(_chunks(5), top_k=5, default_size=2)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 4}}',
+            '{"sufficient": false, "call_retrievers": {"2": 3}}',
+        ]
+    )
+    retriever = _depth(
+        child,
+        llm,
+        _RecordingPrompt(),
+        max_iters=3,
+        max_chunks=2,
+        function_call_max_trials=2,
+    )
+
+    with pytest.raises(RAGRetrieverEvaluationError) as raised:
+        retriever.retrieve("q")
+    assert "no capacity" not in str(raised.value)
+
+
+def test_ensemble_planning_full_pool_on_every_attempt_still_fails():
+    """Planning requires a retriever call, so a full pool there stays fatal."""
+    corpus = _chunks(10)
+    child0 = _FakeChild(corpus, top_k=7, corpus=corpus)
+    child1 = _FakeChild(_chunks(5, document_id=2), top_k=2)
+    decision = (
+        '{"sufficient": false, "call_retrievers": {"1": 1}, '
+        '"request_specific_chunks": {"1": [0, 1, 2, 3, 4, 5, 6]}}'
+    )
+    llm = _ScriptedLLM([decision, decision])
+    retriever = _ensemble(
+        [child0, child1],
+        llm,
+        _RecordingPrompt(),
+        max_iters=2,
+        max_chunks=7,
+        function_call_max_trials=2,
+    )
+
+    with pytest.raises(RAGRetrieverEvaluationError, match="no capacity"):
+        retriever.retrieve("q")
+    assert child0.retrieve_calls == []
+
+
 def test_ensemble_function_calling_planning_selects_child():
     """An FC planning verdict selects child 2 and the schema exposes the maps."""
     child0 = _FakeChild(_chunks(5, document_id=1), top_k=2)
