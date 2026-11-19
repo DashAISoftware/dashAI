@@ -9,6 +9,7 @@ from DashAI.back.models.RAG.exceptions import (
     RAGRetrieverEmptyChildrenError,
     RAGRetrieverError,
 )
+from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
@@ -18,7 +19,7 @@ from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
 from DashAI.back.models.RAG.retrievers.trace_utils import chunk_ref, retriever_trace
 
 
-class CrossEncoderRetriever(CompositeRetriever, ABC):
+class CrossEncoderRetriever(CompositeRetriever, ChunkScorer, ABC):
     """Abstract base for cross-encoder re-rankers.
 
     A cross-encoder processes (query, document) pairs jointly through a
