@@ -14,6 +14,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.exceptions import RAGRetrieverError
+from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
@@ -81,7 +82,7 @@ class MMRRerankerRetrieverSchema(RetrievalExpansionSchema):
     )  # type: ignore
 
 
-class MMRRerankerRetriever(CompositeRetriever):
+class MMRRerankerRetriever(CompositeRetriever, ChunkScorer):
     """Re-ranks retrieval results using Maximum Marginal Relevance for diversity.
 
     The child retriever (the ranker) determines the candidate set via its

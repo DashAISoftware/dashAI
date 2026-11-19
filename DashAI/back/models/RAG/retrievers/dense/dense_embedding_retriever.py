@@ -17,6 +17,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     RetrievalExpansionSchema,
 )
@@ -75,7 +76,7 @@ class DenseEmbeddingRetrieverSchema(RetrievalExpansionSchema):
     )  # type: ignore
 
 
-class DenseEmbeddingRetriever(UnitRetriever):
+class DenseEmbeddingRetriever(UnitRetriever, ChunkScorer):
     """Dense retriever that accepts any text embedding converter.
 
     The embedding component is specified in the schema and instantiated by

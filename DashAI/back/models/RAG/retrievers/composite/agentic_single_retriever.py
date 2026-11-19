@@ -42,6 +42,7 @@ from DashAI.back.models.RAG.RAG_defaults import (
     default_function_calling_llm,
     default_hybrid_retriever,
 )
+from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
 from DashAI.back.models.RAG.retrievers.composite.agentic_retriever import (
     AgenticRetriever,
     IncrementalFetch,
@@ -207,7 +208,7 @@ class AgenticSingleRetrieverSchema(RetrievalExpansionSchema):
     )  # type: ignore
 
 
-class AgenticSingleRetriever(AgenticRetriever):
+class AgenticSingleRetriever(AgenticRetriever, ChunkScorer):
     """Iteratively deepens a single child's retrieval under LLM supervision.
 
     Round 1 delegates to the child with no size override (its own configuration
