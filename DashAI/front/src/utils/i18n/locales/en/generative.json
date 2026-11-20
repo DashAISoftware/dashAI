@@ -252,13 +252,17 @@
         "advanced": "Advanced configuration",
         "enable": "Enable query transformation",
         "historyWindow": "History window",
+        "incomplete": "Choose a prompt and a language model before saving.",
         "language": "Language",
         "llm": "Language model",
+        "loadFailed": "Could not load the query transformation options: {{reason}}",
         "maxSubqueries": "Max sub-queries",
+        "needsDownloadedModel": "Download a language model first, then enable this stage.",
         "nQueries": "Number of queries",
         "noneAvailable": "No query transformation techniques are registered.",
         "off": "Off",
         "prompt": "Prompt",
+        "promptRequired": "This technique has no default prompt, so it cannot be enabled.",
         "unknownComponent": "this transformer is not registered; choose a prompt and a model to continue."
       },
       "unsavedIn": "Unsaved changes in: {{sections}}"

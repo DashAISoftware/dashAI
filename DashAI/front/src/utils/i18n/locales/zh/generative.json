@@ -254,10 +254,14 @@
         "language": "语言",
         "llm": "语言模型",
         "maxSubqueries": "最大子查询数",
+        "needsDownloadedModel": "请先下载一个语言模型，然后再启用此阶段。",
         "nQueries": "查询数量",
         "noneAvailable": "未注册任何查询转换技术。",
         "off": "已关闭",
         "prompt": "提示词",
+        "incomplete": "保存前请选择提示词和语言模型。",
+        "loadFailed": "无法加载查询转换选项：{{reason}}",
+        "promptRequired": "该技术没有默认提示词，无法启用。",
         "unknownComponent": "此转换器未注册；请选择提示词和模型以继续。"
       },
       "unsavedIn": "以下部分有未保存的更改：{{sections}}"

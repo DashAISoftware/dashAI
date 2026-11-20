@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import {
   Alert,
   Button,
+  CircularProgress,
   FormControlLabel,
   Stack,
   Switch,
@@ -16,78 +17,48 @@ import {
   getQueryTransformationComponents,
   getQueryTransformationPrompts,
 } from "../../../api/rag";
+import {
+  isCompleteQueryTransformationRef,
+  resolveDefaultGeneratorName,
+  resolveEnableGenerator,
+  resolveLabel,
+} from "../../../utils/ragQueryTransformation";
 
 /**
- * Reads the `llm_model` placeholder a transformer's schema declares.
- *
- * All transformation techniques share their schema, so the first component
- * carrying the placeholder carries the backend-declared default generator.
- *
- * @param {Array} transformers - The transformation components from the API.
- * @returns {string|null} The default generator name, or null when no schema
- *   declares one.
+ * The message of a failed option request, preferring the API's detail.
+ * @param {object} error - The rejection raised by the request.
+ * @returns {string} A renderable reason.
  */
-export function resolveDefaultGeneratorName(transformers) {
-  const declaring = (transformers || []).find(
-    (component) =>
-      component.schema?.properties?.llm_model?.placeholder?.component,
-  );
-  return declaring?.schema.properties.llm_model.placeholder.component ?? null;
-}
-
-/**
- * Resolves a component's display name or description, whether the API shipped
- * it as a localized string or as a multilingual object (legacy endpoints may
- * emit the raw object shape).
- *
- * @param {string|object|undefined} value - The multilingual or plain value.
- * @param {string} fallback - What to return when nothing resolvable is there.
- * @returns {string} A renderable plain string.
- */
-export function resolveLabel(value, fallback = "") {
-  if (!value) return fallback;
-  if (typeof value === "string") return value;
-  return value.en ?? value.es ?? fallsBackToFirstString(value, fallback);
-}
-
-/**
- * First string field of a multilingual object, or the fallback.
- * @param {object} value - A multilingual-shaped object.
- * @param {string} fallback - What to return when no field is a string.
- * @returns {string} The first string found, or the fallback.
- */
-function fallsBackToFirstString(value, fallback) {
-  const first = Object.values(value || {}).find(
-    (candidate) => typeof candidate === "string",
-  );
-  return typeof first === "string" ? first : fallback;
+function loadFailureReason(error) {
+  const detail = error?.response?.data?.detail;
+  if (typeof detail === "string") return detail;
+  return error?.message ?? String(error);
 }
 
 /**
  * Build the `{component, params}` reference a freshly enabled stage PUTs.
  *
  * The backend fills omitted defaults server-side, but it validates that
- * `llm_model` and `prompt` are present, so both are seeded here: the
- * backend-declared default generator (the transformation schema's
- * `llm_model` placeholder, resolved against the offered list) and the
- * technique's default prompt. Everything else is left out so the server
- * supplies it.
+ * `llm_model` and `prompt` are present, so both are seeded here: the generator
+ * the caller resolved (a downloaded model, see `resolveEnableGenerator`)
+ * and the technique's default prompt. Everything else, the optional reranker
+ * included, is left out so the server supplies its default.
  *
  * @param {object} transformerComponent - The transformer component to enable.
  * @param {string} technique - Its `metadata.technique`, to pick the prompt.
- * @param {object|null} firstGenerator - The generator to prefill, if any.
+ * @param {object|null} generator - The generator to seed, if any.
  * @param {Array} prompts - The transformation prompts to choose from.
  * @returns {object} The `{component, params}` session parameter value.
  */
 export function buildQueryTransformationRef(
   transformerComponent,
   technique,
-  firstGenerator,
+  generator,
   prompts,
 ) {
   const params = {};
-  if (firstGenerator) {
-    params.llm_model = { component: firstGenerator.name, params: {} };
+  if (generator) {
+    params.llm_model = { component: generator.name, params: {} };
   }
   const defaultPrompt = (prompts || []).find(
     (prompt) =>
@@ -128,50 +99,49 @@ export default function QueryTransformationPicker({
   const [generators, setGenerators] = useState([]);
   const [prompts, setPrompts] = useState([]);
   const [loadingTransformers, setLoadingTransformers] = useState(true);
+  const [loadingPrompts, setLoadingPrompts] = useState(true);
+  const [loadingGenerators, setLoadingGenerators] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const [blockMessage, setBlockMessage] = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const loading = loadingTransformers || loadingPrompts || loadingGenerators;
 
   useEffect(() => {
+    const recordFailure = (error) =>
+      setLoadError((previous) => previous ?? loadFailureReason(error));
+
     getQueryTransformationComponents()
       .then((data) => setTransformers(data || []))
-      .catch((error) =>
-        console.error("Failed to load query transformers:", error),
-      )
+      .catch((error) => {
+        console.error("Failed to load query transformers:", error);
+        recordFailure(error);
+      })
       .finally(() => setLoadingTransformers(false));
     getQueryTransformationPrompts()
       .then((data) => setPrompts(data || []))
-      .catch((error) =>
-        console.error("Failed to load query transformation prompts:", error),
-      );
+      .catch((error) => {
+        console.error("Failed to load query transformation prompts:", error);
+        recordFailure(error);
+      })
+      .finally(() => setLoadingPrompts(false));
     getGeneratorComponents()
       .then((data) => setGenerators(data || []))
-      .catch((error) =>
-        console.error("Failed to load generation models:", error),
-      );
+      .catch((error) => {
+        console.error("Failed to load generation models:", error);
+        recordFailure(error);
+      })
+      .finally(() => setLoadingGenerators(false));
   }, []);
 
   const enabled = value != null;
 
-  // The generator the ref points at, else the backend-declared default (the
-  // transformer schemas' `llm_model` placeholder), else the first downloaded
-  // one, else the first listed: pre-selecting one is what the backend
-  // requires on enable.
+  // The backend-declared default generator (the transformer schemas'
+  // `llm_model` placeholder). Enabling seeds a downloaded model, preferring
+  // this default: see `resolveEnableGenerator`.
   const defaultGeneratorName = useMemo(
     () => resolveDefaultGeneratorName(transformers),
     [transformers],
   );
-  const firstGenerator = useMemo(() => {
-    const current = value?.params?.llm_model?.component;
-    return (
-      (current && generators.find((generator) => generator.name === current)) ||
-      (defaultGeneratorName &&
-        generators.find(
-          (generator) => generator.name === defaultGeneratorName,
-        )) ||
-      generators.find((generator) => generator.downloaded) ||
-      generators[0] ||
-      null
-    );
-  }, [generators, value, defaultGeneratorName]);
 
   const technique = useMemo(
     () =>
@@ -195,15 +165,39 @@ export default function QueryTransformationPicker({
     [transformers],
   );
 
-  const enableWith = (transformer) =>
-    onChange(
-      buildQueryTransformationRef(
-        transformer,
-        transformer?.metadata?.technique,
-        firstGenerator,
-        prompts,
-      ),
+  // Enabling never persists a ref without a downloaded model and a prompt:
+  // the backend rejects both with an unexplained 400/409 otherwise.
+  const enableWith = (transformer) => {
+    if (loading || loadError) return;
+    const generator = resolveEnableGenerator(generators, defaultGeneratorName);
+    if (!generator) {
+      setBlockMessage(
+        t("generative:rag.config.queryTransformation.needsDownloadedModel"),
+      );
+      return;
+    }
+    const ref = buildQueryTransformationRef(
+      transformer,
+      transformer?.metadata?.technique,
+      generator,
+      prompts,
     );
+    if (!isCompleteQueryTransformationRef(ref)) {
+      setBlockMessage(
+        t("generative:rag.config.queryTransformation.promptRequired"),
+      );
+      return;
+    }
+    setBlockMessage(null);
+    onChange(ref);
+  };
+
+  // The advanced modal may only persist a complete ref; an incomplete one is
+  // refused here as well as by its disabled Done button.
+  const commitStage = (ref) => {
+    if (ref && !isCompleteQueryTransformationRef(ref)) return;
+    onChange(ref);
+  };
 
   const handleSelect = (preset) => {
     const transformer =
@@ -219,6 +213,8 @@ export default function QueryTransformationPicker({
     section?.registered !== true &&
     !transformers.some((component) => component.name === value?.component);
 
+  // Turning a stage off never depends on the option loads: the switch is only
+  // held disabled while enabling one, which needs the loaded options.
   return (
     <Stack spacing={1.5}>
       <FormControlLabel
@@ -226,7 +222,10 @@ export default function QueryTransformationPicker({
           <Switch
             size="small"
             checked={enabled}
-            disabled={transformers.length === 0}
+            disabled={
+              !enabled &&
+              (loading || Boolean(loadError) || transformers.length === 0)
+            }
             onChange={(event) =>
               event.target.checked
                 ? enableWith(transformers[0])
@@ -237,7 +236,30 @@ export default function QueryTransformationPicker({
         label={t("generative:rag.config.queryTransformation.enable")}
       />
 
-      {!loadingTransformers && transformers.length === 0 && (
+      {loading && (
+        <Stack direction="row" spacing={1} alignItems="center">
+          <CircularProgress size={14} />
+          <Typography variant="caption" color="text.secondary">
+            {t("common:loading")}
+          </Typography>
+        </Stack>
+      )}
+
+      {loadError && (
+        <Alert severity="error" sx={{ py: 0.5 }}>
+          {t("generative:rag.config.queryTransformation.loadFailed", {
+            reason: loadError,
+          })}
+        </Alert>
+      )}
+
+      {blockMessage && !loading && !loadError && (
+        <Alert severity="warning" sx={{ py: 0.5 }}>
+          {blockMessage}
+        </Alert>
+      )}
+
+      {!loading && !loadError && transformers.length === 0 && (
         <Typography variant="caption" color="text.secondary">
           {t("generative:rag.config.queryTransformation.noneAvailable")}
         </Typography>
@@ -270,7 +292,7 @@ export default function QueryTransformationPicker({
         open={showAdvanced}
         onClose={() => setShowAdvanced(false)}
         model={value}
-        setModel={onChange}
+        setModel={commitStage}
         technique={technique}
         generators={generators}
       />
