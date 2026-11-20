@@ -27,6 +27,7 @@ from DashAI.back.models.hugging_face.phi_4_mini_instruct_model import (
     Phi4MiniInstructModel,
 )
 from DashAI.back.models.hugging_face.qwen_model import (
+    Qwen3_8B,
     Qwen25_05BInstruct,
     Qwen25_3BInstruct,
     Qwen25_7BInstruct,
@@ -42,6 +43,7 @@ ALL_CHECKPOINTS = [
     Qwen25_15BInstruct,
     Qwen25_3BInstruct,
     Qwen25_7BInstruct,
+    Qwen3_8B,
     SmolLM2_360MInstruct,
     SmolLM2_17BInstruct,
     Llama31_8BInstruct,
@@ -414,3 +416,30 @@ def test_new_classes_registered_old_ones_gone():
         "MixtralModel",
     }:
         assert old not in registered
+
+
+def test_qwen3_enable_thinking_is_a_schema_parameter():
+    """The reasoning toggle is a documented schema field, not a class constant."""
+    properties = Qwen3_8B.get_schema()["properties"]
+
+    assert properties["enable_thinking"]["placeholder"] is False
+
+
+def test_qwen3_schema_parameter_controls_the_template_variable():
+    """The schema value becomes the chat-template variable and leaves the kwargs."""
+    wrapper = Qwen3_8B.__new__(Qwen3_8B)
+    enabled = {"enable_thinking": True}
+    disabled = {"enable_thinking": False}
+
+    assert wrapper._resolve_chat_template_kwargs(enabled) == {"enable_thinking": True}
+    assert enabled == {}
+    assert wrapper._resolve_chat_template_kwargs(disabled) == {"enable_thinking": False}
+    assert disabled == {}
+
+
+def test_qwen3_missing_enable_thinking_fails_loudly():
+    """A validated schema always supplies the field; bypassing it must fail."""
+    wrapper = Qwen3_8B.__new__(Qwen3_8B)
+
+    with pytest.raises(KeyError, match="enable_thinking"):
+        wrapper._resolve_chat_template_kwargs({})

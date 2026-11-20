@@ -50,6 +50,17 @@ Las sesiones se listan en el lado izquierdo de la sección Generativa, organizad
 
 ---
 
+## Razonamiento en respuestas de texto
+
+Algunos modelos de lenguaje incluyen una sección de razonamiento en su salida,
+delimitada por las etiquetas `<think>...</think>` o `<thinking>...</thinking>`.
+El chat muestra cada bloque completo generado por el modelo en un acordeón
+**Razonamiento**, cerrado inicialmente; el resto de la respuesta conserva el
+formato Markdown. Abre el acordeón para consultar el razonamiento. Las etiquetas
+incompletas y las escritas en mensajes del usuario no se extraen.
+
+---
+
 ## Parámetros
 
 Los parámetros se configuran antes de crear una sesión y pueden ajustarse en cualquier momento durante una sesión activa. Los cambios surten efecto en la próxima generación, y no se requiere reinicio.

@@ -22,8 +22,10 @@ import { useTheme } from "@mui/material/styles";
 import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import SideBar from "../../threeSectionLayout/panelContainers/SideBar";
 import PresetCardList from "./PresetCardList";
+import RAGSectionHelpDialog from "./RAGSectionHelpDialog";
 import PromptEditor from "./PromptEditor";
 import GeneratorPicker from "./GeneratorPicker";
 import QueryTransformationPicker from "./QueryTransformationPicker";
@@ -139,8 +141,13 @@ export default function RAGConfigPanel({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
+  // Which section's help modal is open, if any.
+  const [helpSection, setHelpSection] = useState(null);
+
   const load = useCallback(async () => {
     if (!sessionId) return;
+    // A help modal left open belongs to the section of the session being left.
+    setHelpSection(null);
     setLoading(true);
     setLoadFailed(false);
     try {
@@ -787,39 +794,67 @@ export default function RAGConfigPanel({
                 "&::before": { display: "none" },
               }}
             >
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon sx={{ color: "text.secondary" }} />}
-                sx={{
-                  px: 4,
-                  "& .MuiAccordionSummary-content": { my: 2, minWidth: 0 },
-                }}
-              >
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Stack direction="row" alignItems="center" spacing={1}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <AccordionSummary
+                  expandIcon={
+                    <ExpandMoreIcon sx={{ color: "text.secondary" }} />
+                  }
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    pl: 4,
+                    pr: 0,
+                    "& .MuiAccordionSummary-content": { my: 2, minWidth: 0 },
+                  }}
+                >
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Typography
+                        id={`rag-section-title-${key}`}
+                        variant="subtitle2"
+                        color={invalid ? "error.main" : "text.primary"}
+                        sx={{ fontWeight: 600 }}
+                      >
+                        {section.section_name}
+                      </Typography>
+                      {dirtySections.includes(key) && (
+                        <FiberManualRecordIcon
+                          sx={{ fontSize: 8 }}
+                          color="warning"
+                        />
+                      )}
+                    </Stack>
                     <Typography
-                      variant="subtitle2"
-                      color={invalid ? "error.main" : "text.primary"}
-                      sx={{ fontWeight: 600 }}
+                      variant="caption"
+                      color="text.secondary"
+                      noWrap
+                      sx={{ display: "block" }}
                     >
-                      {section.section_name}
+                      {sectionSummary(key)}
                     </Typography>
-                    {dirtySections.includes(key) && (
-                      <FiberManualRecordIcon
-                        sx={{ fontSize: 8 }}
-                        color="warning"
-                      />
-                    )}
-                  </Stack>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    noWrap
-                    sx={{ display: "block" }}
+                  </Box>
+                </AccordionSummary>
+                <Tooltip
+                  title={t("generative:rag.help.title", {
+                    section: section.section_name,
+                  })}
+                >
+                  <IconButton
+                    size="small"
+                    aria-label={t("generative:rag.help.button")}
+                    aria-describedby={`rag-section-title-${key}`}
+                    onClick={() => setHelpSection(key)}
+                    sx={{
+                      ml: 1,
+                      mr: 4,
+                      color: "text.secondary",
+                      flexShrink: 0,
+                    }}
                   >
-                    {sectionSummary(key)}
-                  </Typography>
-                </Box>
-              </AccordionSummary>
+                    <HelpOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
               <AccordionDetails sx={{ px: 4, pt: 0, pb: 4 }}>
                 {section.description && (
                   <Typography
@@ -836,6 +871,14 @@ export default function RAGConfigPanel({
           );
         })}
       </Box>
+
+      <RAGSectionHelpDialog
+        open={Boolean(helpSection)}
+        onClose={() => setHelpSection(null)}
+        sectionKey={helpSection}
+        section={helpSection ? configuration[helpSection] : null}
+        dirty={helpSection ? dirtySections.includes(helpSection) : false}
+      />
 
       <Box
         sx={{

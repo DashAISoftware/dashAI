@@ -203,8 +203,7 @@
   "parameters": {
    "d": 1,
    "p": 1,
-   "q": 0,
-   "season_length": 12
+   "q": 0
   },
   "split_indexes": {
    "horizon": 3,
@@ -424,8 +423,7 @@
     "optimize": true,
     "upper_bound": 1
    },
-   "q": 0,
-   "season_length": 12
+   "q": 0
   },
   "split_indexes": {
    "horizon": 3,
@@ -1063,9 +1061,7 @@
   "unevaluated_steps": 2
  },
  "holdout/seasonal_naive/run": {
-  "parameters": {
-   "season_length": 12
-  },
+  "parameters": {},
   "split_indexes": {
    "horizon": 3,
    "n_steps": 48,
@@ -1403,8 +1399,7 @@
   "parameters": {
    "d": 1,
    "p": 1,
-   "q": 0,
-   "season_length": 12
+   "q": 0
   },
   "split_indexes": {
    "horizon": 3,
@@ -1750,8 +1745,7 @@
     "optimize": true,
     "upper_bound": 1
    },
-   "q": 0,
-   "season_length": 12
+   "q": 0
   },
   "split_indexes": {
    "horizon": 3,
@@ -2767,9 +2761,7 @@
   "unevaluated_steps": 2
  },
  "rolling/seasonal_naive/run": {
-  "parameters": {
-   "season_length": 12
-  },
+  "parameters": {},
   "split_indexes": {
    "horizon": 3,
    "n_steps": 48,

@@ -28,3 +28,7 @@ stage (rewriting, expansion, or decomposition).
 - **[07-future-work.md](./07-future-work.md)** — Planned improvements:
   retrieval paradigms, PDF parsing, tree-based retrieval, message-level
   document filtering, and multi-modal support.
+- **[08-configuration-help.md](./08-configuration-help.md)** — Per-section help
+  modal in the configuration panel: interaction, content order, parameter
+  explanations, unsaved-change notice, responsive width, localization, and
+  verification.

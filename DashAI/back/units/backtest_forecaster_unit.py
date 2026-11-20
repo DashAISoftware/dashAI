@@ -197,7 +197,13 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
         from DashAI.back.tasks.time_grid import sample_dates
 
         horizon = cuts["horizon"]
-        levels = [95] if model.SUPPORTS_INTERVALS else []
+        # A trial scores only the goal metric, and no metric that reads the
+        # bounds can be one: IntervalCoverage is not optimizable, and both
+        # the API and the job refuse it as a goal. So a trial asks for no
+        # intervals, which for a bootstrapped model would cost hundreds of
+        # simulated paths per origin. If a metric of intervals ever becomes
+        # optimizable, the trial has to ask for its levels again.
+        levels: list = []
         # The switch is never searched, so the trial's model carries the run's.
         switch = {"use_exogenous": getattr(model, "use_exogenous", True)}
         scores = []

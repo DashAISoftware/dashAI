@@ -2,10 +2,12 @@
 
 Takes exactly one child retriever and delegates retrieval to it. After each
 round (except the last) the retriever asks its language model whether the
-accumulated pool is sufficient; when it is not, the model also supplies a larger
-retrieval size ``top_k`` that drives the next delegation. The retriever is
-*blind* to its child's identity: the prompt never names the child beyond the
-generic request, it just asks for a bigger retrieval.
+accumulated pool is sufficient; when it is not, the model's
+``call_retrievers`` value asks for that many *additional* chunks. The retriever
+is *blind* to its child's identity: the prompt never names the child beyond the
+generic request, it just asks for more chunks. The child is then called with its
+cumulative contributed size and only identities it had not contributed before
+enter the pool.
 
 The schema placeholders come from :mod:`DashAI.back.models.RAG.RAG_defaults`:
 ``children`` seeds the default hybrid retriever and ``llm_model`` seeds the
@@ -14,7 +16,7 @@ default RAG function-calling LLM. Both are ordinary, fully modifiable values.
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, Dict, List, Tuple
+from typing import Any, ClassVar, Dict, List, Set, Tuple
 
 from DashAI.back.core.schema_fields import (
     component_field,
@@ -42,6 +44,8 @@ from DashAI.back.models.RAG.RAG_defaults import (
 )
 from DashAI.back.models.RAG.retrievers.composite.agentic_retriever import (
     AgenticRetriever,
+    IncrementalFetch,
+    plan_incremental_fetch,
 )
 from DashAI.back.models.RAG.retrievers.composite.agentic_retriever_support import (
     LLM_RETRIEVER_CATEGORY,
@@ -52,7 +56,11 @@ from DashAI.back.models.RAG.retrievers.composite.evaluation_output import (
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
 )
-from DashAI.back.models.RAG.retrievers.composite.retrieval_pool import RetrievalPool
+from DashAI.back.models.RAG.retrievers.composite.retrieval_pool import (
+    ChunkKey,
+    RetrievalPool,
+    chunk_key,
+)
 from DashAI.back.models.RAG.retrievers.exceptions import CompositeValidationError
 from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
     CALL_RETRIEVERS_KEY,
@@ -204,14 +212,20 @@ class AgenticSingleRetriever(AgenticRetriever):
 
     Round 1 delegates to the child with no size override (its own configuration
     drives). After each round but the last, the pool is judged; an insufficient
-    verdict's ``top_k`` becomes the next delegation's retrieval-size hint,
-    clamped to the remaining budget, with a progress guarantee that turns a
-    zero-progress request into the smallest one that can add a chunk.
+    verdict's ``call_retrievers`` value asks for that many *additional* chunks.
+    The child is then called with its cumulative contributed size — the
+    identities it already contributed plus the new request, capped by
+    ``max_chunks`` plus the discarded slots — and only identities it had not
+    contributed before enter the pool, taken in the child's own ranking order,
+    so its highest-ranked unseen chunks are the ones added. Identity tracking
+    keeps a child that ignores ``top_k`` or reorders its results from being
+    starved; a response without unseen identities adds nothing, and the bounded
+    ``max_iters`` still ends the loop.
 
-    A composite child interprets that hint under its own contract. The default
+    A composite child interprets that size under its own contract. The default
     hybrid child keeps its configured budget and may therefore fill the pool
     before the first judgement; raise ``max_chunks`` or choose a child that
-    honours the hint when deeper rounds are required.
+    honours the requested cumulative size when deeper rounds are required.
     """
 
     SCHEMA = AgenticSingleRetrieverSchema
@@ -226,19 +240,19 @@ class AgenticSingleRetriever(AgenticRetriever):
     DESCRIPTION: str = MultilingualString(
         en="Delegates to one child retriever and iteratively deepens it: the"
         " agentic retriever decides whether the pool suffices and how many"
-        " chunks to retrieve next.",
+        " additional chunks to retrieve next.",
         es="Delega en un recuperador hijo y lo profundiza iterativamente: el"
         " recuperador agéntico decide si el conjunto es suficiente y cuántos"
-        " fragmentos recuperar después.",
+        " fragmentos adicionales recuperar después.",
         pt="Delega a um recuperador filho e aprofunda iterativamente: o"
         " retriever agêntico decide se o conjunto é suficiente e quantos trechos"
-        " recuperar em seguida.",
+        " adicionais recuperar em seguida.",
         de="Delegiert an einen Kind-Retriever und vertieft ihn iterativ: der"
         " agentische Retriever entscheidet, ob der Pool ausreicht und wie viele"
-        " Fragmente als Nächstes abzurufen sind.",
+        " zusätzliche Fragmente als Nächstes abzurufen sind.",
         zh=(
             "委派给一个子检索器并迭代加深：由智能体检索器决定池是否充分"
-            "以及下一步检索多少片段。"
+            "以及下一步额外检索多少片段。"
         ),
     )
 
@@ -252,16 +266,19 @@ class AgenticSingleRetriever(AgenticRetriever):
         "retriever returned them, discard_specific_chunks removes them, the two "
         "are mutually exclusive for the same chunk, and every chunk not "
         "mentioned is preserved. call_retrievers maps 1-based retriever indices "
-        "to the number of chunks to retrieve next (only index 1 is valid here). "
-        "Respect the maximum pool size and the remaining free slots. The "
-        "per-retriever top_k is a size hint; the retriever enforces the hard pool "
-        "cap. Every retriever index and chunk position must be valid, never "
-        "request and discard the same chunk, leave free capacity when calling "
-        "retrievers, and do not leave the pool empty without a retriever call or "
-        "chunk request. Chunks not mentioned stay in the pool exactly as they "
-        "are, except when the maximum capacity forces out older non-requested "
-        "chunks; requested chunks take priority. Invalid decisions are rejected "
-        "and must be retried."
+        "to the number of additional chunks to retrieve next (only index 1 is "
+        "valid here); chunks that retriever already returned are not counted "
+        "again. Any configured top_k shown in the retriever catalog is the "
+        "child's default, not a cumulative-call ceiling. Respect the maximum "
+        "pool size and the remaining free slots. The "
+        "value is an additional-chunk count, not a final absolute size; the "
+        "retriever enforces the hard pool cap. Every retriever index and chunk "
+        "position must be valid, never request and discard the same chunk, "
+        "leave free capacity when calling retrievers, and do not leave the pool "
+        "empty without a retriever call or chunk request. Chunks not mentioned "
+        "stay in the pool exactly as they are, except when the maximum capacity "
+        "forces out older non-requested chunks; requested chunks take priority. "
+        "Invalid decisions are rejected and must be retried."
     )
     FUNCTION_PARAMETERS: ClassVar[Dict[str, Any]] = {
         "type": "object",
@@ -278,8 +295,9 @@ class AgenticSingleRetriever(AgenticRetriever):
                 "additionalProperties": {"type": "integer", "minimum": 1},
                 "description": (
                     "Optional when insufficient: maps the 1-based retriever "
-                    "index (only 1 is valid) to the number of chunks to retrieve "
-                    "next. Not required every round."
+                    "index (only 1 is valid) to the number of ADDITIONAL chunks "
+                    "to retrieve next. Chunks this retriever already returned "
+                    "are not counted again. Not required every round."
                 ),
             },
             REQUEST_CHUNKS_KEY: {
@@ -352,7 +370,7 @@ class AgenticSingleRetriever(AgenticRetriever):
         query : str
             The search query string.
         **kwargs
-            Unused; delegation sizes come from the LLM verdicts.
+            Unused; additional chunk counts come from the LLM verdicts.
 
         Returns
         -------
@@ -373,28 +391,28 @@ class AgenticSingleRetriever(AgenticRetriever):
         pool = RetrievalPool(self.max_chunks, context)
         child_nodes: List[Dict[str, Any]] = []
         rounds: List[Dict[str, Any]] = []
-        requested_top_k: int | None = None
-        max_requested = 0
+        contributed: Set[ChunkKey] = set()
+        pending_fetch: IncrementalFetch | None = None
         should_delegate = True
 
         for round_index in range(self.max_iters):
             delegating = should_delegate and pool.size() < self.max_chunks
-            entry = self._build_entry(child, round_index, requested_top_k, delegating)
+            entry = self._build_entry(child, round_index, pending_fetch, delegating)
             if delegating:
-                returned = self._delegate_round(
+                self._delegate_round(
                     child,
                     query,
                     pool,
-                    requested_top_k,
+                    pending_fetch,
+                    contributed,
                     entry,
                     child_nodes,
                 )
-                max_requested = max(max_requested, returned)
             elif should_delegate:
                 # The pool is already full; still evaluate so request/discard
                 # actions can change its composition.
                 should_delegate = False
-                requested_top_k = None
+                pending_fetch = None
             rounds.append(entry)
 
             if round_index == self.max_iters - 1:
@@ -417,8 +435,8 @@ class AgenticSingleRetriever(AgenticRetriever):
                 )
             pool = prepared
             self._emit_verdict(entry, verdict)
-            requested_top_k, should_delegate = self._next_round_state(
-                verdict, pool, max_requested
+            pending_fetch, should_delegate = self._next_round_state(
+                verdict, pool, contributed
             )
 
         pool_chunks = self._apply_retrieval_expansion(pool.materialize())
@@ -429,11 +447,22 @@ class AgenticSingleRetriever(AgenticRetriever):
         child: Any,
         query: str,
         pool: RetrievalPool,
-        requested_top_k: int | None,
+        fetch: IncrementalFetch | None,
+        contributed: Set[ChunkKey],
         entry: Dict[str, Any],
         child_nodes: List[Dict[str, Any]],
-    ) -> int:
-        """Delegate one depth round and record its returned chunk count.
+    ) -> None:
+        """Delegate one depth round and merge only unseen chunk identities.
+
+        The initial round (``fetch is None``) seeds the pool with the child's
+        own result. Later rounds call the child with the cumulative
+        ``fetch.top_k`` and merge only up to ``fetch.additional`` identities the
+        child had not contributed before, in response order. Raw response
+        lengths are never used as bookkeeping, so an over-returning child
+        contributes its leading unseen chunks instead of its tail and a
+        reordering child cannot skip unseen chunks or be starved. When the
+        response contains no unseen identity, nothing is added and the round
+        simply ends; no retry or artificial chunk is created.
 
         Parameters
         ----------
@@ -442,9 +471,11 @@ class AgenticSingleRetriever(AgenticRetriever):
         query : str
             The search query string.
         pool : RetrievalPool
-            The real pool receiving the returned chunks.
-        requested_top_k : int | None
-            The size hint for this round.
+            The real pool receiving the newly fetched chunks.
+        fetch : IncrementalFetch | None
+            The planned cumulative fetch, or ``None`` for the initial round.
+        contributed : Set[ChunkKey]
+            Identities already contributed by the child. Updated in place.
         entry : Dict[str, Any]
             The round trace entry to update.
         child_nodes : List[Dict[str, Any]]
@@ -452,22 +483,32 @@ class AgenticSingleRetriever(AgenticRetriever):
 
         Returns
         -------
-        int
-            Number of chunks returned by the child.
+        None
+            The pool, the identity history and the trace entry are updated.
         """
-        new_chunks, node = self._delegate(child, query, requested_top_k)
+        top_k = None if fetch is None else fetch.top_k
+        chunks, node = self._delegate(child, query, top_k)
         child_nodes.append(node)
+        before = pool.size()
+        new_chunks = chunks if fetch is None else fetch.select_new(chunks, contributed)
         pool.add(new_chunks)
-        entry["returned"] = len(new_chunks)
-        return len(new_chunks)
+        contributed.update(chunk_key(chunk) for chunk in new_chunks)
+        entry["returned"] = len(chunks)
+        entry["added"] = pool.size() - before
 
     def _next_round_state(
         self,
         verdict: RetrievalVerdict,
         pool: RetrievalPool,
-        max_requested: int,
-    ) -> Tuple[int | None, bool]:
-        """Return the next requested size and whether to delegate again.
+        contributed: Set[ChunkKey],
+    ) -> Tuple[IncrementalFetch | None, bool]:
+        """Return the next cumulative fetch plan and whether to delegate.
+
+        The model asks for *additional* chunks. The plan's cumulative size is
+        the identities the child already contributed plus that request, capped
+        at ``max_chunks`` plus the discarded slots: discarded chunks still
+        occupy the child's ranking, so replacing one requires fetching past the
+        pool cap.
 
         Parameters
         ----------
@@ -475,27 +516,33 @@ class AgenticSingleRetriever(AgenticRetriever):
             The finalized insufficient verdict.
         pool : RetrievalPool
             The adopted pool for the next round.
-        max_requested : int
-            Largest size delegated so far.
+        contributed : Set[ChunkKey]
+            Identities the child already contributed.
 
         Returns
         -------
-        Tuple[int | None, bool]
-            The next delegation size hint and whether to delegate.
+        Tuple[IncrementalFetch | None, bool]
+            The cumulative fetch plan and whether to delegate. The fetch is
+            ``None`` and delegation stops when the verdict asks for no chunk or
+            the child's remaining usable prefix cannot add one.
         """
         calls = verdict.call_retrievers
-        if 1 in calls:
-            size = self._next_delegation_size(
-                calls, max_requested, pool.discarded_count()
-            )
-            return size, True
-        return None, False
+        if 1 not in calls:
+            return None, False
+        fetch = plan_incremental_fetch(
+            len(contributed),
+            calls[1],
+            self.max_chunks + pool.discarded_count(),
+        )
+        if fetch.additional <= 0:
+            return None, False
+        return fetch, True
 
     def _build_entry(
         self,
         child: Any,
         round_index: int,
-        requested_top_k: int | None,
+        fetch: IncrementalFetch | None,
         delegating: bool,
     ) -> Dict[str, Any]:
         """Build the trace entry for one depth round.
@@ -506,8 +553,8 @@ class AgenticSingleRetriever(AgenticRetriever):
             The delegated child retriever.
         round_index : int
             Zero-based round index.
-        requested_top_k : int | None
-            The size hint requested for this round, if delegating.
+        fetch : IncrementalFetch | None
+            The planned cumulative fetch for this round, if delegating.
         delegating : bool
             Whether this round delegates retrieval to the child.
 
@@ -515,35 +562,22 @@ class AgenticSingleRetriever(AgenticRetriever):
         -------
         Dict[str, Any]
             A JSON-serializable round summary with the action maps initialized.
+            ``requested_top_k`` is the actual cumulative call size, ``returned``
+            is the raw child response count and ``added`` is the number of
+            chunks the pool gained from this call.
         """
+        requested_top_k = fetch.top_k if fetch is not None and delegating else None
         return {
             "round": round_index + 1,
             "name": type(child).__name__,
-            "requested_top_k": requested_top_k if delegating else None,
+            "requested_top_k": requested_top_k,
             "returned": 0,
+            "added": 0,
             "verdict": None,
             CALL_RETRIEVERS_KEY: {},
             REQUEST_CHUNKS_KEY: {},
             DISCARD_KEY: {},
         }
-
-    def _next_delegation_size(
-        self, calls: Dict[int, int], max_requested: int, discarded_count: int
-    ) -> int:
-        """Return the next delegation size.
-
-        The model's requested size is capped by ``max_chunks`` plus the number
-        of discarded slots. Discarded chunks still occupy the child's prefix,
-        so replacing one requires fetching past the pool cap; the pool itself
-        keeps materializing at most ``max_chunks`` chunks. When the request
-        would not exceed the largest size already delegated, it is raised to the
-        smallest size that can add a chunk.
-        """
-        call_limit = self.max_chunks + discarded_count
-        size = min(calls[1], call_limit)
-        if size > max_requested:
-            return size
-        return min(max_requested + 1, call_limit)
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
         """Score chunks by delegating to the single child.

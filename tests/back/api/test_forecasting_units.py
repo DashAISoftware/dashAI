@@ -22,7 +22,12 @@ from DashAI.back.units.backtest_forecaster_unit import BacktestForecasterUnit
 from DashAI.back.units.build_forecaster_unit import BuildForecasterUnit
 from DashAI.back.units.context import ExecutionContext
 from DashAI.back.units.fit_final_forecaster_unit import FitFinalForecasterUnit
-from DashAI.back.units.forecast_scope import season_length_for
+from DashAI.back.units.forecast_scope import (
+    kept_parameters,
+    resolved_parameters,
+    season_length_for,
+    season_reason,
+)
 from DashAI.back.units.prepare_series_unit import PrepareSeriesUnit
 from DashAI.back.units.score_forecasts_unit import ScoreForecastsUnit
 
@@ -135,6 +140,149 @@ def test_the_season_follows_the_frequency(freq, season):
     assert season_length_for(freq) == season
 
 
+@pytest.mark.parametrize(
+    ("freq", "season"),
+    [
+        # The base steps. pandas 2.2 spells month, quarter and year ends with
+        # an E ("ME", "QE-DEC", "YE-DEC"); the bare "M", "Q" and "Y" warn.
+        ("D", 7),
+        ("B", 5),
+        ("W", 52),
+        ("h", 24),
+        ("ME", 12),
+        ("QE", 4),
+        ("YE", 1),
+        # A multiple divides the base cycle when it can, and 1 when it cannot.
+        ("3D", 1),
+        ("2h", 12),
+        ("15min", 4),
+        # Anchored frequencies count by their base step.
+        ("SMS", 24),
+        ("SME", 24),
+        ("BMS", 12),
+        ("QS", 4),
+        # A fixed step counts in its largest whole unit before the multiple
+        # divides the cycle: 24 hours are a day, 7 days a week.
+        ("24h", 7),
+        ("60min", 24),
+        ("1440min", 7),
+        ("7D", 52),
+        ("14D", 26),
+        ("48h", 1),
+        ("120min", 12),
+        ("90min", 1),
+        ("3600s", 24),
+        # Seconds repeat every minute.
+        ("s", 60),
+        ("30s", 2),
+        # A step the table does not know assumes no season.
+        ("ms", 1),
+        ("1500ms", 1),
+    ],
+)
+def test_the_season_divides_the_cycle_by_the_step(freq, season):
+    assert season_length_for(freq) == season
+
+
+@pytest.mark.parametrize(
+    ("freq", "reason"),
+    [
+        # A step the app can name, taken once: the season of that step.
+        ("MS", {"key": "seasonFromStep", "values": {"step": "M"}}),
+        ("ME", {"key": "seasonFromStep", "values": {"step": "M"}}),
+        ("D", {"key": "seasonFromStep", "values": {"step": "D"}}),
+        ("h", {"key": "seasonFromStep", "values": {"step": "h"}}),
+        ("YS", {"key": "seasonFromStep", "values": {"step": "Y"}}),
+        ("W-SUN", {"key": "seasonFromStep", "values": {"step": "W"}}),
+        ("B", {"key": "seasonFromStep", "values": {"step": "B"}}),
+        ("SMS", {"key": "seasonFromStep", "values": {"step": "SM"}}),
+        ("QS-JAN", {"key": "seasonFromStep", "values": {"step": "Q"}}),
+        # Read in its largest whole unit first, as season_length_for does.
+        ("24h", {"key": "seasonFromStep", "values": {"step": "D"}}),
+        # A multiple, or a step the table does not know: the frequency itself.
+        ("15min", {"key": "seasonFromFrequency", "values": {"freq": "15min"}}),
+        ("3D", {"key": "seasonFromFrequency", "values": {"freq": "3D"}}),
+        ("ms", {"key": "seasonFromFrequency", "values": {"freq": "ms"}}),
+    ],
+)
+def test_the_season_says_which_frequency_it_came_from(freq, reason):
+    assert season_reason(freq) == reason
+
+
+MONTHLY_SEASON = {
+    "value": 12,
+    "reason": {"key": "seasonFromStep", "values": {"step": "M"}},
+}
+EMPTY_ENVELOPE = {
+    "optimize": False,
+    "fixed_value": None,
+    "lower_bound": 1,
+    "upper_bound": 12,
+}
+
+
+@pytest.mark.parametrize(
+    "given",
+    [{}, {"season_length": None}, {"season_length": EMPTY_ENVELOPE}],
+    ids=["left_out", "none", "empty_envelope"],
+)
+def test_a_season_left_empty_is_recorded_with_where_it_came_from(given):
+    from DashAI.back.models.forecasting.seasonal_naive import (
+        SeasonalNaiveForecaster,
+    )
+
+    model = SeasonalNaiveForecaster(season_length=12)
+
+    assert resolved_parameters(model, given, "MS") == {"season_length": MONTHLY_SEASON}
+
+
+@pytest.mark.parametrize(
+    "given",
+    [
+        {"season_length": 1},
+        {"season_length": {**EMPTY_ENVELOPE, "fixed_value": 12}},
+        # Searched: the search chose it, not the frequency.
+        {"season_length": {**EMPTY_ENVELOPE, "optimize": True}},
+    ],
+    ids=["given", "given_envelope", "searched"],
+)
+def test_a_season_the_run_gives_or_searches_is_not_recorded(given):
+    from DashAI.back.models.forecasting.seasonal_naive import (
+        SeasonalNaiveForecaster,
+    )
+
+    model = SeasonalNaiveForecaster(season_length=12)
+
+    assert resolved_parameters(model, given, "MS") == {}
+
+
+def test_a_model_without_a_season_records_nothing():
+    from DashAI.back.models.forecasting.naive import NaiveForecaster
+
+    assert resolved_parameters(NaiveForecaster(), {}, "MS") == {}
+
+
+@pytest.mark.parametrize(
+    ("given", "kept"),
+    [
+        ({}, {}),
+        ({"season_length": None}, {"season_length": None}),
+        ({"season_length": EMPTY_ENVELOPE}, {"season_length": EMPTY_ENVELOPE}),
+    ],
+    ids=["left_out", "none", "empty_envelope"],
+)
+def test_the_run_keeps_the_season_left_empty(given, kept):
+    used = {"season_length": 12}
+
+    assert kept_parameters(used, given, {"season_length": MONTHLY_SEASON}) == kept
+
+
+def test_the_run_keeps_what_it_used_for_the_rest():
+    used = {"season_length": 3, "p": 2}
+
+    assert kept_parameters(used, {"season_length": 3, "p": 1}, {}) == used
+
+
 def _build(params):
     ctx = _context(task_name=TASK, grid=GRID.to_ref())
     BuildForecasterUnit(
@@ -154,6 +302,64 @@ def test_a_season_given_is_kept_even_if_it_is_one():
     ctx = _build({"season_length": 1})
 
     assert ctx.require("model").season_length == 1
+
+
+def test_a_season_left_empty_comes_from_the_grid():
+    # What the run form sends for a season the user leaves empty.
+    ctx = _build({"season_length": None})
+
+    assert ctx.require("model").season_length == 12
+    assert ctx.require("model_parameters") == {"season_length": 12}
+
+
+def test_a_season_envelope_left_empty_comes_from_the_grid():
+    # The same, for a parameter the form draws with its search switch.
+    envelope = {
+        "optimize": False,
+        "fixed_value": None,
+        "lower_bound": 1,
+        "upper_bound": 12,
+    }
+
+    ctx = _build({"season_length": envelope})
+
+    assert ctx.require("model").season_length == 12
+    assert ctx.require("model_parameters")["season_length"] == {
+        **envelope,
+        "fixed_value": 12,
+    }
+
+
+def test_a_searched_season_left_empty_starts_from_the_grid_and_is_searched():
+    envelope = {
+        "optimize": True,
+        "fixed_value": None,
+        "lower_bound": 2,
+        "upper_bound": 12,
+    }
+
+    ctx = _build({"season_length": envelope})
+
+    assert ctx.require("model_parameters")["season_length"] == {
+        **envelope,
+        "fixed_value": 12,
+    }
+    assert ctx.require("factory").optimizable_parameters
+
+
+@pytest.mark.parametrize("optimize", [False, True])
+def test_a_season_envelope_without_a_fixed_value_comes_from_the_grid(optimize):
+    # An envelope with no fixed value at all is as empty as one whose fixed
+    # value is None.
+    envelope = {"optimize": optimize, "lower_bound": 2, "upper_bound": 12}
+
+    ctx = _build({"season_length": envelope})
+
+    assert ctx.require("model").season_length == 12
+    assert ctx.require("model_parameters")["season_length"] == {
+        **envelope,
+        "fixed_value": 12,
+    }
 
 
 # --- BacktestForecasterUnit --------------------------------------------------

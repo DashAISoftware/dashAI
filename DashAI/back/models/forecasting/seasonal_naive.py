@@ -1,8 +1,14 @@
 from typing import TYPE_CHECKING, Any, Optional
 
-from DashAI.back.core.schema_fields import BaseSchema, int_field, search_space
+from DashAI.back.core.schema_fields import (
+    BaseSchema,
+    int_field,
+    none_type,
+    search_space,
+)
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.forecasting.single_series_forecasting_model import (
+    SEASON_FROM_FREQUENCY,
     SingleSeriesForecastingModel,
 )
 
@@ -14,40 +20,39 @@ class SeasonalNaiveForecasterSchema(BaseSchema):
     """Schema that configures the seasonal naive forecaster."""
 
     season_length: search_space(
-        int_field(ge=1),
-        fixed=1,
+        none_type(int_field(ge=1)),
+        fixed=None,
         low=1,
         high=12,
         description=MultilingualString(
             en=(
                 "How many observations make up one full cycle: 12 for monthly "
-                "data repeating yearly, 7 for daily data repeating weekly. "
-                "Leave it at 1 when the series has no season, which makes this "
-                "the plain naive forecast."
+                "data repeating yearly, 7 for daily data repeating weekly. 1 "
+                "makes this the plain naive forecast. "
+                f"{SEASON_FROM_FREQUENCY.en}"
             ),
             es=(
                 "Cuántas observaciones forman un ciclo completo: 12 para datos "
                 "mensuales que se repiten cada año, 7 para datos diarios que se "
-                "repiten cada semana. Dejar en 1 cuando la serie no tiene "
-                "estacionalidad, lo que equivale al pronóstico ingenuo simple."
+                "repiten cada semana. Con 1 equivale al pronóstico ingenuo "
+                f"simple. {SEASON_FROM_FREQUENCY.es}"
             ),
             pt=(
                 "Quantas observações formam um ciclo completo: 12 para dados "
                 "mensais que se repetem a cada ano, 7 para dados diários que se "
-                "repetem a cada semana. Deixe em 1 quando a série não tem "
-                "sazonalidade, o que equivale à previsão ingênua simples."
+                "repetem a cada semana. Com 1 equivale à previsão ingênua "
+                f"simples. {SEASON_FROM_FREQUENCY.pt}"
             ),
             de=(
                 "Wie viele Beobachtungen einen vollen Zyklus bilden: 12 für "
                 "monatliche Daten mit jährlicher Wiederholung, 7 für "
-                "tägliche Daten mit wöchentlicher. Bei 1 belassen, wenn die "
-                "Reihe keine Saison hat, was der einfachen naiven Prognose "
-                "entspricht."
+                "tägliche Daten mit wöchentlicher. Mit 1 entspricht es der "
+                f"einfachen naiven Prognose. {SEASON_FROM_FREQUENCY.de}"
             ),
             zh=(
                 "一个完整周期包含多少个观测值：月度数据按年重复为 12，"
-                "日度数据按周重复为 7。序列没有季节性时保持为 1，"
-                "此时等同于普通的朴素预测。"
+                "日度数据按周重复为 7。为 1 时等同于普通的朴素预测。"
+                f"{SEASON_FROM_FREQUENCY.zh}"
             ),
         ),
         alias=MultilingualString(

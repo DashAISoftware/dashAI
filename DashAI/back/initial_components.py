@@ -280,6 +280,9 @@ from DashAI.back.models.forecasting.drift import DriftForecaster
 from DashAI.back.models.forecasting.exponential_smoothing import ExponentialSmoothing
 from DashAI.back.models.forecasting.mean import MeanForecaster
 from DashAI.back.models.forecasting.naive import NaiveForecaster
+from DashAI.back.models.forecasting.recursive_regression import (
+    RecursiveRegressionForecaster,
+)
 from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
 from DashAI.back.models.forecasting.theta import Theta
 from DashAI.back.models.hugging_face.albert_transformer import AlbertTransformer
@@ -335,6 +338,7 @@ from DashAI.back.models.hugging_face.phi_4_mini_instruct_model import (
 )
 from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigma
 from DashAI.back.models.hugging_face.qwen_model import (
+    Qwen3_8B,
     Qwen25_05BInstruct,
     Qwen25_3BInstruct,
     Qwen25_7BInstruct,
@@ -711,6 +715,7 @@ def get_initial_components():
         ARIMA,
         ExponentialSmoothing,
         Theta,
+        RecursiveRegressionForecaster,
         FaissDBSCANClustering,
         FaissKMeansClustering,
         AdaBoostClassifier,
@@ -774,6 +779,7 @@ def get_initial_components():
         Qwen25_15BInstruct,
         Qwen25_3BInstruct,
         Qwen25_7BInstruct,
+        Qwen3_8B,
         OpusMtRoaEnTransformer,
         RandomForestClassifier,
         RobertaTransformer,
