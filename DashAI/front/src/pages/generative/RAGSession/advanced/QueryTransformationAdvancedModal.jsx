@@ -14,10 +14,19 @@ import { resolveRagLlmDefaults } from "./resolveRagLlmDefaults";
 
 /**
  * Transformer params that keep their specialized control instead of being
- * rendered by the generic schema form: the nested LLM model. The prompt is a
- * schema field now, drawn as a prompt card by `FormSchemaWithPrompts`.
+ * rendered by the generic schema form: the nested LLM model. The prompt and the
+ * optional reranker are schema fields now, drawn by the generic form (a prompt
+ * card and a component field).
  */
 const TRANSFORMER_EXCLUDED_FIELDS = ["llm_model"];
+
+/**
+ * Transformer params whose cleared value is a choice the backend understands
+ * rather than an omission: `max_subqueries: null` means "no limit" and
+ * `reranker: null` means "no reranking", so the key is persisted as an explicit
+ * null. Dropping it would let the schema placeholder reinstate the default.
+ */
+const NULLABLE_TRANSFORMER_FIELDS = ["max_subqueries", "reranker"];
 
 /**
  * Decide which of the transformation LLM's parameter values a form submission
@@ -118,9 +127,10 @@ export default function QueryTransformationAdvancedModal({
   /**
    * Merges the transformer's schema values into the stage params.
    * `llm_model` is edited by its own control, so it is left untouched; a
-   * cleared scalar is dropped so the backend re-resolves it. The prompt now
-   * arrives as the canonical `{component, params}` reference and is stored as
-   * such.
+   * cleared scalar is dropped so the backend re-resolves it, except for the
+   * nullable ones whose cleared state is an explicit choice (`max_subqueries`
+   * cleared means "no limit"). The prompt now arrives as the canonical
+   * `{component, params}` reference and is stored as such.
    */
   const handleTransformerFormSubmit = (values) =>
     setParams((prev) => {
@@ -129,7 +139,11 @@ export default function QueryTransformationAdvancedModal({
         if (TRANSFORMER_EXCLUDED_FIELDS.includes(key)) continue;
         const value = values[key];
         if (value === "" || value === null || value === undefined) {
-          delete next[key];
+          if (NULLABLE_TRANSFORMER_FIELDS.includes(key)) {
+            next[key] = null;
+          } else {
+            delete next[key];
+          }
         } else {
           next[key] = value;
         }
@@ -248,7 +262,10 @@ export default function QueryTransformationAdvancedModal({
     });
 
   // A stage needs its LLM and prompt before it can be saved.
-  const complete = isCompleteQueryTransformationRef({ params });
+  // A reranker that is a composite also needs its children defined.
+  const [retrieversComplete, setRetrieversComplete] = useState(true);
+  const complete =
+    isCompleteQueryTransformationRef({ params }) && retrieversComplete;
 
   const handleDone = () => {
     if (!complete) return;
@@ -325,6 +342,7 @@ export default function QueryTransformationAdvancedModal({
               excludeFields={TRANSFORMER_EXCLUDED_FIELDS}
               promptFilter={promptOptionsFilter}
               onFormSubmit={handleTransformerFormSubmit}
+              onRetrieversCompleteChange={setRetrieversComplete}
             />
           </FormSchemaContainer>
         )}
