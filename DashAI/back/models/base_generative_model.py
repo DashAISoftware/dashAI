@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, Final, List, Tuple, Union
+from typing import Any, Dict, Final, List, Optional, Tuple, Union
 
 from DashAI.back.config_object import ConfigObject
 
@@ -59,3 +59,29 @@ class BaseGenerativeModel(ConfigObject, metaclass=ABCMeta):
             A list of generated outputs (e.g. strings, images).
         """
         raise NotImplementedError
+
+    def count_tokens(self, messages: List[Dict[str, str]]) -> Optional[int]:
+        """Count the prompt tokens a chat history would occupy.
+
+        Parameters
+        ----------
+        messages : list of dict
+            Conversation in OpenAI chat format (``role`` and ``content``).
+
+        Returns
+        -------
+        int or None
+            Estimated prompt token count, or ``None`` if the model cannot
+            count tokens.
+        """
+        return None
+
+    def context_limits(self) -> Optional[Tuple[int, int]]:
+        """Report the model's context limits, when known.
+
+        Returns
+        -------
+        tuple of int, or None
+            ``(context_window, max_tokens)``, or ``None`` if unknown.
+        """
+        return None

@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List, Optional, Tuple
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -11,7 +11,10 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.hugging_face.gguf_text_generation_base import (
     _release_llama_model,
 )
-from DashAI.back.models.hugging_face.llama_utils import load_llama_or_raise
+from DashAI.back.models.hugging_face.llama_utils import (
+    count_chat_tokens,
+    load_llama_or_raise,
+)
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
@@ -506,6 +509,31 @@ class Phi4MiniInstructModel(TextToTextGenerationTaskModel):
         if model is None:
             return
         _release_llama_model(model, type(self).__name__)
+
+    def count_tokens(self, messages: List[Dict[str, str]]) -> Optional[int]:
+        """Estimate the prompt tokens the given chat history occupies.
+
+        Parameters
+        ----------
+        messages : list of dict
+            Conversation in OpenAI chat format.
+
+        Returns
+        -------
+        int
+            Estimated prompt token count.
+        """
+        return count_chat_tokens(self.model, messages)
+
+    def context_limits(self) -> Optional[Tuple[int, int]]:
+        """Return the configured context window and generation limit.
+
+        Returns
+        -------
+        tuple of int
+            ``(context_window, max_tokens)``.
+        """
+        return (self.n_ctx, self.max_tokens)
 
     def generate(self, prompt: list[dict[str, str]]) -> List[str]:
         output = self.model.create_chat_completion(

@@ -9,6 +9,7 @@ from kink import di
 
 from DashAI.back.dependencies.downloads.downloadable import HFDownloadableMixin
 from DashAI.back.initial_components import get_initial_components
+from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.hugging_face import llama_utils
 from DashAI.back.models.hugging_face.llama_model import (
     Llama31_8BInstruct,
@@ -414,3 +415,35 @@ def test_new_classes_registered_old_ones_gone():
         "MixtralModel",
     }:
         assert old not in registered
+
+
+class _WordTokenizerLlama:
+    """Tokenizes by words and has no chat template."""
+
+    metadata: dict = {}
+
+    def tokenize(self, text: bytes, add_bos: bool = True, special: bool = False):
+        return text.decode().split()
+
+
+def test_count_chat_tokens_without_template_adds_overhead_and_margin():
+    messages = [
+        {"role": "user", "content": "one two three"},
+        {"role": "assistant", "content": "four"},
+    ]
+    count = llama_utils.count_chat_tokens(_WordTokenizerLlama(), messages)
+    expected = 4 + 2 * llama_utils.CHAT_MESSAGE_OVERHEAD + llama_utils.CHAT_TOKEN_MARGIN
+    assert count == expected
+
+
+def test_base_generative_model_cannot_count_by_default():
+    class _Minimal(BaseGenerativeModel):
+        def __init__(self, **kwargs):
+            pass
+
+        def generate(self, input):
+            return []
+
+    model = _Minimal()
+    assert model.count_tokens([]) is None
+    assert model.context_limits() is None

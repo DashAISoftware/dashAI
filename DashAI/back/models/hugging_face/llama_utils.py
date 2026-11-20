@@ -12,6 +12,13 @@ from packaging.version import Version
 
 logger = logging.getLogger(__name__)
 
+#: Estimated per-message token overhead (role markers, separators) used when the
+#: model has no chat template.
+CHAT_MESSAGE_OVERHEAD = 8
+
+#: Safety margin added to every chat token count.
+CHAT_TOKEN_MARGIN = 16
+
 try:
     import llama_cpp
 except ImportError:
@@ -667,3 +674,51 @@ def __is_gpu_available_for_llama_cpp_v02() -> bool:
     """
     lib = llama_cpp.llama_cpp._load_shared_library("llama")
     return hasattr(lib, "ggml_init_cublas")
+
+
+def count_chat_tokens(llama, messages: list[dict[str, str]]) -> int:
+    """Estimate the number of prompt tokens a chat history occupies.
+
+    If the model ships a chat template, the messages are rendered with it and
+    the resulting prompt is tokenized. Otherwise (or if rendering fails) the
+    message contents are tokenized and a fixed overhead is added per message.
+
+    Parameters
+    ----------
+    llama : llama_cpp.Llama
+        Loaded model used for tokenization.
+    messages : list of dict
+        Conversation in OpenAI chat format (``role`` and ``content``).
+
+    Returns
+    -------
+    int
+        Estimated token count, including ``CHAT_TOKEN_MARGIN``.
+    """
+    template = (getattr(llama, "metadata", None) or {}).get("tokenizer.chat_template")
+    if template:
+        try:
+            from llama_cpp.llama_chat_format import Jinja2ChatFormatter
+
+            eos = llama.detokenize([llama.token_eos()], special=True).decode(
+                errors="ignore"
+            )
+            bos = llama.detokenize([llama.token_bos()], special=True).decode(
+                errors="ignore"
+            )
+            formatter = Jinja2ChatFormatter(
+                template=template, eos_token=eos, bos_token=bos
+            )
+            prompt = formatter(messages=messages).prompt
+            tokens = llama.tokenize(prompt.encode(), add_bos=False, special=True)
+            return len(tokens) + CHAT_TOKEN_MARGIN
+        except Exception:
+            logger.debug(
+                "Chat template rendering failed; using estimate.", exc_info=True
+            )
+    total = sum(
+        len(llama.tokenize(m["content"].encode(), add_bos=False))
+        + CHAT_MESSAGE_OVERHEAD
+        for m in messages
+    )
+    return total + CHAT_TOKEN_MARGIN
