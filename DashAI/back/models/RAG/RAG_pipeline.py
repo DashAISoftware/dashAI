@@ -22,6 +22,8 @@ from DashAI.back.models.RAG.exceptions import (
     RAGPipelineConfigError,
     RAGPipelineInputError,
     RAGPipelineRuntimeError,
+    RAGQueryTransformationError,
+    RAGTransformationError,
 )
 from DashAI.back.models.RAG.progress_utils import (
     normalize_progress_text,
@@ -659,8 +661,11 @@ class RAGPipeline(BaseGenerativeModel):
 
         Raises
         ------
-        RAGPipelineRuntimeError
-            If the transformation fails or returns no queries.
+        RAGQueryTransformationError
+            If the transformation fails or returns no queries. The stage's
+            component-level error is kept as the ``__cause__`` of the wrapper,
+            so a caller can tell a configuration failure from an unparseable
+            output without losing the original traceback.
         """
         if self.query_transformation is None:
             return ResolvedQueries(queries=[input_message], transformed_queries=None)
@@ -668,15 +673,23 @@ class RAGPipeline(BaseGenerativeModel):
             transformation_result = self.query_transformation.transform(
                 message=input_message, history=list(history)
             )
-        except RAGPipelineRuntimeError:
+        except RAGTransformationError as e:
+            raise RAGQueryTransformationError(
+                f"Query transformation failed: {str(e)}"
+            ) from e
+        except RAGQueryTransformationError:
+            # Already the stage-level typed error; wrapping it again would
+            # stack a second "Query transformation failed" prefix.
             raise
         except Exception as e:
-            raise RAGPipelineRuntimeError(
+            raise RAGQueryTransformationError(
                 f"Query transformation failed: {str(e)}"
             ) from e
         raw_queries = getattr(transformation_result, "queries", None)
         if not isinstance(raw_queries, list) or not raw_queries:
-            raise RAGPipelineRuntimeError("Query transformation returned no queries.")
+            raise RAGQueryTransformationError(
+                "Query transformation returned no queries."
+            )
         transformed_queries = list(raw_queries)
         return ResolvedQueries(
             queries=transformed_queries,

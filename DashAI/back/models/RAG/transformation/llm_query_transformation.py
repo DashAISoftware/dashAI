@@ -22,6 +22,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.exceptions import (
     RAGTransformationConfigError,
+    RAGTransformationGenerationError,
     RAGTransformationOutputError,
 )
 from DashAI.back.models.RAG.progress_utils import (
@@ -355,9 +356,10 @@ class LLMQueryTransformation(BaseQueryTransformation):
         RAGTransformationConfigError
             If the function-calling route is selected but misconfigured, or the
             prompt/model prerequisites are missing.
+        RAGTransformationGenerationError
+            If the function-calling backend failed to emit a call.
         RAGTransformationOutputError
-            If the model produced no usable output or the function-calling
-            backend failed to emit a call.
+            If the model produced no usable output.
         """
         history_block = format_history(history, self.history_window)
         arguments = self._obtain_arguments(message, history_block)
@@ -446,18 +448,23 @@ class LLMQueryTransformation(BaseQueryTransformation):
         RAGTransformationConfigError
             If the technique declares no function spec, or the model reports
             function-calling support without implementing it.
+        RAGTransformationGenerationError
+            If the function-calling backend raised before emitting a call.
         RAGTransformationOutputError
-            If the backend failed to emit a call, the model did not call the
-            expected function, or it returned arguments that are not a JSON
-            object. Retried up to ``function_call_max_trials`` attempts; the
-            last error is raised once the attempts are exhausted.
+            If the model did not call the expected function, or it returned
+            arguments that are not a JSON object. Retried up to
+            ``function_call_max_trials`` attempts; the last error is raised
+            once the attempts are exhausted.
         """
         spec = self._function_call_spec()
         messages = [{"role": "user", "content": prompt_text}]
         for attempt in range(1, self.function_call_max_trials):
             try:
                 return self._attempt_function_call(messages, spec)
-            except RAGTransformationOutputError as err:
+            except (
+                RAGTransformationOutputError,
+                RAGTransformationGenerationError,
+            ) as err:
                 logger.warning(
                     "Function-calling attempt %d of %d failed for %s; retrying: %s",
                     attempt,
@@ -514,8 +521,11 @@ class LLMQueryTransformation(BaseQueryTransformation):
         RAGTransformationConfigError
             If the model reports support but implements no function-calling
             method.
+        RAGTransformationGenerationError
+            If the backend failed to emit a call.
         RAGTransformationOutputError
-            If the backend failed or returned an unusable call.
+            If the returned call is unusable (wrong function, non-object
+            arguments or an unexpected result shape).
         """
         try:
             result = self.llm_model.generate_function_call(
@@ -528,11 +538,11 @@ class LLMQueryTransformation(BaseQueryTransformation):
                 "not implement generate_function_call."
             ) from err
         except Exception as err:
-            # Normalize every backend failure (RuntimeError/ValueError raised by
-            # the base implementations, or unexpected KeyError/TypeError from a
-            # drifted backend) so RAG_pipeline's RAGTransformationError handling
-            # degrades the chat turn gracefully.
-            raise RAGTransformationOutputError(
+            # The backend was reached but failed to emit a call. Keep this
+            # distinct from an unparseable output so callers can tell a broken
+            # model/backend from a model that answered in the wrong shape. The
+            # cause chain preserves the original exception for diagnostics.
+            raise RAGTransformationGenerationError(
                 f"Function calling failed: {err}"
             ) from err
         return self._validate_function_call_result(result)

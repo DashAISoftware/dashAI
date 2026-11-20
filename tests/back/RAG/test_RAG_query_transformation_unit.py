@@ -20,6 +20,7 @@ from DashAI.back.models.hugging_face.gguf_text_generation_base import (
 )
 from DashAI.back.models.RAG.exceptions import (
     RAGTransformationConfigError,
+    RAGTransformationGenerationError,
     RAGTransformationOutputError,
 )
 from DashAI.back.models.RAG.progress_utils import progress_scope
@@ -653,30 +654,30 @@ class TestFunctionCallingRoute:
         ):
             _expander(None, llm_model=stub).transform("hi", [])
 
-    def test_function_calling_runtime_error_wrapped_as_output_error(self):
-        stub = FunctionCallingStubLLM(
-            generate_error=RuntimeError(
-                "The function calling model did not emit a call for 'expand_query'."
-            )
+    def test_function_calling_runtime_error_wrapped_as_generation_error(self):
+        error = RuntimeError(
+            "The function calling model did not emit a call for 'expand_query'."
         )
+        stub = FunctionCallingStubLLM(generate_error=error)
         with pytest.raises(
-            RAGTransformationOutputError, match="Function calling failed"
-        ):
+            RAGTransformationGenerationError, match="Function calling failed"
+        ) as excinfo:
             _expander(None, llm_model=stub).transform("hi", [])
+        assert excinfo.value.__cause__ is error
 
-    def test_function_calling_value_error_wrapped_as_output_error(self):
+    def test_function_calling_value_error_wrapped_as_generation_error(self):
         stub = FunctionCallingStubLLM(generate_error=ValueError("bad function spec"))
         with pytest.raises(
-            RAGTransformationOutputError, match="Function calling failed"
+            RAGTransformationGenerationError, match="Function calling failed"
         ):
             _expander(None, llm_model=stub).transform("hi", [])
 
-    def test_function_calling_type_error_wrapped_as_output_error(self):
+    def test_function_calling_type_error_wrapped_as_generation_error(self):
         stub = FunctionCallingStubLLM(
             generate_error=TypeError("string indices must be integers")
         )
         with pytest.raises(
-            RAGTransformationOutputError, match="Function calling failed"
+            RAGTransformationGenerationError, match="Function calling failed"
         ):
             _expander(None, llm_model=stub).transform("hi", [])
 
