@@ -194,37 +194,67 @@ class TestDefaultTemplates:
         assert phrase in sufficiency_mod.TEMPLATES[lang]
 
     @pytest.mark.parametrize(
-        ("lang", "hint", "preference", "capacity", "priority"),
+        ("lang", "placeholder"),
+        [
+            ("en", "<additional_chunks>"),
+            ("es", "<fragmentos_adicionales>"),
+            ("pt", "<trechos_adicionais>"),
+        ],
+    )
+    def test_templates_label_call_retrievers_values_as_additional(
+        self, lang, placeholder
+    ):
+        """The JSON shape names additional chunks, never an absolute top_k."""
+        template = sufficiency_mod.TEMPLATES[lang]
+        assert placeholder in template
+        assert "<top_k>" not in template
+
+    @pytest.mark.parametrize(
+        ("lang", "catalog_top_k"),
+        [
+            ("en", "not a cumulative-call ceiling"),
+            ("es", "no un límite para las llamadas acumuladas"),
+            ("pt", "não um limite para chamadas cumulativas"),
+        ],
+    )
+    def test_templates_explain_catalog_top_k_is_not_a_cumulative_limit(
+        self, lang, catalog_top_k
+    ):
+        """Configured child top_k is not presented as the cumulative ceiling."""
+        assert catalog_top_k in sufficiency_mod.TEMPLATES[lang]
+
+    @pytest.mark.parametrize(
+        ("lang", "additional", "preference", "capacity", "priority"),
         [
             (
                 "en",
-                "per-retriever top_k is a size hint",
+                "additional-chunk count, not a final absolute size",
                 "prefer requests within the remaining slots",
                 "enforces the hard pool cap",
                 "requested chunks take priority",
             ),
             (
                 "es",
-                "top_k por recuperador es una sugerencia de tamaño",
+                "cantidad de fragmentos ADICIONALES, no un tamaño final absoluto",
                 "prefiere solicitudes dentro de los espacios restantes",
                 "impone el límite máximo del conjunto",
                 "los fragmentos solicitados tienen prioridad",
             ),
             (
                 "pt",
-                "top_k por recuperador é uma sugestão de tamanho",
+                "quantidade de trechos ADICIONAIS, não um tamanho final absoluto",
                 "prefira solicitações dentro dos espaços restantes",
                 "impõe o limite máximo do conjunto",
                 "os trechos solicitados têm prioridade",
             ),
         ],
     )
-    def test_templates_document_hints_capacity_and_priority(
-        self, lang, hint, preference, capacity, priority
+    def test_templates_document_additional_counts_capacity_and_priority(
+        self, lang, additional, preference, capacity, priority
     ):
-        """The templates document size hints, capacity capping and priority."""
+        """The templates document additional-chunk counts, capping and priority."""
         template = sufficiency_mod.TEMPLATES[lang]
-        assert hint in template
+        assert additional in template
         assert preference in template
         assert capacity in template
         assert priority in template

@@ -728,6 +728,28 @@ may also carry the verdict's
 `message`/`justification`. The ensemble's planning verdict uses
 `planning_message`, `planning_justification` and `planning_dropped_operations`
 so a later post-round verdict cannot overwrite them.
+The first ensemble round also records the planning map as
+`planning_call_retrievers`; each `calls` entry includes its 1-based child
+`index`, so two children of the same class remain distinguishable.
+
+Agentic retrievers ask the model for *additional* chunks, so their per-call
+trace entries distinguish three counts: `requested_top_k` is the actual
+cumulative size delegated to the child (identities it already contributed plus
+the new request), `returned` is the raw child response length and `added` is how
+much the pool actually grew. Depth rounds record them at the round level;
+ensemble rounds record them per consulted child, and an ensemble child is never
+asked for more new chunks than the round can still use. A child that honours the
+requested size returns a prefix of its ranking, so the new suffix of that prefix
+is what enters the pool. A child that ignores the requested size or reorders its
+results contributes the highest-ranked **unseen** identities of the response it
+did return, in response order — never the tail — so ranking fidelity is
+preserved as far as the response allows and the child is never starved. A
+response that repeats only already-contributed identities adds nothing (`added`
+is `0`); the retriever does not retry on its own, never invents chunks, and
+still stops at its bounded `max_iters`. Child identity histories are per
+retriever and cumulative; chunk identity itself is the single
+`(document_id, document_position)` helper shared by the pool, the retrievers and
+the evaluator. The pool still caps `materialize()` at `max_chunks`.
 
 ### Dense Retriever Two-Layer Design
 

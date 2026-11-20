@@ -219,11 +219,19 @@ parsed by the tolerant text parser. Both routes share the same tolerant
 contract: an invalid operation inside a verdict is dropped individually, valid
 ones are preserved, and only a verdict with no usable operation left (or an
 invalid `sufficient` field) is rejected. An insufficient verdict has three
-optional action fields — `call_retrievers`, `request_specific_chunks` and
-`discard_specific_chunks` — and at least one valid operation must remain.
+optional action fields — `call_retrievers` (each value is the number of
+*additional* chunks to fetch from that retriever next, not an absolute `top_k`),
+`request_specific_chunks` and `discard_specific_chunks` — and at least one valid
+operation must remain.
+
+Both retrievers call a child cumulatively — the identities it already
+contributed plus the new request — and pool only the highest-ranked identities
+it had not contributed before; the ensemble also clamps each per-child request
+to the slots the round can still fill.
+
 llama.cpp's GBNF converter enforces `type`, `required` and
 `minItems` but not numeric `minimum`, so the runtime validator remains the
-authoritative guard for `top_k >= 1` and chunk positions `>= 0`.
+authoritative guard for additional-chunk counts `>= 1` and chunk positions `>= 0`.
 
 Both retrievers share the `function_call_max_trials` parameter (default `3`,
 capped at `10`), the maximum number of evaluation attempts including the first.
@@ -433,9 +441,20 @@ takes them as parameters):
 | `Mixtral8x7BInstructQ2K`   | `mradermacher/Mixtral-8x7B-Instruct-v0.1-GGUF` (Q2_K)        | `DashAI/back/models/hugging_face/mixtral_model.py`                           |
 | `Qwen25_05BInstruct`       | `Qwen/Qwen2.5-0.5B-Instruct-GGUF` (Q8_0)                     | `DashAI/back/models/hugging_face/qwen_model.py`                              |
 | `Qwen25_15BInstruct`       | `Qwen/Qwen2.5-1.5B-Instruct-GGUF` (Q8_0)                     | `DashAI/back/models/hugging_face/qwen_model.py`                              |
+| `Qwen3_8B`                 | `Qwen/Qwen3-8B-GGUF` (Q6_K)                                  | `DashAI/back/models/hugging_face/qwen_model.py`                              |
 | `SmolLM2_360MInstruct`     | `HuggingFaceTB/SmolLM2-360M-Instruct-GGUF` (q8_0)            | `DashAI/back/models/hugging_face/smol_lm_model.py`                           |
 | `SmolLM2_17BInstruct`      | `HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF` (q4_k_m)          | `DashAI/back/models/hugging_face/smol_lm_model.py`                           |
 | `Phi4MiniInstructModel`    | `unsloth/Phi-4-mini-instruct-GGUF` (Q8_0), both as parameters | `DashAI/back/models/hugging_face/phi_4_mini_instruct_model.py`               |
+
+`Qwen3_8B` is the default function-calling LLM for the query-transformation
+stage and the agentic retrievers. The RAG defaults raise its context window to
+10 000 tokens and keep a low sampling temperature so the structured function
+calls fit in one pass. Its `enable_thinking` parameter is off by default, so it
+emits the structured call rather than a reasoning trace; turn it on to restore
+reasoning output for any chat use of this checkpoint. The checkpoint is about
+6.73 GB on disk and needs roughly 8 GB of RAM for the default 10 000-token
+context, so it must be downloaded before the first RAG session that uses query
+transformation or an agentic retriever.
 
 `DeepSeekModel` (`hugging_face/deep_seek_model.py`) exists but is not registered
 in `get_initial_components()`, so it is not offered in the UI.

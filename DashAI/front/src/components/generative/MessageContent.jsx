@@ -38,7 +38,11 @@ export function MessageContent({ messages, isUser, isWaiting, isError }) {
             return (
               <Box key={message.id}>
                 {type === "str" && (
-                  <TextMessage message={message.data} isError={isError} />
+                  <TextMessage
+                    message={message.data}
+                    isUser={isUser}
+                    isError={isError}
+                  />
                 )}
                 {type === "Image" && <ImageMessage image={message.data} />}
                 {type === "Audio" && <AudioMessage audio={message.data} />}
