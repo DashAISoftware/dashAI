@@ -97,6 +97,10 @@
       "error": "No se pudo liberar el modelo",
       "inUse": "En uso",
       "lastUsed": "Último uso: {{time}}",
+      "params": {
+        "context_window": "Ventana de contexto",
+        "device": "Dispositivo"
+      },
       "title": "Modelos cargados",
       "unload": "Liberar",
       "unloading": "Liberando..."

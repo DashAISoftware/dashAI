@@ -95,6 +95,10 @@
       "error": "Could not unload the model",
       "inUse": "In use",
       "lastUsed": "Last used: {{time}}",
+      "params": {
+        "context_window": "Context window",
+        "device": "Device"
+      },
       "title": "Loaded models",
       "unload": "Unload",
       "unloading": "Unloading..."

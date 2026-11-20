@@ -13,11 +13,8 @@ function formatLastUsed(value) {
   return new Date(iso).toLocaleTimeString();
 }
 
-function formatParams(params) {
-  if (!params || Object.keys(params).length === 0) return "";
-  return Object.entries(params)
-    .map(([key, val]) => `${key}: ${JSON.stringify(val)}`)
-    .join(", ");
+function formatParamValue(value) {
+  return typeof value === "string" ? value : JSON.stringify(value);
 }
 
 /**
@@ -93,7 +90,7 @@ export default function LoadedModelsSection({ tick }) {
       )}
       {models.map((model) => {
         const pending = model.unload_requested || pendingIds.includes(model.id);
-        const params = formatParams(model.load_params);
+        const params = Object.entries(model.load_params || {});
         const memory = [
           model.ram_bytes != null && `~${formatBytes(model.ram_bytes)} RAM`,
           model.gpu_bytes != null && `~${formatBytes(model.gpu_bytes)} GPU`,
@@ -113,7 +110,12 @@ export default function LoadedModelsSection({ tick }) {
           >
             <Box sx={{ minWidth: 0 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <Typography variant="body2" fontWeight={500} noWrap>
+                <Typography
+                  variant="body2"
+                  fontWeight={500}
+                  noWrap
+                  title={model.label}
+                >
                   {model.label}
                 </Typography>
                 <Chip label={model.slot} size="small" variant="outlined" />
@@ -125,16 +127,20 @@ export default function LoadedModelsSection({ tick }) {
                   />
                 )}
               </Box>
-              {params && (
+              {params.map(([key, value]) => (
                 <Typography
+                  key={key}
                   variant="caption"
                   color="text.secondary"
                   display="block"
-                  noWrap
+                  sx={{ overflowWrap: "anywhere" }}
                 >
-                  {params}
+                  {t(`common:hardwareMonitor.loadedModels.params.${key}`, {
+                    defaultValue: key,
+                  })}
+                  : {formatParamValue(value)}
                 </Typography>
-              )}
+              ))}
               <Typography
                 variant="caption"
                 color="text.secondary"
@@ -153,6 +159,7 @@ export default function LoadedModelsSection({ tick }) {
             <Button
               size="small"
               variant="outlined"
+              sx={{ flexShrink: 0 }}
               disabled={model.in_use || pending}
               onClick={() => handleUnload(model.id)}
             >

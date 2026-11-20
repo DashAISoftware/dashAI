@@ -93,6 +93,10 @@
       "error": "无法释放模型",
       "inUse": "使用中",
       "lastUsed": "最近使用：{{time}}",
+      "params": {
+        "context_window": "上下文窗口",
+        "device": "设备"
+      },
       "title": "已加载的模型",
       "unload": "释放",
       "unloading": "正在释放..."
