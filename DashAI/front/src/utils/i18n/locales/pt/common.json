@@ -1,5 +1,6 @@
 {
   "actions": "Ações",
+  "copyFailed": "Não foi possível copiar: {{reason}}",
   "copy": "Copiar",
   "copied": "Copiado",
   "holdout": "Reservado",

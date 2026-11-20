@@ -1456,8 +1456,11 @@ const TraceChunksPanel = ({
       try {
         await navigator.clipboard.writeText(chunkText.replace(/\\n/g, "\n"));
         enqueueSnackbar(t("common:copied"), { variant: "success" });
-      } catch {
-        enqueueSnackbar(t("common:copy"), { variant: "warning" });
+      } catch (error) {
+        enqueueSnackbar(
+          t("common:copyFailed", { reason: error?.message ?? String(error) }),
+          { variant: "warning" },
+        );
       }
     },
     [enqueueSnackbar, t],
