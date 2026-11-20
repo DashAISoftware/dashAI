@@ -12,6 +12,11 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.job.base_job import BaseJob, JobError, _release_frames
 from DashAI.back.job.generative_failure import fail_process
+from DashAI.back.job.history_summary import (
+    ContextOverflowError,
+    SummarizationError,
+    fit_history,
+)
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.services.workflows import job_name_for
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
@@ -230,26 +235,51 @@ class GenerativeJob(BaseJob):
                         # Only the turns before this one: a retried turn keeps
                         # its place in the conversation (#969), so the turns
                         # that came after it are not its history.
-                        history = []
-                        for proc in (
+                        # Turns covered by the stored summary are sent only
+                        # through it (#977).
+                        summary_until = generative_session.history_summary_until
+                        query = (
                             db.query(GenerativeProcess)
                             .filter(
                                 GenerativeProcess.session_id == generative_session.id
                             )
                             .filter(GenerativeProcess.status == RunStatus.FINISHED)
                             .filter(GenerativeProcess.id < generative_process.id)
-                            .order_by(GenerativeProcess.id)
-                            .all()
-                        ):
+                        )
+                        if summary_until is not None:
+                            query = query.filter(GenerativeProcess.id > summary_until)
+                        turns = []
+                        for proc in query.order_by(GenerativeProcess.id).all():
                             message = task.extract_message_from_output(proc.output)
                             if message is not None:
-                                history.append((proc.input[0].data, message))
-                        input_data = task.prepare_for_task(
-                            input_data,
-                            history=history,
+                                turns.append((proc.id, proc.input[0].data, message))
+                        current_input = input_data
+                        fitted = fit_history(
+                            model,
+                            lambda pairs: task.prepare_for_task(
+                                current_input, history=pairs
+                            ),
+                            turns,
+                            generative_session.history_summary,
+                            summary_until,
                         )
+                        input_data = fitted.messages
+                        if fitted.changed:
+                            generative_session.history_summary = fitted.summary
+                            generative_session.history_summary_until = (
+                                fitted.summary_until
+                            )
+                            db.commit()
                     else:
                         input_data = task.prepare_for_task(input_data)
+                except ContextOverflowError as e:
+                    fail_process(db, generative_process, str(e))
+                    raise JobError(str(e)) from e
+                except SummarizationError as e:
+                    log.exception(e)
+                    message = "Error summarizing the conversation history."
+                    fail_process(db, generative_process, message, e)
+                    raise JobError(message) from e
                 except Exception as e:
                     log.exception(e)
                     message = "Error preparing task with history."
@@ -269,7 +299,10 @@ class GenerativeJob(BaseJob):
                     output: Any = model.generate(input_data)
                 except Exception as e:
                     log.exception(e)
-                    message = "Error during model generation."
+                    if isinstance(e, ValueError) and "exceed context window" in str(e):
+                        message = "Conversation too long for the context window."
+                    else:
+                        message = "Error during model generation."
                     fail_process(db, generative_process, message, e)
                     raise JobError(message) from e
 
