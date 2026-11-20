@@ -34,9 +34,10 @@
 
 - **`n` transformed queries mean `n` retriever calls per turn.** Retrieval runs
   once per query and merges the ranked lists round-robin, de-duplicating by
-  `(document_id, document_position)`; there is no score fusion or re-ranking
-  beyond that interleave. The stored trace also carries one node per query, so
-  the process output grows with the query count.
+  `(document_id, document_position)`; there is no score fusion. The only
+  re-ranking is the optional reranker of the transformation stage (see
+  [Query transformation reranker](#query-transformation-reranker)). The stored trace also carries one node per
+  query, so the process output grows with the query count.
 
 - **LLM stages are not resident simultaneously, but a nested retriever can
   exceed one model.** Each top-level stage's model is a lazy proxy: it loads
@@ -170,6 +171,49 @@
 - **`prompt` and `llm_model` refs are mandatory.** A transformer is built only
   from an explicit prompt component and an explicit text-to-text model
   reference; neither has an implicit default.
+
+## Query transformation reranker
+
+The query-transformation stage has an optional `reranker` parameter. It is a
+component field whose parent is the `ChunkScorer` capability, so the offered
+components are the retrievers whose class inherits that interface (the dense,
+sparse, cross-encoder, MMR, sequential and agentic-single/reranker retrievers).
+The parallel and agentic-ensemble retrievers do not inherit it: they average
+children that may score different chunks, so their scores are not comparable.
+The default is the semantic retriever (multilingual paraphrase MiniLM L12 v2),
+and `null` disables reranking.
+
+The reranker orders the merged multi-query pool against the original user
+message with its `score_chunks`, and keeps its `retrieval_top_k` (`ChunkScorer.rerank_chunks`). It is set up
+through the same retriever setup as the retrieval stage, so it has the same
+index infrastructure. Known limitations of the current implementation:
+
+- **The reranking step is not in the trace.** `RAGPipeline._rerank_pool()`
+  returns the per-query trace unchanged, so the trace panel does not show that
+  the pool was cut from N to `top_k` chunks, nor which retriever scored it.
+  Adding a node needs a trace-consumer change, so it is not done yet.
+
+- **Chunks the reranker cannot score keep their pool order.** A chunk without
+  an id (for example a synthetic window produced by retrieve-then-expand) or
+  outside the reranker's index is not scored. It is kept after the scored
+  chunks instead of being dropped, so it reaches the prompt only when fewer
+  than `top_k` chunks were scored.
+
+- **A reranker has its own index cost.** Its setup goes through the retriever
+  setup, so it reuses a stored index only when the embedding and corpus
+  identity match the retrieval stage. A reranker with a different embedding is
+  indexed again.
+
+- **The rewriter has no reranker.** The `reranker` field lives on
+  `MultiQueryTransformationSchema`, shared by decomposition and expansion. A
+  rewrite emits one query and merges nothing, so there is no pool to reorder.
+
+- **Transformation config errors are pipeline runtime errors by design.**
+  `RAGTransformationError` (and therefore `RAGTransformationConfigError`)
+  inherits from `RAGQueryTransformationError` → `RAGPipelineRuntimeError`
+  instead of `RAGWorkflowError`, so existing `RAGPipelineRuntimeError` handlers
+  keep catching the stage. Any such handler therefore also catches its
+  configuration failures.
 
 ## Maintenance
 
