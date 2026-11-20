@@ -276,13 +276,17 @@
         "advanced": "Erweiterte Konfiguration",
         "enable": "Abfragetransformation aktivieren",
         "historyWindow": "Verlaufsfenster",
+        "incomplete": "Wählen Sie vor dem Speichern einen Prompt und ein Sprachmodell.",
         "language": "Sprache",
         "llm": "Sprachmodell",
+        "loadFailed": "Die Optionen zur Abfragetransformation konnten nicht geladen werden: {{reason}}",
         "maxSubqueries": "Maximale Teilfragen",
+        "needsDownloadedModel": "Laden Sie zuerst ein Sprachmodell herunter und aktivieren Sie dann diese Stufe.",
         "nQueries": "Anzahl der Anfragen",
         "noneAvailable": "Es sind keine Techniken zur Abfrageumformung registriert.",
         "off": "Deaktiviert",
         "prompt": "Prompt",
+        "promptRequired": "Für diese Technik gibt es keinen Standard-Prompt, daher kann sie nicht aktiviert werden.",
         "unknownComponent": "dieser Transformierer ist nicht registriert; wählen Sie einen Prompt und ein Modell, um fortzufahren."
       },
       "unsavedIn": "Nicht gespeicherte Änderungen in: {{sections}}"

@@ -278,13 +278,17 @@
         "advanced": "Configuración avanzada",
         "enable": "Habilitar transformación de consultas",
         "historyWindow": "Ventana de historial",
+        "incomplete": "Elige un prompt y un modelo de lenguaje antes de guardar.",
         "language": "Idioma",
         "llm": "Modelo de lenguaje",
+        "loadFailed": "No se pudieron cargar las opciones de transformación de consultas: {{reason}}",
         "maxSubqueries": "Subconsultas máximas",
+        "needsDownloadedModel": "Descarga primero un modelo de lenguaje y luego habilita esta etapa.",
         "nQueries": "Número de consultas",
         "noneAvailable": "No hay técnicas de transformación de consultas registradas.",
         "off": "Desactivada",
         "prompt": "Prompt",
+        "promptRequired": "Esta técnica no tiene un prompt por defecto, así que no puede habilitarse.",
         "unknownComponent": "este transformador no está registrado; elige un prompt y un modelo para continuar."
       },
       "unsavedIn": "Cambios sin guardar en: {{sections}}"

@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { Button, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { resolveLabel } from "../../../../components/generative/RAG/QueryTransformationPicker";
+import {
+  isCompleteQueryTransformationRef,
+  resolveLabel,
+} from "../../../../utils/ragQueryTransformation";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
@@ -244,7 +247,11 @@ export default function QueryTransformationAdvancedModal({
       };
     });
 
+  // A stage needs its LLM and prompt before it can be saved.
+  const complete = isCompleteQueryTransformationRef({ params });
+
   const handleDone = () => {
+    if (!complete) return;
     setModel({ component: model?.component, params });
     onClose();
   };
@@ -260,7 +267,12 @@ export default function QueryTransformationAdvancedModal({
           <Button onClick={onClose} variant="outlined">
             {t("generative:rag.advanced.close")}
           </Button>
-          <Button onClick={handleDone} variant="contained" color="primary">
+          <Button
+            onClick={handleDone}
+            variant="contained"
+            color="primary"
+            disabled={!complete}
+          >
             {t("generative:rag.advanced.done")}
           </Button>
         </>
@@ -270,6 +282,12 @@ export default function QueryTransformationAdvancedModal({
         <Typography variant="caption" color="text.secondary">
           {model?.component}
         </Typography>
+
+        {!complete && (
+          <Typography variant="caption" color="error.main">
+            {t("generative:rag.config.queryTransformation.incomplete")}
+          </Typography>
+        )}
 
         <TextField
           select
