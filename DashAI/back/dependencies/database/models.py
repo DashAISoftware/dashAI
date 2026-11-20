@@ -733,6 +733,12 @@ class GenerativeSession(Base):
     needs_reindex: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="0"
     )
+    # Summary of the oldest turns, written when the chat outgrows the model's
+    # context window. It stands for every turn up to ``history_summary_until``
+    # (a process id, deliberately not a foreign key so deleting that turn does
+    # not fail); changing a covered turn clears both columns.
+    history_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    history_summary_until: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     # Relationship with GenerativeSessionParameterHistory
     parameters_history: Mapped[List["GenerativeSessionParameterHistory"]] = (

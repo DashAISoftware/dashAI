@@ -196,6 +196,22 @@ async def get_generative_process(
             ) from e
 
 
+def _clear_stale_summary(db, process: GenerativeProcess) -> None:
+    """Drop the session's history summary if it covers ``process``.
+
+    The summary stands for every turn up to ``history_summary_until``, so
+    changing one of them makes it stale. The caller commits.
+    """
+    session = db.get(GenerativeSession, process.session_id)
+    if (
+        session is not None
+        and session.history_summary_until is not None
+        and process.id <= session.history_summary_until
+    ):
+        session.history_summary = None
+        session.history_summary_until = None
+
+
 @router.delete(
     "/{process_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None
 )
@@ -230,6 +246,7 @@ async def delete_generative_process(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Generative process with ID {process_id} does not exist.",
                 )
+            _clear_stale_summary(db, process)
             # Delete all associated input and output data
             db.query(ProcessData).filter_by(process_id=process.id).delete()
             # Delete the generative process itself
@@ -293,6 +310,7 @@ async def retry_generative_process(
             db.query(ProcessData).filter_by(
                 process_id=process.id, is_input=False
             ).delete()
+            _clear_stale_summary(db, process)
             process.status = RunStatus.NOT_STARTED
             process.delivery_time = None
             process.start_time = None

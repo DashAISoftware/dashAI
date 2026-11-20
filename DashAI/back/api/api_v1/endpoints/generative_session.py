@@ -937,6 +937,10 @@ async def update_generative_session(
 
                 session.model_name = model_name
                 session.parameters = new_parameters
+                # A summary written for another model or window may no longer
+                # fit the new one's summarization limit (#977).
+                session.history_summary = None
+                session.history_summary_until = None
                 # Every history entry owns the prompts active when it was
                 # written, so a later prompt edit cannot rewrite its diff.
                 db.add(
@@ -1080,6 +1084,7 @@ async def update_generative_session_params(
                 )
 
             model_name = session.model_name
+            previous_model = model_name
             derived_model = service.model_name_from(updated_parameters)
             if derived_model is not None and derived_model != model_name:
                 _check_model_fits_task(
@@ -1103,6 +1108,14 @@ async def update_generative_session_params(
             )
             db.add(session_params_entry)
 
+            # A summary written under other settings (a larger window, another
+            # model) may no longer fit the summarization limit (#977).
+            if (
+                updated_parameters != old_parameters
+                or session.model_name != previous_model
+            ):
+                session.history_summary = None
+                session.history_summary_until = None
             session.parameters = updated_parameters
             session.last_modified = datetime.now()
             db.commit()
