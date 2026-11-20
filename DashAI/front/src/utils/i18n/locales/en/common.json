@@ -90,6 +90,19 @@
     "connecting": "Connecting to hardware monitor...",
     "cpu": "CPU",
     "gpu": "GPU",
+    "loadedModels": {
+      "empty": "No models loaded",
+      "error": "Could not unload the model",
+      "inUse": "In use",
+      "lastUsed": "Last used: {{time}}",
+      "params": {
+        "context_window": "Context window",
+        "device": "Device"
+      },
+      "title": "Loaded models",
+      "unload": "Unload",
+      "unloading": "Unloading..."
+    },
     "overall": "Overall",
     "ram": "RAM",
     "title": "Hardware Monitor",

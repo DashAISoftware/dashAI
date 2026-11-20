@@ -421,6 +421,9 @@ class Phi4MiniInstructModel(TextToTextGenerationTaskModel):
         ),
     )
 
+    CACHEABLE = True
+    GENERATION_PARAMS = frozenset({"max_tokens", "temperature", "frequency_penalty"})
+
     def __init__(self, **kwargs):
         """Load the Phi 4 Mini Instruct checkpoint via llama.cpp.
 
@@ -487,6 +490,18 @@ class Phi4MiniInstructModel(TextToTextGenerationTaskModel):
             device=device_val,
             context_window=self.n_ctx,
         )
+
+    def set_generation_params(self, **params) -> None:
+        """Update the generation parameters of an already loaded model.
+
+        Parameters
+        ----------
+        **params
+            Generation parameters. Keys outside ``GENERATION_PARAMS`` are ignored.
+        """
+        for name, value in params.items():
+            if name in self.GENERATION_PARAMS:
+                setattr(self, name, value)
 
     def close(self) -> None:
         """Release the llama.cpp backend and reclaim its accelerator memory.

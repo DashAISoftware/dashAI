@@ -136,6 +136,8 @@ def _make_progress_reporter(
 class RAGJob(BaseJob):
     """RAGJob handles the full RAG pipeline lifecycle as a background job."""
 
+    USES_MODEL_CACHE = True
+
     @inject
     def set_status_as_delivered(
         self, session_factory: "sessionmaker" = lambda di: di["session_factory"]

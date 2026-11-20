@@ -19,6 +19,7 @@ from DashAI.back.api.api_v1.endpoints.generative_session import (
 )
 from DashAI.back.api.api_v1.endpoints.hardware import router as hardware
 from DashAI.back.api.api_v1.endpoints.jobs import router as jobs
+from DashAI.back.api.api_v1.endpoints.loaded_models import router as loaded_models
 from DashAI.back.api.api_v1.endpoints.metrics import router as metrics
 from DashAI.back.api.api_v1.endpoints.model_sessions import router as model_sessions
 from DashAI.back.api.api_v1.endpoints.notebook import router as notebook
@@ -64,3 +65,4 @@ api_router_v1.include_router(credentials, prefix="/credential")
 api_router_v1.include_router(rag, prefix="/rag")
 api_router_v1.include_router(system, prefix="/system")
 api_router_v1.include_router(app_config, prefix="/app-config")
+api_router_v1.include_router(loaded_models, prefix="/loaded-models")

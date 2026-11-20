@@ -90,6 +90,19 @@
     "connecting": "Verbindung zum Hardware-Monitor wird hergestellt...",
     "cpu": "CPU",
     "gpu": "GPU",
+    "loadedModels": {
+      "empty": "Keine Modelle geladen",
+      "error": "Das Modell konnte nicht entladen werden",
+      "inUse": "In Verwendung",
+      "lastUsed": "Zuletzt verwendet: {{time}}",
+      "params": {
+        "context_window": "Kontextfenster",
+        "device": "Gerät"
+      },
+      "title": "Geladene Modelle",
+      "unload": "Entladen",
+      "unloading": "Wird entladen..."
+    },
     "overall": "Gesamt",
     "ram": "RAM",
     "title": "Hardware-Monitor",
