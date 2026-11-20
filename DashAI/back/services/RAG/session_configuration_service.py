@@ -36,6 +36,34 @@ log = logging.getLogger(__name__)
 #: Characters per token, for turning prompt text into a token estimate.
 CHARS_PER_TOKEN = 4
 
+#: Transformer parameters that declare how many queries the stage emits. A
+#: stage declaring none of them — a rewriter — hands retrieval a single query.
+QUERY_COUNT_KEYS = ("n_queries", "max_subqueries")
+
+#: Transformer parameter holding the optional reranker retriever reference.
+RERANKER_KEY = "reranker"
+
+#: Queries the retrieval stage runs when no stage multiplies them.
+SINGLE_QUERY = 1
+
+
+def _is_query_count(value: Any) -> bool:
+    """Return whether ``value`` is a usable query or chunk count.
+
+    Parameters
+    ----------
+    value : Any
+        A candidate count. ``bool`` is rejected even though it is an ``int``
+        subclass, because ``True`` is never a chunk count.
+
+    Returns
+    -------
+    bool
+        ``True`` for an ``int`` of at least one that is not a ``bool``.
+    """
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 1
+
+
 _SECTION_NAMES = {
     RAG_PARAM_CHUNKING_MODEL: MultilingualString(
         en="Chunking",
@@ -135,7 +163,7 @@ class SessionConfigurationService:
                 transformation
             ),
             "context_budget": self._context_budget(
-                chunking, retriever, prompt, generation
+                chunking, retriever, prompt, generation, transformation
             ),
         }
 
@@ -216,10 +244,10 @@ class SessionConfigurationService:
         uninstalled transformer degrades to ``registered=False`` instead of
         failing the page.
 
-        This stage is deliberately excluded from ``context_budget``: it only
-        rewrites the user message before retrieval and contributes no chunks,
-        no prompt template and no generation tokens, so it consumes none of the
-        context window the budget accounts for.
+        This stage consumes no prompt or generation tokens of its own, but it is
+        not free: retrieval runs once per emitted query and merges the lists, so
+        ``context_budget`` prices the stage through the number of queries it
+        hands to retrieval and through its reranker's chunk count.
 
         Parameters
         ----------
@@ -373,12 +401,135 @@ class SessionConfigurationService:
             return chunk_size
         return chunking_presets.estimate_tokens(chunk_size)
 
+    def _retrieval_chunk_count(
+        self,
+        retriever: Dict[str, Any],
+        transformation: Optional[Dict[str, Any]],
+    ) -> int:
+        """Return how many chunks the retrieval stage puts in the prompt.
+
+        Retrieval runs once per query the transformation stage emits and merges
+        the lists, so a multi-query stage costs its queries times the retriever's
+        own chunk count. The merged pool is then trimmed to the reranker's chunk
+        count when one is configured, and that trimmed pool is what
+        the generation prompt receives.
+
+        Parameters
+        ----------
+        retriever : Dict[str, Any]
+            The stored retriever reference.
+        transformation : Dict[str, Any] | None
+            The stored transformation reference, or ``None``/empty when the
+            stage is disabled.
+
+        Returns
+        -------
+        int
+            The number of chunks the prompt can hold, expansion and reranker cap
+            included.
+        """
+        retrieved = retriever_presets.effective_chunk_count(
+            retriever.get("component") or "", retriever.get("params") or {}
+        )
+        queries = self._query_count(transformation)
+        if queries <= SINGLE_QUERY:
+            # A single query merges nothing and the reranker only runs on a
+            # merged pool, so the retriever's own chunks reach the prompt.
+            return retrieved
+        merged = retrieved * queries
+        cap = self._pool_cap(transformation)
+        return min(merged, cap) if cap is not None else merged
+
+    def _query_count(self, transformation: Optional[Dict[str, Any]]) -> int:
+        """Return how many queries the transformation stage hands to retrieval.
+
+        A stage that declares no query count — a rewriter — retrieves once. An
+        omitted count is read from the transformer's schema, because that is the
+        value the runtime will resolve the stored configuration to; an
+        explicitly uncapped decomposition is priced at that same declared count,
+        since the model decides the real number.
+
+        Parameters
+        ----------
+        transformation : Dict[str, Any] | None
+            The stored transformation reference.
+
+        Returns
+        -------
+        int
+            The number of queries retrieval runs for one user message.
+        """
+        if not isinstance(transformation, dict):
+            return SINGLE_QUERY
+        params = transformation.get("params") or {}
+        component = transformation.get("component") or ""
+        for key in QUERY_COUNT_KEYS:
+            value = params.get(key)
+            if _is_query_count(value):
+                return value
+            declared = self._declared_query_count(component, key)
+            if _is_query_count(declared):
+                return declared
+        return SINGLE_QUERY
+
+    def _declared_query_count(self, component: str, key: str) -> Any:
+        """Return the count a transformer's schema declares for ``key``.
+
+        Parameters
+        ----------
+        component : str
+            Registered transformer class name.
+        key : str
+            The query-count parameter to read, for example ``"n_queries"``.
+
+        Returns
+        -------
+        Any
+            The schema placeholder (or its pydantic default when the placeholder
+            is absent), or ``None`` when the transformer does not declare ``key``.
+        """
+        entry = self._registry_entry(component)
+        schema = getattr(entry.get("class") if entry else None, "SCHEMA", None)
+        field = (getattr(schema, "model_fields", None) or {}).get(key)
+        if field is None:
+            return None
+        placeholder = (field.json_schema_extra or {}).get("placeholder")
+        return placeholder if _is_query_count(placeholder) else field.default
+
+    def _pool_cap(self, transformation: Optional[Dict[str, Any]]) -> Optional[int]:
+        """Return how many chunks the stage's reranker lets through to the prompt.
+
+        The reranker is a retriever, so its output is priced like one: its own
+        ``top_k`` times the expansion window of its units, which is what
+        :func:`retriever_presets.effective_chunk_count` returns.
+
+        Parameters
+        ----------
+        transformation : Dict[str, Any] | None
+            The stored transformation reference.
+
+        Returns
+        -------
+        int | None
+            The number of chunks the merged pool is trimmed to, or ``None`` when
+            no reranker is configured and the whole pool reaches the prompt.
+        """
+        if not isinstance(transformation, dict):
+            return None
+        reranker = (transformation.get("params") or {}).get(RERANKER_KEY)
+        if not isinstance(reranker, dict) or not reranker.get("component"):
+            return None
+        return retriever_presets.effective_chunk_count(
+            reranker["component"], reranker.get("params") or {}
+        )
+
     def _context_budget(
         self,
         chunking: Dict[str, Any],
         retriever: Dict[str, Any],
         prompt: Dict[str, Any],
         generation: Dict[str, Any],
+        transformation: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Compute how much of the model's context window is already spoken for.
 
@@ -390,7 +541,22 @@ class SessionConfigurationService:
         :func:`~DashAI.back.services.RAG.retriever_presets.effective_chunk_count`,
         which multiplies by the expansion window: an expanded unit carries the
         text of every chunk it covers, so retrieve-then-expand costs more context
-        than its ``top_k`` alone suggests.
+        than its ``top_k`` alone suggests. The query transformation stage is
+        priced the same way — see :meth:`_retrieval_chunk_count` — so a
+        multi-query pool is never reported as a single query's worth of chunks.
+
+        Parameters
+        ----------
+        chunking, retriever, prompt, generation : Dict[str, Any]
+            The stored component references the budget is derived from.
+        transformation : Dict[str, Any] | None
+            The stored query transformation reference, when the stage is enabled.
+
+        Returns
+        -------
+        Dict[str, Any]
+            The window, the tokens already committed and what is left, plus
+            whether the configuration fits.
         """
         generation_params = generation.get("params") or {}
         context_window = generation_params.get("context_window")
@@ -400,9 +566,7 @@ class SessionConfigurationService:
         if not isinstance(max_tokens, int):
             max_tokens = RAG_MAX_TOKENS
 
-        chunk_count = retriever_presets.effective_chunk_count(
-            retriever.get("component") or "", retriever.get("params") or {}
-        )
+        chunk_count = self._retrieval_chunk_count(retriever, transformation)
         used_by_chunks = self._chunk_tokens(chunking) * chunk_count
 
         template = (prompt.get("params") or {}).get("template") or ""
