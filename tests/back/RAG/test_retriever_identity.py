@@ -29,6 +29,11 @@ from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     strip_expansion_options,
 )
 from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import BM25Retriever
+from DashAI.back.models.RAG.transformation import (
+    LLMQueryDecomposer,
+    LLMQueryExpander,
+    LLMQueryRewriter,
+)
 from DashAI.back.services.RAG import retriever_presets
 from DashAI.back.services.RAG.cleanup_service import CleanupService
 from DashAI.back.services.RAG.retriever_setup_service import RetrieverSetupService
@@ -669,6 +674,134 @@ def test_context_budget_prices_a_capped_parent_with_expanded_children():
     budget = service._context_budget(chunking, retriever, prompt, generation)
 
     assert budget["used_by_chunks"] == service._chunk_tokens(chunking) * 15
+
+
+_BUDGET_RETRIEVER = {"component": "BM25Retriever", "params": {"top_k": 10}}
+
+
+def _transformation_budget_service() -> SessionConfigurationService:
+    """Return a budget service whose registry knows the query transformers."""
+    transformers = (LLMQueryRewriter, LLMQueryExpander, LLMQueryDecomposer)
+    registry = {klass.__name__: {"class": klass} for klass in transformers}
+    return SessionConfigurationService(db=None, registry=registry)
+
+
+def _pool_reranker(top_k: int) -> dict:
+    """Return a stored ``reranker`` retriever reference with the given ``top_k``."""
+    return {"component": "DenseEmbeddingRetriever", "params": {"top_k": top_k}}
+
+
+def test_budget_pays_for_every_expansion_query():
+    """Expansion costs ``n_queries x top_k`` chunks when nothing reranks them."""
+    service = _transformation_budget_service()
+    chunking, prompt, generation = _budget_inputs()
+    transformation = {"component": "LLMQueryExpander", "params": {"n_queries": 3}}
+
+    budget = service._context_budget(
+        chunking, _BUDGET_RETRIEVER, prompt, generation, transformation=transformation
+    )
+
+    assert budget["used_by_chunks"] == service._chunk_tokens(chunking) * 30
+
+
+def test_budget_pays_for_the_decomposition_cap_when_omitted():
+    """An omitted ``max_subqueries`` costs the runtime default of three."""
+    service = _transformation_budget_service()
+    chunking, prompt, generation = _budget_inputs()
+    transformation = {"component": "LLMQueryDecomposer", "params": {}}
+
+    budget = service._context_budget(
+        chunking, _BUDGET_RETRIEVER, prompt, generation, transformation=transformation
+    )
+
+    assert budget["used_by_chunks"] == service._chunk_tokens(chunking) * 30
+
+
+def test_budget_pays_for_an_explicit_decomposition_cap():
+    service = _transformation_budget_service()
+    chunking, prompt, generation = _budget_inputs()
+    transformation = {
+        "component": "LLMQueryDecomposer",
+        "params": {"max_subqueries": 2},
+    }
+
+    budget = service._context_budget(
+        chunking, _BUDGET_RETRIEVER, prompt, generation, transformation=transformation
+    )
+
+    assert budget["used_by_chunks"] == service._chunk_tokens(chunking) * 20
+
+
+def test_rewriting_adds_no_chunks_to_the_budget():
+    """A single rewritten query retrieves the same ``top_k`` as no stage."""
+    service = _transformation_budget_service()
+    chunking, prompt, generation = _budget_inputs()
+    rewriting = {"component": "LLMQueryRewriter", "params": {}}
+
+    without = service._context_budget(chunking, _BUDGET_RETRIEVER, prompt, generation)
+    with_rewrite = service._context_budget(
+        chunking, _BUDGET_RETRIEVER, prompt, generation, transformation=rewriting
+    )
+
+    assert with_rewrite == without
+
+
+@pytest.mark.parametrize("disabled", [None, {}])
+def test_disabled_transformation_leaves_the_budget_unchanged(disabled):
+    service = _transformation_budget_service()
+    chunking, prompt, generation = _budget_inputs()
+
+    without = service._context_budget(chunking, _BUDGET_RETRIEVER, prompt, generation)
+    with_disabled = service._context_budget(
+        chunking, _BUDGET_RETRIEVER, prompt, generation, transformation=disabled
+    )
+
+    assert with_disabled == without
+
+
+def test_reranker_caps_the_pool_at_its_final_top_k():
+    """A reranker trims the merged pool, so the budget pays only for its top_k."""
+    service = _transformation_budget_service()
+    chunking, prompt, generation = _budget_inputs()
+    transformation = {
+        "component": "LLMQueryExpander",
+        "params": {"n_queries": 3, "reranker": _pool_reranker(10)},
+    }
+
+    budget = service._context_budget(
+        chunking, _BUDGET_RETRIEVER, prompt, generation, transformation=transformation
+    )
+
+    assert budget["used_by_chunks"] == service._chunk_tokens(chunking) * 10
+
+
+def test_overflowing_expansion_is_reported_as_not_valid():
+    """A pool that exceeds the window is invalid; a reranked pool fits it."""
+    service = _transformation_budget_service()
+    chunking, prompt, _ = _budget_inputs()
+    generation = {
+        "component": "Qwen25_15BInstruct",
+        "params": {"context_window": 2048, "max_tokens": 512},
+    }
+    expansion = {"component": "LLMQueryExpander", "params": {"n_queries": 3}}
+
+    unreranked = service._context_budget(
+        chunking, _BUDGET_RETRIEVER, prompt, generation, transformation=expansion
+    )
+    reranked = service._context_budget(
+        chunking,
+        _BUDGET_RETRIEVER,
+        prompt,
+        generation,
+        transformation={
+            **expansion,
+            "params": {"n_queries": 3, "reranker": _pool_reranker(10)},
+        },
+    )
+
+    assert unreranked["is_valid"] is False
+    assert unreranked["available"] == 0
+    assert reranked["is_valid"] is True
 
 
 # ── Cache hit keeps the options on the live model ────────────────────────────
