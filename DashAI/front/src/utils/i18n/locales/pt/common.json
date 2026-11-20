@@ -300,5 +300,13 @@
     "document": "Documento",
     "localExplainer": "Explicador_local",
     "globalExplainer": "Explicador_global"
+  },
+  "componentTree": {
+    "configureNode": "Configurar componente",
+    "addChild": "Adicionar componente filho",
+    "removeNode": "Remover componente",
+    "selectComponent": "Componente",
+    "parameters": "Parâmetros",
+    "containerNote": "Este componente contém outros componentes. Seus filhos podem ser configurados na árvore abaixo."
   }
 }

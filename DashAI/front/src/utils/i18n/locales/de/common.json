@@ -288,5 +288,13 @@
     "document": "Dokument",
     "localExplainer": "Erklaerung_lokal",
     "globalExplainer": "Erklaerung_global"
+  },
+  "componentTree": {
+    "configureNode": "Komponente konfigurieren",
+    "addChild": "Kindkomponente hinzufügen",
+    "removeNode": "Komponente entfernen",
+    "selectComponent": "Komponente",
+    "parameters": "Parameter",
+    "containerNote": "Diese Komponente enthält andere Komponenten. Ihre Kindkomponenten können im unteren Baum konfiguriert werden."
   }
 }
