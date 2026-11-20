@@ -17,6 +17,7 @@ from DashAI.back.core.schema_fields import (
     BaseSchema,
     component_field,
     int_field,
+    none_type,
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
@@ -42,6 +43,7 @@ from DashAI.back.models.RAG.RAG_defaults import (
     DEFAULT_FUNCTION_CALL_MAX_TRIALS,
     MAX_FUNCTION_CALL_TRIALS,
     default_function_calling_llm,
+    default_query_reranker,
 )
 from DashAI.back.models.RAG.transformation.base_query_transformation import (
     BaseQueryTransformation,
@@ -209,6 +211,55 @@ class LLMQueryTransformationSchema(BaseSchema):
     ) = DEFAULT_FUNCTION_CALL_MAX_TRIALS  # type: ignore
 
 
+class MultiQueryTransformationSchema(LLMQueryTransformationSchema):
+    """Schema for transformers that emit several queries (decomposition, expansion).
+
+    Adds the optional reranker, which only makes sense when more than one
+    query's results have to be merged. Query rewriting emits a single query and
+    uses :class:`LLMQueryTransformationSchema` directly.
+
+    Attributes:
+        reranker: Optional chunk scorer applied to the merged multi-query pool.
+    """
+
+    # Intentional Pydantic default: persisted session configs created before
+    # the reranker existed keep validating and run without reranking. The
+    # placeholder is what new stages store. When set, the reranker is any
+    # retriever: it scores the merged multi-query pool against the original
+    # user message and keeps its own top-k.
+    reranker: schema_field(
+        none_type(component_field(parent="ChunkScorer")),
+        placeholder=default_query_reranker(),
+        description=MultilingualString(
+            en="Optional chunk scorer that reorders the merged chunks of every"
+            " transformed query against the original user message and keeps its"
+            " top-k. Only retrievers that can score chunks are offered; choose"
+            " null to disable reranking.",
+            es="Recuperador opcional que reordena los fragmentos fusionados de cada"
+            " consulta transformada según el mensaje original del usuario y conserva"
+            " su top-k. Puede ser cualquier recuperador; elige null para desactivar"
+            " el reordenamiento.",
+            pt="Recuperador opcional que reordena os fragmentos mesclados de cada"
+            " consulta transformada em relação à mensagem original do usuário e"
+            " mantém seu top-k. Pode ser qualquer recuperador; escolha null para"
+            " desativar o reordenamento.",
+            de="Optionaler Retriever, der die zusammengeführten Chunks aller"
+            " transformierten Anfragen anhand der ursprünglichen Benutzernachricht"
+            " ordnet und sein top-k behält. Jeder Retriever ist möglich; null"
+            " wählen, um das Reranking zu deaktivieren.",
+            zh="可选的检索器，根据原始用户消息对每个转换查询合并后的块进行重新排序，"
+            "并保留其 top-k。可以使用任意检索器；选择 null 以禁用重排序。",
+        ),
+        alias=MultilingualString(
+            en="Reranker",
+            es="Reordenador",
+            pt="Reordenador",
+            de="Reranker",
+            zh="重排序器",
+        ),
+    ) = None  # type: ignore
+
+
 class LLMQueryTransformation(BaseQueryTransformation):
     """Shared implementation for the LLM-backed transformers.
 
@@ -275,6 +326,9 @@ class LLMQueryTransformation(BaseQueryTransformation):
         function_call_max_trials : int, optional
             Maximum number of function-call attempts, the first call included.
             Defaults to :data:`DEFAULT_FUNCTION_CALL_MAX_TRIALS`.
+        reranker : ChunkScorer, optional
+            Retriever the pipeline uses to reorder the merged multi-query pool.
+            Defaults to ``None`` (no reranking).
 
         Raises
         ------
@@ -288,6 +342,7 @@ class LLMQueryTransformation(BaseQueryTransformation):
         self.function_call_max_trials = kwargs.pop(
             "function_call_max_trials", DEFAULT_FUNCTION_CALL_MAX_TRIALS
         )
+        self.reranker = kwargs.pop("reranker", None)
         if self.prompt is None:
             raise RAGTransformationConfigError(
                 "A prompt instance is required to build a query transformer; "

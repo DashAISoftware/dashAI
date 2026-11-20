@@ -21,7 +21,7 @@ from DashAI.back.models.RAG.RAG_constants import (
 )
 from DashAI.back.models.RAG.transformation.llm_query_transformation import (
     LLMQueryTransformation,
-    LLMQueryTransformationSchema,
+    MultiQueryTransformationSchema,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_MAX_SUBQUERIES = 3
 
 
-class LLMQueryDecomposerSchema(LLMQueryTransformationSchema):
+class LLMQueryDecomposerSchema(MultiQueryTransformationSchema):
     """Schema for :class:`LLMQueryDecomposer`.
 
     Attributes:

@@ -20,13 +20,13 @@ from DashAI.back.models.RAG.RAG_constants import (
 )
 from DashAI.back.models.RAG.transformation.llm_query_transformation import (
     LLMQueryTransformation,
-    LLMQueryTransformationSchema,
+    MultiQueryTransformationSchema,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class LLMQueryExpanderSchema(LLMQueryTransformationSchema):
+class LLMQueryExpanderSchema(MultiQueryTransformationSchema):
     """Schema for :class:`LLMQueryExpander`.
 
     Attributes:

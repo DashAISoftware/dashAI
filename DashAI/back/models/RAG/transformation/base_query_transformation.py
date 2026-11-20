@@ -9,11 +9,14 @@ register under the same type.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Final, List, Sequence
+from typing import TYPE_CHECKING, Any, Dict, Final, List, Optional, Sequence
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+
+if TYPE_CHECKING:
+    from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
 
 
 @dataclass(frozen=True)
@@ -100,6 +103,12 @@ class BaseQueryTransformation(ConfigObject):
     #: base-type resolution; the frontend reads it to pair a transformer with
     #: its prompt family without hardcoding class names.
     metadata: Dict[str, Any] = {}
+
+    #: Optional retriever that reorders the merged multi-query retrieval pool.
+    #: It is built with the retrieval infrastructure by the index setup, not by
+    #: the transformer factory, and attached here; a transformer without one
+    #: leaves it ``None``.
+    reranker: Optional[ChunkScorer] = None
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
