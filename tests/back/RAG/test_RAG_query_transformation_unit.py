@@ -37,6 +37,13 @@ from DashAI.back.models.RAG.RAG_defaults import (
     MAX_FUNCTION_CALL_TRIALS,
     default_function_calling_llm,
 )
+from DashAI.back.models.RAG.retrievers.composite.parallel_retriever import (
+    ParallelRetriever,
+)
+from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
+    DenseEmbeddingRetriever,
+)
+from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import BM25Retriever
 from DashAI.back.models.RAG.transformation import (
     BaseQueryTransformation,
     LLMQueryDecomposer,
@@ -1454,6 +1461,9 @@ def _validator_registry() -> _FakeRegistry:
             "DefaultQueryExpansionPrompt": DefaultQueryExpansionPrompt,
             "DefaultQueryDecompositionPrompt": DefaultQueryDecompositionPrompt,
             "StubTransformationLLM": StubTransformationLLM,
+            "DenseEmbeddingRetriever": DenseEmbeddingRetriever,
+            "ParallelRetriever": ParallelRetriever,
+            "BM25Retriever": BM25Retriever,
         }
     )
 
@@ -1509,6 +1519,64 @@ class TestTransformationPromptFamily:
         message = str(exc_info.value)
         assert "LLMQueryExpander" in message
         assert "DefaultQueryRewritingPrompt" in message
+
+
+class TestTransformationRerankerValidation:
+    """The optional reranker reference is a pool reranker or nothing at all."""
+
+    def _ref_with_reranker(self, reranker: Any) -> dict:
+        ref = _transformation_ref("LLMQueryRewriter", "DefaultQueryRewritingPrompt")
+        ref["params"]["reranker"] = reranker
+        return ref
+
+    def test_absent_reranker_accepted(self):
+        _validate_transformation(
+            _transformation_ref("LLMQueryRewriter", "DefaultQueryRewritingPrompt")
+        )
+
+    def test_null_reranker_accepted(self):
+        _validate_transformation(self._ref_with_reranker(None))
+
+    def test_retriever_reference_accepted_as_reranker(self):
+        _validate_transformation(
+            self._ref_with_reranker(
+                {"component": "DenseEmbeddingRetriever", "params": {"top_k": 5}}
+            )
+        )
+
+    def test_retriever_without_the_scorer_capability_rejected(self):
+        """Parallel fuses its children, so it does not inherit ChunkScorer."""
+        with pytest.raises(ValueError, match="ChunkScorer") as exc_info:
+            _validate_transformation(
+                self._ref_with_reranker(
+                    {"component": "ParallelRetriever", "params": {}}
+                )
+            )
+        assert "ParallelRetriever" in str(exc_info.value)
+
+    def test_non_retriever_component_rejected(self):
+        with pytest.raises(ValueError, match="ChunkScorer") as exc_info:
+            _validate_transformation(
+                self._ref_with_reranker({"component": "LLMQueryExpander", "params": {}})
+            )
+        message = str(exc_info.value)
+        assert "LLMQueryExpander" in message
+        assert "reranker" in message
+
+    def test_reference_without_component_rejected(self):
+        with pytest.raises(ValueError, match="reranker") as exc_info:
+            _validate_transformation(self._ref_with_reranker({}))
+        assert "component reference" in str(exc_info.value)
+
+    def test_non_dict_reference_rejected(self):
+        with pytest.raises(ValueError, match="reranker") as exc_info:
+            _validate_transformation(self._ref_with_reranker("DenseEmbeddingRetriever"))
+        assert "component reference" in str(exc_info.value)
+
+    def test_non_string_component_rejected(self):
+        with pytest.raises(ValueError, match="must be a string") as exc_info:
+            _validate_transformation(self._ref_with_reranker({"component": 3}))
+        assert "reranker" in str(exc_info.value)
 
 
 # ===================================================================

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 from sqlalchemy.orm import Session
 
@@ -20,6 +20,7 @@ from DashAI.back.models.RAG.prompts.base_prompt import BasePrompt
 from DashAI.back.models.RAG.RAG_models_factory import RAGModelsFactory
 from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline, RAGPipelineConfig
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
+from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
@@ -63,6 +64,9 @@ class IndexResult:
     chunking: ChunkingFactoryResult
     retriever: RetrieverSetupResult
     total_chunks: int
+    #: The retriever setup service that built ``retriever``. It holds the
+    #: chunks, persistence and documents a reranker retriever needs too.
+    retriever_service: Optional[RetrieverSetupService] = None
 
 
 class SetupService:
@@ -201,6 +205,7 @@ class SetupService:
             chunking=chunking_result,
             retriever=retriever_result,
             total_chunks=sum(len(c) for c in chunking_result.chunks.values()),
+            retriever_service=retriever_service,
         )
 
     def build_pipeline(self, config: RAGPipelineConfig) -> RAGPipeline:
@@ -271,6 +276,11 @@ class SetupService:
                 config.query_transformation.params,
             )
             transformation_model = transformation_result.model
+            self._attach_reranker(
+                transformation_model,
+                config.query_transformation.params,
+                index.retriever_service,
+            )
 
         self._update_db_record(
             config.session_id,
@@ -294,6 +304,51 @@ class SetupService:
         return pipeline
 
     # ── Private helpers ───────────────────────────────────────────────
+
+    @staticmethod
+    def _attach_reranker(
+        transformation_model: BaseQueryTransformation,
+        transformation_params: Dict[str, Any],
+        retriever_service: Optional[RetrieverSetupService],
+    ) -> None:
+        """Build the stage's reranker retriever and attach it to the transformer.
+
+        The reranker is a retriever, so it is set up exactly like the retriever
+        stage: through the same :class:`RetrieverSetupService`, which supplies
+        the chunks, persistence and documents its scoring needs. A stage with
+        no reranker reference (``null`` or absent) keeps ``reranker = None``.
+
+        Parameters
+        ----------
+        transformation_model : BaseQueryTransformation
+            The transformer built by the factory, mutated in place.
+        transformation_params : Dict[str, Any]
+            The stored transformation parameters, holding the reranker ref.
+        retriever_service : RetrieverSetupService or None
+            The service that built the index for this pipeline.
+
+        Raises
+        ------
+        RuntimeError
+            If a reranker is configured but no index service is available.
+        """
+        reference = (transformation_params or {}).get("reranker")
+        if not reference:
+            return
+        if retriever_service is None:
+            raise RuntimeError(
+                "A query transformation reranker needs the retrieval index to be "
+                "built before it can be attached."
+            )
+        reranker = retriever_service.setup(
+            reference["component"], reference.get("params") or {}
+        )
+        if not isinstance(reranker.model, ChunkScorer):
+            raise RuntimeError(
+                f"Reranker '{reference['component']}' does not have the ChunkScorer "
+                "capability and cannot order a pool."
+            )
+        transformation_model.reranker = reranker.model
 
     def _ensure_db_record(self, session_id: int) -> int:
         """Get or create pipeline DB record, return its ID.

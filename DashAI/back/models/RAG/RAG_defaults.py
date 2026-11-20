@@ -6,6 +6,8 @@ agentic composite retrievers:
 
 * the default keyword, semantic and hybrid retrievers (and the converters they
   nest: the bag-of-words word counter and the multilingual embedding model),
+* the default query transformation reranker (the semantic retriever, used to
+  order the merged retrieval pool of the query-transformation stage),
 * the default semantic embedding checkpoint,
 * the default RAG function-calling LLM (the registered Qwen3 8B, with the
   sampling parameters and context window the RAG helper stages need),
@@ -231,6 +233,29 @@ def default_hybrid_retriever(top_k: int = DEFAULT_TOP_K) -> Dict[str, Any]:
             ],
         },
     }
+
+
+def default_query_reranker(top_k: int = DEFAULT_TOP_K) -> Dict[str, Any]:
+    """Return the default query transformation reranker recipe.
+
+    The reranker is any retriever, and the default is the semantic retriever:
+    it scores the merged pool with the multilingual paraphrase embedding the
+    default semantic retriever uses, so a pool reranked by default is ordered
+    the same way the semantic search orders it.
+
+    Parameters
+    ----------
+    top_k : int, optional
+        Number of chunks kept after reranking. Defaults to
+        :data:`DEFAULT_TOP_K`.
+
+    Returns
+    -------
+    Dict[str, Any]
+        A fresh ``{"component": ..., "params": {...}}`` reference to the default
+        semantic retriever with the requested ``top_k``.
+    """
+    return default_semantic_retriever(top_k=top_k)
 
 
 def default_agentic_retriever_prompt() -> Dict[str, Any]:

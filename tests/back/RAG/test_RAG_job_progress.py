@@ -302,9 +302,9 @@ def _run_with_capture(
 
             original = RAGPipeline.multi_query_retrieval
 
-            def wrapped(self, queries):
+            def wrapped(self, queries, original_message=None):
                 _record_progress()
-                return original(self, queries)
+                return original(self, queries, original_message)
 
             monkeypatch.setattr(RAGPipeline, "multi_query_retrieval", wrapped)
         RAGJob(generative_process_id=process_id).run()

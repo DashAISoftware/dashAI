@@ -22,6 +22,7 @@ from DashAI.back.models.RAG.prompts.transformation import (
 )
 from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_QUERY_TRANSFORMATION
 from DashAI.back.models.RAG.RAG_defaults import merge_rag_llm_params
+from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
 from DashAI.back.models.RAG.transformation import BaseQueryTransformation
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
@@ -35,6 +36,7 @@ log = logging.getLogger(__name__)
 #: Nested transformation-parameter keys, hoisted to avoid magic strings.
 _PROMPT_KEY = "prompt"
 _LLM_MODEL_KEY = "llm_model"
+_RERANKER_KEY = "reranker"
 
 #: Default transformation prompts whose ``template`` may be injected from
 #: ``metadata["templates"]`` before schema validation, exactly like the default
@@ -90,7 +92,9 @@ class QueryTransformationValidationService:
         - A dict ``{component, params}`` → the stage is enabled. The outer
           component must be a registered :class:`BaseQueryTransformation`, and
           its nested ``prompt`` / ``llm_model`` refs must be present and of the
-          correct type. A caller-provided nested prompt template is validated
+          correct type. An optional ``reranker`` ref, when present and not
+          ``None``, must name a registered :class:`ChunkScorer`. A
+          caller-provided nested prompt template is validated
           here; default templates are injected later by the validation
           service's component-params pass.
 
@@ -191,6 +195,25 @@ class QueryTransformationValidationService:
                 f"'params' of '{RAG_PARAM_QUERY_TRANSFORMATION}.params.llm_model' "
                 f"must be a dict, got {type(llm_params).__name__}."
             )
+        reranker_ref = params.get("reranker")
+        if reranker_ref is not None:
+            if not isinstance(reranker_ref, dict) or "component" not in reranker_ref:
+                raise ValueError(
+                    f"'reranker' in '{RAG_PARAM_QUERY_TRANSFORMATION}' must be a "
+                    "component reference or null."
+                )
+            reranker_name = reranker_ref["component"]
+            if not isinstance(reranker_name, str):
+                raise ValueError(
+                    f"'component' of "
+                    f"'{RAG_PARAM_QUERY_TRANSFORMATION}.params.reranker' must be a "
+                    f"string, got {type(reranker_name).__name__}."
+                )
+            self._resolve_subclass(
+                reranker_name,
+                ChunkScorer,
+                f"'{RAG_PARAM_QUERY_TRANSFORMATION}.params.reranker'",
+            )
         log.debug(
             "Query transformation stage enabled with %s", component_class.__name__
         )
@@ -200,10 +223,10 @@ class QueryTransformationValidationService:
 
         Mirrors the generation-model defaults for the optional stage: the
         transformer's own schema placeholders (for example ``history_window``)
-        plus the nested LLM's and prompt's placeholders are resolved
-        server-side, sitting *under* whatever the caller sent. The resolved
-        prompt template is later injected from its language-driven defaults by
-        the component-params pass.
+        plus the nested LLM's, prompt's and reranker's placeholders are
+        resolved server-side, sitting *under* whatever the caller sent. The
+        resolved prompt template is later injected from its language-driven
+        defaults by the component-params pass.
 
         The nested LLM receives the shared RAG overrides: ``context_window``
         10000, ``max_tokens`` 300 and ``temperature`` 0.1, instead of the model
@@ -233,6 +256,9 @@ class QueryTransformationValidationService:
         prompt_ref = merged.get(_PROMPT_KEY)
         if isinstance(prompt_ref, dict):
             self._apply_prompt_defaults(prompt_ref)
+        reranker_ref = merged.get(_RERANKER_KEY)
+        if isinstance(reranker_ref, dict):
+            self._apply_reranker_defaults(reranker_ref)
         ref["params"] = merged
 
     def _apply_llm_defaults(self, llm_ref: Dict[str, Any]) -> None:
@@ -272,6 +298,31 @@ class QueryTransformationValidationService:
         prompt_ref["params"] = {
             **resolve_component_defaults(prompt_name, self._registry),
             **prompt_params,
+        }
+
+    def _apply_reranker_defaults(self, reranker_ref: Dict[str, Any]) -> None:
+        """Resolve the nested reranker retriever's placeholders under the caller values.
+
+        The configuration form stores what the user picked, so a reranker
+        selected by name alone -- or with a custom ``top_k`` -- arrives without
+        the embedding reference its schema requires. Resolving the reranker's
+        placeholders here is what makes the stored reference constructible for
+        ``TransformationFactory``; an explicit ``null`` never reaches this
+        helper, so turning reranking off stays a no-op.
+
+        Parameters
+        ----------
+        reranker_ref : Dict[str, Any]
+            The nested ``reranker`` reference, mutated in place. A missing or
+            malformed ``params`` container counts as empty, like the nested LLM.
+        """
+        reranker_name = reranker_ref.get("component")
+        if not reranker_name:
+            return
+        caller_params = reranker_ref.get("params")
+        reranker_ref["params"] = {
+            **resolve_component_defaults(reranker_name, self._registry),
+            **(caller_params if isinstance(caller_params, dict) else {}),
         }
 
     def _validate_nested_template(self, prompt_name: str, template: Any) -> None:
