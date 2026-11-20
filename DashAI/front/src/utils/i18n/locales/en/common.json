@@ -288,5 +288,13 @@
     "document": "Document",
     "localExplainer": "Explainer_local",
     "globalExplainer": "Explainer_global"
+  },
+  "componentTree": {
+    "configureNode": "Configure component",
+    "addChild": "Add child component",
+    "removeNode": "Remove component",
+    "selectComponent": "Component",
+    "parameters": "Parameters",
+    "containerNote": "This component contains other components. Its children can be configured in the tree below."
   }
 }

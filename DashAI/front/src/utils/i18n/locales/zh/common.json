@@ -278,5 +278,13 @@
     "document": "文档",
     "localExplainer": "局部解释器",
     "globalExplainer": "全局解释器"
+  },
+  "componentTree": {
+    "configureNode": "配置组件",
+    "addChild": "添加子组件",
+    "removeNode": "移除组件",
+    "selectComponent": "组件",
+    "parameters": "参数",
+    "containerNote": "此组件包含其他组件。其子组件可在下方的树中配置。"
   }
 }
