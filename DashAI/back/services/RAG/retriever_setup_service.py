@@ -50,7 +50,10 @@ from DashAI.back.models.RAG.retrievers.retriever_factory import (
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 from DashAI.back.models.RAG.utils import hash_function
 from DashAI.back.services.RAG.embedding_storage_service import EmbeddingStorageService
-from DashAI.back.services.RAG.retrieval_llm_service import RetrievalLLMService
+from DashAI.back.services.RAG.retrieval_llm_service import (
+    RetrievalLLMService,
+    RetrievalLLMServiceResult,
+)
 from DashAI.back.services.RAG.retriever_db_service import RetrieverDBService
 from DashAI.back.services.RAG.utils import build_corpus_content_hash
 
@@ -127,6 +130,7 @@ class RetrieverSetupService:
         self._embedding_service = EmbeddingStorageService(
             env_RAG_path, self._db_service
         )
+        self._retrieval_llms: dict[int, RetrievalLLMServiceResult] = {}
 
     # ── Public API ─────────────────────────────────────────────────────
 
@@ -260,8 +264,16 @@ class RetrieverSetupService:
             params=child_config["params"],
         )
 
-    def _resolve_retrieval_llm(self, component_name: str, params: dict):
+    def _resolve_retrieval_llm(
+        self, component_name: str, params: dict
+    ) -> RetrievalLLMServiceResult:
         """Resolve a nested ``llm_model`` reference through the DB-backed service.
+
+        The lookup-or-create still runs for every reference, so the stored record
+        is found or created exactly as before. Identical configurations (same
+        ``db_record_id``) within this service share one lazy proxy, so sibling
+        retrievers that nest the same helper LLM load its backend once. Sharing
+        is safe because :class:`LazyLLM` reloads itself after ``close()``.
 
         Parameters
         ----------
@@ -278,7 +290,12 @@ class RetrieverSetupService:
             and released when the retriever's stage ends.
         """
         service = RetrievalLLMService(self._db, self._registry)
-        return service.get_or_create_lazy(component_name, params)
+        lookup = service.get_or_create_lazy(component_name, params)
+        shared = self._retrieval_llms.get(lookup.db_record_id)
+        if shared is None:
+            self._retrieval_llms[lookup.db_record_id] = lookup
+            return lookup
+        return shared
 
     # ── Private: Unit ──────────────────────────────────────────────────
 

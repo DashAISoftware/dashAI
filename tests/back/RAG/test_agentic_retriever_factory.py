@@ -531,6 +531,58 @@ def test_setup_service_builds_single_retriever_and_persists_bridge(client: TestC
         assert result.model.llm_model.is_loaded is False
 
 
+def test_setup_service_shares_one_helper_llm_between_identical_nested_retrievers(
+    client: TestClient,
+):
+    """Identical helper configs in sibling retrievers share one LazyLLM proxy.
+
+    The factory (the lazy backend constructor) must run once for the pair, not
+    once per retriever, because both nest the same ``llm_model`` reference.
+    """
+    registry = client.app.container["component_registry"]
+    registry.register_component(StubFactoryLLM)
+    registry.register_component(_StubSparseRetriever)
+    session_factory = client.app.container["session_factory"]
+    rag_path = str(client.app.container["config"]["RAG_PATH"])
+
+    with session_factory() as db:
+        pipeline = _create_pipeline(db)
+        service = RetrieverSetupService(
+            db,
+            registry,
+            rag_path,
+            {},
+            chunk_set_id=1,
+            pipeline_id=pipeline.id,
+            chunking_key="test-chunking",
+        )
+        agentic_child = {
+            "component": "AgenticSingleRetriever",
+            "params": {
+                "children": [_leaf_ref(pure=False)],
+                "max_iters": 2,
+                "max_chunks": 5,
+                "llm_model": _llm_ref(),
+                "prompt": _prompt_ref(),
+            },
+        }
+        result = service.setup(
+            "ParallelRetriever",
+            {
+                "children": [agentic_child, copy.deepcopy(agentic_child)],
+                "merge_strategy": "round_robin",
+            },
+        )
+
+        first, second = result.model.get_children()
+        assert first.llm_model is second.llm_model
+
+        before = StubFactoryLLM.construction_count
+        first.retrieve("query")
+        second.retrieve("query")
+        assert StubFactoryLLM.construction_count == before + 1
+
+
 def test_setup_service_parallel_retriever_unchanged(client: TestClient):
     """A component-free composite still sets up through the service."""
     from DashAI.back.models.RAG.retrievers.composite.parallel_retriever import (
