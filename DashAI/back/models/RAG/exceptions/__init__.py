@@ -36,9 +36,11 @@ Exception tree (simplified)::
     │   └── RAGEmbeddingEmptyInputError
     ├── RAGFactoryError
     │   └── RAGComponentNotFoundError
-    └── RAGTransformationError
-        ├── RAGTransformationConfigError
-        └── RAGTransformationOutputError
+    └── RAGQueryTransformationError
+        └── RAGTransformationError
+            ├── RAGTransformationConfigError
+            ├── RAGTransformationOutputError
+            └── RAGTransformationGenerationError
 """
 
 from DashAI.back.models.RAG.exceptions.base import RAGWorkflowError
@@ -87,8 +89,10 @@ from DashAI.back.models.RAG.exceptions.retriever import (
     RAGRetrieverMissingParameterError,
 )
 from DashAI.back.models.RAG.exceptions.transformation import (
+    RAGQueryTransformationError,
     RAGTransformationConfigError,
     RAGTransformationError,
+    RAGTransformationGenerationError,
     RAGTransformationOutputError,
 )
 
@@ -132,7 +136,9 @@ __all__ = [
     "RAGFactoryError",
     "RAGComponentNotFoundError",
     # Transformation
+    "RAGQueryTransformationError",
     "RAGTransformationError",
     "RAGTransformationConfigError",
     "RAGTransformationOutputError",
+    "RAGTransformationGenerationError",
 ]
