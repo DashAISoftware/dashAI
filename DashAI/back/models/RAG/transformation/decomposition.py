@@ -26,6 +26,10 @@ from DashAI.back.models.RAG.transformation.llm_query_transformation import (
 
 logger = logging.getLogger(__name__)
 
+#: Default upper bound on the sub-queries. It is the schema placeholder, the
+#: value persisted configs without the key resolve to, and the runtime default.
+DEFAULT_MAX_SUBQUERIES = 3
+
 
 class LLMQueryDecomposerSchema(LLMQueryTransformationSchema):
     """Schema for :class:`LLMQueryDecomposer`.
@@ -34,6 +38,8 @@ class LLMQueryDecomposerSchema(LLMQueryTransformationSchema):
         prompt: The transformation prompt, defaulting to the decomposition
             prompt.
         max_subqueries: Optional upper bound on the number of sub-queries.
+            Defaults to :data:`DEFAULT_MAX_SUBQUERIES`; ``None`` removes the
+            cap.
     """
 
     prompt: schema_field(
@@ -49,17 +55,17 @@ class LLMQueryDecomposerSchema(LLMQueryTransformationSchema):
     )
     max_subqueries: schema_field(
         none_type(int_field(ge=1)),
-        None,
+        DEFAULT_MAX_SUBQUERIES,
         description=MultilingualString(
-            en="Optional upper bound on the number of sub-queries. Leave empty"
-            " for no limit.",
-            es="Límite superior opcional del número de subconsultas. Déjalo"
-            " vacío para no poner límite.",
-            pt="Limite superior opcional do número de subconsultas. Deixe vazio"
-            " para não limitar.",
-            de="Optionale Obergrenze für die Anzahl der Teilfragen. Leer lassen"
-            " für kein Limit.",
-            zh="子查询数量的可选上限。留空表示不限制。",
+            en="Optional upper bound on the number of sub-queries. Defaults to"
+            " three; set it to null for no limit.",
+            es="Límite superior opcional del número de subconsultas. Por defecto"
+            " son tres; establécelo en null para no poner límite.",
+            pt="Limite superior opcional do número de subconsultas. Por padrão"
+            " são três; defina-o como null para não limitar.",
+            de="Optionale Obergrenze für die Anzahl der Teilfragen. Standardmäßig"
+            " drei; auf null setzen für kein Limit.",
+            zh="子查询数量的可选上限。默认为三个；设为 null 表示不限制。",
         ),
         alias=MultilingualString(
             en="Max sub-queries",
@@ -68,14 +74,15 @@ class LLMQueryDecomposerSchema(LLMQueryTransformationSchema):
             de="Maximale Teilfragen",
             zh="最大子查询数",
         ),
-    ) = None
+    ) = DEFAULT_MAX_SUBQUERIES
 
 
 class LLMQueryDecomposer(LLMQueryTransformation):
     """Decomposes a complex question into independently retrievable sub-queries.
 
-    The model decides how many sub-queries are needed. An optional
-    ``max_subqueries`` cap truncates the result when set.
+    The model decides how many sub-queries are needed. ``max_subqueries`` caps
+    the result, defaulting to :data:`DEFAULT_MAX_SUBQUERIES`; set it to ``None``
+    to keep every sub-query the model produced.
     """
 
     SCHEMA = LLMQueryDecomposerSchema
@@ -143,14 +150,15 @@ class LLMQueryDecomposer(LLMQueryTransformation):
         ----------
         max_subqueries : int | None, optional
             Optional upper bound on the number of sub-queries. Defaults to
-            ``None`` (unrestricted).
+            :data:`DEFAULT_MAX_SUBQUERIES`; ``None`` leaves the result
+            unrestricted.
 
         Other Parameters
         ----------------
         prompt, llm_model, history_window
             Forwarded to :class:`LLMQueryTransformation`.
         """
-        self.max_subqueries = kwargs.pop("max_subqueries", None)
+        self.max_subqueries = kwargs.pop("max_subqueries", DEFAULT_MAX_SUBQUERIES)
         super().__init__(**kwargs)
 
     def _render_prompt(self, message: str, history_block: str) -> str:

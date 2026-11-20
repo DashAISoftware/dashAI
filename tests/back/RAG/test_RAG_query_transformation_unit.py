@@ -44,6 +44,10 @@ from DashAI.back.models.RAG.transformation import (
     LLMQueryRewriter,
     QueryTransformationResult,
 )
+from DashAI.back.models.RAG.transformation.decomposition import (
+    DEFAULT_MAX_SUBQUERIES,
+    LLMQueryDecomposerSchema,
+)
 from DashAI.back.models.RAG.transformation.llm_output_parser import (
     parse_function_call_output,
 )
@@ -1096,6 +1100,27 @@ class TestLLMQueryDecomposer:
         result = _decomposer(['["s1", "s2"]'], cap=None).transform("hi", [])
         assert result.queries == ["s1", "s2"]
 
+    def test_omitted_cap_defaults_to_three(self):
+        """No ``max_subqueries`` argument caps the decomposition at three."""
+        raw = json.dumps(
+            {
+                "name": "decompose_query",
+                "arguments": {"queries": ["s1", "s2", "s3", "s4", "s5"]},
+            }
+        )
+        decomposer = LLMQueryDecomposer(
+            prompt=DefaultQueryDecompositionPrompt(language="en"),
+            llm_model=StubTransformationLLM(response=[raw]),
+            history_window=2,
+        )
+        assert decomposer.transform("hi", []).queries == ["s1", "s2", "s3"]
+
+    def test_schema_default_and_placeholder_are_three(self):
+        """Persisted configs without the key and new sessions both get three."""
+        schema = LLMQueryDecomposer.get_schema()
+        assert schema["properties"]["max_subqueries"]["placeholder"] == 3
+        assert LLMQueryDecomposerSchema.model_fields["max_subqueries"].default == 3
+
 
 # ===================================================================
 # LLM-authored progress narrative
@@ -1620,3 +1645,75 @@ class TestApplyDefaultsTransformationLLM:
         ).apply_defaults(normalized)
 
         assert normalized == {"query_transformation": None}
+
+
+# ===================================================================
+# apply_defaults: the decomposition cap keeps an explicit null
+# ===================================================================
+
+
+def _decomposition_defaults_registry() -> dict:
+    """Registry carrying the decomposer's real schema, prompt and stub LLM."""
+    classes = {
+        "LLMQueryDecomposer": LLMQueryDecomposer,
+        "DefaultQueryDecompositionPrompt": DefaultQueryDecompositionPrompt,
+        "StubTransformationLLM": StubTransformationLLM,
+    }
+    return {
+        name: {"class": klass, "schema": klass.get_schema()}
+        for name, klass in classes.items()
+    }
+
+
+class TestApplyDefaultsDecompositionCap:
+    """``max_subqueries`` is capped by default and unbounded on an explicit null."""
+
+    def _apply(self, params: dict) -> dict:
+        ref = {
+            "component": "LLMQueryDecomposer",
+            "params": {
+                "prompt": {
+                    "component": "DefaultQueryDecompositionPrompt",
+                    "params": {},
+                },
+                "llm_model": {"component": "StubTransformationLLM", "params": {}},
+                **params,
+            },
+        }
+        normalized = {"query_transformation": ref}
+        QueryTransformationValidationService(
+            _decomposition_defaults_registry(), lambda name, template: None
+        ).apply_defaults(normalized)
+        return normalized["query_transformation"]["params"]
+
+    def test_omitted_cap_resolves_to_the_three_default(self):
+        assert self._apply({})["max_subqueries"] == DEFAULT_MAX_SUBQUERIES
+
+    def test_explicit_null_cap_is_preserved(self):
+        """The placeholder merge must not resurrect the default over a null."""
+        assert self._apply({"max_subqueries": None})["max_subqueries"] is None
+
+    def test_explicit_null_cap_keeps_every_subquery(self):
+        raw = json.dumps(
+            {
+                "name": "decompose_query",
+                "arguments": {"queries": ["s1", "s2", "s3", "s4", "s5"]},
+            }
+        )
+        stored = self._apply({"max_subqueries": None})
+
+        decomposer = LLMQueryDecomposer(
+            prompt=DefaultQueryDecompositionPrompt(language="en"),
+            llm_model=StubTransformationLLM(response=[raw]),
+            max_subqueries=stored["max_subqueries"],
+            history_window=stored["history_window"],
+            function_call_max_trials=stored["function_call_max_trials"],
+        )
+
+        assert decomposer.transform("hi", []).queries == [
+            "s1",
+            "s2",
+            "s3",
+            "s4",
+            "s5",
+        ]
