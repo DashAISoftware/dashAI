@@ -239,9 +239,8 @@ const RetrieverConfigurationStep = forwardRef(
           component: updated.component,
           params: updated.params,
         });
-        setNextEnabled(true);
       },
-      [setRetrieverModel, setNextEnabled],
+      [setRetrieverModel],
     );
 
     const isComposite =
@@ -297,6 +296,7 @@ const RetrieverConfigurationStep = forwardRef(
               rootComponent={selectedRetriever.name}
               rootParams={retrieverModel.params}
               onChange={handleCompositeChange}
+              onValidityChange={setNextEnabled}
             />
           </>
         )}
