@@ -38,12 +38,15 @@ function UsageBar({ label, value, detail, color = "primary" }) {
   );
 }
 
+// Fixed so the popover does not shift when the loaded models arrive.
+const PANEL_WIDTH = 400;
+
 export default function HardwareMonitorPanel({ stats, connected }) {
   const { t } = useTranslation(["common"]);
 
   if (!connected || !stats) {
     return (
-      <Box sx={{ p: 8, minWidth: 320 }}>
+      <Box sx={{ p: 8, width: PANEL_WIDTH, maxWidth: "100%" }}>
         <Typography variant="body2" color="text.secondary" textAlign="center">
           {t("common:hardwareMonitor.connecting")}
         </Typography>
@@ -54,7 +57,7 @@ export default function HardwareMonitorPanel({ stats, connected }) {
   const { cpu, ram, gpus } = stats;
 
   return (
-    <Box sx={{ p: 4, minWidth: 320, maxWidth: 400 }}>
+    <Box sx={{ p: 4, width: PANEL_WIDTH, maxWidth: "100%" }}>
       <Typography variant="subtitle2" gutterBottom>
         {t("common:hardwareMonitor.cpu")}
         {cpu.frequency_mhz != null && (
