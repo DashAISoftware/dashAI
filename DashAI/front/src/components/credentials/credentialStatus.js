@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { getCredentials } from "../../api/credentials";
 
-// Credential authentication is a global, per-platform fact (a key is either
-// stored and valid or not). Component lists are fetched once with a
+// Credential authentication is a per-platform fact for the logged-in user (a
+// key of theirs is either stored and valid or not). Component lists are fetched once with a
 // `credentials_satisfied` snapshot and never refetched, so verifying a
 // credential in the dialog would otherwise leave every open list stale until a
 // manual page reload. This module-level pub/sub mirrors the download-state
@@ -11,6 +11,7 @@ import { getCredentials } from "../../api/credentials";
 const cache = new Map(); // name -> boolean is_authenticated
 let loaded = false; // whether the cache has ever been populated
 let inFlight = null; // dedupes concurrent initial fetches
+let generation = 0; // bumped on every session change, see resetCredentialStatuses
 const listeners = new Set(); // (statuses, loaded) => void
 
 const snapshot = () => Object.fromEntries(cache);
@@ -37,19 +38,36 @@ export const setCredentialStatuses = (credentials) => {
   notify();
 };
 
+// Forget the statuses when the session changes: credentials belong to each
+// user, so the next user's must be fetched again. Nothing is fetched here
+// (right after a logout it would answer 401): the views remount with the new
+// session and fetch on their own, because `loaded` is false. A fetch still in
+// flight belongs to the previous user, so its answer is dropped.
+export const resetCredentialStatuses = () => {
+  generation += 1;
+  inFlight = null;
+  cache.clear();
+  loaded = false;
+  notify();
+};
+
 // Fetch the current statuses once and populate the cache. Concurrent callers
 // share the same in-flight request so a screen with many gates fetches once.
 export const refreshCredentialStatuses = () => {
   if (inFlight) return inFlight;
+  const requestGeneration = generation;
   // Wrap in Promise.resolve so a synchronous/non-promise return (e.g. a mocked
   // getCredentials in tests) can never throw on `.then`.
-  inFlight = Promise.resolve(getCredentials())
-    .then((data) => setCredentialStatuses(data))
+  const request = Promise.resolve(getCredentials())
+    .then((data) => {
+      if (requestGeneration === generation) setCredentialStatuses(data);
+    })
     .catch(() => {})
     .finally(() => {
-      inFlight = null;
+      if (inFlight === request) inFlight = null;
     });
-  return inFlight;
+  inFlight = request;
+  return request;
 };
 
 // Subscribe to the live credential statuses. Triggers the initial fetch on

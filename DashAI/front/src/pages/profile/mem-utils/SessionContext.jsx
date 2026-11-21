@@ -10,6 +10,7 @@ import React, {
 import PropTypes from "prop-types";
 
 import { setUnauthorizedHandler } from "../../../api/api";
+import { resetCredentialStatuses } from "../../../components/credentials/credentialStatus";
 import * as authService from "./authService";
 
 const SessionContext = createContext(null);
@@ -36,6 +37,7 @@ export function SessionProvider({ children }) {
     // A 401 without a session (wrong password, first load) is not an expiry
     setUnauthorizedHandler(() => {
       if (userRef.current) {
+        resetCredentialStatuses();
         setUser(null);
         setExpired(true);
       }
@@ -57,6 +59,8 @@ export function SessionProvider({ children }) {
 
   const login = useCallback(async (identifier, password) => {
     const loggedUser = await authService.login(identifier, password);
+    // Credentials belong to each user, so the cached statuses are not theirs
+    resetCredentialStatuses();
     setUser(loggedUser);
     setExpired(false);
     return loggedUser;
@@ -64,12 +68,14 @@ export function SessionProvider({ children }) {
 
   const logout = useCallback(async () => {
     await authService.logout();
+    resetCredentialStatuses();
     setUser(null);
   }, []);
 
   // The backend starts a session for the new account right away
   const register = useCallback(async (data) => {
     const newUser = await authService.register(data);
+    resetCredentialStatuses();
     setUser(newUser);
     setExpired(false);
     return newUser;

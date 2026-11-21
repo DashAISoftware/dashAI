@@ -86,24 +86,28 @@ class KaggleCredential(BaseCredential):
             return False
 
     def apply(self) -> None:
-        """Export the stored Kaggle token to the environment.
+        """Export the acting user's Kaggle token to the environment.
 
         The official ``kaggle`` library reads ``KAGGLE_API_TOKEN`` from the
         environment.  When the module was already imported (and therefore its
-        module-level ``kaggle.api`` instance was authenticated without the
-        token), re-authenticate it so later calls use the token.  No-op when
-        nothing is stored.
+        module-level ``kaggle.api`` instance was authenticated with another
+        token, or none), re-authenticate it so later calls use this one.
+
+        Without a token the variable is removed instead, and the module is
+        re-authenticated too, so a job never uses the token of the user whose
+        job ran before.
         """
         key = self.get_key()
-        if not key:
-            return None
+        if key:
+            os.environ["KAGGLE_API_TOKEN"] = key
+        else:
+            os.environ.pop("KAGGLE_API_TOKEN", None)
 
-        os.environ["KAGGLE_API_TOKEN"] = key
         if "kaggle" in sys.modules:
             try:
                 import kaggle
 
                 kaggle.api.authenticate()
-            except Exception:
+            except (Exception, SystemExit):
                 logger.debug("Could not re-authenticate the kaggle module")
         return None

@@ -15,6 +15,10 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.credentials.sync import (
+    acting_user_credential_statuses,
+    credentials_satisfied,
+)
 from DashAI.back.dependencies.database.models import GenerativeSession
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.RAG.RAG_constants import (
@@ -185,8 +189,9 @@ class SessionConfigurationService:
             if requires_download
             else True
         )
-        section["credentials_satisfied"] = bool(
-            entry.get("credentials_satisfied", True)
+        # Each user stores their own credentials, so this is the asking user's
+        section["credentials_satisfied"] = credentials_satisfied(
+            entry, acting_user_credential_statuses()
         )
         section["required_credentials"] = list(entry.get("required_credentials") or [])
         return section

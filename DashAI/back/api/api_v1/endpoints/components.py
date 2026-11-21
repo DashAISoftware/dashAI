@@ -11,6 +11,10 @@ from pydantic import BaseModel
 from typing_extensions import Annotated
 
 from DashAI.back.core.utils import MultilingualString, localize
+from DashAI.back.credentials.sync import (
+    acting_user_credential_statuses,
+    credentials_satisfied,
+)
 
 if TYPE_CHECKING:
     from DashAI.back.dependencies.registry import ComponentRegistry
@@ -33,8 +37,19 @@ def _intersect_component_lists(
     return selected_components
 
 
-def _delete_class(component_dict: Dict[str, Any]) -> Dict[str, Any]:
-    return {key: value for key, value in component_dict.items() if key != "class"}
+def _delete_class(
+    component_dict: Dict[str, Any], credential_statuses: Dict[str, bool]
+) -> Dict[str, Any]:
+    """Prepare a registry component dict for a response.
+
+    Drops the class and sets ``credentials_satisfied`` from the credentials of
+    the user asking, since each user stores their own.
+    """
+    response = {key: value for key, value in component_dict.items() if key != "class"}
+    response["credentials_satisfied"] = credentials_satisfied(
+        component_dict, credential_statuses
+    )
+    return response
 
 
 @router.get("/")
@@ -193,8 +208,9 @@ async def get_components(
         if getattr(component_dict.get("class"), "REQUIRES_DOWNLOAD", False):
             component_registry.refresh_download_status(comp_name)
 
+    credential_statuses = acting_user_credential_statuses()
     return [
-        localize(_delete_class(component_dict), accept_language)
+        localize(_delete_class(component_dict, credential_statuses), accept_language)
         for component_dict in selected_components.values()
     ]
 
@@ -414,7 +430,9 @@ def get_component_by_id(
             detail=f"Component {id} not found in the registry.",
         )
     raw = component_registry[id]
-    return localize(_delete_class(raw), accept_language)
+    return localize(
+        _delete_class(raw, acting_user_credential_statuses()), accept_language
+    )
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -477,7 +495,8 @@ async def get_child_components(
     children_list = component_registry.get_child_components(
         component_name, recursive=recursive
     )
-    return [_delete_class(child) for child in children_list]
+    credential_statuses = acting_user_credential_statuses()
+    return [_delete_class(child, credential_statuses) for child in children_list]
 
 
 @router.get("/image/{component_name}/", status_code=status.HTTP_200_OK)

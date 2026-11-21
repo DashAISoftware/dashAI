@@ -1893,9 +1893,19 @@ class Credential(Base):
     __tablename__ = "credential"
     """
     Table to store encrypted credentials for external platforms.
+
+    Each credential belongs to one user: a user stores a platform key once and
+    only that user's requests and jobs use it, in any of their projects.
     """
+    __table_args__ = (
+        UniqueConstraint("user_id", "name", name="uq_credential_user_id_name"),
+    )
+
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String, nullable=False)
     encrypted_key: Mapped[str] = mapped_column(Text, nullable=False)
     verified: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="0"

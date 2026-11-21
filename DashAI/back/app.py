@@ -11,6 +11,7 @@ from kink import di
 
 from DashAI.back.api.api_v1.api import api_router_v1
 from DashAI.back.api.front_api import router as app_router
+from DashAI.back.auth.acting_user import SessionTokenMiddleware
 from DashAI.back.auth.catalog import sync_auth_catalog
 from DashAI.back.container import build_container
 from DashAI.back.dependencies.config_builder import build_config_dict
@@ -133,6 +134,9 @@ def create_app(
 
     app.include_router(app_router)
 
+    # Lets code outside the endpoints (credentials, the job queue) know which
+    # user a request comes from
+    app.add_middleware(SessionTokenMiddleware)
     app.add_middleware(
         CORSMiddleware,
         # An explicit list: with credentials allowed, "*" would let any site

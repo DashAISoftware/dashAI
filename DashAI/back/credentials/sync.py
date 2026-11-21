@@ -1,22 +1,48 @@
-"""Synchronize credential availability flags on the component registry."""
+"""Credential availability of components, for the user the backend acts for.
 
-import logging
-from typing import List, Union
+Credentials belong to each user, so whether a component has the credentials
+it requires depends on who asks. The registry keeps the flag computed without
+any credential; responses replace it with the acting user's.
+"""
+
+from typing import Any, Dict
 
 from kink import di
 
-logger = logging.getLogger(__name__)
+from DashAI.back.auth.acting_user import get_acting_user_id
 
 
-def sync_credentials_status(only: Union[List[str], None] = None) -> None:
-    """Refresh ``credentials_satisfied`` flags from stored credential statuses.
+def acting_user_credential_statuses() -> Dict[str, bool]:
+    """Return the verified status of the acting user's credentials.
+
+    Returns
+    -------
+    Dict[str, bool]
+        Mapping of credential name to verified status; empty when the backend
+        acts for nobody.
+    """
+    user_id = get_acting_user_id()
+    if user_id is None:
+        return {}
+    return di["credential_store"].all_statuses(user_id=user_id)
+
+
+def credentials_satisfied(
+    component_dict: Dict[str, Any], statuses: Dict[str, bool]
+) -> bool:
+    """Tell whether every credential a component requires is verified.
 
     Parameters
     ----------
-    only : Union[List[str], None]
-        If provided, only these component names are recomputed. If None, all
-        components are recomputed.
+    component_dict : Dict[str, Any]
+        The registry component dict.
+    statuses : Dict[str, bool]
+        A user's credential statuses, from ``acting_user_credential_statuses``.
+
+    Returns
+    -------
+    bool
+        True when no required credential is missing.
     """
-    store = di["credential_store"]
-    registry = di["component_registry"]
-    registry.refresh_credentials_status(store.all_statuses(), only=only)
+    required = component_dict.get("required_credentials") or []
+    return all(statuses.get(name, False) for name in required)

@@ -22,6 +22,7 @@ from huey.signals import (
     SIGNAL_EXECUTING,
 )
 
+from DashAI.back.auth.acting_user import acting_as, get_acting_user_id
 from DashAI.back.dependencies.job_queues.base_job_queue import (
     BaseJobQueue,
     JobQueueError,
@@ -58,6 +59,10 @@ warnings.filterwarnings(
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
+
+
+# Key of ``job.kwargs`` holding the id of the user that enqueued the job
+OWNER_USER_KWARG = "owner_user_id"
 
 
 class _JobCancelledError(Exception):
@@ -128,7 +133,9 @@ def _worker_loop(in_q, out_q) -> None:
 
         try:
             job = _dill.loads(job_bytes)
-            result = job.run()
+            # Credentials read inside the job belong to the user that enqueued it
+            with acting_as(job.kwargs.get(OWNER_USER_KWARG)):
+                result = job.run()
             out_q.put(_dill.dumps({"ok": True, "result": result}))
         except Exception as _exc:
             # Job-level errors are returned to the parent; the worker stays alive.
@@ -267,10 +274,13 @@ class HueyJobQueue(BaseJobQueue):
 
         # Run inline for test/immediate mode and for opt-out jobs (ISOLATED=False)
         if self.huey.immediate or not getattr(job, "ISOLATED", True):
-            result = job.run()
-            # Wrap coroutines produced by async run() methods (e.g. PipelineJob)
-            if asyncio.iscoroutine(result):
-                result = asyncio.get_event_loop().run_until_complete(result)
+            # Credentials read inside the job belong to the user that enqueued it
+            with acting_as(job.kwargs.get(OWNER_USER_KWARG)):
+                result = job.run()
+                # Wrap coroutines produced by async run() methods (e.g.
+                # PipelineJob); inside the block, so they also act as the owner
+                if asyncio.iscoroutine(result):
+                    result = asyncio.get_event_loop().run_until_complete(result)
             # If the job mutated the consumer's ComponentRegistry (e.g.
             # SyncComponentsJob), the worker's DI container is now stale.
             # Terminate it so _ensure_worker respawns a fresh one (fix #7).
@@ -928,6 +938,9 @@ class HueyJobQueue(BaseJobQueue):
             )
 
     def put(self, job: BaseJob) -> int:
+        # Remember who enqueued the job (the user of the request, or the owner
+        # of the job that enqueues this one), so it runs with their credentials
+        job.kwargs.setdefault(OWNER_USER_KWARG, get_acting_user_id())
         result = self._execute(job)
 
         return result

@@ -65,10 +65,24 @@ def get_current_user(
     if session_token is None:
         raise _unauthorized()
 
+    user = resolve_session_user(session_token, session_factory, secret)
+    if user is None:
+        raise _unauthorized()
+    return user
+
+
+def resolve_session_user(
+    session_token: str, session_factory: "sessionmaker", secret: bytes
+) -> Optional[User]:
+    """Return the active user a session token belongs to, or None.
+
+    None covers every failure: an invalid or expired token, a missing or
+    inactive user, and a token revoked by a newer ``token_version``.
+    """
     try:
         token_data = decode_access_token(session_token, secret)
     except InvalidTokenError:
-        raise _unauthorized() from None
+        return None
 
     with session_factory() as db:
         user = load_user(db, token_data.user_id)
@@ -78,7 +92,7 @@ def get_current_user(
         or not user.is_active
         or user.token_version != token_data.token_version
     ):
-        raise _unauthorized()
+        return None
     return user
 
 

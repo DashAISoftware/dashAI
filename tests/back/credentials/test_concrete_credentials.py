@@ -108,3 +108,27 @@ def test_kaggle_apply_sets_token_and_reauths():
         cred.apply()
         assert os.environ.get("KAGGLE_API_TOKEN") == "KGAT_stored"
     api.authenticate.assert_called()
+
+
+def test_kaggle_apply_without_token_clears_it_and_reauths():
+    cred = KaggleCredential()
+    api = MagicMock()
+    with fake_kaggle(api), patch.object(cred, "get_key", return_value=None):
+        # Left behind by the job of another user
+        os.environ["KAGGLE_API_TOKEN"] = "KGAT_previous"
+        cred.apply()
+        assert "KAGGLE_API_TOKEN" not in os.environ
+    api.authenticate.assert_called()
+
+
+def test_huggingface_apply_sets_and_clears_the_token(monkeypatch):
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    cred = HuggingFaceCredential()
+
+    with patch.object(cred, "get_key", return_value="hf_stored"):
+        cred.apply()
+    assert os.environ["HF_TOKEN"] == "hf_stored"
+
+    with patch.object(cred, "get_key", return_value=None):
+        cred.apply()
+    assert "HF_TOKEN" not in os.environ

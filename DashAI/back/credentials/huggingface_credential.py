@@ -1,6 +1,7 @@
 """HuggingFace Hub credential."""
 
 import logging
+import os
 from typing import Final
 
 from DashAI.back.core.utils import MultilingualString
@@ -55,11 +56,16 @@ class HuggingFaceCredential(BaseCredential):
             return False
 
     def apply(self) -> None:
-        """Log in to the HuggingFace Hub if a key is stored."""
-        key = self.get_key()
-        if not key:
-            return None
-        from huggingface_hub import login
+        """Hand the acting user's token to the HuggingFace Hub library.
 
-        login(token=key)
+        The token goes in ``HF_TOKEN``, which the library reads on every call
+        and prefers over the token file that ``login()`` would write for the
+        whole machine. Without a token the variable is removed, so a job never
+        uses the token of the user whose job ran before.
+        """
+        key = self.get_key()
+        if key:
+            os.environ["HF_TOKEN"] = key
+        else:
+            os.environ.pop("HF_TOKEN", None)
         return None

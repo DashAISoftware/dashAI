@@ -8,7 +8,9 @@ from fastapi.exceptions import HTTPException
 from kink import di
 from pydantic import BaseModel
 
-from DashAI.back.credentials.sync import sync_credentials_status
+from DashAI.back.auth.acting_user import acting_as
+from DashAI.back.auth.dependencies import get_current_user
+from DashAI.back.dependencies.database.models import User
 
 if TYPE_CHECKING:
     from DashAI.back.dependencies.registry import ComponentRegistry
@@ -78,8 +80,7 @@ def _status_payload(
     The payload bundles the catalog fields (display name, description) with the
     authentication state in a single object so the configuration modal can be
     populated with one request. The stored key is included so the modal can
-    display it, which is acceptable for DashAI's local-first, single-user
-    desktop model where the database already lives on the user's machine.
+    display it; it is only ever sent to the user who owns it.
 
     Parameters
     ----------
@@ -114,8 +115,9 @@ def _status_payload(
 async def list_credentials(
     accept_language: Union[str, None] = Header(default=None),
     registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    user: User = Depends(get_current_user),
 ) -> List[Dict[str, Any]]:
-    """List all credential components with their authentication status.
+    """List all credential components with the user's authentication status.
 
     Returns catalog metadata and auth state together in a single response so
     the configuration modal does not need one request per credential.
@@ -134,10 +136,14 @@ async def list_credentials(
     """
     creds = _credential_components(registry)
     store = di["credential_store"]
-    statuses = store.all_statuses()
+    statuses = store.all_statuses(user_id=user.id)
     return [
         _status_payload(
-            name, cdict, statuses.get(name, False), store.load(name), accept_language
+            name,
+            cdict,
+            statuses.get(name, False),
+            store.load(name, user_id=user.id),
+            accept_language,
         )
         for name, cdict in creds.items()
     ]
@@ -148,8 +154,9 @@ async def get_credential_status(
     name: str,
     accept_language: Union[str, None] = Header(default=None),
     registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    user: User = Depends(get_current_user),
 ) -> Dict[str, Any]:
-    """Return the status of a single credential.
+    """Return the status of one of the user's credentials.
 
     Parameters
     ----------
@@ -178,7 +185,11 @@ async def get_credential_status(
         )
     store = di["credential_store"]
     return _status_payload(
-        name, creds[name], store.is_verified(name), store.load(name), accept_language
+        name,
+        creds[name],
+        store.is_verified(name, user_id=user.id),
+        store.load(name, user_id=user.id),
+        accept_language,
     )
 
 
@@ -187,8 +198,9 @@ async def authenticate_credential(
     name: str,
     body: AuthRequest,
     registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    user: User = Depends(get_current_user),
 ) -> Dict[str, Any]:
-    """Verify and store a credential key.
+    """Verify and store a credential key for the user.
 
     Parameters
     ----------
@@ -217,15 +229,14 @@ async def authenticate_credential(
         )
     credential = creds[name]["class"]()
     try:
-        credential.auth(body.key)
+        with acting_as(user.id):
+            credential.auth(body.key)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid credential key.",
         ) from exc
 
-    affected = registry.get_required_credentials(name)
-    sync_credentials_status(only=affected)
     return {"is_authenticated": True}
 
 
@@ -233,8 +244,9 @@ async def authenticate_credential(
 async def delete_credential(
     name: str,
     registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    user: User = Depends(get_current_user),
 ) -> Dict[str, Any]:
-    """Remove a stored credential key.
+    """Remove the user's stored credential key.
 
     Parameters
     ----------
@@ -259,7 +271,5 @@ async def delete_credential(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Credential '{name}' not found.",
         )
-    di["credential_store"].delete(name)
-    affected = registry.get_required_credentials(name)
-    sync_credentials_status(only=affected)
+    di["credential_store"].delete(name, user_id=user.id)
     return {"is_authenticated": False}

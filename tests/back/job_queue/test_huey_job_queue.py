@@ -3,6 +3,7 @@ import time  # noqa: F401
 
 import pytest
 
+from DashAI.back.auth.acting_user import acting_as, get_acting_user_id
 from DashAI.back.dependencies.job_queues.base_job_queue import JobQueueError
 from DashAI.back.dependencies.job_queues.huey_job_queue import HueyJobQueue
 from DashAI.back.job.base_job import BaseJob
@@ -189,3 +190,26 @@ def test_base_job_report_progress_noop_without_huey_id():
     job = DummyJob()
     assert job.kwargs.get("huey_id") is None
     job.report_progress(0.5, "Should be ignored")
+
+
+class ActingUserJob(DummyJob):
+    """Records the user each run acts for, which credentials are read as."""
+
+    seen = []
+
+    def run(self) -> None:
+        ActingUserJob.seen.append(get_acting_user_id())
+
+
+def test_jobs_run_as_the_user_that_enqueued_them(test_job_queue: HueyJobQueue):
+    ActingUserJob.seen = []
+
+    with acting_as(7):
+        job = ActingUserJob()
+        test_job_queue.put(job)
+    anonymous_job = ActingUserJob()
+    test_job_queue.put(anonymous_job)
+
+    assert job.kwargs["owner_user_id"] == 7
+    assert anonymous_job.kwargs["owner_user_id"] is None
+    assert ActingUserJob.seen == [7, None]

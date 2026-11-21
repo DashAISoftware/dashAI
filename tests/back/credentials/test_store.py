@@ -21,38 +21,54 @@ def store(session_factory):
     return CredentialStore(session_factory, encryptor)
 
 
+USER = 1
+OTHER_USER = 2
+
+
 def test_save_and_load_roundtrip(store):
-    store.save("HuggingFaceCredential", "hf_token_123")
-    assert store.load("HuggingFaceCredential") == "hf_token_123"
+    store.save("HuggingFaceCredential", "hf_token_123", user_id=USER)
+    assert store.load("HuggingFaceCredential", user_id=USER) == "hf_token_123"
 
 
 def test_save_marks_verified(store):
-    store.save("HuggingFaceCredential", "hf_token_123")
-    assert store.is_verified("HuggingFaceCredential") is True
+    store.save("HuggingFaceCredential", "hf_token_123", user_id=USER)
+    assert store.is_verified("HuggingFaceCredential", user_id=USER) is True
 
 
 def test_load_missing_returns_none(store):
-    assert store.load("Missing") is None
-    assert store.is_verified("Missing") is False
+    assert store.load("Missing", user_id=USER) is None
+    assert store.is_verified("Missing", user_id=USER) is False
 
 
 def test_save_is_upsert(store):
-    store.save("HuggingFaceCredential", "old")
-    store.save("HuggingFaceCredential", "new")
-    assert store.load("HuggingFaceCredential") == "new"
+    store.save("HuggingFaceCredential", "old", user_id=USER)
+    store.save("HuggingFaceCredential", "new", user_id=USER)
+    assert store.load("HuggingFaceCredential", user_id=USER) == "new"
 
 
 def test_delete_removes_key(store):
-    store.save("HuggingFaceCredential", "tok")
-    store.delete("HuggingFaceCredential")
-    assert store.load("HuggingFaceCredential") is None
-    assert store.is_verified("HuggingFaceCredential") is False
+    store.save("HuggingFaceCredential", "tok", user_id=USER)
+    store.delete("HuggingFaceCredential", user_id=USER)
+    assert store.load("HuggingFaceCredential", user_id=USER) is None
+    assert store.is_verified("HuggingFaceCredential", user_id=USER) is False
 
 
 def test_all_statuses(store):
-    store.save("HuggingFaceCredential", "tok")
-    store.save("GithubCredential", "ghp")
-    assert store.all_statuses() == {
+    store.save("HuggingFaceCredential", "tok", user_id=USER)
+    store.save("GithubCredential", "ghp", user_id=USER)
+    assert store.all_statuses(user_id=USER) == {
         "HuggingFaceCredential": True,
         "GithubCredential": True,
     }
+
+
+def test_credentials_are_kept_per_user(store):
+    store.save("HuggingFaceCredential", "tok_user", user_id=USER)
+
+    assert store.load("HuggingFaceCredential", user_id=OTHER_USER) is None
+    assert store.is_verified("HuggingFaceCredential", user_id=OTHER_USER) is False
+    assert store.all_statuses(user_id=OTHER_USER) == {}
+
+    store.save("HuggingFaceCredential", "tok_other", user_id=OTHER_USER)
+    store.delete("HuggingFaceCredential", user_id=USER)
+    assert store.load("HuggingFaceCredential", user_id=OTHER_USER) == "tok_other"
