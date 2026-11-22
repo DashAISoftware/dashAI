@@ -23,8 +23,11 @@ class CorrectedPairedTTest(BaseStatisticalTest):
 
     References
     ----------
-    Nadeau, C., & Bengio, Y. (2003). Inference for the Generalization Error.
-    Machine Learning, 52(3), 239-281.
+    - Nadeau, C., & Bengio, Y. (2003). Inference for the Generalization
+      Error. Machine Learning, 52(3), 239-281.
+    - Dietterich, T. G. (1998). Approximate Statistical Tests for Comparing
+      Supervised Classification Learning Algorithms. Neural Computation,
+      10(7), 1895-1923.
     """
 
     DISPLAY_NAME: str = MultilingualString(

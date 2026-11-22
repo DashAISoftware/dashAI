@@ -19,9 +19,11 @@ class LeveneTest(BaseStatisticalTest):
 
     References
     ----------
-    Levene, H. (1960). Robust Tests for Equality of Variances. In Olkin, I.
-    et al. (eds.), Contributions to Probability and Statistics: Essays in
-    Honor of Harold Hotelling, Stanford University Press.
+    - Levene, H. (1960). Robust Tests for Equality of Variances. In Olkin,
+      I. et al. (eds.), Contributions to Probability and Statistics: Essays
+      in Honor of Harold Hotelling, Stanford University Press.
+    - Montgomery, D. C. (2017). Design and Analysis of Experiments
+      (9th ed.). Wiley.
     """
 
     DISPLAY_NAME: str = MultilingualString(

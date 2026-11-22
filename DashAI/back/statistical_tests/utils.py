@@ -44,7 +44,21 @@ class UndefinedTestError(ValueError):
 
 
 class CorrectionMethod(Enum):
-    """Enum for correction methods used in statistical tests."""
+    """Enum for correction methods used in statistical tests.
+
+    ``HOLM`` and ``BONFERRONI`` control the familywise error rate (FWER);
+    ``BENJAMINI_HOCHBERG`` controls the false discovery rate (FDR).
+
+    References
+    ----------
+    - Shaffer, J. P. (1995). Multiple Hypothesis Testing. Annual Review of
+      Psychology, 46, 561-584.
+    - Demšar, J. (2006). Statistical Comparisons of Classifiers over
+      Multiple Data Sets. Journal of Machine Learning Research, 7, 1-30.
+    - García, S., & Herrera, F. (2008). An Extension on "Statistical
+      Comparisons of Classifiers over Multiple Data Sets" for all Pairwise
+      Comparisons. Journal of Machine Learning Research, 9, 2677-2694.
+    """
 
     HOLM = "holm"
     BONFERRONI = "bonferroni"
@@ -62,6 +76,8 @@ def correct_p_values(
 
     Returns:
         list[dict]: List of corrected p-values with additional information.
+
+    See ``CorrectionMethod`` for the references behind each method.
     """
     return multipletests(p_values, alpha=alpha, method=method.value)[1]
 
