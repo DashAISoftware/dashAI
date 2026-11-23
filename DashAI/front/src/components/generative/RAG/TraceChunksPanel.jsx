@@ -25,9 +25,11 @@ import {
   getSessionConfiguration,
 } from "../../../api/rag";
 import {
+  asArray,
   isPlainObject,
   isQueryTransformed,
   filterRenderableEntries,
+  findRerankNode,
   groupReferencesByDocument,
   getDocumentTitle,
   resolveChunkLabel,
@@ -170,8 +172,10 @@ function buildTraceChunksModel(
       ? references[highlightedRef]
       : undefined;
   const hasSelectedChunk = isPlainObject(selectedChunkInfo);
+  const rerankNode = findRerankNode(trace);
   return {
     entries,
+    rerankNode,
     groups,
     hasReferences,
     transformed,
@@ -922,6 +926,8 @@ QuerySelectorChips.propTypes = {
  * under bold "Query N" mini-headings when "All" is active.
  * @param {object} props
  * @param {Array<object>} props.entries - Renderable trace entries.
+ * @param {object|null} [props.rerankNode] - Pool-reranking trace node, shown
+ *   under the query trees in the "All" view.
  * @param {number|null} props.selectedQuery - Active index, or null for "All".
  * @param {object|null} props.selectedEntry - The selected entry, if a specific query is active.
  * @param {object|null} props.references - Chunk reference map by ref key.
@@ -932,6 +938,7 @@ QuerySelectorChips.propTypes = {
  */
 function TraceTrees({
   entries,
+  rerankNode,
   selectedQuery,
   selectedEntry,
   references,
@@ -979,12 +986,29 @@ function TraceTrees({
             renderTree(entry, index, index === entries.length - 1),
           )
         : selectedEntry && renderTree(selectedEntry, selectedQuery, true)}
+      {selectedQuery === null && rerankNode && (
+        <Box data-testid="rerank-tree" sx={{ mt: 2 }}>
+          <Typography variant="body2" sx={{ fontWeight: "bold", mb: 0.5 }}>
+            {t("generative:traceChunks.rerankTitle", {
+              pool: asArray(rerankNode.pool).length,
+              kept: asArray(rerankNode.chunks).length,
+            })}
+          </Typography>
+          <RetrieverTraceTree
+            node={rerankNode}
+            references={references}
+            retrieverComponents={retrieverComponents}
+            onChunkClick={onChunkClick}
+          />
+        </Box>
+      )}
     </Box>
   );
 }
 
 TraceTrees.propTypes = {
   entries: PropTypes.array.isRequired,
+  rerankNode: PropTypes.object,
   selectedQuery: PropTypes.number,
   selectedEntry: PropTypes.object,
   references: PropTypes.object,
@@ -1174,6 +1198,7 @@ SelectedChunkPanel.propTypes = {
  * discarded candidates, in that order.
  * @param {object} props
  * @param {Array<object>} props.entries - Renderable trace entries.
+ * @param {object|null} [props.rerankNode] - Pool-reranking trace node.
  * @param {Array<{count: number}>} props.perQuery - Per-query candidate stats.
  * @param {string[]} props.discardedRefs - Refs that never reached the answer.
  * @param {boolean} props.transformed - Whether the query was rewritten.
@@ -1188,6 +1213,7 @@ SelectedChunkPanel.propTypes = {
  */
 function PipelineViewContent({
   entries,
+  rerankNode,
   perQuery,
   discardedRefs,
   transformed,
@@ -1223,6 +1249,7 @@ function PipelineViewContent({
 
       <TraceTrees
         entries={entries}
+        rerankNode={rerankNode}
         selectedQuery={selectedQuery}
         selectedEntry={selectedEntry}
         references={references}
@@ -1237,6 +1264,7 @@ function PipelineViewContent({
 
 PipelineViewContent.propTypes = {
   entries: PropTypes.array.isRequired,
+  rerankNode: PropTypes.object,
   perQuery: PropTypes.array.isRequired,
   discardedRefs: PropTypes.array.isRequired,
   transformed: PropTypes.bool.isRequired,
@@ -1342,6 +1370,7 @@ const TraceChunksPanel = ({
 
   const {
     entries,
+    rerankNode,
     groups,
     hasReferences,
     transformed,
@@ -1609,6 +1638,7 @@ const TraceChunksPanel = ({
 
                 <PipelineViewContent
                   entries={entries}
+                  rerankNode={rerankNode}
                   perQuery={perQuery}
                   discardedRefs={discardedRefs}
                   transformed={transformed}
