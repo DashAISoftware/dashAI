@@ -135,4 +135,17 @@ describe("QueryTransformationAdvancedModal completeness", () => {
     );
     expect(doneButton()).toBeEnabled();
   });
+
+  it("shows an error and blocks saving when the model defaults fail to load", async () => {
+    resolveRagLlmDefaults.mockRejectedValue(new Error("network down"));
+    const setModel = renderModal(modelWith("Downloaded"));
+
+    expect(
+      await screen.findByText(
+        "generative:rag.config.queryTransformation.loadFailed",
+      ),
+    ).toBeInTheDocument();
+    expect(doneButton()).toBeDisabled();
+    expect(setModel).not.toHaveBeenCalled();
+  });
 });
