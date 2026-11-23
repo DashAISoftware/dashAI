@@ -57,6 +57,18 @@ RAG_OUTPUT_MESSAGE_TYPE = "str"
 
 RAG_WORKFLOW_NAME = "RAGWorkflow"
 
+# Trace entry marking the pool-reranking stage:
+# ``{"stage": TRACE_STAGE_RERANK, "reranker": <trace node>}``.
+TRACE_STAGE_RERANK = "rerank"
+
+# Key of the optional reranker retriever inside a multi-query transformer's
+# params.
+RERANKER_KEY = "reranker"
+
+# Key of the decomposition transformer's optional cap on its sub-queries;
+# an explicit ``None`` lifts the cap.
+MAX_SUBQUERIES_KEY = "max_subqueries"
+
 # Live stage progress
 # -------------------
 # While a RAG process runs, ``GenerativeProcess.progress`` holds exactly one of

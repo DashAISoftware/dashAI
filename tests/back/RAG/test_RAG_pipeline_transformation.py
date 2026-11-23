@@ -17,6 +17,7 @@ from DashAI.back.models.RAG.documents.chunk import Chunk
 from DashAI.back.models.RAG.exceptions import (
     RAGPipelineConfigError,
     RAGPipelineRuntimeError,
+    RAGRetrieverRerankError,
     RAGTransformationError,
 )
 from DashAI.back.models.RAG.RAG_pipeline import (
@@ -170,6 +171,10 @@ class _RecordingReranker:
         self.closed = 0
         self.error = None
 
+    @classmethod
+    def get_representation(cls):
+        return None
+
     def rerank_chunks(self, chunks, query):
         if self.error is not None:
             raise self.error
@@ -300,7 +305,7 @@ class TestUniformRetrievalPath:
         retriever.retrieve.return_value = _retriever_stub([first, second])
         pipeline = _make_pipeline(retriever=retriever)
 
-        result, trace = pipeline.multi_query_retrieval(["only"])
+        result, trace = pipeline.multi_query_retrieval(["only"], "only")
 
         retriever.retrieve.assert_called_once_with("only")
         # A one-element list is a merge no-op: content and order are preserved.
@@ -326,7 +331,7 @@ class TestUniformRetrievalPath:
         )
         pipeline = _make_pipeline(retriever=retriever)
 
-        result, trace = pipeline.multi_query_retrieval(["q1", "q2"])
+        result, trace = pipeline.multi_query_retrieval(["q1", "q2"], "q1")
 
         assert [c.document_position for c in result] == [0, 0]
         assert [entry["query"] for entry in trace] == ["q1", "q2"]
@@ -608,8 +613,8 @@ class TestGenerateWithTransformation:
         assert [chunk_ref(c) for c in pool] == ["1_0", "1_1", "2_1", "2_0", "3_0"]
         assert list(result.chunks) == ["3_0", "2_0", "2_1"]
 
-    def test_reranker_is_not_recorded_in_the_query_trace(self):
-        """The trace stays one entry per query; the pool ordering is not traced."""
+    def test_reranker_is_recorded_after_the_query_entries(self):
+        """One entry per query, then a rerank stage entry with pool and kept."""
         reranker = _RecordingReranker(top_k=3)
         pipeline = _make_pipeline(
             retriever=self._retriever(),
@@ -617,8 +622,13 @@ class TestGenerateWithTransformation:
         )
         result = pipeline.generate(({"role": "user", "content": "msg"},))
 
-        assert [entry["query"] for entry in result.trace] == ["q1", "q2"]
-        assert all("reranker" not in entry for entry in result.trace)
+        assert [entry["query"] for entry in result.trace[:2]] == ["q1", "q2"]
+        assert all("reranker" not in entry for entry in result.trace[:2])
+        assert len(result.trace) == 3
+        stage = result.trace[2]
+        assert stage["stage"] == "rerank"
+        assert stage["reranker"]["chunks"] == ["3_0", "2_0", "2_1"]
+        assert set(stage["reranker"]["chunks"]) <= set(stage["reranker"]["pool"])
         assert list(result.chunks) == ["3_0", "2_0", "2_1"]
 
     def test_reranker_is_released_after_retrieval(self):
@@ -641,6 +651,18 @@ class TestGenerateWithTransformation:
             RAGPipelineRuntimeError, match="Failed during pool reranking"
         ):
             pipeline.generate(({"role": "user", "content": "msg"},))
+        assert reranker.closed >= 1
+
+    def test_unrankable_pool_fails_the_turn_and_releases_the_reranker(self):
+        reranker = _RecordingReranker(top_k=3)
+        reranker.error = RAGRetrieverRerankError("could not score any chunk")
+        pipeline = _make_pipeline(
+            retriever=self._retriever(),
+            query_transformation=_RerankedTransformer(["q1", "q2"], reranker),
+        )
+        with pytest.raises(RAGPipelineRuntimeError, match="could not score"):
+            pipeline.generate(({"role": "user", "content": "msg"},))
+        assert reranker.closed >= 1
 
     def test_stub_transformer_timing_and_result_flow_through(self):
         """A real (non-mock) transformer is timed and its query is retrieved."""
