@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { Alert, Box, Button, Typography, useMediaQuery } from "@mui/material";
-import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
+import RAGAdvancedDialog from "../../shared/RAGAdvancedDialog";
 import { getComponents } from "../../../api/component";
 import { loadsDataKind } from "../../../utils/dataKinds";
 import DocumentSourcePicker from "./upload/DocumentSourcePicker";

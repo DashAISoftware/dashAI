@@ -10,7 +10,7 @@ import {
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import FormSchemaContainer from "../FormSchemaContainer";
-import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
+import RAGAdvancedDialog from "../RAGAdvancedDialog";
 import { resolveLocalizedText } from "../../../utils/localize";
 import { componentCategory } from "./componentTreeUtils";
 
