@@ -8,7 +8,10 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.exceptions import RAGRetrieverError
-from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
+from DashAI.back.models.RAG.retrievers.capabilities import (
+    ChunkScorer,
+    ScoringChild,
+)
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
@@ -59,6 +62,7 @@ class SequentialRetriever(CompositeRetriever, ChunkScorer):
     """
 
     SCHEMA = SequentialRetrieverSchema
+    SCORING_CHILD = ScoringChild.LAST
     DISPLAY_NAME: str = MultilingualString(
         en="Sequential Retriever",
         es="Recuperador Secuencial",

@@ -44,7 +44,10 @@ from DashAI.back.models.RAG.RAG_defaults import (
     default_hybrid_retriever,
 )
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
-from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
+from DashAI.back.models.RAG.retrievers.capabilities import (
+    ChunkScorer,
+    ScoringChild,
+)
 from DashAI.back.models.RAG.retrievers.composite.agentic_retriever_support import (
     LLM_RETRIEVER_CATEGORY,
     close_llm,
@@ -240,6 +243,7 @@ class AgenticRerankerRetriever(CompositeRetriever, ChunkScorer):
     """
 
     SCHEMA = AgenticRerankerRetrieverSchema
+    SCORING_CHILD = ScoringChild.FIRST
     CATEGORY: MultilingualString = LLM_RETRIEVER_CATEGORY
     DISPLAY_NAME: str = MultilingualString(
         en="Agentic Reranker Retriever",

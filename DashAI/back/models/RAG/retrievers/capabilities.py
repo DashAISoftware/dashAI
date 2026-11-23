@@ -16,10 +16,18 @@ that need it.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Tuple
+from enum import Enum
+from typing import ClassVar, Dict, List, Optional, Tuple
 
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.exceptions import RAGRetrieverRerankError
+
+
+class ScoringChild(Enum):
+    """Which child of a composite scorer produces the scores it reports."""
+
+    FIRST = "first"
+    LAST = "last"
 
 
 class ChunkScorer(ABC):
@@ -34,7 +42,14 @@ class ChunkScorer(ABC):
     scorer: each child may score a different subset of the candidates, so the
     averages are not comparable and a chunk no child scored has no score at
     all. Such a retriever does not inherit this interface.
+
+    A composite scorer reports the scores of one of its children, so that child
+    must itself be a chunk scorer: ``SCORING_CHILD`` names it (the first or the
+    last child). A leaf scorer, or one that scores with its own model, leaves
+    it ``None``.
     """
+
+    SCORING_CHILD: ClassVar[Optional[ScoringChild]] = None
 
     @abstractmethod
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
@@ -100,20 +115,31 @@ class ChunkScorer(ABC):
         Returns:
             One id list per chunk: the chunk's own id, or for an expanded
             window the ids of every stored chunk at its ``source_positions``.
+            A scorer that has no chunk store at all (``chunks`` is ``None`` or
+            absent) cannot resolve a window, so it ranks it by its own id, the
+            id of the first chunk it covers.
+
+        Raises:
+            RAGRetrieverRerankError: If the scorer has a chunk store and none of
+                a window's ``source_positions`` resolves in it.
         """
-        corpus = getattr(self, "chunks", None) or {}
+        corpus = getattr(self, "chunks", None)
         covered: List[List[int]] = []
         for chunk in chunks:
             positions = getattr(chunk, "source_positions", None)
-            if not positions:
+            if not positions or corpus is None:
                 covered.append([] if chunk.id is None else [chunk.id])
                 continue
             ids: List[int] = []
             for stored in corpus.get(chunk.document_id, {}).values():
                 if stored.id is not None and stored.document_position in positions:
                     ids.append(stored.id)
-            if not ids and chunk.id is not None:
-                ids.append(chunk.id)
+            if not ids:
+                raise RAGRetrieverRerankError(
+                    f"{type(self).__name__} could not resolve the chunks of a "
+                    f"window of document {chunk.document_id} at positions "
+                    f"{sorted(positions)} in its chunk store."
+                )
             covered.append(ids)
         return covered
 

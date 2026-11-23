@@ -21,12 +21,18 @@ from DashAI.back.models.RAG.prompts.transformation import (
     QueryTransformationPrompt,
 )
 from DashAI.back.models.RAG.RAG_constants import (
+    CHILDREN_KEY,
+    COMPONENT_KEY,
     MAX_SUBQUERIES_KEY,
+    PARAMS_KEY,
     RAG_PARAM_QUERY_TRANSFORMATION,
     RERANKER_KEY,
 )
 from DashAI.back.models.RAG.RAG_defaults import merge_rag_llm_params
-from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
+from DashAI.back.models.RAG.retrievers.capabilities import (
+    ChunkScorer,
+    ScoringChild,
+)
 from DashAI.back.models.RAG.transformation import BaseQueryTransformation
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
@@ -268,12 +274,56 @@ class QueryTransformationValidationService:
                 f"'reranker' in '{RAG_PARAM_QUERY_TRANSFORMATION}' must be a "
                 "component reference or null."
             )
-        reranker_name = self._require_component_name(reranker_ref, RERANKER_KEY)
-        self._resolve_subclass(
-            reranker_name,
-            ChunkScorer,
-            f"'{RAG_PARAM_QUERY_TRANSFORMATION}.params.reranker'",
+        reranker_params = reranker_ref.get(PARAMS_KEY)
+        if reranker_params is not None and not isinstance(reranker_params, dict):
+            raise ValueError(
+                f"'params' of '{RAG_PARAM_QUERY_TRANSFORMATION}.params.reranker' "
+                f"must be a dict, got {type(reranker_params).__name__}."
+            )
+        self._validate_scorer_chain(
+            reranker_ref, f"'{RAG_PARAM_QUERY_TRANSFORMATION}.params.reranker'"
         )
+
+    def _validate_scorer_chain(self, ref: Dict[str, Any], where: str) -> None:
+        """Validate a scorer reference and the child it scores through.
+
+        A composite scorer reports the scores of one child (see
+        :attr:`ChunkScorer.SCORING_CHILD`), so that child must be a chunk
+        scorer too: a parallel or ensemble retriever there would hand back
+        averages that are not comparable across the pool.
+
+        Parameters
+        ----------
+        ref : Dict[str, Any]
+            A component reference with a ``component`` key.
+        where : str
+            Human-readable location used in the error message.
+
+        Raises
+        ------
+        ValueError
+            If the component is not a registered :class:`ChunkScorer`, or a
+            composite scorer lacks the child it scores through.
+        """
+        name = self._require_component_name(ref, where)
+        scorer_class = self._resolve_subclass(name, ChunkScorer, where)
+        scoring_child = scorer_class.SCORING_CHILD
+        if scoring_child is None:
+            return
+        params = ref.get(PARAMS_KEY)
+        children = params.get(CHILDREN_KEY) if isinstance(params, dict) else None
+        if not isinstance(children, list) or not children:
+            raise ValueError(
+                f"Component '{name}' at {where} scores through one of its "
+                "children, so it needs at least one child."
+            )
+        child = children[-1] if scoring_child is ScoringChild.LAST else children[0]
+        if not isinstance(child, dict) or COMPONENT_KEY not in child:
+            raise ValueError(
+                f"The child '{name}' scores through at {where} must be a "
+                "component reference."
+            )
+        self._validate_scorer_chain(child, f"{where} > {name}")
 
     @staticmethod
     def _require_component_name(ref: Dict[str, Any], key: str) -> str:
@@ -412,16 +462,29 @@ class QueryTransformationValidationService:
         Parameters
         ----------
         reranker_ref : Dict[str, Any]
-            The nested ``reranker`` reference, mutated in place. A missing or
-            malformed ``params`` container counts as empty, like the nested LLM.
+            The nested ``reranker`` reference, mutated in place. A reference
+            without ``params`` is the minimal ``{"component": name}`` and takes
+            the schema defaults; a ``params`` that is not a dict is malformed.
+
+        Raises
+        ------
+        ValueError
+            If ``params`` is present and not a dict.
         """
-        reranker_name = reranker_ref.get("component")
+        reranker_name = reranker_ref.get(COMPONENT_KEY)
         if not reranker_name:
             return
-        caller_params = reranker_ref.get("params")
-        reranker_ref["params"] = {
+        caller_params = reranker_ref.get(PARAMS_KEY)
+        if caller_params is None:
+            caller_params = {}
+        elif not isinstance(caller_params, dict):
+            raise ValueError(
+                f"'params' of '{RAG_PARAM_QUERY_TRANSFORMATION}.params.reranker' "
+                f"must be a dict, got {type(caller_params).__name__}."
+            )
+        reranker_ref[PARAMS_KEY] = {
             **resolve_component_defaults(reranker_name, self._registry),
-            **(caller_params if isinstance(caller_params, dict) else {}),
+            **caller_params,
         }
 
     def _validate_nested_template(self, prompt_name: str, template: Any) -> None:

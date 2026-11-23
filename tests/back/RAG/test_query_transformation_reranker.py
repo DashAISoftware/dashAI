@@ -62,7 +62,7 @@ class _Scorer(ChunkScorer):
     def __init__(self, scores: Dict[int, float], top_k: int = 10, chunks=None) -> None:
         self._scores = scores
         self._top_k = top_k
-        self.chunks = chunks or {}
+        self.chunks = chunks
 
     def score_chunks(self, chunk_ids: List[int], query: str):
         scored = [(cid, self._scores[cid]) for cid in chunk_ids if cid in self._scores]
@@ -141,6 +141,34 @@ class TestRerankChunks:
         retriever = _scorer({2: 0.5, 4: 0.9, 5: 0.1}, top_k=2, chunks=stored)
 
         ranked = retriever.rerank_chunks([plain, window], "query")
+
+        assert ranked[0] is window
+
+    def test_a_window_that_does_not_resolve_in_the_chunk_store_is_an_error(self):
+        stored = {1: {i: _chunk(i) for i in range(3)}}
+        window = Chunk(
+            id=8,
+            document_id=1,
+            document_position=8,
+            text="chunk 8 chunk 9",
+            source_positions=(8, 9),
+        )
+        retriever = _scorer({8: 0.1}, top_k=2, chunks=stored)
+
+        with pytest.raises(RAGRetrieverRerankError, match="could not resolve"):
+            retriever.rerank_chunks([_chunk(2), window], "query")
+
+    def test_a_scorer_without_a_chunk_store_ranks_a_window_by_its_own_id(self):
+        window = Chunk(
+            id=4,
+            document_id=1,
+            document_position=4,
+            text="chunk 4 chunk 5",
+            source_positions=(4, 5),
+        )
+        retriever = _scorer({2: 0.5, 4: 0.1}, top_k=2)
+
+        ranked = retriever.rerank_chunks([_chunk(2), window], "query")
 
         assert ranked[0] is window
 
@@ -369,7 +397,6 @@ class TestSetupBuildsTheRerankerWithTheIndex:
         built = _setup_service()._build_reranker(
             config,
             retrievers,
-            _retriever_result(),
             lambda fraction, message: progress.append(message),
         )
 
@@ -384,7 +411,6 @@ class TestSetupBuildsTheRerankerWithTheIndex:
             built = _setup_service()._build_reranker(
                 _stage_config("LLMQueryExpander", params),
                 retrievers,
-                _retriever_result(),
                 lambda fraction, message: None,
             )
 
@@ -395,7 +421,6 @@ class TestSetupBuildsTheRerankerWithTheIndex:
         built = _setup_service()._build_reranker(
             SimpleNamespace(query_transformation=None),
             _Retrievers(),
-            _retriever_result(),
             lambda fraction, message: None,
         )
 
@@ -410,7 +435,6 @@ class TestSetupBuildsTheRerankerWithTheIndex:
                 {"reranker": {"component": "DenseEmbeddingRetriever", "params": {}}},
             ),
             retrievers,
-            _retriever_result(),
             lambda fraction, message: None,
         )
 
@@ -419,7 +443,6 @@ class TestSetupBuildsTheRerankerWithTheIndex:
 
     def test_reranker_without_the_scorer_capability_is_refused_and_released(self):
         not_a_scorer = _Closable()
-        main = _Closable()
 
         with pytest.raises(RAGTransformationConfigError, match="ChunkScorer"):
             _setup_service()._build_reranker(
@@ -428,12 +451,44 @@ class TestSetupBuildsTheRerankerWithTheIndex:
                     {"reranker": {"component": "ParallelRetriever", "params": {}}},
                 ),
                 _Retrievers(model=not_a_scorer),
-                _retriever_result(main),
                 lambda fraction, message: None,
             )
 
         assert not_a_scorer.closed == 1
-        assert main.closed == 1
+
+    def test_reranker_with_non_dict_params_is_refused_before_building(self):
+        retrievers = _Retrievers(model=_FakeScorer("dense"))
+
+        with pytest.raises(RAGTransformationConfigError, match="must be a dict"):
+            _setup_service()._build_reranker(
+                _stage_config(
+                    "LLMQueryExpander",
+                    {
+                        "reranker": {
+                            "component": "DenseEmbeddingRetriever",
+                            "params": "abc",
+                        }
+                    },
+                ),
+                retrievers,
+                lambda fraction, message: None,
+            )
+
+        assert retrievers.built == []
+
+    def test_reranker_reference_without_params_takes_the_minimal_reference(self):
+        retrievers = _Retrievers(model=_FakeScorer("dense"))
+
+        _setup_service()._build_reranker(
+            _stage_config(
+                "LLMQueryExpander",
+                {"reranker": {"component": "DenseEmbeddingRetriever"}},
+            ),
+            retrievers,
+            lambda fraction, message: None,
+        )
+
+        assert retrievers.built == [("DenseEmbeddingRetriever", {})]
 
 
 class TestChunkScorerCapabilityIsResolvedFromTheRegistry:
@@ -480,6 +535,140 @@ class TestRerankTraceFailure:
 
         with pytest.raises(RAGPipelineRuntimeError, match="describe the pool reranker"):
             pipeline.multi_query_retrieval(["a", "b"], "original")
+
+
+class _SequencedRetrievers:
+    """A retriever setup service: one result per call, optionally failing."""
+
+    def __init__(self, models: list, fail_on_call: int | None = None) -> None:
+        self._models = models
+        self._fail_on_call = fail_on_call
+        self.calls = 0
+
+    def setup(self, component: str, params: dict):
+        self.calls += 1
+        if self.calls == self._fail_on_call:
+            raise RuntimeError("embedding failed")
+        return SimpleNamespace(model=self._models[self.calls - 1])
+
+
+def _index_service(monkeypatch, retrievers, clear_flag=None) -> SetupService:
+    """A ``SetupService`` whose collaborators are fakes but whose ``build_index``
+    control flow is the real one."""
+    import DashAI.back.services.RAG.setup_service as setup_module
+
+    chunking = SimpleNamespace(chunks={})
+    service = _setup_service()
+    service._RAG_path = "unused"
+    service._db = object()
+    service._ensure_db_record = lambda session_id: 1
+    service._documents = SimpleNamespace(load=lambda documents: {})
+    service._chunking = SimpleNamespace(
+        get_or_create_chunk_set=lambda *args, **kwargs: SimpleNamespace(id=7),
+        create=lambda *args, **kwargs: (3, chunking),
+    )
+    service._clear_reindex_flag = clear_flag or (lambda session_id: None)
+    monkeypatch.setattr(
+        setup_module, "RetrieverSetupService", lambda *args, **kwargs: retrievers
+    )
+    return service
+
+
+def _index_config(reranker: dict | None):
+    reference = SimpleNamespace(component="DenseEmbeddingRetriever", params={})
+    params = {} if reranker is None else {"reranker": reranker}
+    return SimpleNamespace(
+        session_id=1,
+        documents=[],
+        chunking_model=SimpleNamespace(component="CharacterChunkModel", params={}),
+        retriever_model=reference,
+        query_transformation=SimpleNamespace(
+            component="LLMQueryExpander", params=params
+        ),
+    )
+
+
+_RERANKER_REFERENCE = {"component": "DenseEmbeddingRetriever", "params": {}}
+
+
+class _ClosableScorer(_FakeScorer):
+    def __init__(self, name: str) -> None:
+        super().__init__(name)
+        self.closed = 0
+
+    def close(self) -> None:
+        self.closed += 1
+
+
+class TestBuildIndexReleasesOnFailure:
+    """``build_index`` itself leaves nothing loaded when the reranker step fails."""
+
+    def test_a_reranker_setup_failure_releases_the_retriever(self, monkeypatch):
+        main = _Closable()
+        service = _index_service(
+            monkeypatch, _SequencedRetrievers([main, None], fail_on_call=2)
+        )
+
+        with pytest.raises(RuntimeError, match="embedding failed"):
+            service.build_index(_index_config(_RERANKER_REFERENCE))
+
+        assert main.closed == 1
+
+    def test_a_non_scorer_reranker_releases_both_stages(self, monkeypatch):
+        main, not_a_scorer = _Closable(), _Closable()
+        service = _index_service(
+            monkeypatch, _SequencedRetrievers([main, not_a_scorer])
+        )
+
+        with pytest.raises(RAGTransformationConfigError, match="ChunkScorer"):
+            service.build_index(_index_config(_RERANKER_REFERENCE))
+
+        assert main.closed == 1
+        assert not_a_scorer.closed == 1
+
+    def test_a_failure_after_the_reranker_is_built_releases_both_stages(
+        self, monkeypatch
+    ):
+        main, scorer = _Closable(), _ClosableScorer("dense")
+
+        def _fail(session_id):
+            raise RuntimeError("flag store down")
+
+        service = _index_service(
+            monkeypatch, _SequencedRetrievers([main, scorer]), clear_flag=_fail
+        )
+
+        with pytest.raises(RuntimeError, match="flag store down"):
+            service.build_index(_index_config(_RERANKER_REFERENCE))
+
+        assert main.closed == 1
+        assert scorer.closed == 1
+
+    def test_a_successful_index_keeps_the_stages_open_until_released(self, monkeypatch):
+        main, scorer = _Closable(), _ClosableScorer("dense")
+        service = _index_service(monkeypatch, _SequencedRetrievers([main, scorer]))
+
+        index = service.build_index(_index_config(_RERANKER_REFERENCE))
+
+        assert index.reranker.model is scorer
+        assert main.closed == 0
+        assert scorer.closed == 0
+
+        SetupService.release_index(index)
+
+        assert main.closed == 1
+        assert scorer.closed == 1
+
+    def test_build_pipeline_propagates_the_failure_without_leaking(self, monkeypatch):
+        main = _Closable()
+        service = _index_service(
+            monkeypatch, _SequencedRetrievers([main, None], fail_on_call=2)
+        )
+
+        with pytest.raises(RuntimeError, match="embedding failed"):
+            service.build_pipeline(_index_config(_RERANKER_REFERENCE))
+
+        assert main.closed == 1
 
 
 class TestBuildPipelineReleasesOnFailure:
