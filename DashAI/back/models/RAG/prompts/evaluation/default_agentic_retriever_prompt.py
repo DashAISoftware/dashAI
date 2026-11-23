@@ -46,6 +46,9 @@ TEMPLATES = {
         "\n"
         "Retriever catalog: {retriever.description}\n"
         "\n"
+        "Any configured top_k shown in the catalog is the child's own default, "
+        "not a cumulative-call ceiling.\n"
+        "\n"
         "The listed chunks ARE the current pool. Chunks not mentioned in the "
         "two chunk fields stay in the pool exactly as they are, except when the "
         "maximum capacity forces out older non-requested chunks; requested "
@@ -55,7 +58,7 @@ TEMPLATES = {
         "Respond by calling the function evaluate_agentic_retrieval with a "
         "single JSON object with this shape:\n"
         '{"sufficient": <true or false>, "call_retrievers": '
-        '{"<retriever index>": <top_k>}, "request_specific_chunks": '
+        '{"<retriever index>": <additional_chunks>}, "request_specific_chunks": '
         '{"<document id>": [<chunk positions>]}, "discard_specific_chunks": '
         '{"<document id>": [<chunk positions>]}, '
         '"message": "<one short user-facing sentence>", '
@@ -68,10 +71,12 @@ TEMPLATES = {
         '- "justification" is optional: one short sentence in the same '
         "language as this prompt explaining why.\n"
         '- "call_retrievers" maps 1-based retriever indices from the retriever '
-        "catalog to the number of chunks to retrieve from that retriever next. "
-        "It is NOT mandatory every round. Indices must be at least 1. The "
-        "per-retriever top_k is a size hint; the retriever enforces the hard pool "
-        "cap.\n"
+        "catalog to the number of ADDITIONAL chunks to retrieve from that "
+        "retriever next. Chunks that retriever already returned are not counted "
+        "again, so ask only for the extra chunks you still need. It is NOT "
+        "mandatory every round. Indices must be at least 1. Each value is an "
+        "additional-chunk count, not a final absolute size; the retriever "
+        "enforces the hard pool cap.\n"
         '- "request_specific_chunks" maps document ids to chunk positions to '
         "ADD to the pool, even if no retriever returned them. Use the document "
         "chunk counts to choose valid positions in 0..C-1.\n"
@@ -125,6 +130,9 @@ TEMPLATES = {
         "\n"
         "Catálogo de recuperadores: {retriever.description}\n"
         "\n"
+        "Cualquier top_k configurado que aparezca en el catálogo es el valor "
+        "predeterminado del hijo, no un límite para las llamadas acumuladas.\n"
+        "\n"
         "Los fragmentos listados SON el conjunto actual. Los fragmentos no "
         "mencionados en los dos campos de fragmentos permanecen en el conjunto "
         "exactamente como están, salvo que la capacidad máxima expulse "
@@ -135,7 +143,8 @@ TEMPLATES = {
         "Responde llamando a la función evaluate_agentic_retrieval con un "
         "único objeto JSON con esta forma:\n"
         '{"sufficient": <true o false>, "call_retrievers": '
-        '{"<índice del recuperador>": <top_k>}, "request_specific_chunks": '
+        '{"<índice del recuperador>": <fragmentos_adicionales>}, '
+        '"request_specific_chunks": '
         '{"<id del documento>": [<posiciones de fragmentos>]}, '
         '"discard_specific_chunks": '
         '{"<id del documento>": [<posiciones de fragmentos>]}, '
@@ -149,10 +158,13 @@ TEMPLATES = {
         '- "justification" es opcional: una frase breve, en el mismo idioma de '
         "este prompt, explicando por qué.\n"
         '- "call_retrievers" asigna índices de recuperador basados en 1 del '
-        "catálogo al número de fragmentos a recuperar de ese recuperador en la "
-        "siguiente ronda. NO es obligatorio en cada ronda. Los índices deben "
-        "ser al menos 1. El top_k por recuperador es una sugerencia de tamaño; "
-        "el recuperador aplica el límite máximo del conjunto.\n"
+        "catálogo a la cantidad de fragmentos ADICIONALES a recuperar de ese "
+        "recuperador en la siguiente ronda. Los fragmentos que ese recuperador "
+        "ya devolvió no se cuentan de nuevo, así que pide solo los fragmentos "
+        "extra que aún necesites. NO es obligatorio en cada ronda. Los índices "
+        "deben ser al menos 1. Cada valor es una cantidad de fragmentos "
+        "ADICIONALES, no un tamaño final absoluto; el recuperador aplica el "
+        "límite máximo del conjunto.\n"
         '- "request_specific_chunks" asigna ids de documento a posiciones de '
         "fragmento para AÑADIRLAS al conjunto, aunque ningún recuperador las "
         "haya devuelto. Usa el número de fragmentos de cada documento para "
@@ -210,6 +222,9 @@ TEMPLATES = {
         "\n"
         "Catálogo de recuperadores: {retriever.description}\n"
         "\n"
+        "Qualquer top_k configurado mostrado no catálogo é o valor padrão do "
+        "filho, não um limite para chamadas cumulativas.\n"
+        "\n"
         "Os trechos listados SÃO o conjunto atual. Os trechos não mencionados "
         "nos dois campos de trechos permanecem no conjunto exatamente como "
         "estão, exceto quando a capacidade máxima expulsa trechos antigos não "
@@ -219,7 +234,8 @@ TEMPLATES = {
         "Responda chamando a função evaluate_agentic_retrieval com um "
         "único objeto JSON com esta forma:\n"
         '{"sufficient": <true ou false>, "call_retrievers": '
-        '{"<índice do recuperador>": <top_k>}, "request_specific_chunks": '
+        '{"<índice do recuperador>": <trechos_adicionais>}, '
+        '"request_specific_chunks": '
         '{"<id do documento>": [<posições de trechos>]}, '
         '"discard_specific_chunks": '
         '{"<id do documento>": [<posições de trechos>]}, '
@@ -233,10 +249,13 @@ TEMPLATES = {
         '- "justification" é opcional: uma frase breve, no mesmo idioma deste '
         "prompt, explicando por quê.\n"
         '- "call_retrievers" mapeia índices de recuperador baseados em 1 do '
-        "catálogo para o número de trechos a recuperar desse recuperador na "
-        "próxima rodada. NÃO é obrigatório em cada rodada. Os índices devem ser "
-        "pelo menos 1. O top_k por recuperador é uma sugestão de tamanho; o "
-        "recuperador aplica o limite máximo do conjunto.\n"
+        "catálogo para o número de trechos ADICIONAIS a recuperar desse "
+        "recuperador na próxima rodada. Os trechos que esse recuperador já "
+        "retornou não são contados novamente, então peça apenas os trechos "
+        "extras de que ainda precisa. NÃO é obrigatório em cada rodada. Os "
+        "índices devem ser pelo menos 1. Cada valor é uma quantidade de trechos "
+        "ADICIONAIS, não um tamanho final absoluto; o recuperador aplica o "
+        "limite máximo do conjunto.\n"
         '- "request_specific_chunks" mapeia ids de documento para posições de '
         "trecho a ADICIONAR ao conjunto, mesmo que nenhum recuperador as tenha "
         "retornado. Use o número de trechos de cada documento para escolher "

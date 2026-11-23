@@ -25,9 +25,31 @@ import {
 import { getChildComponents } from "../../../api/component";
 import { getApiErrorMessage } from "../../../utils/apiError";
 import { LANGUAGE_CODES } from "../../../constants/languages";
+import {
+  DEFAULT_PROMPT_LANGUAGE,
+  PROMPT_LANGUAGE_PARAM,
+  resolveStoredPromptTemplate,
+  storedPromptLanguages,
+  storedPromptShape,
+} from "./promptSchema";
 
 /** The component a hand-written template is stored under. */
 const CUSTOM_PROMPT_COMPONENT = "CustomRAGGenerationPrompt";
+
+/**
+ * A seed language the selector can actually display.
+ *
+ * The language saved with a prompt is not guaranteed to be one of the codes
+ * this editor offers, and a select whose value is not an option renders empty.
+ *
+ * @param {*} candidate - The language to prefer, if any.
+ * @returns {string} The candidate when it is selectable, the default otherwise.
+ */
+function selectableSeedLanguage(candidate) {
+  return LANGUAGE_CODES.includes(candidate)
+    ? candidate
+    : DEFAULT_PROMPT_LANGUAGE;
+}
 
 /**
  * Placeholders every RAG prompt has to contain, used until the registry's own
@@ -87,8 +109,8 @@ export default function PromptEditor({
   // Which language's template to seed from. `CustomRAGGenerationPrompt` takes
   // only a template and never reads a language, so storing one in its params
   // would be a control that silently does nothing.
-  const [seedLanguage, setSeedLanguage] = useState(
-    promptModel?.params?.language ?? "en",
+  const [seedLanguage, setSeedLanguage] = useState(() =>
+    selectableSeedLanguage(promptModel?.params?.[PROMPT_LANGUAGE_PARAM]),
   );
 
   useEffect(() => {
@@ -218,20 +240,31 @@ export default function PromptEditor({
   /**
    * Replaces the template with one saved in the prompt library.
    *
+   * A saved prompt stores either one template or one per language; the shared
+   * resolver loads the variant selected here when available, then falls back
+   * to a supported stored language.
+   *
    * @param {string} value - The selected prompt id, as a string.
    */
   const handleSeedSaved = (value) => {
     const prompt = savedPrompts.find((item) => String(item.id) === value);
     if (!prompt) return;
     const parameters = prompt.parameters ?? {};
-    const templates = parameters.templates ?? {};
-    const templateText =
-      parameters.template ??
-      templates[seedLanguage] ??
-      Object.values(templates)[0];
-    if (typeof templateText !== "string") return;
+    const shape = storedPromptShape(parameters);
+    const languages = storedPromptLanguages(parameters).filter((language) =>
+      LANGUAGE_CODES.includes(language),
+    );
+    if (shape.usesTemplates && languages.length === 0) return;
+    const preferredLanguage = languages.includes(seedLanguage)
+      ? seedLanguage
+      : languages.includes(shape.language)
+        ? shape.language
+        : (languages[0] ?? selectableSeedLanguage(seedLanguage));
+    const language = selectableSeedLanguage(preferredLanguage);
+    const templateText = resolveStoredPromptTemplate(parameters, language);
+    if (!templateText) return;
     update(templateText);
-    if (parameters.language) setSeedLanguage(parameters.language);
+    setSeedLanguage(language);
   };
 
   /**

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import replace
-from typing import Any, Callable, Dict, List, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, List, Sequence, Set
 
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.exceptions.retriever import (
@@ -28,6 +28,10 @@ from DashAI.back.models.RAG.retrievers.composite.llm_route_runner import (
 )
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
+)
+from DashAI.back.models.RAG.retrievers.composite.retrieval_pool import (
+    ChunkKey,
+    chunk_key,
 )
 from DashAI.back.models.RAG.retrievers.composite.structured_output import (
     cap_errors,
@@ -204,9 +208,7 @@ class RetrievalEvaluator:
             max_rounds=max_rounds,
             remaining=max(top_k - pool_size, 0),
         )
-        known_keys: Set[Tuple[int, int]] = {
-            (chunk.document_id, chunk.document_position) for chunk in chunks
-        }
+        known_keys: Set[ChunkKey] = {chunk_key(chunk) for chunk in chunks}
 
         def finalize(verdict: RetrievalVerdict) -> RetrievalVerdict:
             """Finalize and apply one parsed verdict inside the retry loop."""
@@ -237,7 +239,7 @@ class RetrievalEvaluator:
         mapping: Dict[int, List[int]],
         key: str,
         context: RetrievalContext,
-        known_keys: Set[Tuple[int, int]],
+        known_keys: Set[ChunkKey],
         has_corpus: bool,
     ) -> Dict[int, List[int]]:
         """Reject chunk positions unknown to the corpus or the materialized pool.
@@ -255,7 +257,7 @@ class RetrievalEvaluator:
             Canonical field name, echoed in error messages.
         context : RetrievalContext
             Document and corpus knowledge.
-        known_keys : Set[Tuple[int, int]]
+        known_keys : Set[ChunkKey]
             ``(document_id, document_position)`` keys of the materialized pool.
         has_corpus : bool
             Whether ``context`` carries corpus knowledge. Computed once by the
@@ -299,7 +301,7 @@ class RetrievalEvaluator:
         context: RetrievalContext,
         *,
         pool_size: int,
-        known_keys: Set[Tuple[int, int]],
+        known_keys: Set[ChunkKey],
         require_retriever_call: bool = False,
     ) -> RetrievalVerdict:
         """Validate a parsed verdict against the concrete retrievers and pool.
@@ -314,7 +316,7 @@ class RetrievalEvaluator:
             Document and corpus knowledge used to validate chunk positions.
         pool_size : int
             Number of chunks in the materialized pool.
-        known_keys : Set[Tuple[int, int]]
+        known_keys : Set[ChunkKey]
             ``(document_id, document_position)`` keys of the materialized pool.
         require_retriever_call : bool, optional
             Require an insufficient verdict with at least one valid retriever
