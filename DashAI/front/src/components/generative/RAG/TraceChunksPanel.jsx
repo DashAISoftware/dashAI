@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import {
+  Alert,
   Box,
   Button,
   Chip,
@@ -25,7 +26,6 @@ import {
   getSessionConfiguration,
 } from "../../../api/rag";
 import {
-  asArray,
   isPlainObject,
   isQueryTransformed,
   filterRenderableEntries,
@@ -947,6 +947,10 @@ function TraceTrees({
   onChunkClick,
 }) {
   const { t } = useTranslation("generative");
+  const rerankIsComplete =
+    Boolean(rerankNode) &&
+    Array.isArray(rerankNode.pool) &&
+    Array.isArray(rerankNode.chunks);
   /**
    * Renders one query's retriever tree, or stacks them under "Query N"
    * mini-headings when "All" is active.
@@ -986,12 +990,17 @@ function TraceTrees({
             renderTree(entry, index, index === entries.length - 1),
           )
         : selectedEntry && renderTree(selectedEntry, selectedQuery, true)}
-      {selectedQuery === null && rerankNode && (
+      {selectedQuery === null && rerankNode && !rerankIsComplete && (
+        <Alert data-testid="rerank-malformed" severity="error" sx={{ mt: 2 }}>
+          {t("generative:traceChunks.rerankMalformed")}
+        </Alert>
+      )}
+      {selectedQuery === null && rerankNode && rerankIsComplete && (
         <Box data-testid="rerank-tree" sx={{ mt: 2 }}>
           <Typography variant="body2" sx={{ fontWeight: "bold", mb: 0.5 }}>
             {t("generative:traceChunks.rerankTitle", {
-              pool: asArray(rerankNode.pool).length,
-              kept: asArray(rerankNode.chunks).length,
+              pool: rerankNode.pool.length,
+              kept: rerankNode.chunks.length,
             })}
           </Typography>
           <RetrieverTraceTree

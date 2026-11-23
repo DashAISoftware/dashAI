@@ -4,7 +4,7 @@
  */
 
 import { TRACE_STAGE_RERANK } from "../../../constants/rag";
-import { isPlainObject } from "../../shared/componentTree/componentTreeUtils";
+import { isPlainObject } from "../../../utils/objects";
 
 /**
  * Coerces a possibly-missing list into an array.
