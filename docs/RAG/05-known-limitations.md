@@ -198,15 +198,19 @@ index infrastructure. Known limitations of the current implementation:
   scores.
 
 - **Every pooled chunk must be scorable.** A chunk without an id, or whose
-  ids the reranker's index does not hold, makes the stage fail with
-  `RAGRetrieverRerankError` (wrapped as a pipeline error) instead of being
-  kept unranked, so the pool is never returned as if it had been ordered.
+  ids the reranker's index does not hold, makes the scorer raise
+  `RAGRetrieverRerankError` instead of keeping the chunk unranked, so the pool
+  is never returned as if it had been ordered. The pipeline re-raises it as a
+  `RAGPipelineRuntimeError` ("Failed during pool reranking") whose `__cause__`
+  is the scorer's `RAGRetrieverRerankError`.
 
 - **A retrieve-then-expand window is ranked by its best chunk.** A window has
   the id of its first covered chunk, but the reranker scores every stored chunk
   it spans (through `source_positions`) and ranks the window by the lowest
-  distance among them. A scorer without the retriever's chunk store cannot
-  resolve the covered ids and falls back to the window's own id.
+  distance among them. A scorer that has a chunk store but cannot resolve any
+  of a window's `source_positions` in it fails with `RAGRetrieverRerankError`.
+  Only a scorer with no chunk store at all (`chunks` is absent or `None`)
+  cannot resolve the covered ids, and it ranks the window by its own id.
 
 - **Reranking cost grows with the pool, not with the corpus.** The reranker
   scores only the chunks of the merged pool: at most the number of queries
@@ -226,7 +230,20 @@ index infrastructure. Known limitations of the current implementation:
   run (`SetupService.build_index`, "Building the reranker" progress step), so
   the first chat turn after indexing no longer embeds the corpus silently.
   Composite rerankers reuse their stored composite row when the children are
-  unchanged.
+  unchanged. If the reranker step fails, `build_index` releases the retriever
+  and the reranker it had built before the error propagates, and the indexing
+  job releases the ones of a successful run once it has recorded the result.
+
+- **A composite reranker must score through a chunk scorer.** A composite
+  scorer reports the scores of one child (`ChunkScorer.SCORING_CHILD`: the last
+  child of a sequential retriever, the single child of the MMR and the agentic
+  single and reranker retrievers). Validation follows that chain through the
+  nested references and rejects a reranker such as a sequential retriever whose
+  last child is a parallel retriever, because the averaged scores a parallel or
+  ensemble retriever returns are not comparable across the pool. A composite
+  scorer without children, or a reranker whose `params` is not a dict, is
+  rejected too. A reference without `params` is the minimal
+  `{"component": name}` and takes the schema defaults.
 
 - **The rewriter has no reranker.** The `reranker` field lives on
   `MultiQueryTransformationSchema`, shared by decomposition and expansion. A
@@ -245,15 +262,33 @@ index infrastructure. Known limitations of the current implementation:
   (`DEFAULT_MAX_SUBQUERIES`), but a stored stage that omits the key keeps
   running uncapped, and an update that resends the stage without it keeps it
   uncapped. An explicit `null` also means no limit; an explicit integer caps
-  the result. The context budget prices an uncapped decomposition at the
-  declared three queries, so it under-counts when the model emits more.
+  the result. This holds through the job path too: the transformer factory
+  restores the omitted key to "no cap" (`STORED_ABSENT_VALUES`) after the
+  schema has filled in its default. The context budget prices an omitted cap
+  and an explicit `null` alike, at the declared three queries, so it is an
+  estimate that under-counts when the model emits more, not a bound.
 
 - **Cleanup tells the stages apart by their stored parameters.** The retriever
   stage and the reranker keep their rows in the same pipeline and one row can
   serve both. When either changes, the other's rows are protected, the
   reranker's rows are removed when only its configuration changes, and rows
-  are matched by their stored parameters (class name alone is only the fallback
-  for the retriever stage's own rows).
+  are matched by their stored parameters: a unit by its parameters, a
+  composite by its ordered children. Class name alone is only the fallback,
+  used when nothing matches exactly (rows whose stored children no longer equal
+  the saved reference, such as the duplicates composite setup used to insert
+  every turn); it never selects a protected row, but it cannot tell such a row
+  from another stage's row of the same class. Embedding matrices are keyed by
+  chunk set, embedding model and document, not by retriever, so dropping a
+  dense reranker keeps the matrices a retained dense retriever with the same
+  embedding still reads.
+
+- **A malformed stored structure fails instead of being patched.** Cleanup and
+  the context budget raise `RAGPipelineConfigError` for a stored reference
+  that is not a component reference, a `params` that is not a dict, a composite
+  without a list of children, a query count that is not a positive integer or
+  `null`, or a transformer stage without a `params` dict. A reference without
+  `params` is the one documented minimal form; a disabled stage is an absent or
+  empty `query_transformation`.
 
 - **The context budget prices the reranker as a cap on units.** The reranker's
   `top_k` bounds how many units of the merged pool reach the prompt, and each
@@ -271,11 +306,15 @@ index infrastructure. Known limitations of the current implementation:
   configuration failures. The stage raises four types: the generic
   `RAGQueryTransformationError`, `RAGTransformationConfigError`,
   `RAGTransformationOutputError` (the model's output could not be parsed) and
-  `RAGTransformationGenerationError` (the model call failed). Nothing in the
-  backend catches them by subtype today: the job error message shows their
-  text only, not their class, and no code retries an unparseable output or
-  answers a configuration failure differently from a model failure. The
-  subtypes exist so such handling can be added without parsing messages.
+  `RAGTransformationGenerationError` (the model call failed). The transformer
+  does catch two of them by subtype: on the function-calling route an output
+  error or a generation error is retried, up to `function_call_max_trials`
+  attempts including the first, and the last error is raised once they are
+  exhausted. A configuration error is never retried, and the text route makes a
+  single attempt. Nothing above the transformer distinguishes the subtypes: the
+  pipeline wraps them and the job error message shows their text only, not their
+  class, so a configuration failure is not answered differently from a model
+  failure there.
 
 ## Maintenance
 
