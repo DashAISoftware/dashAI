@@ -37,8 +37,14 @@ from DashAI.back.models.RAG.RAG_defaults import (
     MAX_FUNCTION_CALL_TRIALS,
     default_function_calling_llm,
 )
+from DashAI.back.models.RAG.retrievers.composite.mmr_reranker_retriever import (
+    MMRRerankerRetriever,
+)
 from DashAI.back.models.RAG.retrievers.composite.parallel_retriever import (
     ParallelRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.sequential_retriever import (
+    SequentialRetriever,
 )
 from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
     DenseEmbeddingRetriever,
@@ -1469,6 +1475,8 @@ def _validator_registry() -> _FakeRegistry:
             "StubTransformationLLM": StubTransformationLLM,
             "DenseEmbeddingRetriever": DenseEmbeddingRetriever,
             "ParallelRetriever": ParallelRetriever,
+            "SequentialRetriever": SequentialRetriever,
+            "MMRRerankerRetriever": MMRRerankerRetriever,
             "BM25Retriever": BM25Retriever,
         }
     )
@@ -1599,6 +1607,86 @@ class TestTransformationRerankerValidation:
         with pytest.raises(ValueError, match="must be a string") as exc_info:
             _validate_transformation(self._ref_with_reranker({"component": 3}))
         assert "reranker" in str(exc_info.value)
+
+    def test_non_dict_params_rejected(self):
+        with pytest.raises(ValueError, match="must be a dict") as exc_info:
+            _validate_transformation(
+                self._ref_with_reranker(
+                    {"component": "DenseEmbeddingRetriever", "params": "abc"}
+                )
+            )
+        assert "reranker" in str(exc_info.value)
+
+    def test_reference_without_params_is_the_minimal_reference(self):
+        _validate_transformation(
+            self._ref_with_reranker({"component": "DenseEmbeddingRetriever"})
+        )
+
+    @staticmethod
+    def _composite(component: str, *children: str) -> dict:
+        return {
+            "component": component,
+            "params": {
+                "children": [{"component": child, "params": {}} for child in children]
+            },
+        }
+
+    def test_composite_scoring_through_a_non_scorer_last_child_is_rejected(self):
+        with pytest.raises(ValueError, match="ChunkScorer") as exc_info:
+            _validate_transformation(
+                self._ref_with_reranker(
+                    self._composite("SequentialRetriever", "ParallelRetriever")
+                )
+            )
+        assert "ParallelRetriever" in str(exc_info.value)
+
+    def test_composite_scoring_through_a_non_scorer_first_child_is_rejected(self):
+        with pytest.raises(ValueError, match="ChunkScorer") as exc_info:
+            _validate_transformation(
+                self._ref_with_reranker(
+                    self._composite("MMRRerankerRetriever", "ParallelRetriever")
+                )
+            )
+        assert "ParallelRetriever" in str(exc_info.value)
+
+    def test_sequential_only_needs_its_last_child_to_be_a_scorer(self):
+        _validate_transformation(
+            self._ref_with_reranker(
+                self._composite(
+                    "SequentialRetriever",
+                    "ParallelRetriever",
+                    "DenseEmbeddingRetriever",
+                )
+            )
+        )
+
+    def test_composite_scorer_with_scorer_children_is_accepted(self):
+        _validate_transformation(
+            self._ref_with_reranker(
+                self._composite("MMRRerankerRetriever", "DenseEmbeddingRetriever")
+            )
+        )
+
+    def test_composite_scorer_without_children_is_rejected(self):
+        with pytest.raises(ValueError, match="at least one child"):
+            _validate_transformation(
+                self._ref_with_reranker(
+                    {"component": "SequentialRetriever", "params": {}}
+                )
+            )
+
+    def test_nested_non_scorer_is_rejected_through_the_chain(self):
+        nested = {
+            "component": "SequentialRetriever",
+            "params": {
+                "children": [
+                    self._composite("MMRRerankerRetriever", "ParallelRetriever")
+                ]
+            },
+        }
+        with pytest.raises(ValueError, match="ChunkScorer") as exc_info:
+            _validate_transformation(self._ref_with_reranker(nested))
+        assert "MMRRerankerRetriever" in str(exc_info.value)
 
 
 # ===================================================================

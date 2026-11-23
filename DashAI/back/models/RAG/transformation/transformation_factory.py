@@ -92,6 +92,9 @@ class TransformationFactory:
             )
 
         validated = model_class.SCHEMA.model_validate(params)
+        # ``validated`` fills an omitted parameter with its schema default, but
+        # a stored configuration that omits some keys means something else
+        # (see ``STORED_ABSENT_VALUES``), so those are restored below.
         # The reranker is a retriever, and a retriever needs the retrieval
         # infrastructure (chunks, persistence, index). That is supplied by the
         # index setup, which builds it and attaches it to the transformer. Here
@@ -103,5 +106,8 @@ class TransformationFactory:
             self._registry,
             lazy_model_classes=(TextToTextGenerationTaskModel,),
         )
+        for key, absent_value in model_class.STORED_ABSENT_VALUES.items():
+            if key not in validated.model_fields_set:
+                resolved[key] = absent_value
         model = model_class(**resolved)
         return TransformationFactoryResult(model=model)

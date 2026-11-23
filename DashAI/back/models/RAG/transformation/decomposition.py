@@ -140,6 +140,8 @@ class LLMQueryDecomposer(LLMQueryTransformation):
         "required": ["queries"],
     }
 
+    STORED_ABSENT_VALUES: ClassVar[Dict[str, Any]] = {MAX_SUBQUERIES_KEY: None}
+
     metadata = {
         "technique": "decomposition",
         "prompt_parent": "QueryDecompositionPrompt",
