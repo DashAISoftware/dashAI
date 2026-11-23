@@ -259,7 +259,6 @@
       "configureNode": "Configurar nodo",
       "mergeStrategyInterleave": "Intercalar",
       "mergeStrategyRoundRobin": "Round robin",
-      "modelsLoadFailed": "No se pudieron cargar los componentes disponibles.",
       "nestedCompositeNote": "Este es un recuperador compuesto. Sus hijos se configuran en el árbol, fuera de este diálogo.",
       "parameters": "Parámetros",
       "removeNode": "Eliminar nodo",
@@ -431,7 +430,8 @@
         "startFromHelp": "Reemplaza la plantilla de abajo. La tuya se conserva hasta que elijas una.",
         "template": "Plantilla",
         "templatePlaceholder": "Cada mensaje del usuario llega como {input}\nLos fragmentos recuperados llegan como {chunks}",
-        "unnamedPrompt": "Prompt {{id}}"
+        "unnamedPrompt": "Prompt {{id}}",
+        "malformedData": "Algunos prompts devueltos por el servidor están incompletos y se omitieron: {{names}}"
       },
       "field": {
         "edit": "Editar plantilla",
@@ -608,7 +608,8 @@
     "storyRewritten_one": "Tu mensaje se reescribió en {{count}} query de búsqueda.",
     "storyRewritten_other": "Tu mensaje se reescribió en {{count}} queries de búsqueda.",
     "title": "Fuentes del mensaje",
-    "yourMessage": "Tu mensaje fue"
+    "yourMessage": "Tu mensaje fue",
+    "rerankMalformed": "La entrada de reordenamiento de este trace está incompleta: faltan los candidatos o los chunks conservados."
   },
   "validation": {
     "apiKeyMissingDescription": "Este modelo requiere una API key para funcionar. Abre la configuración avanzada para añadir tu API key.",

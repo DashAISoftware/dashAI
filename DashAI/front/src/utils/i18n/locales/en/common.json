@@ -297,7 +297,11 @@
     "parameters": "Parameters",
     "containerNote": "This component contains other components. Its children are configured in the tree, outside this dialog.",
     "loadFailed": "Could not load the components: {{reason}}",
-    "unknownComponent": "The component {{component}} is not available, so its tree cannot be shown."
+    "unknownComponent": "The component {{component}} is not available, so its tree cannot be shown.",
+    "unknownChild": "The component {{component}} is not available. Replace or remove it before saving.",
+    "configureNodeNamed": "Configure component {{name}}",
+    "noSchema": "The component {{component}} has no configuration schema, so it cannot be selected.",
+    "formUnavailable": "The settings form is not ready yet. Try again in a moment."
   },
   "component": "Component",
   "null": "Null"

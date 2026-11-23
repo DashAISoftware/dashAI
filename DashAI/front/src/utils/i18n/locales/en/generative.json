@@ -257,7 +257,6 @@
       "configureNode": "Configure node",
       "mergeStrategyInterleave": "Interleave",
       "mergeStrategyRoundRobin": "Round robin",
-      "modelsLoadFailed": "Could not load the available components.",
       "nestedCompositeNote": "This is a composite retriever. Its children are configured in the tree, outside this dialog.",
       "parameters": "Parameters",
       "removeNode": "Remove node",
@@ -429,7 +428,8 @@
         "startFromHelp": "Replaces the template below. Yours is kept until you pick one.",
         "template": "Template",
         "templatePlaceholder": "Each user message arrives as {input}\nThe retrieved passages arrive as {chunks}",
-        "unnamedPrompt": "Prompt {{id}}"
+        "unnamedPrompt": "Prompt {{id}}",
+        "malformedData": "Some prompts returned by the server are incomplete and were left out: {{names}}"
       },
       "field": {
         "edit": "Edit template",
@@ -601,7 +601,8 @@
     "storyRewritten_one": "Your message was rewritten into {{count}} search query.",
     "storyRewritten_other": "Your message was rewritten into {{count}} search queries.",
     "title": "Message sources",
-    "yourMessage": "Your message was"
+    "yourMessage": "Your message was",
+    "rerankMalformed": "The reranking entry of this trace is incomplete: its candidates or kept chunks are missing."
   },
   "validation": {
     "apiKeyMissingDescription": "This model requires an API key to function. Open Advanced Configuration to add your API key.",

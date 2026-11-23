@@ -132,6 +132,50 @@ describe("ComponentTreeBuilder", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it("shows an error for an unknown child and keeps it when the tree is saved", async () => {
+    const onChange = jest.fn();
+    const onLoad = jest.fn();
+    renderTree({
+      onChange,
+      onLoad,
+      rootComponent: "Many",
+      rootParams: {
+        kids: [
+          { component: "Leaf", params: {} },
+          { component: "Ghost", params: { a: 1 } },
+        ],
+      },
+    });
+
+    expect(
+      await screen.findByText("common:componentTree.unknownChild"),
+    ).toBeInTheDocument();
+    expect(onLoad).toHaveBeenCalledWith(
+      {
+        component: "Many",
+        params: {
+          kids: [
+            { component: "Leaf", params: {} },
+            { component: "Ghost", params: { a: 1 } },
+          ],
+        },
+      },
+      { findComponent: expect.any(Function) },
+    );
+
+    fireEvent.click(
+      screen.getAllByLabelText("common:componentTree.removeNode")[0],
+    );
+
+    expect(onChange).toHaveBeenLastCalledWith(
+      {
+        component: "Many",
+        params: { kids: [{ component: "Ghost", params: { a: 1 } }] },
+      },
+      expect.any(Object),
+    );
+  });
+
   it("loads the parent declared by the container for its children", async () => {
     renderTree({ rootComponent: "Many", rootParams: {} });
     await screen.findByText("Many");

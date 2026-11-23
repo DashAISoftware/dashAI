@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import {
+  Alert,
   Autocomplete,
   Box,
   Button,
@@ -58,10 +59,12 @@ export default function ComponentTreeNodeConfig({
   const [params, setParams] = useState({});
   const [initialParams, setInitialParams] = useState({});
   const [loadingDefaults, setLoadingDefaults] = useState(false);
+  const [loadError, setLoadError] = useState(null);
   const defaultsRequestRef = useRef(0);
 
   useEffect(() => {
     if (!nodeData || !options.length) return;
+    setLoadError(null);
     setSelected(options.find((c) => c.name === nodeData.component) || null);
     const current = nodeData.params;
     setParams(current);
@@ -73,14 +76,18 @@ export default function ComponentTreeNodeConfig({
   /**
    * Selects a component and loads its default parameters. Only the latest
    * request may write the form state, so quickly switching components cannot
-   * apply a stale response.
+   * apply a stale response. When the defaults cannot be loaded the previous
+   * selection and its params are restored and the failure is shown, so the new
+   * component is never saved with the previous component's params.
    * @param {object} _event - The autocomplete event.
    * @param {object|null} value - The newly selected component.
    */
   const handleChange = async (_event, value) => {
     const requestId = defaultsRequestRef.current + 1;
     defaultsRequestRef.current = requestId;
+    const previous = { selected, params, initialParams };
     setSelected(value);
+    setLoadError(null);
 
     if (!value) {
       setParams({});
@@ -94,6 +101,12 @@ export default function ComponentTreeNodeConfig({
       if (requestId !== defaultsRequestRef.current) return;
       setParams(defaults);
       setInitialParams(defaults);
+    } catch (error) {
+      if (requestId !== defaultsRequestRef.current) return;
+      setSelected(previous.selected);
+      setParams(previous.params);
+      setInitialParams(previous.initialParams);
+      setLoadError(error instanceof Error ? error.message : String(error));
     } finally {
       if (requestId === defaultsRequestRef.current) setLoadingDefaults(false);
     }
@@ -141,6 +154,12 @@ export default function ComponentTreeNodeConfig({
             <TextField {...inputParams} label={labels.selectComponent} />
           )}
         />
+
+        {loadError !== null && (
+          <Alert severity="error" sx={{ py: 0.5 }}>
+            {t("common:componentTree.loadFailed", { reason: loadError })}
+          </Alert>
+        )}
 
         {childrenField && (
           <Typography variant="caption" color="text.secondary">

@@ -259,7 +259,6 @@
       "configureNode": "Configurar Nó",
       "mergeStrategyInterleave": "Intercalar",
       "mergeStrategyRoundRobin": "Round robin",
-      "modelsLoadFailed": "Não foi possível carregar os componentes disponíveis.",
       "nestedCompositeNote": "Este é um recuperador composto. Seus filhos são configurados na árvore, fora deste diálogo.",
       "parameters": "Parâmetros",
       "removeNode": "Remover nó",
@@ -431,7 +430,8 @@
         "startFromHelp": "Substitui o modelo abaixo. O seu é mantido até você escolher um.",
         "template": "Modelo",
         "templatePlaceholder": "Cada mensagem do usuário chega como {input}\nOs trechos recuperados chegam como {chunks}",
-        "unnamedPrompt": "Prompt {{id}}"
+        "unnamedPrompt": "Prompt {{id}}",
+        "malformedData": "Alguns prompts retornados pelo servidor estão incompletos e foram omitidos: {{names}}"
       },
       "field": {
         "edit": "Editar modelo",
@@ -608,7 +608,8 @@
     "storyRewritten_one": "A sua mensagem foi reescrita em {{count}} query de busca.",
     "storyRewritten_other": "A sua mensagem foi reescrita em {{count}} queries de busca.",
     "title": "Fontes da mensagem",
-    "yourMessage": "A sua mensagem foi"
+    "yourMessage": "A sua mensagem foi",
+    "rerankMalformed": "A entrada de reordenação deste trace está incompleta: faltam os candidatos ou os chunks mantidos."
   },
   "validation": {
     "apiKeyMissingDescription": "Este modelo requer uma chave de API para funcionar. Abra a Configuração Avançada para adicionar sua chave de API.",

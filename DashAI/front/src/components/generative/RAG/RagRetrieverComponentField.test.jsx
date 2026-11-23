@@ -31,7 +31,22 @@ jest.mock("../../../utils/schema", () => ({
 }));
 jest.mock("../../shared/FormSchema", () => ({
   __esModule: true,
-  default: () => null,
+  default: ({ formSubmitRef, onFormSubmit }) => {
+    if (formSubmitRef) {
+      formSubmitRef.current = global.mockFormik
+        ? {
+            values: global.mockFormik.values,
+            validateForm: async () => global.mockFormik.errors,
+            submitForm: async () => {
+              if (Object.keys(global.mockFormik.errors).length === 0) {
+                onFormSubmit(global.mockFormik.values);
+              }
+            },
+          }
+        : null;
+    }
+    return null;
+  },
 }));
 jest.mock("../../shared/FormSchemaContainer", () => ({
   __esModule: true,
@@ -64,6 +79,7 @@ const childrenSchema = {
 const MODELS = [
   { name: "Dense", display_name: "Dense", schema: { properties: {} } },
   { name: "MMR", display_name: "MMR", schema: childrenSchema },
+  { name: "Bare", display_name: "Bare" },
 ];
 
 const renderField = (props = {}) => {
@@ -83,6 +99,10 @@ const renderField = (props = {}) => {
 };
 
 beforeEach(() => {
+  global.mockFormik = {
+    values: { top_k: 7 },
+    errors: {},
+  };
   useModelParents.mockReturnValue({ models: MODELS, error: null });
   useSchema.mockReturnValue({
     modelSchema: { properties: {} },
@@ -183,11 +203,93 @@ describe("RagRetrieverComponentField", () => {
     expect(screen.queryByText("common:null")).not.toBeInTheDocument();
   });
 
-  it("treats an unset nullable field as Null", () => {
+  it("shows the selector, not Null, for an unset nullable field", () => {
     renderField({ nullable: true });
 
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
     expect(screen.getByText("common:null")).toBeInTheDocument();
+  });
+
+  it("treats only an explicit null as Null", () => {
+    renderField({
+      nullable: true,
+      field: { value: null, onChange: jest.fn() },
+    });
+
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  });
+
+  it("turns a component off with Null and restores the placeholder with Component", async () => {
+    const onChange = jest.fn();
+    const placeholder = { component: "Dense", params: { top_k: 3 } };
+    const { rerender } = render(
+      <RagRetrieverComponentField
+        name="reranker"
+        parent="ChunkScorer"
+        label="Reranker"
+        nullable
+        placeholder={placeholder}
+        field={{ value: placeholder, onChange }}
+      />,
+    );
+
+    await userEvent.click(screen.getByText("common:null"));
+    expect(onChange).toHaveBeenLastCalledWith(null);
+
+    rerender(
+      <RagRetrieverComponentField
+        name="reranker"
+        parent="ChunkScorer"
+        label="Reranker"
+        nullable
+        placeholder={placeholder}
+        field={{ value: null, onChange }}
+      />,
+    );
+    await userEvent.click(screen.getByText("common:component"));
+    expect(onChange).toHaveBeenLastCalledWith(placeholder);
+  });
+
+  it("reports the field valid again when it unmounts", () => {
+    const onValidityChange = jest.fn();
+    const { unmount } = render(
+      <RagRetrieverComponentField
+        name="reranker"
+        parent="ChunkScorer"
+        label="Reranker"
+        field={{
+          value: { component: "MMR", params: { children: [] } },
+          onChange: jest.fn(),
+        }}
+        onValidityChange={onValidityChange}
+      />,
+    );
+    onValidityChange.mockClear();
+
+    unmount();
+
+    expect(onValidityChange).toHaveBeenCalledWith(true);
+  });
+
+  it("reports a stored composite invalid while its params are still loading", () => {
+    useSchema.mockReturnValue({ modelSchema: null, defaultValues: {} });
+    const { onValidityChange } = renderField({
+      field: { value: { component: "MMR" }, onChange: jest.fn() },
+    });
+
+    expect(onValidityChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it("says so when a model without a configuration schema is chosen", async () => {
+    const { onChange } = renderField();
+
+    await userEvent.click(screen.getByRole("combobox"));
+    await userEvent.click(screen.getByRole("option", { name: "Bare" }));
+
+    expect(
+      await screen.findByText("common:componentTree.loadFailed"),
+    ).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it("keeps the last selection when an earlier one resolves after it", async () => {
@@ -232,5 +334,57 @@ describe("RagRetrieverComponentField", () => {
     expect(
       await screen.findByText("common:componentTree.loadFailed"),
     ).toBeInTheDocument();
+  });
+
+  describe("settings dialog", () => {
+    const openDialog = async (onChange = jest.fn()) => {
+      renderField({
+        field: { value: { component: "Dense", params: {} }, onChange },
+      });
+      await userEvent.click(
+        screen.getByRole("button", { name: "common:configureSubmodel" }),
+      );
+      return onChange;
+    };
+    const save = () =>
+      userEvent.click(screen.getByRole("button", { name: "common:save" }));
+
+    it("stores the submitted values and closes", async () => {
+      const onChange = await openDialog();
+
+      await save();
+
+      await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+      expect(getModelFromSubform(onChange.mock.calls[0][0])).toBe("Dense");
+      await waitFor(() =>
+        expect(
+          screen.queryByRole("button", { name: "common:save" }),
+        ).not.toBeInTheDocument(),
+      );
+    });
+
+    it("keeps the dialog open and stores nothing while the values are invalid", async () => {
+      global.mockFormik.errors = { top_k: "required" };
+      const onChange = await openDialog();
+
+      await save();
+
+      expect(onChange).not.toHaveBeenCalled();
+      expect(
+        screen.getByRole("button", { name: "common:save" }),
+      ).toBeInTheDocument();
+    });
+
+    it("says the form is not ready instead of saving other values", async () => {
+      global.mockFormik = null;
+      const onChange = await openDialog();
+
+      await save();
+
+      expect(
+        await screen.findByText("common:componentTree.formUnavailable"),
+      ).toBeInTheDocument();
+      expect(onChange).not.toHaveBeenCalled();
+    });
   });
 });

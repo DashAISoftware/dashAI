@@ -287,7 +287,11 @@
     "parameters": "参数",
     "containerNote": "此组件包含其他组件。其子组件在此对话框之外的树中配置。",
     "loadFailed": "无法加载组件：{{reason}}",
-    "unknownComponent": "组件 {{component}} 不可用，因此无法显示其树。"
+    "unknownComponent": "组件 {{component}} 不可用，因此无法显示其树。",
+    "unknownChild": "组件 {{component}} 不可用。保存前请替换或删除它。",
+    "configureNodeNamed": "配置组件 {{name}}",
+    "noSchema": "组件 {{component}} 没有配置模式，因此无法选择。",
+    "formUnavailable": "设置表单尚未就绪，请稍后重试。"
   },
   "component": "组件",
   "null": "空"

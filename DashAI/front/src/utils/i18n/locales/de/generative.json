@@ -257,7 +257,6 @@
       "configureNode": "Knoten konfigurieren",
       "mergeStrategyInterleave": "Verketten",
       "mergeStrategyRoundRobin": "Round robin",
-      "modelsLoadFailed": "Die verfügbaren Komponenten konnten nicht geladen werden.",
       "nestedCompositeNote": "Dies ist ein zusammengesetzter Retriever. Seine Kindknoten werden im Baum außerhalb dieses Dialogs konfiguriert.",
       "parameters": "Parameter",
       "removeNode": "Knoten entfernen",
@@ -429,7 +428,8 @@
         "startFromHelp": "Ersetzt die Vorlage unten. Ihre bleibt erhalten, bis Sie eine auswählen.",
         "template": "Vorlage",
         "templatePlaceholder": "Jede Nutzernachricht kommt als {input} an\nDie gefundenen Textabschnitte als {chunks}",
-        "unnamedPrompt": "Prompt {{id}}"
+        "unnamedPrompt": "Prompt {{id}}",
+        "malformedData": "Einige vom Server gelieferte Prompts sind unvollständig und wurden ausgelassen: {{names}}"
       },
       "field": {
         "edit": "Vorlage bearbeiten",
@@ -601,7 +601,8 @@
     "storyRewritten_one": "Deine Nachricht wurde in {{count}} Suchabfrage umgeschrieben.",
     "storyRewritten_other": "Deine Nachricht wurde in {{count}} Suchabfragen umgeschrieben.",
     "title": "Quellen der Nachricht",
-    "yourMessage": "Deine Nachricht war"
+    "yourMessage": "Deine Nachricht war",
+    "rerankMalformed": "Der Reranking-Eintrag dieses Traces ist unvollständig: Kandidaten oder behaltene Chunks fehlen."
   },
   "validation": {
     "apiKeyMissingDescription": "Dieses Modell benötigt einen API-Schlüssel, um zu funktionieren. Öffnen Sie die erweiterte Konfiguration, um Ihren API-Schlüssel hinzuzufügen.",

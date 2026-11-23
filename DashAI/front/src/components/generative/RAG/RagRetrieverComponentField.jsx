@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { Box, Button, IconButton, MenuItem, Tooltip } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  IconButton,
+  MenuItem,
+  Tooltip,
+} from "@mui/material";
 import { Settings } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { Input } from "../../configurableObject/Inputs/InputStyles";
@@ -89,7 +96,9 @@ export function retrieverFieldInfo(fieldSchema) {
  * hidden behind a button, and the field reports through `onValidityChange`
  * whether every composite has its children. A component with no children is
  * configured through the settings button, as in any other nested component
- * field. When `nullable`, a Component/Null switch turns the field off.
+ * field. When `nullable`, a Component/Null switch turns the field off; only an
+ * explicit `null` value means off, so an unset value shows the selector with no
+ * choice made.
  *
  * @param {object} props
  * @param {string} props.name - Field name, used as the card key.
@@ -122,11 +131,11 @@ export default function RagRetrieverComponentField({
   const { models, error: modelsError } = useModelParents({ parent });
   const [openDialog, setOpenDialog] = useState(false);
   const [selectError, setSelectError] = useState(null);
+  const [dialogError, setDialogError] = useState(null);
   const formikRef = useRef(null);
   const selectRequestRef = useRef(0);
 
-  const isNull =
-    nullable && (field?.value === null || field?.value === undefined);
+  const isNull = nullable && field?.value === null;
   const selectedName = field?.value ? getModelFromSubform(field.value) : null;
   const selected = models?.find((model) => model.name === selectedName);
   const containerField = findChildrenField(selected?.schema);
@@ -135,23 +144,6 @@ export default function RagRetrieverComponentField({
   const { modelSchema, defaultValues: defaultParams } = useSchema({
     modelName: selectedName,
   });
-
-  useEffect(() => {
-    if (modelsPending) {
-      onValidityChange?.(false);
-      return;
-    }
-    if (!containerField) onValidityChange?.(true);
-  }, [modelsPending, containerField, onValidityChange]);
-
-  useEffect(() => () => onValidityChange?.(true), [onValidityChange]);
-
-  useEffect(
-    () => () => {
-      selectRequestRef.current += 1;
-    },
-    [],
-  );
 
   /**
    * The params the selected component currently holds: the stored ones, or its
@@ -163,6 +155,28 @@ export default function RagRetrieverComponentField({
     if (stored) return stored;
     return modelSchema ? defaultParams : null;
   };
+
+  const rootParams = currentParams();
+  const compositeLoading = Boolean(
+    selectedName && containerField && rootParams === null,
+  );
+
+  useEffect(() => {
+    if (modelsPending || compositeLoading) {
+      onValidityChange?.(false);
+      return;
+    }
+    if (!containerField) onValidityChange?.(true);
+  }, [modelsPending, compositeLoading, containerField, onValidityChange]);
+
+  useEffect(() => () => onValidityChange?.(true), [onValidityChange]);
+
+  useEffect(
+    () => () => {
+      selectRequestRef.current += 1;
+    },
+    [],
+  );
 
   /**
    * Stores a component and its params as the field value.
@@ -179,9 +193,14 @@ export default function RagRetrieverComponentField({
    */
   const handleSelect = async (event) => {
     const model = models?.find((item) => item.name === event.target.value);
-    if (!model?.schema) return;
     selectRequestRef.current += 1;
     const requestId = selectRequestRef.current;
+    if (!model?.schema) {
+      setSelectError(
+        t("common:componentTree.noSchema", { component: event.target.value }),
+      );
+      return;
+    }
     try {
       const { initialValues } = generateYupSchema(
         await formattedModel(model.schema),
@@ -207,9 +226,21 @@ export default function RagRetrieverComponentField({
     field.onChange(placeholder);
   };
 
-  /** Saves the settings dialog's values into the field and closes it. */
-  const handleDialogSave = () => {
-    writeValue(selectedName, formikRef.current?.values ?? currentParams());
+  /**
+   * Submits the settings form, which stores its values in the field, and closes
+   * the dialog only when they are valid. A form that is not mounted yet is
+   * reported instead of saving something else.
+   */
+  const handleDialogSave = async () => {
+    const formik = formikRef.current;
+    if (formik === null) {
+      setDialogError(t("common:componentTree.formUnavailable"));
+      return;
+    }
+    await formik.submitForm();
+    const errors = await formik.validateForm();
+    if (Object.keys(errors).length > 0) return;
+    setDialogError(null);
     setOpenDialog(false);
   };
 
@@ -219,8 +250,6 @@ export default function RagRetrieverComponentField({
     (loadErrorReason
       ? t("common:componentTree.loadFailed", { reason: loadErrorReason })
       : undefined);
-  const rootParams = currentParams();
-
   let modeSelected = FIELD_MODE_COMPONENT;
   if (isNull) modeSelected = FIELD_MODE_NULL;
 
@@ -242,8 +271,12 @@ export default function RagRetrieverComponentField({
         <span>
           <IconButton
             size="small"
+            aria-label={t("common:configureSubmodel")}
             disabled={disabled}
-            onClick={() => setOpenDialog(true)}
+            onClick={() => {
+              setDialogError(null);
+              setOpenDialog(true);
+            }}
           >
             <Settings fontSize="small" />
           </IconButton>
@@ -315,6 +348,11 @@ export default function RagRetrieverComponentField({
           </>
         }
       >
+        {dialogError !== null && (
+          <Alert severity="error" sx={{ py: 0.5, mb: 1 }}>
+            {dialogError}
+          </Alert>
+        )}
         {selectedName && !containerField && (
           <FormSchemaContainer key={`retriever-form-${selectedName}`}>
             <FormSchema
