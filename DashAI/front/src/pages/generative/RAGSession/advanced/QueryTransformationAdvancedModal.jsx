@@ -16,7 +16,7 @@ import {
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
-import RAGAdvancedDialog from "./RAGAdvancedDialog";
+import RAGAdvancedDialog from "../../../../components/shared/RAGAdvancedDialog";
 import { resolveRagLlmDefaults } from "./resolveRagLlmDefaults";
 
 /**

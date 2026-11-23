@@ -19,7 +19,7 @@ import {
   getParamsFromSubform,
 } from "../../../utils/schema";
 import CompositeRetrieverBuilder from "../../../pages/generative/RAGSession/advanced/CompositeRetrieverBuilder";
-import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
+import RAGAdvancedDialog from "../../shared/RAGAdvancedDialog";
 import {
   OPTIMIZE_PLACEHOLDER_KEY,
   SCHEMA_TYPE_NULL,

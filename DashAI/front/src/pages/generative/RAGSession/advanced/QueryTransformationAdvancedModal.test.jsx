@@ -7,7 +7,7 @@ import { resolveRagLlmDefaults } from "./resolveRagLlmDefaults";
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key) => key }),
 }));
-jest.mock("./RAGAdvancedDialog", () => ({
+jest.mock("../../../../components/shared/RAGAdvancedDialog", () => ({
   __esModule: true,
   default: ({ open, title, actions, children }) =>
     open ? (
