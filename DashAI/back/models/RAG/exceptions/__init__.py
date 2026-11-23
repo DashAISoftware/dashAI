@@ -19,7 +19,8 @@ Exception tree (simplified)::
     │   ├── RAGRetrieverMissingParameterError
     │   ├── RAGRetrieverCompositeValidationError
     │   ├── RAGRetrieverEmptyChildrenError
-    │   └── RAGRetrieverEvaluationError
+    │   ├── RAGRetrieverEvaluationError
+    │   └── RAGRetrieverRerankError
     ├── RAGPromptError
     │   ├── RAGPromptValidationError
     │   └── RAGPromptTemplateError
@@ -86,6 +87,7 @@ from DashAI.back.models.RAG.exceptions.retriever import (
     RAGRetrieverEmptyChildrenError,
     RAGRetrieverError,
     RAGRetrieverEvaluationError,
+    RAGRetrieverRerankError,
     RAGRetrieverMissingParameterError,
 )
 from DashAI.back.models.RAG.exceptions.transformation import (
@@ -114,6 +116,7 @@ __all__ = [
     "RAGRetrieverCompositeValidationError",
     "RAGRetrieverEmptyChildrenError",
     "RAGRetrieverEvaluationError",
+    "RAGRetrieverRerankError",
     # Prompt
     "RAGPromptError",
     "RAGPromptValidationError",

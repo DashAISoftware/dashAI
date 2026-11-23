@@ -40,13 +40,14 @@ from DashAI.back.models.RAG.RAG_constants import (
     RAG_PROGRESS_STAGE_GENERATING,
     RAG_PROGRESS_STAGE_RETRIEVING,
     RAG_PROGRESS_STAGE_TRANSFORMING,
+    TRACE_STAGE_RERANK,
 )
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
     unpack_retrieval_result,
 )
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import prefer_wider_chunk
-from DashAI.back.models.RAG.retrievers.trace_utils import chunk_ref
+from DashAI.back.models.RAG.retrievers.trace_utils import chunk_ref, retriever_trace
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
@@ -299,8 +300,10 @@ class RAGGenerationOutput:
         query transformation stage is disabled or when rewriting produces a
         single query).
     trace : List[Dict[str, Any]]
-        One trace node per query, in query order. Each entry is
-        ``{"query": <query>, "retriever": <retriever trace node>}``. The
+        One trace node per query, in query order, each
+        ``{"query": <query>, "retriever": <retriever trace node>}``, followed by
+        an optional ``{"stage": "rerank", "reranker": <node>}`` entry when the
+        transformation stage reranked the merged pool. The
         retriever nodes reference chunks by ``"<document_id>_<position>"`` —
         the same keys as ``chunks`` — so the frontend joins them without
         duplicating chunk payloads. Always a list.
@@ -518,7 +521,7 @@ class RAGPipeline(BaseGenerativeModel):
         return self.query_transformation.reranker
 
     def multi_query_retrieval(
-        self, queries: List[str], original_message: Optional[str] = None
+        self, queries: List[str], original_message: str
     ) -> Tuple[List[Chunk], List[Dict[str, Any]]]:
         """Retrieve for every query, merge the results and optionally rerank.
 
@@ -550,15 +553,16 @@ class RAGPipeline(BaseGenerativeModel):
         ----------
         queries : List[str]
             The search queries, in priority order. Always non-empty.
-        original_message : str, optional
-            The current user message the pool is reranked against. Required
-            when the transformer carries a reranker; ignored otherwise.
+        original_message : str
+            The current user message the pool is reranked against. Only used
+            when the transformer carries a reranker.
 
         Returns
         -------
         Tuple[List[Chunk], List[Dict[str, Any]]]
             The round-robin merged, de-duplicated (and, when a reranker is
-            configured, reranked) chunks and one trace entry per query —
+            configured, reranked) chunks and one trace entry per query (plus a
+            final rerank entry when a reranker ran) —
             ``{"query": <query>, "retriever": <trace node>}`` — in query order.
 
         Raises
@@ -593,7 +597,7 @@ class RAGPipeline(BaseGenerativeModel):
         self,
         pool: List[Chunk],
         trace: List[Dict[str, Any]],
-        original_message: Optional[str],
+        original_message: str,
     ) -> Tuple[List[Chunk], List[Dict[str, Any]]]:
         """Order the merged pool with the stage's reranker, when configured.
 
@@ -602,37 +606,43 @@ class RAGPipeline(BaseGenerativeModel):
         pool : List[Chunk]
             The merged, de-duplicated chunks of every query.
         trace : List[Dict[str, Any]]
-            The per-query trace entries, kept as they are: the trace describes
-            the retrievals that produced the candidates, not the pool ordering.
-        original_message : str or None
+            The per-query trace entries, kept in front of the reranking entry.
+        original_message : str
             The current user message the reranker ranks against.
 
         Returns
         -------
         Tuple[List[Chunk], List[Dict[str, Any]]]
-            The pool unchanged and the trace untouched when no reranker is
-            configured; otherwise the reranked pool and the same trace.
+            The pool and the trace unchanged when no reranker is configured;
+            otherwise the reranked pool and the trace followed by one
+            ``{"stage": "rerank", "reranker": <node>}`` entry. The node is a
+            retriever trace node whose ``chunks`` are the kept chunks and
+            whose ``pool`` lists every candidate the reranker received.
 
         Raises
         ------
         RAGPipelineRuntimeError
-            If a reranker is configured without the original message, or if it
-            fails while ordering the pool.
+            If the reranker fails while ordering the pool, including when it
+            could not score every chunk of it, or if its trace node cannot be
+            built.
         """
         reranker = self._configured_reranker()
         if reranker is None:
             return pool, trace
-        if original_message is None:
-            raise RAGPipelineRuntimeError(
-                "Pool reranking requires the original user message."
-            )
         try:
             reranked = reranker.rerank_chunks(pool, original_message)
         except Exception as e:
             raise RAGPipelineRuntimeError(
                 f"Failed during pool reranking: {str(e)}"
             ) from e
-        return reranked, trace
+        pool_refs = [chunk_ref(chunk) for chunk in pool]
+        try:
+            node = retriever_trace(reranker, reranked, pool=pool_refs)
+        except Exception as e:
+            raise RAGPipelineRuntimeError(
+                f"Failed to describe the pool reranker in the trace: {str(e)}"
+            ) from e
+        return reranked, [*trace, {"stage": TRACE_STAGE_RERANK, "reranker": node}]
 
     def _build_chunk_references(
         self,
@@ -776,7 +786,7 @@ class RAGPipeline(BaseGenerativeModel):
         )
 
     def _retrieve(
-        self, queries: List[str], original_message: Optional[str] = None
+        self, queries: List[str], original_message: str
     ) -> Tuple[List[Chunk], List[Dict[str, Any]]]:
         """Retrieve chunks through the pipeline's single retrieval path.
 
@@ -784,7 +794,7 @@ class RAGPipeline(BaseGenerativeModel):
         ----------
         queries : List[str]
             The non-empty query list to retrieve for.
-        original_message : str, optional
+        original_message : str
             The current user message the optional reranker ranks against.
 
         Returns
@@ -924,6 +934,43 @@ class RAGPipeline(BaseGenerativeModel):
         except Exception:
             log.warning("Error closing RAG stage model.", exc_info=True)
 
+    def _run_transformation_stage(
+        self, input_message: str, history: Tuple[Dict[str, str], ...]
+    ) -> Tuple[ResolvedQueries, float]:
+        """Run the query transformation stage and time it.
+
+        Teardown happens after the stage timing, so releasing weights is not
+        charged to the returned duration; any first-use model construction
+        inside the stage is included.
+
+        Parameters
+        ----------
+        input_message : str
+            The current user message.
+        history : Tuple[Dict[str, str], ...]
+            The prior conversation turns.
+
+        Returns
+        -------
+        Tuple[ResolvedQueries, float]
+            The resolved queries and the stage duration in milliseconds.
+        """
+        if self.query_transformation is not None:
+            report_progress(RAG_PROGRESS_STAGE_TRANSFORMING)
+        started_at = time.perf_counter()
+        try:
+            resolved = self._resolve_queries(input_message, history)
+        finally:
+            elapsed_ms = (time.perf_counter() - started_at) * 1000.0
+            if self.query_transformation is not None:
+                self._release(self.query_transformation)
+        return resolved, elapsed_ms
+
+    def _release_retrieval_stage(self) -> None:
+        """Release the retriever and the reranker the transformer owns."""
+        self._release(self.retriever)
+        self._release(self._configured_reranker())
+
     def generate(
         self,
         input_data: Tuple[Dict[str, str], ...],
@@ -965,20 +1012,9 @@ class RAGPipeline(BaseGenerativeModel):
             started_at = time.perf_counter()
             try:
                 input_message, history = self._extract_input(input_data)
-                if self.query_transformation is not None:
-                    report_progress(RAG_PROGRESS_STAGE_TRANSFORMING)
-                transformation_started_at = time.perf_counter()
-                try:
-                    resolved = self._resolve_queries(input_message, history)
-                finally:
-                    transformation_ms = (
-                        time.perf_counter() - transformation_started_at
-                    ) * 1000.0
-                    # Teardown happens after the stage timing, so releasing
-                    # weights is not charged to transformation_ms; any first-use
-                    # model construction inside the stage is included.
-                    if self.query_transformation is not None:
-                        self._release(self.query_transformation)
+                resolved, transformation_ms = self._run_transformation_stage(
+                    input_message, history
+                )
                 report_progress(
                     RAG_PROGRESS_STAGE_RETRIEVING,
                     message=resolved.message,
@@ -993,8 +1029,7 @@ class RAGPipeline(BaseGenerativeModel):
                     # The transformer is released at the end of its own stage,
                     # but the reranker it owns is used by the retrieval stage,
                     # so its teardown belongs here.
-                    self._release(self.retriever)
-                    self._release(self._configured_reranker())
+                    self._release_retrieval_stage()
                 # Report BEFORE taking the generation start timestamp: the
                 # reporter may open a DB session and commit, and that overhead
                 # must not be charged to generation_ms (which measures only
@@ -1036,6 +1071,5 @@ class RAGPipeline(BaseGenerativeModel):
                 # stage) must not leave a loaded model behind. Releases are
                 # idempotent, so already-closed stages are no-ops.
                 self._release(self.query_transformation)
-                self._release(self._configured_reranker())
-                self._release(self.retriever)
+                self._release_retrieval_stage()
                 self._release(self.llm_model)

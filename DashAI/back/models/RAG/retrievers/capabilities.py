@@ -16,9 +16,10 @@ that need it.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.exceptions import RAGRetrieverRerankError
 
 
 class ChunkScorer(ABC):
@@ -52,10 +53,10 @@ class ChunkScorer(ABC):
     def rerank_chunks(self, chunks: List[Chunk], query: str) -> List[Chunk]:
         """Order an already-retrieved candidate pool by this scorer's distance.
 
-        The pool's chunk ids are scored with :meth:`score_chunks`, and the best
-        ``retrieval_top_k`` are kept. Chunks the scorer does not score (no
-        id, or an id it does not hold) keep their pool order after the scored
-        ones, so a partial score never drops a candidate.
+        Every chunk is scored through the stored chunks it covers: a plain
+        chunk through its own id, and a retrieve-then-expand window through the
+        ids of all the chunks it spans, keeping the best (lowest) distance. The
+        best ``retrieval_top_k`` are kept.
 
         Args:
             chunks: The candidate pool, in its current order. May be empty.
@@ -63,14 +64,87 @@ class ChunkScorer(ABC):
 
         Returns:
             At most ``retrieval_top_k`` chunks, best first.
+
+        Raises:
+            RAGRetrieverRerankError: If any pool chunk could not be scored (no
+                id, or ids the scorer does not hold), which means the scorer's
+                index does not hold the pool.
         """
         if not chunks:
             return []
-        scored = self.score_chunks(
-            [chunk.id for chunk in chunks if chunk.id is not None], query
-        )
-        by_id = {chunk.id: chunk for chunk in chunks if chunk.id is not None}
-        ranked = [by_id[chunk_id] for chunk_id, _ in scored if chunk_id in by_id]
-        scored_ids = {chunk.id for chunk in ranked}
-        ranked += [chunk for chunk in chunks if chunk.id not in scored_ids]
+        covered = self._covered_ids(chunks)
+        distances = self._distances(covered, query)
+        scored: List[Tuple[float, int, Chunk]] = []
+        unscorable = 0
+        for order, chunk in enumerate(chunks):
+            best = _best_distance(covered[order], distances)
+            if best is None:
+                unscorable += 1
+            else:
+                scored.append((best, order, chunk))
+        if unscorable:
+            raise RAGRetrieverRerankError(
+                f"{type(self).__name__} could not score {unscorable} of the "
+                f"{len(chunks)} pooled chunks; its index does not hold them."
+            )
+        scored.sort(key=_distance_then_order)
+        ranked = [entry[2] for entry in scored]
         return ranked[: self.retrieval_top_k]
+
+    def _covered_ids(self, chunks: List[Chunk]) -> List[List[int]]:
+        """Return, per pool chunk, the stored chunk ids it is scored through.
+
+        Args:
+            chunks: The candidate pool.
+
+        Returns:
+            One id list per chunk: the chunk's own id, or for an expanded
+            window the ids of every stored chunk at its ``source_positions``.
+        """
+        corpus = getattr(self, "chunks", None) or {}
+        covered: List[List[int]] = []
+        for chunk in chunks:
+            positions = getattr(chunk, "source_positions", None)
+            if not positions:
+                covered.append([] if chunk.id is None else [chunk.id])
+                continue
+            ids: List[int] = []
+            for stored in corpus.get(chunk.document_id, {}).values():
+                if stored.id is not None and stored.document_position in positions:
+                    ids.append(stored.id)
+            if not ids and chunk.id is not None:
+                ids.append(chunk.id)
+            covered.append(ids)
+        return covered
+
+    def _distances(self, covered: List[List[int]], query: str) -> Dict[int, float]:
+        """Score every distinct covered id once.
+
+        Args:
+            covered: The per-chunk covered id lists.
+            query: The query the ids are scored against.
+
+        Returns:
+            The distance of each id the scorer holds.
+        """
+        unique_ids = list(
+            dict.fromkeys(chunk_id for ids in covered for chunk_id in ids)
+        )
+        if not unique_ids:
+            return {}
+        return dict(self.score_chunks(unique_ids, query))
+
+
+def _best_distance(ids: List[int], distances: Dict[int, float]) -> float | None:
+    """Return the lowest distance among *ids*, or ``None`` if none is scored."""
+    best = None
+    for chunk_id in ids:
+        distance = distances.get(chunk_id)
+        if distance is not None and (best is None or distance < best):
+            best = distance
+    return best
+
+
+def _distance_then_order(entry: Tuple[float, int, Chunk]) -> Tuple[float, int]:
+    """Sort key: ascending distance, ties kept in pool order."""
+    return entry[0], entry[1]
