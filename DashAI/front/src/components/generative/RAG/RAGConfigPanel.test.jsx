@@ -34,9 +34,6 @@ jest.mock("../../../api/rag", () => ({
 jest.mock("../../../api/session", () => ({
   updateGenerativeSession: jest.fn(),
 }));
-jest.mock("../../../pages/generative/RAGSession/retrieverKinds", () => ({
-  loadRetrieverKinds: jest.fn(),
-}));
 // The generator picker fetches components and download state of its own; the
 // panel only cares about the availability it reports back.
 jest.mock("./GeneratorPicker", () => {
@@ -59,9 +56,6 @@ jest.mock(
 );
 
 const api = require("../../../api/rag");
-const {
-  loadRetrieverKinds,
-} = require("../../../pages/generative/RAGSession/retrieverKinds");
 
 const CHUNKING_PRESETS = [
   {
@@ -177,7 +171,6 @@ beforeEach(() => {
   api.getQueryTransformationComponents.mockResolvedValue([]);
   api.getQueryTransformationPrompts.mockResolvedValue([]);
   api.getGeneratorComponents.mockResolvedValue([]);
-  loadRetrieverKinds.mockResolvedValue({});
 });
 
 /** Renders the panel and waits for its initial load. */

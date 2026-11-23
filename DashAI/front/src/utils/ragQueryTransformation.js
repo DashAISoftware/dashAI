@@ -8,6 +8,24 @@
  */
 
 import i18next from "i18next";
+import {
+  DEFAULT_PROMPT_LANGUAGE,
+  LLM_MODEL_KEY,
+  PROMPT_KEY,
+  PROMPT_VARIANT_DEFAULT,
+} from "../constants/rag";
+import { resolveLocalizedText } from "./localize";
+
+/**
+ * The i18n key suffixes (under `rag.config.queryTransformation`) that explain
+ * why the stage cannot be enabled or saved.
+ */
+export const QUERY_TRANSFORMATION_BLOCK = Object.freeze({
+  INCOMPLETE: "incomplete",
+  NEEDS_DOWNLOADED_MODEL: "needsDownloadedModel",
+  PROMPT_REQUIRED: "promptRequired",
+  COMPOSITE_INCOMPLETE: "compositeIncomplete",
+});
 
 /**
  * Reads the `llm_model` placeholder a transformer's schema declares.
@@ -20,11 +38,13 @@ import i18next from "i18next";
  *   declares one.
  */
 export function resolveDefaultGeneratorName(transformers) {
-  const declaring = (transformers || []).find(
+  const declaring = transformers.find(
     (component) =>
-      component.schema?.properties?.llm_model?.placeholder?.component,
+      component.schema?.properties?.[LLM_MODEL_KEY]?.placeholder?.component,
   );
-  return declaring?.schema.properties.llm_model.placeholder.component ?? null;
+  return (
+    declaring?.schema.properties[LLM_MODEL_KEY].placeholder.component ?? null
+  );
 }
 
 /**
@@ -40,9 +60,7 @@ export function resolveDefaultGeneratorName(transformers) {
  * @returns {object|null} The generator to seed, or null when none qualifies.
  */
 export function resolveEnableGenerator(generators, defaultName) {
-  const downloaded = (generators || []).filter(
-    (generator) => generator.downloaded,
-  );
+  const downloaded = generators.filter((generator) => generator.downloaded);
   return (
     downloaded.find((generator) => generator.name === defaultName) ??
     downloaded[0] ??
@@ -58,17 +76,114 @@ export function resolveEnableGenerator(generators, defaultName) {
  */
 export function isCompleteQueryTransformationRef(ref) {
   return Boolean(
-    ref?.params?.llm_model?.component && ref?.params?.prompt?.component,
+    ref?.params?.[LLM_MODEL_KEY]?.component &&
+    ref?.params?.[PROMPT_KEY]?.component,
   );
 }
 
 /**
- * Resolves a component's display name or description, whether the API shipped
- * it as a localized string or as a multilingual object (legacy endpoints may
- * emit the raw object shape).
+ * Whether a generation model is known and downloaded.
+ * @param {Array} generators - The generator components from the API.
+ * @param {string|undefined} name - The generator name to look up.
+ * @returns {boolean} True when the model exists and is downloaded.
+ */
+export function isGeneratorDownloaded(generators, name) {
+  const generator = generators.find((item) => item.name === name);
+  return generator?.downloaded === true;
+}
+
+/**
+ * Whether a stage ref may be persisted: it carries its LLM and prompt, and the
+ * LLM is downloaded, so the backend would not reject it at run time.
+ * @param {object|null} ref - The `{component, params}` stage ref.
+ * @param {Array} generators - The generator components from the API.
+ * @returns {boolean} True when the ref can be saved.
+ */
+export function canPersistQueryTransformationRef(ref, generators) {
+  return (
+    isCompleteQueryTransformationRef(ref) &&
+    isGeneratorDownloaded(generators, ref.params[LLM_MODEL_KEY].component)
+  );
+}
+
+/**
+ * Build the `{component, params}` reference a freshly enabled stage PUTs.
  *
- * A multilingual object is read in the interface language first, then English,
- * then Spanish, then its first string.
+ * The backend fills omitted defaults server-side, but it validates that
+ * `llm_model` and `prompt` are present, so both are seeded here: the generator
+ * the caller resolved (a downloaded model, see `resolveEnableGenerator`)
+ * and the technique's default prompt. Everything else, the optional reranker
+ * included, is left out so the server supplies its default.
+ *
+ * @param {object} transformerComponent - The transformer component to enable.
+ * @param {string} technique - Its `metadata.technique`, to pick the prompt.
+ * @param {object|null} generator - The generator to seed, if any.
+ * @param {Array} prompts - The transformation prompts to choose from.
+ * @returns {object} The `{component, params}` session parameter value.
+ */
+export function buildQueryTransformationRef(
+  transformerComponent,
+  technique,
+  generator,
+  prompts,
+) {
+  const params = {};
+  if (generator) {
+    params[LLM_MODEL_KEY] = { component: generator.name, params: {} };
+  }
+  const defaultPrompt = prompts.find(
+    (prompt) =>
+      prompt.metadata?.technique === technique &&
+      prompt.metadata?.variant === PROMPT_VARIANT_DEFAULT,
+  );
+  if (defaultPrompt) {
+    params[PROMPT_KEY] = {
+      component: defaultPrompt.name,
+      params: { language: DEFAULT_PROMPT_LANGUAGE },
+    };
+  }
+  return { component: transformerComponent.name, params };
+}
+
+/**
+ * Decide what enabling the stage with a transformer persists, or why it cannot.
+ *
+ * @param {object} options
+ * @param {object} options.transformer - The transformer component to enable.
+ * @param {Array} options.generators - The generator components from the API.
+ * @param {string|null} options.defaultGeneratorName - The backend default.
+ * @param {Array} options.prompts - The transformation prompts.
+ * @returns {{ref: (object|null), blockedBy: (string|null)}} The ref to persist,
+ *   or the i18n key suffix of the reason it cannot be enabled.
+ */
+export function prepareEnableRef({
+  transformer,
+  generators,
+  defaultGeneratorName,
+  prompts,
+}) {
+  const generator = resolveEnableGenerator(generators, defaultGeneratorName);
+  if (!generator) {
+    return {
+      ref: null,
+      blockedBy: QUERY_TRANSFORMATION_BLOCK.NEEDS_DOWNLOADED_MODEL,
+    };
+  }
+  const ref = buildQueryTransformationRef(
+    transformer,
+    transformer?.metadata?.technique,
+    generator,
+    prompts,
+  );
+  if (!isCompleteQueryTransformationRef(ref)) {
+    return { ref: null, blockedBy: QUERY_TRANSFORMATION_BLOCK.PROMPT_REQUIRED };
+  }
+  return { ref, blockedBy: null };
+}
+
+/**
+ * Resolves a component's display name or description, whether the API shipped
+ * it as a localized string or as a multilingual object.
  *
  * @param {string|object|undefined} value - The multilingual or plain value.
  * @param {string} fallback - What to return when nothing resolvable is there.
@@ -81,22 +196,5 @@ export function resolveLabel(
   fallback = "",
   language = i18next.language,
 ) {
-  if (!value) return fallback;
-  if (typeof value === "string") return value;
-  const preferred = language ? value[language.split("-")[0]] : undefined;
-  if (typeof preferred === "string") return preferred;
-  return value.en ?? value.es ?? fallsBackToFirstString(value, fallback);
-}
-
-/**
- * First string field of a multilingual object, or the fallback.
- * @param {object} value - A multilingual-shaped object.
- * @param {string} fallback - What to return when no field is a string.
- * @returns {string} The first string found, or the fallback.
- */
-function fallsBackToFirstString(value, fallback) {
-  const first = Object.values(value || {}).find(
-    (candidate) => typeof candidate === "string",
-  );
-  return typeof first === "string" ? first : fallback;
+  return resolveLocalizedText(value, language) || fallback;
 }

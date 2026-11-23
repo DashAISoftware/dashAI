@@ -53,6 +53,22 @@ function selectableSeedLanguage(candidate) {
 }
 
 /**
+ * The language a saved prompt loads in: the requested one when the prompt has
+ * it, else the language it was stored in, else its first language.
+ *
+ * @param {string} requested - The language the editor asked for.
+ * @param {string} storedShape - The language the prompt was stored in.
+ * @param {string[]} languages - The selectable languages the prompt has.
+ * @returns {string} The language to load.
+ */
+function preferredSavedLanguage(requested, storedShape, languages) {
+  if (languages.includes(requested)) return requested;
+  if (languages.includes(storedShape)) return storedShape;
+  if (languages.length > 0) return languages[0];
+  return selectableSeedLanguage(requested);
+}
+
+/**
  * Placeholders every RAG prompt has to contain, used until the registry's own
  * answer arrives (and if that request fails).
  */
@@ -91,7 +107,6 @@ export default function PromptEditor({
   const [libraryVersion, setLibraryVersion] = useState(0);
   const [seedsLoaded, setSeedsLoaded] = useState(false);
   const [savedLoaded, setSavedLoaded] = useState(!showSeeding);
-  // "" (nothing picked), `default:<component>` or `saved:<id>`.
   const [selection, setSelection] = useState("");
   const selectionInferredRef = useRef(false);
   const [saveOpen, setSaveOpen] = useState(false);
@@ -124,10 +139,6 @@ export default function PromptEditor({
     let cancelled = false;
     getLibraryPrompts()
       .then((options) => {
-        // Built-in templates come from the registry; only user-saved prompts
-        // belong here. This editor writes a generation template, so
-        // query-rewriting or agentic retriever prompts would be loaded into a
-        // slot that never runs them.
         if (!cancelled) {
           setSavedPrompts(
             options.filter(
@@ -253,17 +264,15 @@ export default function PromptEditor({
       LANGUAGE_CODES.includes(code),
     );
     if (shape.usesTemplates && languages.length === 0) return null;
-    const preferred = languages.includes(language)
-      ? language
-      : languages.includes(shape.language)
-        ? shape.language
-        : (languages[0] ?? selectableSeedLanguage(language));
+    const preferred = preferredSavedLanguage(
+      language,
+      shape.language,
+      languages,
+    );
     const text = resolveStoredPromptTemplate(parameters, preferred);
     return text ? { text, language: selectableSeedLanguage(preferred) } : null;
   }, []);
 
-  // Work out which prompt the incoming template came from, once, so the
-  // selector opens on it instead of looking empty.
   useEffect(() => {
     if (selectionInferredRef.current || !seedsLoaded || !savedLoaded) return;
     selectionInferredRef.current = true;
@@ -440,7 +449,10 @@ export default function PromptEditor({
             )}
             {savedPrompts.map((prompt) => (
               <MenuItem key={prompt.id} value={`saved:${prompt.id}`}>
-                {prompt.name || `Prompt ${prompt.id}`}
+                {prompt.name ||
+                  t("generative:rag.prompt.editor.unnamedPrompt", {
+                    id: prompt.id,
+                  })}
               </MenuItem>
             ))}
           </TextField>
