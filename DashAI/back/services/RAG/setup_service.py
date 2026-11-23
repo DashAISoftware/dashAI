@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Callable, Dict, Optional
 
 from sqlalchemy.orm import Session
 
@@ -16,7 +16,9 @@ from DashAI.back.models.RAG.chunking_models.chunking_model_factory import (
     ChunkingFactoryResult,
 )
 from DashAI.back.models.RAG.documents import Chunk, SourceDocument
+from DashAI.back.models.RAG.exceptions import RAGTransformationConfigError
 from DashAI.back.models.RAG.prompts.base_prompt import BasePrompt
+from DashAI.back.models.RAG.RAG_constants import RERANKER_KEY
 from DashAI.back.models.RAG.RAG_models_factory import RAGModelsFactory
 from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline, RAGPipelineConfig
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
@@ -64,9 +66,11 @@ class IndexResult:
     chunking: ChunkingFactoryResult
     retriever: RetrieverSetupResult
     total_chunks: int
-    #: The retriever setup service that built ``retriever``. It holds the
-    #: chunks, persistence and documents a reranker retriever needs too.
-    retriever_service: Optional[RetrieverSetupService] = None
+    #: The retriever setup service that built ``retriever``.
+    retriever_service: RetrieverSetupService
+    #: The query-transformation reranker built over the same index, or ``None``
+    #: when the stage has none (or its transformer cannot use one).
+    reranker: Optional[RetrieverSetupResult] = None
 
 
 class SetupService:
@@ -195,6 +199,10 @@ class SetupService:
             config.retriever_model.params,
         )
 
+        reranker = self._build_reranker(
+            config, retriever_service, retriever_result, report
+        )
+
         self._clear_reindex_flag(config.session_id)
         report(1.0, "Index ready")
         return IndexResult(
@@ -206,6 +214,7 @@ class SetupService:
             retriever=retriever_result,
             total_chunks=sum(len(c) for c in chunking_result.chunks.values()),
             retriever_service=retriever_service,
+            reranker=reranker,
         )
 
     def build_pipeline(self, config: RAGPipelineConfig) -> RAGPipeline:
@@ -242,7 +251,32 @@ class SetupService:
             If a database error occurs.
         """
         index = self.build_index(config)
+        try:
+            return self._pipeline_from_index(config, index)
+        except Exception:
+            # Nothing owns the retriever and the reranker built for the index
+            # once the pipeline fails to assemble, so release them here.
+            self._close_model(index.reranker)
+            self._close_model(index.retriever)
+            raise
 
+    def _pipeline_from_index(
+        self, config: RAGPipelineConfig, index: IndexResult
+    ) -> RAGPipeline:
+        """Assemble the pipeline's remaining stages around a built index.
+
+        Parameters
+        ----------
+        config : RAGPipelineConfig
+            Typed pipeline configuration.
+        index : IndexResult
+            The persisted index and the retriever stages built over it.
+
+        Returns
+        -------
+        RAGPipeline
+            Fully assembled pipeline ready for ``generate()``.
+        """
         llm_result = self._llm.get_or_create_lazy(
             config.generation_model.component,
             config.generation_model.params,
@@ -276,11 +310,8 @@ class SetupService:
                 config.query_transformation.params,
             )
             transformation_model = transformation_result.model
-            self._attach_reranker(
-                transformation_model,
-                config.query_transformation.params,
-                index.retriever_service,
-            )
+            if index.reranker is not None:
+                transformation_model.reranker = index.reranker.model
 
         self._update_db_record(
             config.session_id,
@@ -288,8 +319,7 @@ class SetupService:
             prompt_id,
             llm_result.db_record_id,
         )
-
-        pipeline = self._assemble_pipeline_instance(
+        return self._assemble_pipeline_instance(
             config=config,
             pipeline_id=index.pipeline_id,
             documents=index.documents,
@@ -301,54 +331,87 @@ class SetupService:
             llm_model=llm_result.model,
             query_transformation=transformation_model,
         )
-        return pipeline
 
     # ── Private helpers ───────────────────────────────────────────────
 
-    @staticmethod
-    def _attach_reranker(
-        transformation_model: BaseQueryTransformation,
-        transformation_params: Dict[str, Any],
-        retriever_service: Optional[RetrieverSetupService],
-    ) -> None:
-        """Build the stage's reranker retriever and attach it to the transformer.
+    def _build_reranker(
+        self,
+        config: RAGPipelineConfig,
+        retriever_service: RetrieverSetupService,
+        retriever_result: RetrieverSetupResult,
+        report: ProgressFn,
+    ) -> Optional[RetrieverSetupResult]:
+        """Build the transformation stage's reranker over the same index.
 
         The reranker is a retriever, so it is set up exactly like the retriever
         stage: through the same :class:`RetrieverSetupService`, which supplies
-        the chunks, persistence and documents its scoring needs. A stage with
-        no reranker reference (``null`` or absent) keeps ``reranker = None``.
+        the chunks, persistence and documents its scoring needs. Building it
+        here, with the index, makes its embedding work part of the indexing run
+        and its progress, instead of a silent cost of the first chat turn.
+
+        A stage with no reranker reference (``null`` or absent), or a
+        transformer that has no ``reranker`` parameter (the rewriter emits one
+        query, so there is no pool to reorder), builds nothing.
 
         Parameters
         ----------
-        transformation_model : BaseQueryTransformation
-            The transformer built by the factory, mutated in place.
-        transformation_params : Dict[str, Any]
-            The stored transformation parameters, holding the reranker ref.
-        retriever_service : RetrieverSetupService or None
-            The service that built the index for this pipeline.
+        config : RAGPipelineConfig
+            Typed pipeline configuration.
+        retriever_service : RetrieverSetupService
+            The service that built the retriever stage's index.
+        retriever_result : RetrieverSetupResult
+            The retriever stage, released if the reranker cannot be built.
+        report : ProgressFn
+            Indexing progress reporter.
+
+        Returns
+        -------
+        Optional[RetrieverSetupResult]
+            The built reranker, or ``None`` when there is nothing to build.
 
         Raises
         ------
-        RuntimeError
-            If a reranker is configured but no index service is available.
+        RAGTransformationConfigError
+            If the configured reranker does not have the ``ChunkScorer``
+            capability and so cannot order a pool.
         """
-        reference = (transformation_params or {}).get("reranker")
-        if not reference:
-            return
-        if retriever_service is None:
-            raise RuntimeError(
-                "A query transformation reranker needs the retrieval index to be "
-                "built before it can be attached."
-            )
+        stage = config.query_transformation
+        if stage is None:
+            return None
+        reference = stage.params.get(RERANKER_KEY)
+        transformer_class = self._registry[stage.component]["class"]
+        if not reference or RERANKER_KEY not in transformer_class.SCHEMA.model_fields:
+            return None
+
+        report(0.85, "Building the reranker")
         reranker = retriever_service.setup(
-            reference["component"], reference.get("params") or {}
+            reference["component"], reference.get("params", {})
         )
         if not isinstance(reranker.model, ChunkScorer):
-            raise RuntimeError(
+            self._close_model(reranker)
+            self._close_model(retriever_result)
+            raise RAGTransformationConfigError(
                 f"Reranker '{reference['component']}' does not have the ChunkScorer "
                 "capability and cannot order a pool."
             )
-        transformation_model.reranker = reranker.model
+        return reranker
+
+    @staticmethod
+    def _close_model(result: Optional[RetrieverSetupResult]) -> None:
+        """Release a built retriever without masking the failure being handled.
+
+        Parameters
+        ----------
+        result : Optional[RetrieverSetupResult]
+            The built retriever, or ``None`` when there is nothing to release.
+        """
+        close = getattr(getattr(result, "model", None), "close", None)
+        if not callable(close):
+            return
+        try:
+            close()
+        except Exception:
+            log.warning("Error closing a retriever after a failure.", exc_info=True)
 
     def _ensure_db_record(self, session_id: int) -> int:
         """Get or create pipeline DB record, return its ID.
