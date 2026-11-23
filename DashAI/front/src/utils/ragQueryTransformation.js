@@ -16,6 +16,9 @@ import {
 } from "../constants/rag";
 import { resolveLocalizedText } from "./localize";
 
+/** The params of a ref that stores none. */
+const NO_PARAMS = Object.freeze({});
+
 /**
  * The i18n key suffixes (under `rag.config.queryTransformation`) that explain
  * why the stage cannot be enabled or saved.
@@ -66,6 +69,16 @@ export function resolveEnableGenerator(generators, defaultName) {
     downloaded[0] ??
     null
   );
+}
+
+/**
+ * The params of a stage ref. A ref without `params` is the minimal ref
+ * `{component}`, whose params are empty.
+ * @param {{component: string, params: (object|undefined)}} ref - The stage ref.
+ * @returns {object} The ref's params.
+ */
+export function stageParams(ref) {
+  return ref.params ?? NO_PARAMS;
 }
 
 /**

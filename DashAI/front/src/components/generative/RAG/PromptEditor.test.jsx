@@ -129,3 +129,28 @@ test("writes only what the prompt component actually reads", async () => {
   const written = setPromptModel.mock.calls.at(-1)[0];
   expect(Object.keys(written.params)).toEqual(["template"]);
 });
+
+test("names a default prompt that arrives without templates instead of hiding it", async () => {
+  getDefaultPrompts.mockResolvedValue([
+    BASE_PROMPT,
+    SEED_PROMPT,
+    { name: "BrokenDefaultPrompt", metadata: {} },
+  ]);
+  renderEditor("Use {chunks} to answer {input}");
+
+  expect(await screen.findByText(/BrokenDefaultPrompt/)).toBeInTheDocument();
+});
+
+test("names a saved prompt that arrives without parameters instead of hiding it", async () => {
+  getLibraryPrompts.mockResolvedValue([
+    {
+      id: 7,
+      name: "Broken saved prompt",
+      is_library: true,
+      prompt_type: "generation",
+    },
+  ]);
+  renderEditor("Use {chunks} to answer {input}");
+
+  expect(await screen.findByText(/Broken saved prompt/)).toBeInTheDocument();
+});

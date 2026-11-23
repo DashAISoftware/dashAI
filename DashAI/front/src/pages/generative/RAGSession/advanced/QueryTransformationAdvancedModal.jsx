@@ -7,6 +7,7 @@ import {
   isCompleteQueryTransformationRef,
   isGeneratorDownloaded,
   resolveLabel,
+  stageParams,
 } from "../../../../utils/ragQueryTransformation";
 import {
   LLM_MODEL_KEY,
@@ -92,6 +93,7 @@ function llmParamsToPersist(carriedParams, seedDefaults, values) {
  * @param {boolean}  props.open - Whether the dialog is open.
  * @param {Function} props.onClose - Closes the dialog.
  * @param {object}   props.model - The current stage ref `{component, params}`.
+ *   The picker mounts the modal only while the stage is on, so it always has one.
  * @param {Function} props.setModel - Persists the edited ref.
  * @param {string}   [props.technique] - The transformer's technique, deciding
  *   which parameters apply.
@@ -107,7 +109,7 @@ export default function QueryTransformationAdvancedModal({
   generators,
 }) {
   const { t } = useTranslation(["generative"]);
-  const [params, setParams] = useState(model?.params || {});
+  const [params, setParams] = useState(stageParams(model));
   const [seededCarried, setSeededCarried] = useState(null);
   const [seedDefaults, setSeedDefaults] = useState(null);
   const [seedError, setSeedError] = useState(null);
@@ -121,7 +123,7 @@ export default function QueryTransformationAdvancedModal({
   // Start from the persisted reference each time the dialog opens; while it is
   // open the edits live here and only reach the session on Done.
   useEffect(() => {
-    if (open) setParams(model?.params || {});
+    if (open) setParams(stageParams(model));
   }, [open, model]);
 
   const promptOptionsFilter = useCallback(
@@ -167,8 +169,9 @@ export default function QueryTransformationAdvancedModal({
    */
   const carriedParamsFor = (key, name) => {
     if (key !== LLM_MODEL_KEY) return {};
-    if (model?.params?.[LLM_MODEL_KEY]?.component !== name) return {};
-    return model.params[LLM_MODEL_KEY].params;
+    const stored = stageParams(model)[LLM_MODEL_KEY];
+    if (stored?.component !== name) return {};
+    return stored.params;
   };
 
   /** Points a nested component parameter at `name`, keeping its params on reselect. */
@@ -194,7 +197,7 @@ export default function QueryTransformationAdvancedModal({
       return next;
     });
 
-  const llmComponent = params.llm_model?.component;
+  const llmComponent = params[LLM_MODEL_KEY]?.component;
 
   // Seed the schema form for the selected LLM with the RAG defaults the
   // transformer schema declares, not the LLM's generic placeholders: that is
@@ -226,7 +229,7 @@ export default function QueryTransformationAdvancedModal({
     setSeedError(null);
 
     let cancelled = false;
-    resolveRagLlmDefaults(model?.component, llmComponent)
+    resolveRagLlmDefaults(model.component, llmComponent)
       .then((defaults) => {
         if (cancelled) return;
         seedDefaultsRef.current = defaults;
@@ -234,7 +237,7 @@ export default function QueryTransformationAdvancedModal({
       })
       .catch((error) => {
         if (cancelled) return;
-        setSeedError(error.message);
+        setSeedError(error instanceof Error ? error.message : String(error));
       });
 
     return () => {
@@ -251,14 +254,15 @@ export default function QueryTransformationAdvancedModal({
   // still need the RAG 10K/300 defaults. The carried baseline is used rather
   // than only the live params because switching away and back resets the live
   // map, while the original values must still be restored.
+  const liveLlmParams = params[LLM_MODEL_KEY]?.params;
   const llmInitialValues = useMemo(() => {
     if (!llmComponent) return {};
     return {
-      ...(seedDefaults || {}),
-      ...(seededCarried || {}),
-      ...(params.llm_model?.params || {}),
+      ...seedDefaults,
+      ...seededCarried,
+      ...liveLlmParams,
     };
-  }, [llmComponent, seededCarried, params.llm_model?.params, seedDefaults]);
+  }, [llmComponent, seededCarried, liveLlmParams, seedDefaults]);
 
   // Always wait for the RAG seed: a carried partial map is not enough to fill
   // the keys it omits.
@@ -267,11 +271,11 @@ export default function QueryTransformationAdvancedModal({
   /** Maps the schema form's full value set onto the params to persist. */
   const handleLlmFormSubmit = (values) =>
     setParams((prev) => {
-      if (!prev.llm_model) return prev;
+      if (!prev[LLM_MODEL_KEY]) return prev;
       return {
         ...prev,
-        llm_model: {
-          component: prev.llm_model.component,
+        [LLM_MODEL_KEY]: {
+          component: prev[LLM_MODEL_KEY].component,
           params: llmParamsToPersist(
             carriedParamsRef.current,
             seedDefaultsRef.current,
@@ -308,7 +312,7 @@ export default function QueryTransformationAdvancedModal({
 
   const handleDone = () => {
     if (!complete) return;
-    setModel({ component: model?.component, params });
+    setModel({ component: model.component, params });
     onClose();
   };
 
@@ -336,7 +340,7 @@ export default function QueryTransformationAdvancedModal({
     >
       <Stack spacing={2} sx={{ pt: 1 }}>
         <Typography variant="caption" color="text.secondary">
-          {model?.component}
+          {model.component}
         </Typography>
 
         {reason && (
@@ -357,7 +361,7 @@ export default function QueryTransformationAdvancedModal({
           select
           size="small"
           label={t("generative:rag.config.queryTransformation.llm")}
-          value={params.llm_model?.component || ""}
+          value={params[LLM_MODEL_KEY]?.component ?? ""}
           onChange={(event) => setComponent(LLM_MODEL_KEY, event.target.value)}
         >
           {llmOptions.map((generator) => (
@@ -379,13 +383,13 @@ export default function QueryTransformationAdvancedModal({
           </FormSchemaContainer>
         )}
 
-        {model?.component && (
+        {model.component && (
           <FormSchemaContainer key={`transformer-form-${model.component}`}>
             <FormSchemaWithPrompts
               autoSave
               hideButtons
               model={model.component}
-              initialValues={model?.params || {}}
+              initialValues={stageParams(model)}
               excludeFields={TRANSFORMER_EXCLUDED_FIELDS}
               promptFilter={promptOptionsFilter}
               onFormSubmit={handleTransformerFormSubmit}
@@ -401,7 +405,7 @@ export default function QueryTransformationAdvancedModal({
 QueryTransformationAdvancedModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  model: PropTypes.object,
+  model: PropTypes.object.isRequired,
   setModel: PropTypes.func.isRequired,
   technique: PropTypes.string,
   generators: PropTypes.array.isRequired,

@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import QueryTransformationAdvancedModal from "./QueryTransformationAdvancedModal";
 import { resolveRagLlmDefaults } from "./resolveRagLlmDefaults";
@@ -63,7 +63,7 @@ const modelWith = (llm) => ({
   },
 });
 
-const renderModal = (model, setModel = jest.fn()) => {
+const renderModal = async (model, setModel = jest.fn()) => {
   render(
     <QueryTransformationAdvancedModal
       open
@@ -74,6 +74,7 @@ const renderModal = (model, setModel = jest.fn()) => {
       generators={GENERATORS}
     />,
   );
+  await act(async () => {});
   return setModel;
 };
 
@@ -82,7 +83,7 @@ const doneButton = () =>
 
 describe("QueryTransformationAdvancedModal completeness", () => {
   it("allows saving a complete stage with a downloaded model", async () => {
-    const setModel = renderModal(modelWith("Downloaded"));
+    const setModel = await renderModal(modelWith("Downloaded"));
 
     expect(doneButton()).toBeEnabled();
     await userEvent.click(doneButton());
@@ -90,8 +91,8 @@ describe("QueryTransformationAdvancedModal completeness", () => {
     expect(setModel).toHaveBeenCalledTimes(1);
   });
 
-  it("blocks saving when the chosen model is not downloaded", () => {
-    const setModel = renderModal(modelWith("Missing"));
+  it("blocks saving when the chosen model is not downloaded", async () => {
+    const setModel = await renderModal(modelWith("Missing"));
 
     expect(doneButton()).toBeDisabled();
     expect(
@@ -102,8 +103,8 @@ describe("QueryTransformationAdvancedModal completeness", () => {
     expect(setModel).not.toHaveBeenCalled();
   });
 
-  it("asks for a prompt and a model when the ref is incomplete", () => {
-    renderModal({ component: "LLMQueryExpander", params: {} });
+  it("asks for a prompt and a model when the ref is incomplete", async () => {
+    await renderModal({ component: "LLMQueryExpander", params: {} });
 
     expect(doneButton()).toBeDisabled();
     expect(
@@ -112,7 +113,7 @@ describe("QueryTransformationAdvancedModal completeness", () => {
   });
 
   it("explains an incomplete composite reranker with its own message", async () => {
-    renderModal(modelWith("Downloaded"));
+    await renderModal(modelWith("Downloaded"));
 
     await userEvent.click(
       screen.getByRole("button", { name: "make-composite-incomplete" }),
@@ -138,7 +139,7 @@ describe("QueryTransformationAdvancedModal completeness", () => {
 
   it("shows an error and blocks saving when the model defaults fail to load", async () => {
     resolveRagLlmDefaults.mockRejectedValue(new Error("network down"));
-    const setModel = renderModal(modelWith("Downloaded"));
+    const setModel = await renderModal(modelWith("Downloaded"));
 
     expect(
       await screen.findByText(
