@@ -196,32 +196,78 @@ message with its `score_chunks`, and keeps its `retrieval_top_k` (`ChunkScorer.r
 through the same retriever setup as the retrieval stage, so it has the same
 index infrastructure. Known limitations of the current implementation:
 
-- **The reranking step is not in the trace.** `RAGPipeline._rerank_pool()`
-  returns the per-query trace unchanged, so the trace panel does not show that
-  the pool was cut from N to `top_k` chunks, nor which retriever scored it.
-  Adding a node needs a trace-consumer change, so it is not done yet.
+- **The reranking step is a trailing trace entry, shown only in the "All"
+  view.** `RAGPipeline._rerank_pool()` appends
+  `{"stage": "rerank", "reranker": <node>}` after the per-query entries. The
+  node is a retriever trace node: `chunks` are the kept chunks and `pool` every
+  candidate the reranker received. The entry has no `retriever`, so consumers that render
+  per-query entries skip it, and the Pipeline panel draws it under the query
+  trees only when no single query is selected. The node carries no per-chunk
+  scores.
 
-- **Chunks the reranker cannot score keep their pool order.** A chunk without
-  an id (for example a synthetic window produced by retrieve-then-expand) or
-  outside the reranker's index is not scored. It is kept after the scored
-  chunks instead of being dropped, so it reaches the prompt only when fewer
-  than `top_k` chunks were scored.
+- **Every pooled chunk must be scorable.** A chunk without an id, or whose
+  ids the reranker's index does not hold, makes the stage fail with
+  `RAGRetrieverRerankError` (wrapped as a pipeline error) instead of being
+  kept unranked, so the pool is never returned as if it had been ordered.
+
+- **A retrieve-then-expand window is ranked by its best chunk.** A window has
+  the id of its first covered chunk, but the reranker scores every stored chunk
+  it spans (through `source_positions`) and ranks the window by the lowest
+  distance among them. A scorer without the retriever's chunk store cannot
+  resolve the covered ids and falls back to the window's own id.
 
 - **A reranker has its own index cost.** Its setup goes through the retriever
   setup, so it reuses a stored index only when the embedding and corpus
   identity match the retrieval stage. A reranker with a different embedding is
-  indexed again.
+  indexed again. It is built together with the retriever stage, by the indexing
+  run (`SetupService.build_index`, "Building the reranker" progress step), so
+  the first chat turn after indexing no longer embeds the corpus silently.
+  Composite rerankers reuse their stored composite row when the children are
+  unchanged.
 
 - **The rewriter has no reranker.** The `reranker` field lives on
   `MultiQueryTransformationSchema`, shared by decomposition and expansion. A
   rewrite emits one query and merges nothing, so there is no pool to reorder.
+  Validation rejects a non-null `reranker` on a rewriter, and the setup never
+  builds one for it.
+
+- **An absent `reranker` key means "off" for stored sessions.** The default
+  semantic reranker is injected only when a session is created. A session that
+  stores a stage without the key keeps running without reranking, and an update
+  that resends such a stage keeps it off (it never turns reranking, and its
+  index, on silently). Send the key explicitly to enable it.
+
+- **A stored decomposition without `max_subqueries` is not capped.** The
+  schema placeholder and a new session suggest three sub-queries
+  (`DEFAULT_MAX_SUBQUERIES`), but a stored stage that omits the key keeps
+  running uncapped, and an update that resends the stage without it keeps it
+  uncapped. An explicit `null` also means no limit; an explicit integer caps
+  the result. The context budget prices an uncapped decomposition at the
+  declared three queries, so it under-counts when the model emits more.
+
+- **Cleanup tells the stages apart by their stored parameters.** The retriever
+  stage and the reranker keep their rows in the same pipeline and one row can
+  serve both. When either changes, the other's rows are protected, the
+  reranker's rows are removed when only its configuration changes, and rows
+  are matched by their stored parameters (class name alone is only the fallback
+  for the retriever stage's own rows).
+
+- **The context budget prices the reranker as a cap on units.** The reranker's
+  `top_k` bounds how many units of the merged pool reach the prompt, and each
+  unit is as wide as the retriever stage's retrieve-then-expand window; the
+  reranker's own expansion options never widen the pool. An explicitly uncapped
+  decomposition (`max_subqueries: null`) is priced at the reranker's cap when
+  there is one; without a reranker it is still priced at the declared count
+  although the model may emit more.
 
 - **Transformation config errors are pipeline runtime errors by design.**
   `RAGTransformationError` (and therefore `RAGTransformationConfigError`)
   inherits from `RAGQueryTransformationError` → `RAGPipelineRuntimeError`
   instead of `RAGWorkflowError`, so existing `RAGPipelineRuntimeError` handlers
   keep catching the stage. Any such handler therefore also catches its
-  configuration failures.
+  configuration failures. The subtypes are for programmatic handling: the job
+  error message shows their text only, not their class, so nothing in the
+  backend distinguishes a configuration failure from an unparseable output yet.
 
 ## Maintenance
 
