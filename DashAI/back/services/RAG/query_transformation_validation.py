@@ -20,7 +20,11 @@ from DashAI.back.models.RAG.prompts.transformation import (
     DefaultQueryRewritingPrompt,
     QueryTransformationPrompt,
 )
-from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_QUERY_TRANSFORMATION
+from DashAI.back.models.RAG.RAG_constants import (
+    MAX_SUBQUERIES_KEY,
+    RAG_PARAM_QUERY_TRANSFORMATION,
+    RERANKER_KEY,
+)
 from DashAI.back.models.RAG.RAG_defaults import merge_rag_llm_params
 from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
 from DashAI.back.models.RAG.transformation import BaseQueryTransformation
@@ -36,7 +40,11 @@ log = logging.getLogger(__name__)
 #: Nested transformation-parameter keys, hoisted to avoid magic strings.
 _PROMPT_KEY = "prompt"
 _LLM_MODEL_KEY = "llm_model"
-_RERANKER_KEY = "reranker"
+
+#: Optional keys a stored stage runs without when omitted: an update that
+#: resends the stage without them keeps them off instead of taking the schema
+#: placeholder a new session starts from.
+STORED_OPTIONAL_KEYS = (RERANKER_KEY, MAX_SUBQUERIES_KEY)
 
 #: Default transformation prompts whose ``template`` may be injected from
 #: ``metadata["templates"]`` before schema validation, exactly like the default
@@ -135,18 +143,40 @@ class QueryTransformationValidationService:
         )
 
         params = ref["params"]
-        prompt_ref = params.get("prompt")
+        self._validate_prompt_ref(params, component_name, component_class)
+        self._validate_llm_ref(params)
+        self._validate_reranker_ref(params, component_name, component_class)
+        log.debug(
+            "Query transformation stage enabled with %s", component_class.__name__
+        )
+
+    def _validate_prompt_ref(
+        self, params: Dict[str, Any], component_name: str, component_class: type
+    ) -> None:
+        """Validate the nested ``prompt`` reference and its template.
+
+        Parameters
+        ----------
+        params : Dict[str, Any]
+            The transformer's ``params``.
+        component_name : str
+            The transformer's registered name, for error messages.
+        component_class : type
+            The resolved transformer class, which names its prompt family.
+
+        Raises
+        ------
+        ValueError
+            If the prompt is missing, malformed, of the wrong family or carries
+            an invalid template.
+        """
+        prompt_ref = params.get(_PROMPT_KEY)
         if not isinstance(prompt_ref, dict) or "component" not in prompt_ref:
             raise ValueError(
                 f"'prompt' is required in '{RAG_PARAM_QUERY_TRANSFORMATION}' "
                 "and must be a component reference."
             )
-        prompt_name = prompt_ref["component"]
-        if not isinstance(prompt_name, str):
-            raise ValueError(
-                f"'component' of '{RAG_PARAM_QUERY_TRANSFORMATION}.params.prompt' "
-                f"must be a string, got {type(prompt_name).__name__}."
-            )
+        prompt_name = self._require_component_name(prompt_ref, _PROMPT_KEY)
         prompt_class = self._resolve_subclass(
             prompt_name,
             QueryTransformationPrompt,
@@ -172,18 +202,26 @@ class QueryTransformationValidationService:
         )
         self._validate_nested_template(prompt_name, template)
 
-        llm_ref = params.get("llm_model")
+    def _validate_llm_ref(self, params: Dict[str, Any]) -> None:
+        """Validate the nested ``llm_model`` reference.
+
+        Parameters
+        ----------
+        params : Dict[str, Any]
+            The transformer's ``params``.
+
+        Raises
+        ------
+        ValueError
+            If the model is missing, malformed or not a text-to-text model.
+        """
+        llm_ref = params.get(_LLM_MODEL_KEY)
         if not isinstance(llm_ref, dict) or "component" not in llm_ref:
             raise ValueError(
                 f"'llm_model' is required in '{RAG_PARAM_QUERY_TRANSFORMATION}' "
                 "and must be a component reference."
             )
-        llm_name = llm_ref["component"]
-        if not isinstance(llm_name, str):
-            raise ValueError(
-                f"'component' of '{RAG_PARAM_QUERY_TRANSFORMATION}.params.llm_model' "
-                f"must be a string, got {type(llm_name).__name__}."
-            )
+        llm_name = self._require_component_name(llm_ref, _LLM_MODEL_KEY)
         self._resolve_subclass(
             llm_name,
             TextToTextGenerationTaskModel,
@@ -195,30 +233,78 @@ class QueryTransformationValidationService:
                 f"'params' of '{RAG_PARAM_QUERY_TRANSFORMATION}.params.llm_model' "
                 f"must be a dict, got {type(llm_params).__name__}."
             )
-        reranker_ref = params.get("reranker")
-        if reranker_ref is not None:
-            if not isinstance(reranker_ref, dict) or "component" not in reranker_ref:
-                raise ValueError(
-                    f"'reranker' in '{RAG_PARAM_QUERY_TRANSFORMATION}' must be a "
-                    "component reference or null."
-                )
-            reranker_name = reranker_ref["component"]
-            if not isinstance(reranker_name, str):
-                raise ValueError(
-                    f"'component' of "
-                    f"'{RAG_PARAM_QUERY_TRANSFORMATION}.params.reranker' must be a "
-                    f"string, got {type(reranker_name).__name__}."
-                )
-            self._resolve_subclass(
-                reranker_name,
-                ChunkScorer,
-                f"'{RAG_PARAM_QUERY_TRANSFORMATION}.params.reranker'",
+
+    def _validate_reranker_ref(
+        self, params: Dict[str, Any], component_name: str, component_class: type
+    ) -> None:
+        """Validate the optional nested ``reranker`` reference.
+
+        Parameters
+        ----------
+        params : Dict[str, Any]
+            The transformer's ``params``.
+        component_name : str
+            The transformer's registered name, for error messages.
+        component_class : type
+            The resolved transformer class.
+
+        Raises
+        ------
+        ValueError
+            If a reranker is set on a transformer that has none (the rewriter
+            emits one query, so there is no pool to reorder), or if it is not a
+            reference to a registered :class:`ChunkScorer`.
+        """
+        reranker_ref = params.get(RERANKER_KEY)
+        if reranker_ref is None:
+            return
+        if RERANKER_KEY not in component_class.SCHEMA.model_fields:
+            raise ValueError(
+                f"Transformer '{component_name}' emits a single query, so it "
+                f"has no pool to rerank; remove '{RERANKER_KEY}' or set it to null."
             )
-        log.debug(
-            "Query transformation stage enabled with %s", component_class.__name__
+        if not isinstance(reranker_ref, dict) or "component" not in reranker_ref:
+            raise ValueError(
+                f"'reranker' in '{RAG_PARAM_QUERY_TRANSFORMATION}' must be a "
+                "component reference or null."
+            )
+        reranker_name = self._require_component_name(reranker_ref, RERANKER_KEY)
+        self._resolve_subclass(
+            reranker_name,
+            ChunkScorer,
+            f"'{RAG_PARAM_QUERY_TRANSFORMATION}.params.reranker'",
         )
 
-    def apply_defaults(self, normalized: Dict[str, Any]) -> None:
+    @staticmethod
+    def _require_component_name(ref: Dict[str, Any], key: str) -> str:
+        """Return the ``component`` of a nested reference, which must be a string.
+
+        Parameters
+        ----------
+        ref : Dict[str, Any]
+            The nested reference; its ``component`` key is known to exist.
+        key : str
+            The nested parameter's name, for the error message.
+
+        Returns
+        -------
+        str
+            The component name.
+
+        Raises
+        ------
+        ValueError
+            If ``component`` is not a string.
+        """
+        name = ref["component"]
+        if not isinstance(name, str):
+            raise ValueError(
+                f"'component' of '{RAG_PARAM_QUERY_TRANSFORMATION}.params.{key}' "
+                f"must be a string, got {type(name).__name__}."
+            )
+        return name
+
+    def apply_defaults(self, normalized: Dict[str, Any], is_new: bool) -> None:
         """Fill the transformation stage's omitted params from its schema.
 
         Mirrors the generation-model defaults for the optional stage: the
@@ -235,11 +321,20 @@ class QueryTransformationValidationService:
         (the shared frontend writes those placeholders when another LLM is
         selected); an explicit non-default value always wins.
 
+        The default reranker and the default sub-query cap are injected only
+        for a new session. An update that resends a stage without the
+        ``reranker`` or ``max_subqueries`` key keeps them off, matching how the
+        job runs the same stored dict, so editing a stored session never
+        silently turns reranking (and its index) on or caps its sub-queries.
+
         Parameters
         ----------
         normalized : Dict[str, Any]
             Normalised parameters dict, mutated in place only when the stage is
             present and not ``None``.
+        is_new : bool
+            ``True`` when the parameters create a session, ``False`` when they
+            update a stored one.
         """
         ref = normalized.get(RAG_PARAM_QUERY_TRANSFORMATION)
         if not isinstance(ref, dict):
@@ -250,13 +345,17 @@ class QueryTransformationValidationService:
             return
 
         merged = {**resolve_component_defaults(name, self._registry), **params}
+        if not is_new:
+            for key in STORED_OPTIONAL_KEYS:
+                if key in merged and key not in params:
+                    merged[key] = None
         llm_ref = merged.get(_LLM_MODEL_KEY)
         if isinstance(llm_ref, dict):
             self._apply_llm_defaults(llm_ref)
         prompt_ref = merged.get(_PROMPT_KEY)
         if isinstance(prompt_ref, dict):
             self._apply_prompt_defaults(prompt_ref)
-        reranker_ref = merged.get(_RERANKER_KEY)
+        reranker_ref = merged.get(RERANKER_KEY)
         if isinstance(reranker_ref, dict):
             self._apply_reranker_defaults(reranker_ref)
         ref["params"] = merged

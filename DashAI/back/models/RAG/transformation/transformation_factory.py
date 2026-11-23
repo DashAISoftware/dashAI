@@ -15,6 +15,7 @@ from DashAI.back.models.RAG.exceptions import (
     RAGComponentNotFoundError,
     RAGTransformationConfigError,
 )
+from DashAI.back.models.RAG.RAG_constants import RERANKER_KEY
 from DashAI.back.models.RAG.transformation.base_query_transformation import (
     BaseQueryTransformation,
 )
@@ -95,8 +96,8 @@ class TransformationFactory:
         # infrastructure (chunks, persistence, index). That is supplied by the
         # index setup, which builds it and attaches it to the transformer. Here
         # it is left out so ``fill_objects`` does not build it bare.
-        if "reranker" in type(validated).model_fields:
-            validated = validated.model_copy(update={"reranker": None})
+        if RERANKER_KEY in type(validated).model_fields:
+            validated = validated.model_copy(update={RERANKER_KEY: None})
         resolved = fill_objects(
             validated,
             self._registry,
