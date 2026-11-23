@@ -1,16 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  MenuItem,
-  Tooltip,
-} from "@mui/material";
+import { Box, Button, IconButton, MenuItem, Tooltip } from "@mui/material";
 import { Settings } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { Input } from "../../configurableObject/Inputs/InputStyles";
@@ -29,12 +19,22 @@ import {
   getParamsFromSubform,
 } from "../../../utils/schema";
 import CompositeRetrieverBuilder from "../../../pages/generative/RAGSession/advanced/CompositeRetrieverBuilder";
+import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
+import {
+  OPTIMIZE_PLACEHOLDER_KEY,
+  SCHEMA_TYPE_NULL,
+  SCHEMA_TYPE_OBJECT,
+} from "../../../constants/rag";
+import { RETRIEVER_FIELD_PARENTS } from "./retrieverParents";
 
-/**
- * Registry parents whose components this field renders: every retriever and
- * every chunk scorer, composite or not.
- */
-export const RETRIEVER_FIELD_PARENTS = ["BaseRetriever", "ChunkScorer"];
+export { RETRIEVER_FIELD_PARENTS };
+
+/** The two states of a nullable retriever field, as the chip group's keys. */
+const FIELD_MODE_COMPONENT = "component";
+const FIELD_MODE_NULL = "null";
+
+/** The z-index that stacks the settings dialog above the dialog that holds the form. */
+const SETTINGS_DIALOG_Z_INDEX = 1400;
 
 /**
  * Whether a schema property is a retriever component reference, optional or
@@ -52,27 +52,29 @@ export const RETRIEVER_FIELD_PARENTS = ["BaseRetriever", "ChunkScorer"];
 export function retrieverFieldInfo(fieldSchema) {
   if (!fieldSchema) return null;
   if (
-    fieldSchema.type === "object" &&
+    fieldSchema.type === SCHEMA_TYPE_OBJECT &&
     RETRIEVER_FIELD_PARENTS.includes(fieldSchema.parent) &&
-    fieldSchema.placeholder?.optimize === undefined
+    fieldSchema.placeholder?.[OPTIMIZE_PLACEHOLDER_KEY] === undefined
   ) {
     return { parent: fieldSchema.parent, nullable: false };
   }
   if (Array.isArray(fieldSchema.anyOf)) {
     const objectBranch = fieldSchema.anyOf.find(
       (branch) =>
-        branch?.type === "object" &&
+        branch?.type === SCHEMA_TYPE_OBJECT &&
         RETRIEVER_FIELD_PARENTS.includes(branch.parent),
     );
     const accepted = fieldSchema.anyOf.filter(
-      (branch) => branch?.type === "object" || branch?.type === "null",
+      (branch) =>
+        branch?.type === SCHEMA_TYPE_OBJECT ||
+        branch?.type === SCHEMA_TYPE_NULL,
     );
-    // Any other branch (a number, a string) means this is a general union and
-    // belongs to the generic renderer.
     if (objectBranch && accepted.length === fieldSchema.anyOf.length) {
       return {
         parent: objectBranch.parent,
-        nullable: fieldSchema.anyOf.some((branch) => branch?.type === "null"),
+        nullable: fieldSchema.anyOf.some(
+          (branch) => branch?.type === SCHEMA_TYPE_NULL,
+        ),
       };
     }
   }
@@ -117,59 +119,118 @@ export default function RagRetrieverComponentField({
   onValidityChange,
 }) {
   const { t } = useTranslation(["common", "generative"]);
-  const { models } = useModelParents({ parent });
+  const { models, error: modelsError } = useModelParents({ parent });
   const [openDialog, setOpenDialog] = useState(false);
+  const [selectError, setSelectError] = useState(null);
   const formikRef = useRef(null);
+  const selectRequestRef = useRef(0);
 
-  const isNull = field?.value === null || field?.value === undefined;
-  const selectedName = isNull ? null : getModelFromSubform(field.value);
+  const isNull =
+    nullable && (field?.value === null || field?.value === undefined);
+  const selectedName = field?.value ? getModelFromSubform(field.value) : null;
   const selected = models?.find((model) => model.name === selectedName);
   const containerField = findChildrenField(selected?.schema);
+  const modelsPending = Boolean(selectedName) && models === null;
 
-  const { defaultValues: defaultParams } = useSchema({
+  const { modelSchema, defaultValues: defaultParams } = useSchema({
     modelName: selectedName,
   });
 
-  // Only a composite can be incomplete; the tree reports its own verdict, and
-  // anything else (no selection, a plain component, Null) is complete.
   useEffect(() => {
+    if (modelsPending) {
+      onValidityChange?.(false);
+      return;
+    }
     if (!containerField) onValidityChange?.(true);
-  }, [containerField, onValidityChange]);
+  }, [modelsPending, containerField, onValidityChange]);
 
-  // A field that unmounts (a rule hides it) must not keep Done disabled.
   useEffect(() => () => onValidityChange?.(true), [onValidityChange]);
 
-  const currentParams = () =>
-    getParamsFromSubform(field?.value) ?? defaultParams ?? {};
+  useEffect(
+    () => () => {
+      selectRequestRef.current += 1;
+    },
+    [],
+  );
 
+  /**
+   * The params the selected component currently holds: the stored ones, or its
+   * schema defaults once loaded.
+   * @returns {object|null} The params, or null while the defaults load.
+   */
+  const currentParams = () => {
+    const stored = getParamsFromSubform(field?.value);
+    if (stored) return stored;
+    return modelSchema ? defaultParams : null;
+  };
+
+  /**
+   * Stores a component and its params as the field value.
+   * @param {string} modelName - The component name.
+   * @param {object} params - The component params.
+   */
   const writeValue = (modelName, params) =>
     field.onChange(formattedSubform({ parent, model: modelName, params }));
 
+  /**
+   * Selects a component and seeds its params from its schema. A selection that
+   * a newer one overtook while its schema was loading is dropped.
+   * @param {object} event - The select change event.
+   */
   const handleSelect = async (event) => {
     const model = models?.find((item) => item.name === event.target.value);
     if (!model?.schema) return;
-    const { initialValues } = generateYupSchema(
-      await formattedModel(model.schema),
-    );
-    writeValue(model.name, initialValues);
+    selectRequestRef.current += 1;
+    const requestId = selectRequestRef.current;
+    try {
+      const { initialValues } = generateYupSchema(
+        await formattedModel(model.schema),
+      );
+      if (requestId !== selectRequestRef.current) return;
+      setSelectError(null);
+      writeValue(model.name, initialValues);
+    } catch (error) {
+      if (requestId !== selectRequestRef.current) return;
+      setSelectError(error?.message ?? String(error));
+    }
   };
 
-  const handleTypeChange = (type) => {
-    field.onChange(type === "null" ? null : placeholder);
+  /**
+   * Switches the field between a component and Null.
+   * @param {string} mode - FIELD_MODE_COMPONENT, or FIELD_MODE_NULL to turn it off.
+   */
+  const handleTypeChange = (mode) => {
+    if (mode === FIELD_MODE_NULL) {
+      field.onChange(null);
+      return;
+    }
+    field.onChange(placeholder);
   };
 
+  /** Saves the settings dialog's values into the field and closes it. */
   const handleDialogSave = () => {
     writeValue(selectedName, formikRef.current?.values ?? currentParams());
     setOpenDialog(false);
   };
 
+  const loadErrorReason = selectError ?? modelsError?.message;
+  const cardError =
+    errorMessage ??
+    (loadErrorReason
+      ? t("common:componentTree.loadFailed", { reason: loadErrorReason })
+      : undefined);
+  const rootParams = currentParams();
+
+  let modeSelected = FIELD_MODE_COMPONENT;
+  if (isNull) modeSelected = FIELD_MODE_NULL;
+
   const typeSelector = nullable ? (
     <SingleSelectChipGroup
       options={[
-        { key: "object", label: t("common:component", "Component") },
-        { key: "null", label: "Null" },
+        { key: FIELD_MODE_COMPONENT, label: t("common:component") },
+        { key: FIELD_MODE_NULL, label: t("common:null") },
       ]}
-      selected={isNull ? "null" : "object"}
+      selected={modeSelected}
       onChange={handleTypeChange}
       disabled={disabled}
     />
@@ -196,7 +257,7 @@ export default function RagRetrieverComponentField({
         label={label}
         paramKey={name}
         description={description}
-        errorMessage={errorMessage}
+        errorMessage={cardError}
         headerRight={
           typeSelector || configureButton ? (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -215,19 +276,20 @@ export default function RagRetrieverComponentField({
             onChange={handleSelect}
             sx={{ width: "100%" }}
           >
-            {models?.map((model) => (
+            {(models ?? []).map((model) => (
               <MenuItem key={model.name} value={model.name}>
                 {model.display_name || model.name}
               </MenuItem>
             ))}
           </Input>
         )}
-        {!isNull && selectedName && containerField && (
+        {!isNull && selectedName && containerField && rootParams && (
           <Box sx={{ mt: 2 }}>
             <CompositeRetrieverBuilder
               key={`tree-${selectedName}`}
               rootComponent={selectedName}
-              rootParams={currentParams()}
+              rootParams={rootParams}
+              rootParent={parent}
               onChange={(tree) => writeValue(tree.component, tree.params)}
               onValidityChange={onValidityChange}
             />
@@ -235,38 +297,37 @@ export default function RagRetrieverComponentField({
         )}
       </FormSchemaFieldCard>
 
-      <Dialog
+      <RAGAdvancedDialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
+        title={t("common:modelToConfig", { model: selectedName })}
         maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { maxHeight: "80vh", zIndex: 1400 } }}
-        BackdropProps={{ sx: { zIndex: 1399 } }}
+        minHeight={200}
+        dialogProps={{ sx: { zIndex: SETTINGS_DIALOG_Z_INDEX } }}
+        actions={
+          <>
+            <Button onClick={() => setOpenDialog(false)} color="inherit">
+              {t("common:cancel")}
+            </Button>
+            <Button onClick={handleDialogSave} variant="contained">
+              {t("common:save")}
+            </Button>
+          </>
+        }
       >
-        <DialogTitle>{`${selectedName} Configuration`}</DialogTitle>
-        <DialogContent dividers sx={{ minHeight: 200 }}>
-          {selectedName && !containerField && (
-            <FormSchemaContainer key={`retriever-form-${selectedName}`}>
-              <FormSchema
-                model={selectedName}
-                initialValues={currentParams()}
-                onFormSubmit={(values) => writeValue(selectedName, values)}
-                autoSave={false}
-                formSubmitRef={formikRef}
-                hideButtons
-              />
-            </FormSchemaContainer>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} color="inherit">
-            {t("common:cancel")}
-          </Button>
-          <Button onClick={handleDialogSave} variant="contained">
-            {t("common:save")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        {selectedName && !containerField && (
+          <FormSchemaContainer key={`retriever-form-${selectedName}`}>
+            <FormSchema
+              model={selectedName}
+              initialValues={rootParams ?? defaultParams}
+              onFormSubmit={(values) => writeValue(selectedName, values)}
+              autoSave={false}
+              formSubmitRef={formikRef}
+              hideButtons
+            />
+          </FormSchemaContainer>
+        )}
+      </RAGAdvancedDialog>
     </>
   );
 }

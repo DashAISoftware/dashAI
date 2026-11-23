@@ -228,19 +228,18 @@
     },
     "composite": {
       "addChild": "Add retriever node",
-      "allChunks": "All chunks",
       "chunkFusion": "Chunk fusion",
       "compositeInstructions": "Click the + button to add a child retriever to this composite. Click on a retriever card to edit its parameters or choose another model.",
       "configureNode": "Configure node",
       "mergeStrategyInterleave": "Interleave",
       "mergeStrategyRoundRobin": "Round robin",
-      "nestedCompositeNote": "This is a composite retriever. Its children can be configured in the tree below.",
+      "modelsLoadFailed": "Could not load the available components.",
+      "nestedCompositeNote": "This is a composite retriever. Its children are configured in the tree, outside this dialog.",
       "parameters": "Parameters",
       "removeNode": "Remove node",
       "reranking": "Reranking",
       "retrieverDescription": "Choose a retriever to configure its parameters. Keyword retrievers (BM25, TF-IDF) find documents by term frequency. Embedding retrievers capture semantic meaning with dense vectors. Composite retrievers chain multiple retrievers together, sequentially or in parallel.",
-      "selectModel": "Select retriever model",
-      "selectedChunks": "Selected chunks"
+      "selectModel": "Select retriever model"
     },
     "config": {
       "advanced": "Advanced configuration",
@@ -263,7 +262,8 @@
         "off": "Off",
         "prompt": "Prompt",
         "promptRequired": "This technique has no default prompt, so it cannot be enabled.",
-        "unknownComponent": "this transformer is not registered; choose a prompt and a model to continue."
+        "unknownComponent": "{{component}}: this transformer is not registered; choose a prompt and a model to continue.",
+        "compositeIncomplete": "Add at least one child to every composite component before saving."
       },
       "unsavedIn": "Unsaved changes in: {{sections}}"
     },
@@ -404,7 +404,8 @@
         "defaultPrompts": "Default prompts",
         "startFromHelp": "Replaces the template below. Yours is kept until you pick one.",
         "template": "Template",
-        "templatePlaceholder": "Each user message arrives as {input}\nThe retrieved passages arrive as {chunks}"
+        "templatePlaceholder": "Each user message arrives as {input}\nThe retrieved passages arrive as {chunks}",
+        "unnamedPrompt": "Prompt {{id}}"
       },
       "field": {
         "edit": "Edit template",
@@ -560,6 +561,7 @@
     "queryCandidates_one": "{{count}} candidate",
     "queryCandidates_other": "{{count}} candidates",
     "queryTooltip": "Query {{index}}",
+    "rerankTitle": "Pool reranking ({{pool}} candidates → {{kept}} kept)",
     "receivedCount_one": "{{chunks}} chunk from {{documents}} document",
     "receivedCount_other": "{{chunks}} chunks from {{documents}} documents",
     "receivedTitle": "Chunks used for this answer",

@@ -15,7 +15,7 @@ import {
  * @param {{component: string, params: object}|null|undefined} ref - The
  *   serialised `{component, params}` tree root.
  * @param {function(string): (object|null)} findComponent - Looks a component
- *   up by name; it must return the component's `schema`.
+ *   up by name; it must return the component object, whose `schema` is read.
  * @returns {boolean} True when every container in the tree has its children.
  */
 export function isCompositeTreeComplete(ref, findComponent) {

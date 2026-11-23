@@ -230,19 +230,18 @@
     },
     "composite": {
       "addChild": "Adicionar nó recuperador",
-      "allChunks": "Todos os fragmentos",
       "chunkFusion": "Fusão de chunks",
       "compositeInstructions": "Clique no botão + para adicionar um recuperador filho a este composto. Clique em um cartão para editar seus parâmetros ou escolher outro modelo.",
       "configureNode": "Configurar Nó",
       "mergeStrategyInterleave": "Intercalar",
       "mergeStrategyRoundRobin": "Round robin",
-      "nestedCompositeNote": "Este é um recuperador composto. Seus filhos podem ser configurados na árvore abaixo.",
+      "modelsLoadFailed": "Não foi possível carregar os componentes disponíveis.",
+      "nestedCompositeNote": "Este é um recuperador composto. Seus filhos são configurados na árvore, fora deste diálogo.",
       "parameters": "Parâmetros",
       "removeNode": "Remover nó",
       "reranking": "Reordenação",
       "retrieverDescription": "Escolha um recuperador para configurar seus parâmetros. Os recuperadores por palavras-chave (BM25, TF-IDF) encontram documentos por frequência de termos. Os recuperadores por embeddings capturam o significado semântico com vetores densos. Os recuperadores compostos encadeiam vários recuperadores, de forma sequencial ou em paralelo.",
-      "selectModel": "Selecionar modelo recuperador",
-      "selectedChunks": "Fragmentos selecionados"
+      "selectModel": "Selecionar modelo recuperador"
     },
     "config": {
       "advanced": "Configuração avançada",
@@ -265,7 +264,8 @@
         "off": "Desativada",
         "prompt": "Prompt",
         "promptRequired": "Esta técnica não tem um prompt padrão, portanto não pode ser habilitada.",
-        "unknownComponent": "este transformador não está registrado; escolha um prompt e um modelo para continuar."
+        "unknownComponent": "{{component}}: este transformador não está registrado; escolha um prompt e um modelo para continuar.",
+        "compositeIncomplete": "Adicione pelo menos um filho a cada componente composto antes de salvar."
       },
       "unsavedIn": "Alterações não salvas em: {{sections}}"
     },
@@ -406,7 +406,8 @@
         "defaultPrompts": "Prompts padrão",
         "startFromHelp": "Substitui o modelo abaixo. O seu é mantido até você escolher um.",
         "template": "Modelo",
-        "templatePlaceholder": "Cada mensagem do usuário chega como {input}\nOs trechos recuperados chegam como {chunks}"
+        "templatePlaceholder": "Cada mensagem do usuário chega como {input}\nOs trechos recuperados chegam como {chunks}",
+        "unnamedPrompt": "Prompt {{id}}"
       },
       "field": {
         "edit": "Editar modelo",
@@ -564,6 +565,7 @@
     "queryCandidates_one": "{{count}} candidato",
     "queryCandidates_other": "{{count}} candidatos",
     "queryTooltip": "Consulta {{index}}",
+    "rerankTitle": "Reordenação do pool ({{pool}} candidatos → {{kept}} mantidos)",
     "receivedCount_many": "{{chunks}} fragmentos de {{documents}} documentos",
     "receivedCount_one": "{{chunks}} fragmento de {{documents}} documento",
     "receivedCount_other": "{{chunks}} fragmentos de {{documents}} documentos",

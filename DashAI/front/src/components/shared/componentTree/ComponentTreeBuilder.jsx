@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Box, Typography } from "@mui/material";
+import { Alert, Box, Typography } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import { getChildComponents } from "../../../api/component";
+import useComponentRegistry from "../../../hooks/useComponentRegistry";
 import { resolveDefaults as resolveSchemaDefaults } from "../../../utils/schema";
 import { resolveLocalizedText } from "../../../utils/localize";
 import FormSchema from "../FormSchema";
@@ -19,39 +19,6 @@ import {
   serializeNode,
   updateAt,
 } from "./componentTreeUtils";
-
-/**
- * Loads the components of a registry parent and of every parent that the
- * containers among them declare for their children, until no new parent
- * appears.
- *
- * @param {string} parent - The registry parent class of the tree's root.
- * @returns {Promise<{byName: Map<string, object>,
- *   optionsByParent: Object<string, object[]>}>} The components by name, and the
- *   components that inherit each loaded parent.
- */
-async function loadComponents(parent) {
-  const byName = new Map();
-  const optionsByParent = {};
-  const queue = [parent];
-  while (queue.length) {
-    const next = queue.shift();
-    if (next in optionsByParent) continue;
-    let list = [];
-    try {
-      list = (await getChildComponents(next, true)) || [];
-    } catch (error) {
-      console.warn(`[ComponentTreeBuilder] Failed to load ${next}:`, error);
-    }
-    optionsByParent[next] = list;
-    for (const component of list) {
-      byName.set(component.name, component);
-      const field = findChildrenField(component.schema);
-      if (field && !(field.parent in optionsByParent)) queue.push(field.parent);
-    }
-  }
-  return { byName, optionsByParent };
-}
 
 /**
  * Generic interactive tree for components that contain other components.
@@ -72,8 +39,10 @@ async function loadComponents(parent) {
  * @param {function({component: string, params: object}): void} props.onChange -
  *   Receives the serialised tree on every change, and `{findComponent}` as a
  *   second argument so the caller can inspect component schemas.
- * @param {boolean} [props.emitOnLoad] - Also reports the initial tree once it
- *   is built, so a caller can validate it before the first edit.
+ * @param {function({component: string, params: object}, {findComponent:
+ *   function}): void} [props.onLoad] - Receives the initial tree once it is
+ *   built, so a caller can validate it before the first edit. It is not an
+ *   edit: `onChange` is never called for it, so nothing is written back.
  * @param {string} props.parent - Registry parent class whose components the
  *   root may be.
  * @param {function(string): Promise<object>} [props.resolveDefaults] - Default
@@ -99,14 +68,17 @@ export default function ComponentTreeBuilder({
   renderCaption,
   labels: labelOverrides,
   sideContent = null,
-  emitOnLoad = false,
+  onLoad,
 }) {
   const { t, i18n } = useTranslation(["common"]);
-  const [registry, setRegistry] = useState(null);
+  const { registry, error: registryError } = useComponentRegistry(parent);
   const [tree, setTree] = useState(null);
+  const [rootUnknown, setRootUnknown] = useState(false);
   const [editing, setEditing] = useState(null);
   const [editingParentId, setEditingParentId] = useState(null);
   const nextIdRef = useRef(createIdFactory());
+  const rootParamsRef = useRef(rootParams);
+  const onLoadRef = useRef(onLoad);
 
   const labels = useMemo(
     () => ({
@@ -122,16 +94,6 @@ export default function ComponentTreeBuilder({
     [t, labelOverrides],
   );
 
-  useEffect(() => {
-    let cancelled = false;
-    loadComponents(parent).then((loaded) => {
-      if (!cancelled) setRegistry(loaded);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [parent]);
-
   const findComponent = useCallback(
     (name) => registry?.byName.get(name) ?? null,
     [registry],
@@ -146,30 +108,13 @@ export default function ComponentTreeBuilder({
   );
   const canAddChild = useCallback(
     (node) => {
-      const { maxItems } = getChildrenField(node.component) || {};
-      const configured = (node.children || []).filter((c) => c.component);
-      return maxItems == null || configured.length < maxItems;
+      const field = getChildrenField(node.component);
+      if (!field) return false;
+      if (field.maxItems == null) return true;
+      return node.children.filter((c) => c.component).length < field.maxItems;
     },
     [getChildrenField],
   );
-
-  useEffect(() => {
-    if (!registry) return;
-    nextIdRef.current = createIdFactory();
-    const root = buildNodeFromRef(
-      { component: rootComponent, params: rootParams || {} },
-      findComponent,
-      nextIdRef.current,
-    );
-    const initial = root || {
-      nodeId: nextIdRef.current(),
-      component: rootComponent,
-      params: rootParams || {},
-      children: [],
-    };
-    setTree(initial);
-    if (emitOnLoad) emit(initial);
-  }, [registry, rootComponent]);
 
   /**
    * Serialises the tree and reports it through `onChange`.
@@ -179,6 +124,37 @@ export default function ComponentTreeBuilder({
     (root) => onChange(serializeNode(root, findComponent), { findComponent }),
     [onChange, findComponent],
   );
+
+  useEffect(() => {
+    rootParamsRef.current = rootParams;
+    onLoadRef.current = onLoad;
+  });
+
+  useEffect(() => {
+    if (!registry) return;
+    nextIdRef.current = createIdFactory();
+    const root = buildNodeFromRef(
+      { component: rootComponent, params: rootParamsRef.current ?? {} },
+      findComponent,
+      nextIdRef.current,
+    );
+    setRootUnknown(!root);
+    setTree(root);
+    if (root) {
+      onLoadRef.current?.(serializeNode(root, findComponent), {
+        findComponent,
+      });
+    }
+  }, [registry, rootComponent, findComponent]);
+
+  /**
+   * Replaces the tree and reports it to the owner.
+   * @param {object} updated - The new tree root.
+   */
+  const commitTree = (updated) => {
+    setTree(updated);
+    emit(updated);
+  };
 
   /**
    * Persists a node's component and params into the tree. When the component
@@ -193,24 +169,21 @@ export default function ComponentTreeBuilder({
    */
   const handleSaveNode = (nodeId, component, params) => {
     const field = getChildrenField(component);
-    setTree((prev) => {
-      const updated = updateAt(prev, nodeId, (node) => {
-        const hasNoChildren = !node.children || node.children.length === 0;
-        const seedDefaults =
-          field && node.component !== component && hasNoChildren;
-        let children = field ? node.children : [];
-        if (seedDefaults) {
-          children = getChildRefs({ params }, field.key)
-            .map((child) =>
-              buildNodeFromRef(child, findComponent, nextIdRef.current),
-            )
-            .filter(Boolean);
-        }
-        return { ...node, component, params: { ...params }, children };
-      });
-      emit(updated);
-      return updated;
+    const updated = updateAt(tree, nodeId, (node) => {
+      const hasNoChildren = !node.children || node.children.length === 0;
+      const seedDefaults =
+        field && node.component !== component && hasNoChildren;
+      let children = field ? node.children : [];
+      if (seedDefaults) {
+        children = getChildRefs({ params }, field.key)
+          .map((child) =>
+            buildNodeFromRef(child, findComponent, nextIdRef.current),
+          )
+          .filter(Boolean);
+      }
+      return { ...node, component, params: { ...params }, children };
     });
+    commitTree(updated);
     setEditing(null);
     setEditingParentId(null);
   };
@@ -222,18 +195,15 @@ export default function ComponentTreeBuilder({
    */
   const handleAddChild = (parentId) => {
     const id = nextIdRef.current();
+    const updated = updateAt(tree, parentId, (node) => ({
+      ...node,
+      children: [
+        ...node.children.filter((c) => c.component !== ""),
+        { nodeId: id, component: "", params: {}, children: [] },
+      ],
+    }));
+    commitTree(updated);
     setEditingParentId(parentId);
-    setTree((prev) => {
-      const updated = updateAt(prev, parentId, (node) => ({
-        ...node,
-        children: [
-          ...(node.children || []).filter((c) => c.component !== ""),
-          { nodeId: id, component: "", params: {}, children: [] },
-        ],
-      }));
-      emit(updated);
-      return updated;
-    });
     setEditing(id);
   };
 
@@ -243,27 +213,23 @@ export default function ComponentTreeBuilder({
    * @param {string} childId - The child node id.
    */
   const handleRemoveChild = (parentId, childId) => {
-    setTree((prev) => {
-      const updated = updateAt(prev, parentId, (node) => ({
-        ...node,
-        children: (node.children || []).filter((c) => c.nodeId !== childId),
-      }));
-      emit(updated);
-      return updated;
-    });
+    const updated = updateAt(tree, parentId, (node) => ({
+      ...node,
+      children: node.children.filter((c) => c.nodeId !== childId),
+    }));
+    commitTree(updated);
   };
 
-  // The root takes the components of the tree's parent; a child takes those
-  // that inherit the parent its container declares for its children.
   const editingNode = tree && editing ? findNode(tree, editing) : null;
   const options = useMemo(() => {
     if (!tree || !editing || !registry) return [];
     const container = findParentNode(tree, editing);
-    const optionsParent = container
-      ? getChildrenField(container.component)?.parent
-      : parent;
+    let optionsParent = parent;
+    if (container) {
+      optionsParent = getChildrenField(container.component)?.parent;
+    }
     return selectableOptions(
-      registry.optionsByParent[optionsParent] ?? [],
+      registry.optionsByParent[optionsParent],
       t("common:other"),
     );
   }, [tree, editing, registry, parent, getChildrenField, t]);
@@ -284,6 +250,24 @@ export default function ComponentTreeBuilder({
     },
     [findComponent, renderCaption, t, i18n],
   );
+
+  if (registryError) {
+    return (
+      <Alert severity="error" sx={{ py: 0.5 }}>
+        {t("common:componentTree.loadFailed", { reason: registryError })}
+      </Alert>
+    );
+  }
+
+  if (rootUnknown) {
+    return (
+      <Alert severity="error" sx={{ py: 0.5 }}>
+        {t("common:componentTree.unknownComponent", {
+          component: rootComponent,
+        })}
+      </Alert>
+    );
+  }
 
   if (!tree) {
     return (
@@ -336,7 +320,6 @@ export default function ComponentTreeBuilder({
           labels={labels}
           onSave={handleSaveNode}
           onClose={() => {
-            // Drop the placeholder child if the dialog closes without saving.
             if (editingNode && !editingNode.component && editingParentId) {
               handleRemoveChild(editingParentId, editing);
             }
@@ -359,5 +342,5 @@ ComponentTreeBuilder.propTypes = {
   renderCaption: PropTypes.func,
   labels: PropTypes.object,
   sideContent: PropTypes.node,
-  emitOnLoad: PropTypes.bool,
+  onLoad: PropTypes.func,
 };

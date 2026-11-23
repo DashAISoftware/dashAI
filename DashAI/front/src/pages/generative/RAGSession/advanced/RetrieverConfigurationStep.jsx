@@ -11,12 +11,8 @@ import PropTypes from "prop-types";
 import { Box, Autocomplete, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { getRetrievalParadigm } from "../../../../api/rag";
-import {
-  loadRetrieverKinds,
-  isComposite as isCompositeKind,
-  retrieverCategory,
-  sortByCategory,
-} from "../retrieverKinds";
+import { retrieverCategory, sortByCategory } from "../retrieverKinds";
+import { findChildrenField } from "../../../../components/shared/componentTree/componentTreeUtils";
 import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import CompositeRetrieverBuilder from "./CompositeRetrieverBuilder";
 import { FormSchemaProvider } from "../../../../contexts/schema";
@@ -40,6 +36,16 @@ function getDisplayName(component) {
     if (typeof dn[key] === "string") return dn[key];
   }
   return component.name || "";
+}
+
+/**
+ * Whether a retriever declares children, so its tree decides whether it can
+ * be saved.
+ * @param {object|null} retriever - The retriever component.
+ * @returns {boolean} True for a composite retriever.
+ */
+function isCompositeRetriever(retriever) {
+  return Boolean(findChildrenField(retriever?.schema));
 }
 
 /**
@@ -124,21 +130,23 @@ const RetrieverConfigurationStep = forwardRef(
     const [allOptions, setAllOptions] = useState([]);
     const [selectedRetriever, setSelectedRetriever] = useState(null);
     const [openConfig, setOpenConfig] = useState(false);
-    const savedParamsRef = useRef(null);
+    const savedRef = useRef(null);
 
     /**
-     * Persists the current form parameter values into the retriever model state.
+     * Persists the last edited configuration into the retriever model state.
+     * The component is the one the saved params belong to, so a root swapped in
+     * the tree is never stored with another component's name.
      * Used by parent dialogs via the imperative ref handle.
      */
     const saveCurrentFormValues = useCallback(() => {
-      const values = savedParamsRef.current;
-      if (values && Object.keys(values).length > 0 && selectedRetriever) {
+      const saved = savedRef.current;
+      if (saved && Object.keys(saved.params).length > 0) {
         setRetrieverModel({
-          component: selectedRetriever.name,
-          params: values,
+          component: saved.component,
+          params: saved.params,
         });
       }
-    }, [selectedRetriever, setRetrieverModel]);
+    }, [setRetrieverModel]);
 
     useEffect(() => {
       return () => {
@@ -154,7 +162,6 @@ const RetrieverConfigurationStep = forwardRef(
 
     useEffect(() => {
       const load = async () => {
-        await loadRetrieverKinds();
         let retrievers = [];
         try {
           retrievers = await getRetrievalParadigm();
@@ -177,7 +184,7 @@ const RetrieverConfigurationStep = forwardRef(
           if (found) {
             setSelectedRetriever(found);
             setOpenConfig(true);
-            setNextEnabled(true);
+            setNextEnabled(!isCompositeRetriever(found));
           }
         }
       };
@@ -192,7 +199,7 @@ const RetrieverConfigurationStep = forwardRef(
      */
     const handleRetrieverChange = useCallback(
       async (_event, newValue) => {
-        savedParamsRef.current = null;
+        savedRef.current = null;
 
         if (!newValue) {
           setSelectedRetriever(null);
@@ -205,8 +212,8 @@ const RetrieverConfigurationStep = forwardRef(
         const defaults = await resolveRetrieverDefaults(newValue.name);
         setSelectedRetriever(newValue);
         setRetrieverModel({ component: newValue.name, params: defaults });
-        setOpenConfig(Boolean(newValue?.schema?.properties));
-        setNextEnabled(true);
+        setOpenConfig(Boolean(newValue.schema?.properties));
+        setNextEnabled(!isCompositeRetriever(newValue));
       },
       [setRetrieverModel, setNextEnabled],
     );
@@ -217,34 +224,46 @@ const RetrieverConfigurationStep = forwardRef(
      */
     const handleParametersSave = useCallback(
       (newParams) => {
-        savedParamsRef.current = newParams;
+        savedRef.current = {
+          component: selectedRetriever.name,
+          params: newParams,
+        };
         setRetrieverModel({
-          component: selectedRetriever?.name || "",
+          component: selectedRetriever.name,
           params: newParams,
         });
         setNextEnabled(true);
       },
-      [selectedRetriever?.name, setRetrieverModel, setNextEnabled],
+      [selectedRetriever, setRetrieverModel, setNextEnabled],
     );
 
     /**
      * Receives the serialised tree from CompositeRetrieverBuilder and persists it
-     * into the retriever model.
+     * into the retriever model. When the root was swapped for another component,
+     * the selection follows it, so the selector and the saved model agree.
      * @param {object} updated - The updated composite model { component, params }.
      */
     const handleCompositeChange = useCallback(
       (updated) => {
-        savedParamsRef.current = updated.params;
+        savedRef.current = {
+          component: updated.component,
+          params: updated.params,
+        };
         setRetrieverModel({
           component: updated.component,
           params: updated.params,
         });
+        if (updated.component !== selectedRetriever.name) {
+          const swapped = allOptions.find(
+            (option) => option.name === updated.component,
+          );
+          if (swapped) setSelectedRetriever(swapped);
+        }
       },
-      [setRetrieverModel],
+      [allOptions, selectedRetriever, setRetrieverModel],
     );
 
-    const isComposite =
-      selectedRetriever && isCompositeKind(selectedRetriever.name);
+    const isComposite = isCompositeRetriever(selectedRetriever);
 
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>

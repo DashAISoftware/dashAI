@@ -307,6 +307,10 @@
     "removeNode": "Remover componente",
     "selectComponent": "Componente",
     "parameters": "Parâmetros",
-    "containerNote": "Este componente contém outros componentes. Seus filhos podem ser configurados na árvore abaixo."
-  }
+    "containerNote": "Este componente contém outros componentes. Seus filhos são configurados na árvore, fora deste diálogo.",
+    "loadFailed": "Não foi possível carregar os componentes: {{reason}}",
+    "unknownComponent": "O componente {{component}} não está disponível, então sua árvore não pode ser exibida."
+  },
+  "component": "Componente",
+  "null": "Nulo"
 }

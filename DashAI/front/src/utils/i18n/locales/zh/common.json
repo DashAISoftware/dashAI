@@ -285,6 +285,10 @@
     "removeNode": "移除组件",
     "selectComponent": "组件",
     "parameters": "参数",
-    "containerNote": "此组件包含其他组件。其子组件可在下方的树中配置。"
-  }
+    "containerNote": "此组件包含其他组件。其子组件在此对话框之外的树中配置。",
+    "loadFailed": "无法加载组件：{{reason}}",
+    "unknownComponent": "组件 {{component}} 不可用，因此无法显示其树。"
+  },
+  "component": "组件",
+  "null": "空"
 }

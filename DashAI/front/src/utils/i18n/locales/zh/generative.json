@@ -228,19 +228,18 @@
     },
     "composite": {
       "addChild": "添加检索节点",
-      "allChunks": "所有块",
       "chunkFusion": "分块融合",
       "compositeInstructions": "点击 + 按钮向此组合添加子检索器。点击检索器卡片以编辑其参数或选择其他模型。",
       "configureNode": "配置节点",
       "mergeStrategyInterleave": "交错合并",
       "mergeStrategyRoundRobin": "轮询",
-      "nestedCompositeNote": "这是一个组合检索器。其子节点可以在下方的树中配置。",
+      "modelsLoadFailed": "无法加载可用组件。",
+      "nestedCompositeNote": "这是一个组合检索器。其子节点在此对话框之外的树中配置。",
       "parameters": "参数",
       "removeNode": "删除节点",
       "reranking": "重新排序",
       "retrieverDescription": "选择一个检索器来配置其参数。关键词检索器（BM25、TF-IDF）通过词频查找文档。嵌入检索器通过稠密向量捕获语义含义。组合检索器按顺序或并行地链接多个检索器。",
-      "selectModel": "选择检索模型",
-      "selectedChunks": "已选块"
+      "selectModel": "选择检索模型"
     },
     "config": {
       "advanced": "高级配置",
@@ -262,7 +261,8 @@
         "incomplete": "保存前请选择提示词和语言模型。",
         "loadFailed": "无法加载查询转换选项：{{reason}}",
         "promptRequired": "该技术没有默认提示词，无法启用。",
-        "unknownComponent": "此转换器未注册；请选择提示词和模型以继续。"
+        "unknownComponent": "{{component}}: 此转换器未注册；请选择提示词和模型以继续。",
+        "compositeIncomplete": "保存前，请为每个复合组件至少添加一个子组件。"
       },
       "unsavedIn": "以下部分有未保存的更改：{{sections}}"
     },
@@ -402,7 +402,8 @@
         "defaultPrompts": "默认提示词",
         "startFromHelp": "会替换下方的模板。在你选择之前，你的内容会保留。",
         "template": "模板",
-        "templatePlaceholder": "每条用户消息以 {input} 传入\n检索到的片段以 {chunks} 传入"
+        "templatePlaceholder": "每条用户消息以 {input} 传入\n检索到的片段以 {chunks} 传入",
+        "unnamedPrompt": "提示词 {{id}}"
       },
       "field": {
         "edit": "编辑模板",
@@ -558,6 +559,7 @@
     "queryCandidates_one": "{{count}} 个候选",
     "queryCandidates_other": "{{count}} 个候选",
     "queryTooltip": "查询 {{index}}",
+    "rerankTitle": "候选池重排序（{{pool}} 个候选 → 保留 {{kept}} 个）",
     "receivedCount_one": "来自 {{documents}} 个文档的 {{chunks}} 个内容块",
     "receivedCount_other": "来自 {{documents}} 个文档的 {{chunks}} 个内容块",
     "receivedTitle": "用于此回答的内容块",
