@@ -77,7 +77,12 @@ export default function QueryTransformationPicker({
    * @param {object} transformer - The transformer component to enable.
    */
   const enableWith = (transformer) => {
-    if (loading || loadError) return;
+    if (!transformer) {
+      setBlockMessage(
+        t("generative:rag.config.queryTransformation.noneAvailable"),
+      );
+      return;
+    }
     const { ref, blockedBy } = prepareEnableRef({
       transformer,
       generators,
@@ -109,9 +114,17 @@ export default function QueryTransformationPicker({
    * @param {object} preset - The selected technique card.
    */
   const handleSelect = (preset) => {
-    const transformer =
-      transformers.find((component) => component.name === preset.component) ||
-      preset;
+    const transformer = transformers.find(
+      (component) => component.name === preset.component,
+    );
+    if (!transformer) {
+      setBlockMessage(
+        t("generative:rag.config.queryTransformation.unknownComponent", {
+          component: preset.component,
+        }),
+      );
+      return;
+    }
     enableWith(transformer);
   };
 
@@ -174,6 +187,7 @@ export default function QueryTransformationPicker({
         presets={presets}
         activeKey={enabled ? value?.component : null}
         onSelect={handleSelect}
+        disabled={loading || Boolean(loadError)}
       />
 
       {unregistered && (
@@ -194,14 +208,16 @@ export default function QueryTransformationPicker({
         {t("generative:rag.config.queryTransformation.advanced")}
       </Button>
 
-      <QueryTransformationAdvancedModal
-        open={showAdvanced}
-        onClose={() => setShowAdvanced(false)}
-        model={value}
-        setModel={commitStage}
-        technique={technique}
-        generators={generators}
-      />
+      {enabled && (
+        <QueryTransformationAdvancedModal
+          open={showAdvanced}
+          onClose={() => setShowAdvanced(false)}
+          model={value}
+          setModel={commitStage}
+          technique={technique}
+          generators={generators}
+        />
+      )}
     </Stack>
   );
 }

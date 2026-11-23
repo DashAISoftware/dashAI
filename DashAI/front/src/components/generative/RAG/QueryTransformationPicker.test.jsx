@@ -13,13 +13,25 @@ jest.mock("../../../hooks/useQueryTransformationOptions", () => ({
 }));
 jest.mock("./PresetCardList", () => ({
   __esModule: true,
-  default: ({ presets, onSelect }) => (
+  default: ({ presets, onSelect, disabled }) => (
     <div>
       {presets.map((preset) => (
-        <button key={preset.key} type="button" onClick={() => onSelect(preset)}>
+        <button
+          key={preset.key}
+          type="button"
+          disabled={disabled}
+          onClick={() => onSelect(preset)}
+        >
           {preset.key}
         </button>
       ))}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onSelect({ key: "ghost", component: "Ghost" })}
+      >
+        ghost-card
+      </button>
     </div>
   ),
 }));
@@ -182,6 +194,44 @@ describe("QueryTransformationPicker", () => {
     expect(
       screen.getByText("generative:rag.config.queryTransformation.loadFailed"),
     ).toBeInTheDocument();
+    expect(screen.getByRole("switch")).toBeDisabled();
+  });
+
+  it("leaves the cards inert while the options load or fail", () => {
+    mockOptions({ loading: true });
+    const { rerender } = render(
+      <QueryTransformationPicker value={null} onChange={jest.fn()} />,
+    );
+    expect(
+      screen.getByRole("button", { name: "LLMQueryExpander" }),
+    ).toBeDisabled();
+
+    mockOptions({ loadError: "boom" });
+    rerender(<QueryTransformationPicker value={null} onChange={jest.fn()} />);
+    expect(
+      screen.getByRole("button", { name: "LLMQueryExpander" }),
+    ).toBeDisabled();
+  });
+
+  it("says so when a card names a transformer that is not registered", async () => {
+    mockOptions();
+    const onChange = jest.fn();
+    render(<QueryTransformationPicker value={null} onChange={onChange} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "ghost-card" }));
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(
+        "generative:rag.config.queryTransformation.unknownComponent",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the switch off when there is no technique to enable", async () => {
+    mockOptions({ transformers: [] });
+    render(<QueryTransformationPicker value={null} onChange={jest.fn()} />);
+
     expect(screen.getByRole("switch")).toBeDisabled();
   });
 });

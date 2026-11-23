@@ -31,6 +31,18 @@ jest.mock("../../../api/rag", () => ({
   getQueryTransformationPrompts: jest.fn(),
   getGeneratorComponents: jest.fn(),
 }));
+// The picker loads its options through this hook, which updates state after
+// the test body has finished; the panel only needs a settled, empty answer.
+jest.mock("../../../hooks/useQueryTransformationOptions", () => {
+  const options = {
+    transformers: [],
+    prompts: [],
+    generators: [],
+    loading: false,
+    loadError: null,
+  };
+  return { __esModule: true, default: () => options };
+});
 jest.mock("../../../api/session", () => ({
   updateGenerativeSession: jest.fn(),
 }));
