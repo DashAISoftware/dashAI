@@ -208,6 +208,17 @@ index infrastructure. Known limitations of the current implementation:
   distance among them. A scorer without the retriever's chunk store cannot
   resolve the covered ids and falls back to the window's own id.
 
+- **Reranking cost grows with the pool, not with the corpus.** The reranker
+  scores only the chunks of the merged pool: at most the number of queries
+  times the retrieval stage's `top_k`, fewer once queries return the same
+  chunk, and more when retrieve-then-expand windows are scored through every
+  chunk they cover. For a cross-encoder reranker that is one model forward
+  pass per pooled chunk on every turn. The context budget does not price it,
+  because the budget only counts the tokens of the chunks that reach the
+  generator. Building the chunk lookup the cross-encoder needs walks the whole
+  corpus on each call, which is cheap next to that inference and only matters
+  for very large corpora.
+
 - **A reranker has its own index cost.** Its setup goes through the retriever
   setup, so it reuses a stored index only when the embedding and corpus
   identity match the retrieval stage. A reranker with a different embedding is
@@ -257,9 +268,14 @@ index infrastructure. Known limitations of the current implementation:
   inherits from `RAGQueryTransformationError` → `RAGPipelineRuntimeError`
   instead of `RAGWorkflowError`, so existing `RAGPipelineRuntimeError` handlers
   keep catching the stage. Any such handler therefore also catches its
-  configuration failures. The subtypes are for programmatic handling: the job
-  error message shows their text only, not their class, so nothing in the
-  backend distinguishes a configuration failure from an unparseable output yet.
+  configuration failures. The stage raises four types: the generic
+  `RAGQueryTransformationError`, `RAGTransformationConfigError`,
+  `RAGTransformationOutputError` (the model's output could not be parsed) and
+  `RAGTransformationGenerationError` (the model call failed). Nothing in the
+  backend catches them by subtype today: the job error message shows their
+  text only, not their class, and no code retries an unparseable output or
+  answers a configuration failure differently from a model failure. The
+  subtypes exist so such handling can be added without parsing messages.
 
 ## Maintenance
 
