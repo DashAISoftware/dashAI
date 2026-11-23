@@ -4,6 +4,7 @@ from typing import Any, Sequence
 
 from sqlalchemy.orm import Session
 
+from DashAI.back.core.schema_fields.utils import normalize_payload
 from DashAI.back.dependencies.database.models import (
     RAGChunkingModel,
     RAGChunkSet,
@@ -18,7 +19,9 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.models.RAG.RAG_constants import (
     COMPOSITE_RETRIEVER_NAMES,
+    RAG_PARAM_QUERY_TRANSFORMATION,
     RAG_PARAM_RETRIEVER_MODEL,
+    RERANKER_KEY,
 )
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     strip_expansion_options,
@@ -56,6 +59,31 @@ def _retriever_identity(reference: Any) -> Any:
     identity = dict(reference)
     identity["params"] = strip_expansion_options(params)
     return identity
+
+
+def _reranker_reference(parameters: Any) -> Any:
+    """Return the query-transformation reranker reference of session parameters.
+
+    Parameters
+    ----------
+    parameters : Any
+        A session's parameters dict, or any other value.
+
+    Returns
+    -------
+    Any
+        The ``reranker`` reference nested in ``query_transformation``, or
+        ``None`` when the stage, its params or the reranker is absent.
+    """
+    if not isinstance(parameters, dict):
+        return None
+    transformation = parameters.get(RAG_PARAM_QUERY_TRANSFORMATION)
+    if not isinstance(transformation, dict):
+        return None
+    params = transformation.get("params")
+    if not isinstance(params, dict):
+        return None
+    return params.get(RERANKER_KEY)
 
 
 class CleanupService:
@@ -122,16 +150,35 @@ class CleanupService:
                 _component_changed("retriever_model")
             )
 
+            # The retriever stage and the query-transformation reranker store
+            # their rows under the same pipeline, and one row can serve both
+            # when they share a configuration. Whatever the new parameters still
+            # reference must survive the cleanup of the other stage.
+            protected = self._protected_bridge_ids(session_id, new_parameters)
+
             if should_cleanup_retriever:
                 if retriever_component_name in COMPOSITE_RETRIEVER_NAMES:
-                    self._cleanup_composite_retriever(old_parameters, session_id)
+                    self._cleanup_composite_retriever(
+                        old_parameters, session_id, protected
+                    )
                 else:
                     self._cleanup_unit_retriever(
                         old_parameters,
                         documents_ids,
                         retriever_model_params,
                         session_id,
+                        protected,
                     )
+
+            old_reranker = _reranker_reference(old_parameters)
+            if old_reranker and (
+                new_parameters is None
+                or _retriever_identity(old_reranker)
+                != _retriever_identity(_reranker_reference(new_parameters))
+            ):
+                self._cleanup_reranker(
+                    old_reranker, documents_ids, session_id, protected
+                )
 
             # ── Chunking model cleanup (AFTER retriever) ──
             chunking_model_params = old_parameters.get("chunking_model") or {}
@@ -280,6 +327,201 @@ class CleanupService:
             .count()
         )
 
+    def _select_unit_bridge(
+        self, pipeline_id: int, reference: dict, protected: set[int]
+    ) -> RAGRetriever | None:
+        """Pick the bridge row that realizes a unit retriever reference.
+
+        The row whose stored parameters equal the reference is preferred. A
+        pipeline also holds the reranker's rows, which can share the class name,
+        so a lookup by class name alone could return the wrong one; it is only
+        the fallback for rows whose parameters no longer match, and it never
+        returns a protected row.
+
+        Args:
+            pipeline_id: The owning pipeline.
+            reference: The ``{component, params}`` retriever reference.
+            protected: Bridge ids that must not be selected.
+
+        Returns:
+            The bridge to delete, or ``None`` when there is none.
+        """
+        for bridge in self._matching_bridges(pipeline_id, reference):
+            if bridge.id not in protected:
+                return bridge
+        candidates = (
+            self.db.query(RAGRetriever)
+            .filter(
+                RAGRetriever.pipeline_id == pipeline_id,
+                RAGRetriever.class_name == reference.get("component"),
+            )
+            .order_by(RAGRetriever.id)
+            .all()
+        )
+        for bridge in candidates:
+            if bridge.id not in protected:
+                return bridge
+        return None
+
+    def _matching_bridges(self, pipeline_id: int, reference: Any) -> list[RAGRetriever]:
+        """Return the bridges that realize a retriever reference exactly.
+
+        Args:
+            pipeline_id: The owning pipeline.
+            reference: A ``{component, params}`` retriever reference.
+
+        Returns:
+            Bridges of the referenced class whose stored parameters (unit) or
+            ordered children (composite) match the reference.
+        """
+        if not isinstance(reference, dict):
+            return []
+        component = reference.get("component")
+        params = normalize_payload(reference.get("params") or {})
+        candidates = (
+            self.db.query(RAGRetriever)
+            .filter(
+                RAGRetriever.pipeline_id == pipeline_id,
+                RAGRetriever.class_name == component,
+            )
+            .all()
+        )
+        matches: list[RAGRetriever] = []
+        for bridge in candidates:
+            if self._bridge_matches(bridge, component, params):
+                matches.append(bridge)
+        return matches
+
+    def _bridge_matches(
+        self, bridge: RAGRetriever, component: str, params: dict
+    ) -> bool:
+        """Check whether a bridge row realizes a component with these params.
+
+        Args:
+            bridge: The candidate bridge row.
+            component: The referenced component name.
+            params: The referenced, normalized parameters.
+
+        Returns:
+            ``True`` when a unit's stored parameters equal the reference
+            (ignoring the expansion options), or when a composite's ordered
+            children match the referenced children recursively.
+        """
+        if component in COMPOSITE_RETRIEVER_NAMES:
+            child_refs = params.get("children") or []
+            links = sorted(bridge.children, key=lambda link: link.child_order)
+            if len(links) != len(child_refs):
+                return False
+            for link, child_ref in zip(links, child_refs, strict=True):
+                child = self.db.get(RAGRetriever, link.child_id)
+                if child is None or not isinstance(child_ref, dict):
+                    return False
+                child_name = child_ref.get("component")
+                if child.class_name != child_name:
+                    return False
+                child_params = normalize_payload(child_ref.get("params") or {})
+                if not self._bridge_matches(child, child_name, child_params):
+                    return False
+            return True
+        detail = bridge.dense_detail or bridge.sparse_detail
+        if detail is None:
+            return False
+        identity = dict(sorted(strip_expansion_options(params).items()))
+        return detail.parameters == identity
+
+    def _tree_ids(self, bridge: RAGRetriever) -> set[int]:
+        """Return the id of a bridge and of every descendant child bridge.
+
+        Args:
+            bridge: The root bridge row.
+
+        Returns:
+            The ids of the whole retriever tree.
+        """
+        ids = {bridge.id}
+        for link in bridge.children:
+            child = self.db.get(RAGRetriever, link.child_id)
+            if child is not None:
+                ids |= self._tree_ids(child)
+        return ids
+
+    def _protected_bridge_ids(
+        self, session_id: int, new_parameters: dict | None
+    ) -> set[int]:
+        """Collect the bridge rows the session's new parameters still use.
+
+        The retriever stage and the reranker keep their rows under one
+        pipeline, and a row serves both when their configurations are equal.
+        Deleting the old rows of one stage must not take the other stage's.
+
+        Args:
+            session_id: Generative session identifier.
+            new_parameters: The parameters after the change, or ``None`` when
+                the session is being deleted (nothing is protected).
+
+        Returns:
+            The ids of every bridge in the trees the new parameters reference.
+        """
+        if new_parameters is None:
+            return set()
+        pipeline_id = self._find_pipeline_id(session_id)
+        if pipeline_id is None:
+            return set()
+        references = [
+            new_parameters.get(RAG_PARAM_RETRIEVER_MODEL),
+            _reranker_reference(new_parameters),
+        ]
+        protected: set[int] = set()
+        for reference in references:
+            for bridge in self._matching_bridges(pipeline_id, reference):
+                protected |= self._tree_ids(bridge)
+        return protected
+
+    def _cleanup_reranker(
+        self,
+        reference: dict,
+        documents_ids: list,
+        session_id: int,
+        protected: set[int],
+    ) -> None:
+        """Delete the rows the query-transformation reranker owned.
+
+        Only rows that match the old reranker reference exactly are removed, so
+        the retriever stage's rows are never swept by class name.
+
+        Args:
+            reference: The old ``{component, params}`` reranker reference.
+            documents_ids: Document ids whose embeddings to delete.
+            session_id: Generative session identifier.
+            protected: Bridge ids the session's new parameters still use.
+        """
+        pipeline_id = self._find_pipeline_id(session_id)
+        if pipeline_id is None:
+            return
+        for bridge in self._matching_bridges(pipeline_id, reference):
+            if bridge.id not in protected:
+                self._delete_bridge_tree(bridge, documents_ids, protected)
+
+    def _delete_bridge_tree(
+        self, bridge: RAGRetriever, documents_ids: list, protected: set[int]
+    ) -> None:
+        """Delete a bridge, its descendants and the resources they own.
+
+        Args:
+            bridge: The root bridge row.
+            documents_ids: Document ids whose embeddings to delete.
+            protected: Bridge ids that must survive.
+        """
+        for link in list(bridge.children):
+            child = self.db.get(RAGRetriever, link.child_id)
+            if child is not None and child.id not in protected:
+                self._delete_bridge_tree(child, documents_ids, protected)
+        if bridge.dense_detail is not None:
+            self._cleanup_dense_retriever(bridge, documents_ids)
+        elif bridge.sparse_detail is not None:
+            self._cleanup_sparse_retriever(bridge)
+        self.db.delete(bridge)
+
     def _find_pipeline_id(self, session_id: int) -> int | None:
         """Find pipeline DB record ID for a session.
 
@@ -296,6 +538,7 @@ class CleanupService:
         self,
         old_parameters: dict,
         session_id: int,
+        protected: set[int],
     ) -> None:
         """Cascade-delete a composite retriever and its children.
 
@@ -307,6 +550,8 @@ class CleanupService:
             old_parameters: Session parameters containing the retriever
                 component name.
             session_id: Generative session identifier.
+            protected: Bridge ids the session's new parameters still use; they
+                are never deleted, even when they share this class name.
         """
         pipeline_id = self._find_pipeline_id(session_id)
         if pipeline_id is None:
@@ -326,6 +571,8 @@ class CleanupService:
         )
 
         for bridge in composite_bridges:
+            if bridge.id in protected:
+                continue
             child_links = (
                 self.db.query(RAGRetrieverChild)
                 .filter_by(parent_id=bridge.id)
@@ -334,7 +581,7 @@ class CleanupService:
             )
             for link in child_links:
                 child_bridge = self.db.query(RAGRetriever).get(link.child_id)
-                if child_bridge is None:
+                if child_bridge is None or child_bridge.id in protected:
                     continue
                 if child_bridge.sparse_detail:
                     detail = child_bridge.sparse_detail
@@ -353,6 +600,7 @@ class CleanupService:
         documents_ids: list,
         retriever_model_params: dict,
         session_id: int,
+        protected: set[int],
     ) -> None:
         """Cascade-delete a unit retriever (dense or sparse).
 
@@ -364,18 +612,14 @@ class CleanupService:
             documents_ids: Document ids associated with the session.
             retriever_model_params: The ``retriever_model`` parameter dict.
             session_id: Generative session identifier.
+            protected: Bridge ids the session's new parameters still use.
         """
         pipeline_id = self._find_pipeline_id(session_id)
         if pipeline_id is None:
             return
 
-        bridge = (
-            self.db.query(RAGRetriever)
-            .filter(
-                RAGRetriever.pipeline_id == pipeline_id,
-                RAGRetriever.class_name == retriever_model_params.get("component"),
-            )
-            .first()
+        bridge = self._select_unit_bridge(
+            pipeline_id, retriever_model_params, protected
         )
         if bridge is None:
             return

@@ -160,7 +160,7 @@ def test_composite_cleanup_keeps_a_shared_sparse_folder(orm_db, tmp_path):
     orm_db.commit()
 
     CleanupService(orm_db)._cleanup_composite_retriever(
-        {"retriever_model": {"component": "ParallelRetriever"}}, first.id
+        {"retriever_model": {"component": "ParallelRetriever"}}, first.id, set()
     )
     orm_db.flush()
 
