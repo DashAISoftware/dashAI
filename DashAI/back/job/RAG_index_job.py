@@ -135,16 +135,19 @@ class RAGIndexJob(BaseJob):
                     pipeline_config,
                     progress=self.report_progress,
                 )
-                log.debug(
-                    "Indexed session %d: chunk set %d, %d chunks",
-                    session_id,
-                    result.chunk_set_id,
-                    result.total_chunks,
-                )
-                return {
-                    "chunk_set_id": result.chunk_set_id,
-                    "total_chunks": result.total_chunks,
-                }
+                try:
+                    log.debug(
+                        "Indexed session %d: chunk set %d, %d chunks",
+                        session_id,
+                        result.chunk_set_id,
+                        result.total_chunks,
+                    )
+                    return {
+                        "chunk_set_id": result.chunk_set_id,
+                        "total_chunks": result.total_chunks,
+                    }
+                finally:
+                    SetupService.release_index(result)
         except JobError:
             self.set_status_as_error()
             raise

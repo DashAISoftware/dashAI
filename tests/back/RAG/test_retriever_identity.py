@@ -630,8 +630,8 @@ def test_context_budget_grows_when_expansion_is_enabled():
         "params": {"top_k": 4, ENABLE_FIELD: True, WINDOW_FIELD: 3},
     }
 
-    off = service._context_budget(chunking, plain, prompt, generation)
-    on = service._context_budget(chunking, expanded, prompt, generation)
+    off = service._context_budget(chunking, plain, prompt, generation, None)
+    on = service._context_budget(chunking, expanded, prompt, generation, None)
 
     assert off["used_by_chunks"] > 0
     assert on["used_by_chunks"] == off["used_by_chunks"] * 3
@@ -646,7 +646,7 @@ def test_context_budget_matches_the_effective_chunk_count(window):
     params = {"top_k": 6, ENABLE_FIELD: True, WINDOW_FIELD: window}
     retriever = {"component": "BM25Retriever", "params": params}
 
-    budget = service._context_budget(chunking, retriever, prompt, generation)
+    budget = service._context_budget(chunking, retriever, prompt, generation, None)
 
     expected = service._chunk_tokens(
         chunking
@@ -671,7 +671,7 @@ def test_context_budget_prices_a_capped_parent_with_expanded_children():
         },
     }
 
-    budget = service._context_budget(chunking, retriever, prompt, generation)
+    budget = service._context_budget(chunking, retriever, prompt, generation, None)
 
     assert budget["used_by_chunks"] == service._chunk_tokens(chunking) * 15
 
@@ -738,7 +738,9 @@ def test_rewriting_adds_no_chunks_to_the_budget():
     chunking, prompt, generation = _budget_inputs()
     rewriting = {"component": "LLMQueryRewriter", "params": {}}
 
-    without = service._context_budget(chunking, _BUDGET_RETRIEVER, prompt, generation)
+    without = service._context_budget(
+        chunking, _BUDGET_RETRIEVER, prompt, generation, None
+    )
     with_rewrite = service._context_budget(
         chunking, _BUDGET_RETRIEVER, prompt, generation, transformation=rewriting
     )
@@ -751,7 +753,9 @@ def test_disabled_transformation_leaves_the_budget_unchanged(disabled):
     service = _transformation_budget_service()
     chunking, prompt, generation = _budget_inputs()
 
-    without = service._context_budget(chunking, _BUDGET_RETRIEVER, prompt, generation)
+    without = service._context_budget(
+        chunking, _BUDGET_RETRIEVER, prompt, generation, None
+    )
     with_disabled = service._context_budget(
         chunking, _BUDGET_RETRIEVER, prompt, generation, transformation=disabled
     )

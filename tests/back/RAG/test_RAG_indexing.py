@@ -13,6 +13,7 @@ import os
 import sqlite3
 import tempfile
 import uuid
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -236,6 +237,37 @@ def test_index_job_makes_a_session_indexed(client: TestClient, written_documents
     assert after["status"] == "indexed", after
     assert after["total_chunks"] > 0
     assert after["retriever_ready"] is True
+
+
+def test_index_job_releases_the_retriever_and_the_reranker(
+    client: TestClient, written_documents: list, monkeypatch
+):
+    session_id, _ = _create_session_with_document(
+        client, "index_job_release", written_documents
+    )
+
+    class _Closable:
+        def __init__(self):
+            self.closed = 0
+
+        def close(self):
+            self.closed += 1
+
+    retriever, reranker = _Closable(), _Closable()
+    index = SimpleNamespace(
+        chunk_set_id=1,
+        total_chunks=1,
+        retriever=SimpleNamespace(model=retriever),
+        reranker=SimpleNamespace(model=reranker),
+    )
+    monkeypatch.setattr(
+        SetupService, "build_index", lambda self, config, progress=None: index
+    )
+
+    RAGIndexJob(session_id=session_id).run()
+
+    assert retriever.closed == 1
+    assert reranker.closed == 1
 
 
 def test_index_job_refuses_a_session_with_no_documents(client: TestClient):
