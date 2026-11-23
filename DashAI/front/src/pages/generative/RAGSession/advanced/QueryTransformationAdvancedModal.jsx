@@ -110,6 +110,7 @@ export default function QueryTransformationAdvancedModal({
   const [params, setParams] = useState(model?.params || {});
   const [seededCarried, setSeededCarried] = useState(null);
   const [seedDefaults, setSeedDefaults] = useState(null);
+  const [seedError, setSeedError] = useState(null);
 
   // Refs mirror the seed state so the submit handler never reads a stale
   // closure: autosave rewrites `params` on every keystroke, but the carried
@@ -212,6 +213,7 @@ export default function QueryTransformationAdvancedModal({
       seedDefaultsRef.current = {};
       setSeededCarried(null);
       setSeedDefaults(null);
+      setSeedError(null);
       return undefined;
     }
 
@@ -221,12 +223,19 @@ export default function QueryTransformationAdvancedModal({
     setSeededCarried(carried);
     setSeedDefaults(null);
 
+    setSeedError(null);
+
     let cancelled = false;
-    resolveRagLlmDefaults(model?.component, llmComponent).then((defaults) => {
-      if (cancelled) return;
-      seedDefaultsRef.current = defaults;
-      setSeedDefaults(defaults);
-    });
+    resolveRagLlmDefaults(model?.component, llmComponent)
+      .then((defaults) => {
+        if (cancelled) return;
+        seedDefaultsRef.current = defaults;
+        setSeedDefaults(defaults);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setSeedError(error.message);
+      });
 
     return () => {
       cancelled = true;
@@ -275,7 +284,8 @@ export default function QueryTransformationAdvancedModal({
   const [retrieversComplete, setRetrieversComplete] = useState(true);
   const refComplete = isCompleteQueryTransformationRef({ params });
   const llmDownloaded = isGeneratorDownloaded(generators, llmComponent);
-  const complete = refComplete && llmDownloaded && retrieversComplete;
+  const complete =
+    refComplete && llmDownloaded && retrieversComplete && seedError === null;
 
   const llmOptions = generators.filter(
     (generator) => generator.downloaded || generator.name === llmComponent,
@@ -332,6 +342,14 @@ export default function QueryTransformationAdvancedModal({
         {reason && (
           <Typography variant="caption" color="error.main">
             {t(`generative:rag.config.queryTransformation.${reason}`)}
+          </Typography>
+        )}
+
+        {seedError !== null && (
+          <Typography variant="caption" color="error.main">
+            {t("generative:rag.config.queryTransformation.loadFailed", {
+              reason: seedError,
+            })}
           </Typography>
         )}
 
