@@ -1,7 +1,7 @@
 export enum PluginStatus {
   REGISTERED = 1,
   INSTALLED = 2,
-  ERROR = 3,
+  ERROR = 99,
 }
 
 interface ITag {

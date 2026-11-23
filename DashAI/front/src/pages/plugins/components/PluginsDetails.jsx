@@ -75,11 +75,10 @@ function PluginsDetails() {
 
   const { updatePlugin, loading: installLoading } = usePluginsUpdate({
     pluginId: plugin.id,
-    newStatus: [PluginStatus.INSTALLED, PluginStatus.DOWNLOADED].includes(
-      plugin.status,
-    )
-      ? PluginStatus.REGISTERED
-      : PluginStatus.INSTALLED,
+    newStatus:
+      plugin.status === PluginStatus.INSTALLED
+        ? PluginStatus.REGISTERED
+        : PluginStatus.INSTALLED,
     onSuccess: () => {
       setUpdatePluginFlag(true);
     },
@@ -102,16 +101,12 @@ function PluginsDetails() {
             size="medium"
             variant="outlined"
           >
-            {[PluginStatus.INSTALLED, PluginStatus.DOWNLOADED].includes(
-              plugin.status,
-            )
+            {plugin.status === PluginStatus.INSTALLED
               ? t("plugins:button.uninstall")
               : t("plugins:button.install")}
           </Button>
         )}
-        {[PluginStatus.INSTALLED, PluginStatus.DOWNLOADED].includes(
-          plugin.status,
-        ) && (
+        {plugin.status === PluginStatus.INSTALLED && (
           <Button
             onClick={() => upgradePlugin()}
             size="medium"
@@ -208,9 +203,7 @@ function PluginsDetails() {
               subheader={
                 <Grid container direction={"column"} rowGap={8}>
                   <Grid>
-                    {[PluginStatus.INSTALLED, PluginStatus.DOWNLOADED].includes(
-                      plugin.status,
-                    ) ? (
+                    {plugin.status === PluginStatus.INSTALLED ? (
                       <Typography>
                         <Trans i18nKey="plugins:label.versionInstalledLatestAvailable">
                           Version installed: {plugin.installed_version} | Latest

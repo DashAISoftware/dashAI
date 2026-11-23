@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
  */
 export default function usePluginsUpgrade({ pluginId }) {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["plugins"]);
 
   const upgradePlugin = async () => {
     try {
