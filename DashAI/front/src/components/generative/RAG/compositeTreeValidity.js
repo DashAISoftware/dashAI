@@ -9,8 +9,9 @@ import {
  * A node that declares a list of children (a container such as a sequential or
  * MMR reranker retriever) needs at least one configured child, or as many as
  * its own `minItems` asks for, and every child must be complete in turn. A
- * node that is not a container is always complete. Unknown components are
- * treated as incomplete, since the backend would reject them.
+ * node that is not a container is always complete. Unknown components and
+ * children without a component are treated as incomplete, since the backend
+ * would reject them.
  *
  * @param {{component: string, params: object}|null|undefined} ref - The
  *   serialised `{component, params}` tree root.
@@ -24,9 +25,7 @@ export function isCompositeTreeComplete(ref, findComponent) {
   if (!info) return false;
   const childrenField = findChildrenField(info.schema);
   if (!childrenField) return true;
-  const children = getChildRefs(ref, childrenField.key).filter(
-    (child) => child?.component,
-  );
+  const children = getChildRefs(ref, childrenField.key);
   if (children.length < Math.max(1, childrenField.minItems)) return false;
   return children.every((child) =>
     isCompositeTreeComplete(child, findComponent),

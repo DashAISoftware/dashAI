@@ -10,6 +10,10 @@
  */
 
 import { SCHEMA_TYPE_ARRAY } from "../../../constants/rag";
+import { isPlainObject } from "../../../utils/objects";
+
+/** Name shown for a stored ref that carries no component name. */
+export const UNREADABLE_REF_NAME = "?";
 
 /**
  * A node of the editable tree.
@@ -21,6 +25,9 @@ import { SCHEMA_TYPE_ARRAY } from "../../../constants/rag";
  * @property {object} params - The component params, without its children.
  * @property {TreeNode[]} children - The configured children, empty for a
  *   component that is not a container.
+ * @property {boolean} [unknown] - True for a stored ref whose component is not
+ *   in the registry (or is not a readable ref). It is kept in the tree so it is
+ *   shown as an error and saved back unchanged, never dropped silently.
  */
 
 /**
@@ -32,15 +39,6 @@ import { SCHEMA_TYPE_ARRAY } from "../../../constants/rag";
  * @property {number} minItems - Minimum number of children.
  * @property {(number|null)} maxItems - Maximum number of children, if any.
  */
-
-/**
- * Whether a value is a non-null, non-array object.
- * @param {*} value - Value to test.
- * @returns {boolean} True for a plain object.
- */
-export function isPlainObject(value) {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
 
 /**
  * Finds the list-of-components property of a component schema.
@@ -103,31 +101,58 @@ export function getChildRefs(ref, key) {
 /**
  * Recursively maps a serialised ref into an editable tree node.
  *
- * Refs that are malformed or name an unknown component are dropped (null), so
- * unknown components never enter the tree. A ref without `params` is the
- * minimal ref `{component}`: its params are the component's defaults, which the
- * form resolves when the node is edited.
+ * A ref that is malformed or names an unknown component becomes a node flagged
+ * `unknown` that keeps its stored params, so the tree shows it as an error, its
+ * validity accounts for it, and saving does not drop it. A ref without
+ * `params` is the minimal ref `{component}`: its params are the component's
+ * defaults, which the form resolves when the node is edited.
  *
- * @param {object} ref - Serialised ref to map.
+ * @param {*} ref - Serialised ref to map.
  * @param {function(string): (object|null)} findComponent - Component lookup.
  * @param {function(): string} nextId - Node id generator.
- * @returns {TreeNode|null} The tree node, or null.
+ * @returns {TreeNode} The tree node.
  */
 export function buildNodeFromRef(ref, findComponent, nextId) {
-  if (!isPlainObject(ref)) return null;
-  const info = findComponent(ref.component);
-  if (!info) return null;
+  if (!isPlainObject(ref)) {
+    return {
+      nodeId: nextId(),
+      component: UNREADABLE_REF_NAME,
+      params: {},
+      children: [],
+      unknown: true,
+    };
+  }
+  const info = ref.component ? findComponent(ref.component) : null;
+  if (!info) {
+    return {
+      nodeId: nextId(),
+      component: ref.component || UNREADABLE_REF_NAME,
+      params: ref.params || {},
+      children: [],
+      unknown: true,
+    };
+  }
   const field = findChildrenField(info.schema);
   return {
     nodeId: nextId(),
     component: ref.component,
     params: ref.params || {},
     children: field
-      ? getChildRefs(ref, field.key)
-          .map((child) => buildNodeFromRef(child, findComponent, nextId))
-          .filter(Boolean)
+      ? getChildRefs(ref, field.key).map((child) =>
+          buildNodeFromRef(child, findComponent, nextId),
+        )
       : [],
   };
+}
+
+/**
+ * The component names of the stored refs a tree could not resolve.
+ * @param {TreeNode} node - Tree root.
+ * @returns {string[]} The names of the unknown nodes, in tree order.
+ */
+export function collectUnknownNames(node) {
+  const own = node.unknown ? [node.component] : [];
+  return [...own, ...node.children.flatMap(collectUnknownNames)];
 }
 
 /**

@@ -5,11 +5,13 @@ import { useTranslation } from "react-i18next";
 import useComponentRegistry from "../../../hooks/useComponentRegistry";
 import { resolveDefaults as resolveSchemaDefaults } from "../../../utils/schema";
 import { resolveLocalizedText } from "../../../utils/localize";
+import { EMPTY_COMPONENT_NAME } from "../../../constants/rag";
 import FormSchema from "../FormSchema";
 import ComponentTreeNodeView from "./ComponentTreeNodeView";
 import ComponentTreeNodeConfig from "./ComponentTreeNodeConfig";
 import {
   buildNodeFromRef,
+  collectUnknownNames,
   createIdFactory,
   findChildrenField,
   findNode,
@@ -138,9 +140,9 @@ export default function ComponentTreeBuilder({
       findComponent,
       nextIdRef.current,
     );
-    setRootUnknown(!root);
-    setTree(root);
-    if (root) {
+    setRootUnknown(root.unknown === true);
+    setTree(root.unknown ? null : root);
+    if (!root.unknown) {
       onLoadRef.current?.(serializeNode(root, findComponent), {
         findComponent,
       });
@@ -175,11 +177,9 @@ export default function ComponentTreeBuilder({
         field && node.component !== component && hasNoChildren;
       let children = field ? node.children : [];
       if (seedDefaults) {
-        children = getChildRefs({ params }, field.key)
-          .map((child) =>
-            buildNodeFromRef(child, findComponent, nextIdRef.current),
-          )
-          .filter(Boolean);
+        children = getChildRefs({ params }, field.key).map((child) =>
+          buildNodeFromRef(child, findComponent, nextIdRef.current),
+        );
       }
       return { ...node, component, params: { ...params }, children };
     });
@@ -198,8 +198,13 @@ export default function ComponentTreeBuilder({
     const updated = updateAt(tree, parentId, (node) => ({
       ...node,
       children: [
-        ...node.children.filter((c) => c.component !== ""),
-        { nodeId: id, component: "", params: {}, children: [] },
+        ...node.children.filter((c) => c.component !== EMPTY_COMPONENT_NAME),
+        {
+          nodeId: id,
+          component: EMPTY_COMPONENT_NAME,
+          params: {},
+          children: [],
+        },
       ],
     }));
     commitTree(updated);
@@ -236,6 +241,7 @@ export default function ComponentTreeBuilder({
 
   const captionOf = useCallback(
     (node) => {
+      if (node.unknown) return null;
       const info = findComponent(node.component);
       if (renderCaption) {
         return renderCaption({
@@ -279,6 +285,8 @@ export default function ComponentTreeBuilder({
     );
   }
 
+  const unknownNames = [...new Set(collectUnknownNames(tree))];
+
   return (
     <Box
       sx={{
@@ -291,6 +299,11 @@ export default function ComponentTreeBuilder({
       {sideContent}
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
+        {unknownNames.map((component) => (
+          <Alert key={component} severity="error" sx={{ py: 0.5, mb: 1 }}>
+            {t("common:componentTree.unknownChild", { component })}
+          </Alert>
+        ))}
         <ComponentTreeNodeView
           node={tree}
           depth={0}
@@ -320,7 +333,11 @@ export default function ComponentTreeBuilder({
           labels={labels}
           onSave={handleSaveNode}
           onClose={() => {
-            if (editingNode && !editingNode.component && editingParentId) {
+            if (
+              editingNode &&
+              editingNode.component === EMPTY_COMPONENT_NAME &&
+              editingParentId
+            ) {
               handleRemoveChild(editingParentId, editing);
             }
             setEditing(null);

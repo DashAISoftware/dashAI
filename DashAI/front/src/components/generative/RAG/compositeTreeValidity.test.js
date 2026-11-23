@@ -67,6 +67,24 @@ describe("isCompositeTreeComplete", () => {
     expect(isCompositeTreeComplete(ref, find)).toBe(false);
   });
 
+  it("rejects a composite that keeps an unknown or unreadable child", () => {
+    const withGhost = {
+      component: "Sequential",
+      params: {
+        children: [
+          { component: "Dense", params: {} },
+          { component: "Ghost", params: {} },
+        ],
+      },
+    };
+    const withJunk = {
+      component: "Sequential",
+      params: { children: [{ component: "Dense", params: {} }, "junk"] },
+    };
+    expect(isCompositeTreeComplete(withGhost, find)).toBe(false);
+    expect(isCompositeTreeComplete(withJunk, find)).toBe(false);
+  });
+
   it("rejects a nested composite that is empty", () => {
     const ref = {
       component: "Sequential",

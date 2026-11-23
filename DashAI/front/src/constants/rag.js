@@ -32,3 +32,6 @@ export const SCHEMA_TYPE_NULL = "null";
 
 /** Placeholder property that marks a schema field as an optimizer field. */
 export const OPTIMIZE_PLACEHOLDER_KEY = "optimize";
+
+/** Component name of a tree node that was added but not configured yet. */
+export const EMPTY_COMPONENT_NAME = "";

@@ -309,7 +309,11 @@
     "parameters": "Parámetros",
     "containerNote": "Este componente contiene otros componentes. Sus hijos se configuran en el árbol, fuera de este diálogo.",
     "loadFailed": "No se pudieron cargar los componentes: {{reason}}",
-    "unknownComponent": "El componente {{component}} no está disponible, por lo que no se puede mostrar su árbol."
+    "unknownComponent": "El componente {{component}} no está disponible, por lo que no se puede mostrar su árbol.",
+    "unknownChild": "El componente {{component}} no está disponible. Reemplázalo o elimínalo antes de guardar.",
+    "configureNodeNamed": "Configurar el componente {{name}}",
+    "noSchema": "El componente {{component}} no tiene esquema de configuración, por lo que no se puede seleccionar.",
+    "formUnavailable": "El formulario de ajustes aún no está listo. Inténtalo de nuevo en un momento."
   },
   "component": "Componente",
   "null": "Nulo"

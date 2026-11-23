@@ -1,10 +1,12 @@
 import {
   buildNodeFromRef,
+  collectUnknownNames,
   createIdFactory,
   findChildrenField,
   findParentNode,
   selectableOptions,
   serializeNode,
+  UNREADABLE_REF_NAME,
 } from "./componentTreeUtils";
 
 const listOf = (parent, extra = {}) => ({
@@ -86,18 +88,32 @@ describe("buildNodeFromRef and serializeNode", () => {
     expect(node.children.map((child) => child.component)).toEqual(["Leaf"]);
   });
 
-  it("drops unknown components and malformed refs", () => {
+  it("keeps unknown components and malformed refs as flagged nodes", () => {
     const ref = {
       component: "Container",
-      params: { kids: [{ component: "Ghost", params: {} }, "not a ref"] },
+      params: {
+        kids: [{ component: "Ghost", params: { a: 1 } }, "not a ref"],
+      },
     };
 
     const node = buildNodeFromRef(ref, find, createIdFactory());
 
-    expect(node.children).toEqual([]);
+    expect(node.children.map((child) => child.unknown)).toEqual([true, true]);
+    expect(collectUnknownNames(node)).toEqual(["Ghost", UNREADABLE_REF_NAME]);
     expect(
       buildNodeFromRef({ component: "Ghost" }, find, createIdFactory()),
-    ).toBeNull();
+    ).toMatchObject({ component: "Ghost", unknown: true });
+  });
+
+  it("saves an unknown child back unchanged instead of dropping it", () => {
+    const ref = {
+      component: "Container",
+      params: { kids: [{ component: "Ghost", params: { a: 1 } }] },
+    };
+
+    const node = buildNodeFromRef(ref, find, createIdFactory());
+
+    expect(serializeNode(node, find)).toEqual(ref);
   });
 
   it("does not add a children key to a component that is not a container", () => {

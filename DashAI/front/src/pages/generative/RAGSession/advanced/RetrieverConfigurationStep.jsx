@@ -8,7 +8,7 @@ import {
   useImperativeHandle,
 } from "react";
 import PropTypes from "prop-types";
-import { Box, Autocomplete, TextField, Typography } from "@mui/material";
+import { Alert, Box, Autocomplete, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { getRetrievalParadigm } from "../../../../api/rag";
 import { retrieverCategory, sortByCategory } from "../retrieverKinds";
@@ -17,6 +17,16 @@ import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSch
 import CompositeRetrieverBuilder from "./CompositeRetrieverBuilder";
 import { FormSchemaProvider } from "../../../../contexts/schema";
 import { resolveRetrieverDefaults } from "./resolveRetrieverDefaults";
+import { EMPTY_COMPONENT_NAME } from "../../../../constants/rag";
+
+/**
+ * The message of a failed request or defect.
+ * @param {*} error - The rejection or thrown value.
+ * @returns {string} A renderable reason.
+ */
+function failureReason(error) {
+  return error instanceof Error ? error.message : String(error);
+}
 
 /**
  * Resolves a component's display name from its display_name field (string or multilingual).
@@ -63,23 +73,29 @@ function AutoSaveFormSchema({
   retrieverModel,
   onParametersChange,
 }) {
+  const { t } = useTranslation(["common"]);
   const formikRef = useRef(null);
 
   const [fetchedDefaults, setFetchedDefaults] = useState(null);
+  const [defaultsError, setDefaultsError] = useState(null);
 
   useEffect(() => {
-    if (!selectedRetriever) return;
+    if (!selectedRetriever) return undefined;
     let cancelled = false;
-    (async () => {
-      const d = await resolveRetrieverDefaults(selectedRetriever.name);
-      if (!cancelled) setFetchedDefaults(d);
-    })();
+    setDefaultsError(null);
+    resolveRetrieverDefaults(selectedRetriever.name)
+      .then((defaults) => {
+        if (!cancelled) setFetchedDefaults(defaults);
+      })
+      .catch((error) => {
+        if (!cancelled) setDefaultsError(failureReason(error));
+      });
     return () => {
       cancelled = true;
     };
   }, [selectedRetriever]);
 
-  const initialValues = useMemo(() => {
+  const storedParams = useMemo(() => {
     if (
       retrieverModel?.component === selectedRetriever?.name &&
       retrieverModel?.params &&
@@ -87,8 +103,9 @@ function AutoSaveFormSchema({
     ) {
       return retrieverModel.params;
     }
-    return fetchedDefaults || {};
-  }, [selectedRetriever, retrieverModel, fetchedDefaults]);
+    return null;
+  }, [selectedRetriever, retrieverModel]);
+  const initialValues = storedParams ?? fetchedDefaults;
 
   const handleFormSubmit = useCallback(
     (values) => {
@@ -96,6 +113,16 @@ function AutoSaveFormSchema({
     },
     [onParametersChange],
   );
+
+  if (defaultsError !== null && storedParams === null) {
+    return (
+      <Alert severity="error" sx={{ py: 0.5 }}>
+        {t("common:componentTree.loadFailed", { reason: defaultsError })}
+      </Alert>
+    );
+  }
+
+  if (initialValues === null) return null;
 
   return (
     <FormSchemaWithPrompts
@@ -130,7 +157,9 @@ const RetrieverConfigurationStep = forwardRef(
     const [allOptions, setAllOptions] = useState([]);
     const [selectedRetriever, setSelectedRetriever] = useState(null);
     const [openConfig, setOpenConfig] = useState(false);
+    const [loadError, setLoadError] = useState(null);
     const savedRef = useRef(null);
+    const changeRequestRef = useRef(0);
 
     /**
      * Persists the last edited configuration into the retriever model state.
@@ -162,14 +191,15 @@ const RetrieverConfigurationStep = forwardRef(
 
     useEffect(() => {
       const load = async () => {
-        let retrievers = [];
+        let retrievers;
         try {
           retrievers = await getRetrievalParadigm();
-        } catch (e) {
-          retrievers = allParadigms || [];
+        } catch (error) {
+          setLoadError(failureReason(error));
+          return;
         }
         const options = sortByCategory(
-          (retrievers || []).filter(
+          retrievers.filter(
             (retriever) => retriever.configurable_object !== false,
           ),
           t("common:other"),
@@ -200,16 +230,28 @@ const RetrieverConfigurationStep = forwardRef(
     const handleRetrieverChange = useCallback(
       async (_event, newValue) => {
         savedRef.current = null;
+        changeRequestRef.current += 1;
+        const requestId = changeRequestRef.current;
+        setLoadError(null);
 
         if (!newValue) {
           setSelectedRetriever(null);
-          setRetrieverModel({ component: "", params: {} });
+          setRetrieverModel({ component: EMPTY_COMPONENT_NAME, params: {} });
           setOpenConfig(false);
           setNextEnabled(false);
           return;
         }
 
-        const defaults = await resolveRetrieverDefaults(newValue.name);
+        let defaults;
+        try {
+          defaults = await resolveRetrieverDefaults(newValue.name);
+        } catch (error) {
+          if (requestId === changeRequestRef.current) {
+            setLoadError(failureReason(error));
+          }
+          return;
+        }
+        if (requestId !== changeRequestRef.current) return;
         setSelectedRetriever(newValue);
         setRetrieverModel({ component: newValue.name, params: defaults });
         setOpenConfig(Boolean(newValue.schema?.properties));
@@ -257,10 +299,18 @@ const RetrieverConfigurationStep = forwardRef(
           const swapped = allOptions.find(
             (option) => option.name === updated.component,
           );
-          if (swapped) setSelectedRetriever(swapped);
+          if (!swapped) {
+            setLoadError(
+              t("common:componentTree.unknownComponent", {
+                component: updated.component,
+              }),
+            );
+            return;
+          }
+          setSelectedRetriever(swapped);
         }
       },
-      [allOptions, selectedRetriever, setRetrieverModel],
+      [allOptions, selectedRetriever, setRetrieverModel, t],
     );
 
     const isComposite = isCompositeRetriever(selectedRetriever);
@@ -291,6 +341,12 @@ const RetrieverConfigurationStep = forwardRef(
             />
           )}
         />
+
+        {loadError !== null && (
+          <Alert severity="error" sx={{ py: 0.5 }}>
+            {t("common:componentTree.loadFailed", { reason: loadError })}
+          </Alert>
+        )}
 
         {selectedRetriever && openConfig && !isComposite && (
           <FormSchemaProvider

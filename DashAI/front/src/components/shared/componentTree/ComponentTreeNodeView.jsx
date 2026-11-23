@@ -4,6 +4,7 @@ import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import SchemaIcon from "@mui/icons-material/Schema";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
 import { resolveLocalizedText } from "../../../utils/localize";
 
 const INDENT = 40;
@@ -43,6 +44,7 @@ export default function ComponentTreeNodeView({
   labels,
   i18n,
 }) {
+  const { t } = useTranslation(["common"]);
   if (!node || !node.component) return null;
 
   const info = findComponent(node.component);
@@ -53,6 +55,9 @@ export default function ComponentTreeNodeView({
   const container = isContainer(node);
   const cardX = depth * INDENT;
   const caption = renderCaption(node) || null;
+  let cardBorderColor = "accent.amberBorder";
+  if (container) cardBorderColor = "accent.purpleBorder";
+  if (node.unknown) cardBorderColor = "error.main";
 
   return (
     <Box>
@@ -84,7 +89,7 @@ export default function ComponentTreeNodeView({
           data-node={`${node.component}@${depth}`}
           role="button"
           tabIndex={0}
-          aria-label={`${labels.configureNode}: ${name}`}
+          aria-label={t("common:componentTree.configureNodeNamed", { name })}
           onClick={() => onEdit(node.nodeId)}
           onKeyDown={(event) => {
             if (event.key !== "Enter" && event.key !== " ") return;
@@ -98,9 +103,7 @@ export default function ComponentTreeNodeView({
             px: 1.5,
             py: 1,
             border: "1px solid",
-            borderColor: container
-              ? "accent.purpleBorder"
-              : "accent.amberBorder",
+            borderColor: cardBorderColor,
             borderRadius: 1,
             cursor: "pointer",
             backgroundColor: "background.paper",
