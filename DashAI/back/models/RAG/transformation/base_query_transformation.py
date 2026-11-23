@@ -9,7 +9,16 @@ register under the same type.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, Final, List, Optional, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Dict,
+    Final,
+    List,
+    Optional,
+    Sequence,
+)
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import BaseSchema
@@ -103,6 +112,13 @@ class BaseQueryTransformation(ConfigObject):
     #: base-type resolution; the frontend reads it to pair a transformer with
     #: its prompt family without hardcoding class names.
     metadata: Dict[str, Any] = {}
+
+    #: Value a stored configuration takes for a parameter it omits, when that
+    #: absence has a meaning other than the schema default (a stored
+    #: decomposition without a sub-query cap runs uncapped, while a new
+    #: session starts from the schema placeholder). The factory applies it to
+    #: every listed key that the stored parameters do not carry.
+    STORED_ABSENT_VALUES: ClassVar[Dict[str, Any]] = {}
 
     #: Optional retriever that reorders the merged multi-query retrieval pool.
     #: It is built with the retrieval infrastructure by the index setup, not by

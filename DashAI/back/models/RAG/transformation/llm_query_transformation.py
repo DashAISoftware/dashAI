@@ -38,6 +38,7 @@ from DashAI.back.models.RAG.RAG_constants import (
     RAG_PROGRESS_JUSTIFICATION_KEY,
     RAG_PROGRESS_MESSAGE_KEY,
     RAG_PROGRESS_STAGE_TRANSFORMING,
+    RERANKER_KEY,
 )
 from DashAI.back.models.RAG.RAG_defaults import (
     DEFAULT_FUNCTION_CALL_MAX_TRIALS,
@@ -257,7 +258,7 @@ class MultiQueryTransformationSchema(LLMQueryTransformationSchema):
             de="Reranker",
             zh="重排序器",
         ),
-    ) = None  # type: ignore
+    ) = None
 
 
 class LLMQueryTransformation(BaseQueryTransformation):
@@ -342,7 +343,7 @@ class LLMQueryTransformation(BaseQueryTransformation):
         self.function_call_max_trials = kwargs.pop(
             "function_call_max_trials", DEFAULT_FUNCTION_CALL_MAX_TRIALS
         )
-        self.reranker = kwargs.pop("reranker", None)
+        self.reranker = kwargs.pop(RERANKER_KEY, None)
         if self.prompt is None:
             raise RAGTransformationConfigError(
                 "A prompt instance is required to build a query transformer; "

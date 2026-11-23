@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+import pytest
+
 from DashAI.back.converters.hugging_face.text_embedding.sentence_transformer import (
     ParaphraseMultilingualMiniLML12V2Embedding,
 )
@@ -35,6 +37,9 @@ from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
 from DashAI.back.models.RAG.transformation import (
     LLMQueryDecomposer,
     TransformationFactory,
+)
+from DashAI.back.models.RAG.transformation.decomposition import (
+    DEFAULT_MAX_SUBQUERIES,
 )
 from DashAI.back.services.RAG.query_transformation_validation import (
     QueryTransformationValidationService,
@@ -197,3 +202,59 @@ class TestFactoryLeavesTheRerankerToTheIndexSetup:
 
     def test_default_reference_does_not_build_a_reranker_in_the_factory(self):
         assert _transformer().reranker is None
+
+
+class TestStoredDecompositionCapThroughTheFactory:
+    """A stored decomposition keeps its meaning of an omitted cap in the job."""
+
+    @staticmethod
+    def _build(is_new: bool = False, **extra: Any) -> LLMQueryDecomposer:
+        parameters = _stored_params()
+        parameters["query_transformation"]["params"].update(extra)
+        _service().apply_defaults(parameters, is_new=is_new)
+        reference = parameters["query_transformation"]
+        return (
+            TransformationFactory(_registry())
+            .create(reference["component"], reference["params"])
+            .model
+        )
+
+    @staticmethod
+    def _build_stored_without_defaults(**extra: Any) -> LLMQueryDecomposer:
+        """Build from the stored dict directly, as the job path does."""
+        reference = _stored_params()["query_transformation"]
+        reference["params"].update(extra)
+        return (
+            TransformationFactory(_registry())
+            .create(reference["component"], reference["params"])
+            .model
+        )
+
+    def test_a_stored_stage_without_the_key_is_uncapped(self):
+        assert self._build_stored_without_defaults().max_subqueries is None
+
+    def test_an_update_without_the_key_stays_uncapped(self):
+        assert self._build(is_new=False).max_subqueries is None
+
+    def test_an_explicit_null_is_uncapped(self):
+        assert (
+            self._build_stored_without_defaults(max_subqueries=None).max_subqueries
+            is None
+        )
+
+    def test_an_explicit_integer_is_kept(self):
+        assert self._build_stored_without_defaults(max_subqueries=2).max_subqueries == 2
+
+    def test_a_new_session_starts_from_the_default(self):
+        assert self._build(is_new=True).max_subqueries == DEFAULT_MAX_SUBQUERIES
+
+
+class TestMalformedRerankerParams:
+    """A reranker whose params is not a dict is rejected, not replaced."""
+
+    def test_apply_defaults_rejects_non_dict_params(self):
+        parameters = _stored_params({"component": "DenseEmbeddingRetriever"})
+        parameters["query_transformation"]["params"]["reranker"]["params"] = "abc"
+
+        with pytest.raises(ValueError, match="must be a dict"):
+            _service().apply_defaults(parameters, is_new=True)
