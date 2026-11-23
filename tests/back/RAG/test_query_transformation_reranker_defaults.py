@@ -90,10 +90,10 @@ def _stored_params(reranker: Any = _NOT_SET) -> Dict[str, Any]:
     }
 
 
-def _resolved(reranker: Any = _NOT_SET) -> Dict[str, Any]:
+def _resolved(reranker: Any = _NOT_SET, is_new: bool = True) -> Dict[str, Any]:
     """Run the stored parameters through the validation service's defaults."""
     parameters = _stored_params(reranker)
-    _service().apply_defaults(parameters)
+    _service().apply_defaults(parameters, is_new=is_new)
     return parameters["query_transformation"]
 
 
@@ -148,6 +148,31 @@ class TestRerankerDefaults:
             reference["params"]["embedding_model"]["component"]
             == PARAPHRASE_MULTILINGUAL_EMBEDDING_COMPONENT
         )
+
+    def test_update_without_the_key_keeps_the_reranker_off(self):
+        """Editing a stored session must not silently turn reranking on."""
+        params = _resolved(is_new=False)["params"]
+
+        assert params["reranker"] is None
+
+    def test_update_with_an_explicit_reranker_keeps_it(self):
+        reference = _resolved(
+            {"component": "BM25Retriever", "params": {}}, is_new=False
+        )
+
+        assert reference["params"]["reranker"]["component"] == "BM25Retriever"
+
+    def test_stored_session_without_the_key_runs_without_a_reranker(self):
+        """The job path never applies defaults, so an absent key means off."""
+        parameters = _stored_params()["query_transformation"]
+
+        transformer = (
+            TransformationFactory(_registry())
+            .create(parameters["component"], parameters["params"])
+            .model
+        )
+
+        assert transformer.reranker is None
 
     def test_explicit_null_stays_disabled(self):
         reference = _resolved(None)

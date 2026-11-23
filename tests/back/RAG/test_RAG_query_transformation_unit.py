@@ -1107,8 +1107,8 @@ class TestLLMQueryDecomposer:
         result = _decomposer(['["s1", "s2"]'], cap=None).transform("hi", [])
         assert result.queries == ["s1", "s2"]
 
-    def test_omitted_cap_defaults_to_three(self):
-        """No ``max_subqueries`` argument caps the decomposition at three."""
+    def test_omitted_cap_leaves_the_decomposition_unrestricted(self):
+        """No ``max_subqueries`` argument means no cap, as a stored session runs."""
         raw = json.dumps(
             {
                 "name": "decompose_query",
@@ -1120,10 +1120,16 @@ class TestLLMQueryDecomposer:
             llm_model=StubTransformationLLM(response=[raw]),
             history_window=2,
         )
-        assert decomposer.transform("hi", []).queries == ["s1", "s2", "s3"]
+        assert decomposer.transform("hi", []).queries == [
+            "s1",
+            "s2",
+            "s3",
+            "s4",
+            "s5",
+        ]
 
     def test_schema_default_and_placeholder_are_three(self):
-        """Persisted configs without the key and new sessions both get three."""
+        """A new session starts from three; the transformer itself has no default."""
         schema = LLMQueryDecomposer.get_schema()
         assert schema["properties"]["max_subqueries"]["placeholder"] == 3
         assert LLMQueryDecomposerSchema.model_fields["max_subqueries"].default == 3
@@ -1525,14 +1531,30 @@ class TestTransformationRerankerValidation:
     """The optional reranker reference is a pool reranker or nothing at all."""
 
     def _ref_with_reranker(self, reranker: Any) -> dict:
-        ref = _transformation_ref("LLMQueryRewriter", "DefaultQueryRewritingPrompt")
+        ref = _transformation_ref("LLMQueryExpander", "DefaultQueryExpansionPrompt")
         ref["params"]["reranker"] = reranker
         return ref
 
     def test_absent_reranker_accepted(self):
         _validate_transformation(
-            _transformation_ref("LLMQueryRewriter", "DefaultQueryRewritingPrompt")
+            _transformation_ref("LLMQueryExpander", "DefaultQueryExpansionPrompt")
         )
+
+    def test_rewriter_with_a_reranker_is_rejected(self):
+        ref = _transformation_ref("LLMQueryRewriter", "DefaultQueryRewritingPrompt")
+        ref["params"]["reranker"] = {
+            "component": "DenseEmbeddingRetriever",
+            "params": {},
+        }
+
+        with pytest.raises(ValueError, match="single query"):
+            _validate_transformation(ref)
+
+    def test_rewriter_with_a_null_reranker_is_accepted(self):
+        ref = _transformation_ref("LLMQueryRewriter", "DefaultQueryRewritingPrompt")
+        ref["params"]["reranker"] = None
+
+        _validate_transformation(ref)
 
     def test_null_reranker_accepted(self):
         _validate_transformation(self._ref_with_reranker(None))
@@ -1620,7 +1642,7 @@ class TestApplyDefaultsTransformationLLM:
             _transformation_defaults_registry(), lambda name, template: None
         )
         normalized = {"query_transformation": ref}
-        service.apply_defaults(normalized)
+        service.apply_defaults(normalized, is_new=True)
         return normalized["query_transformation"]
 
     def test_omitted_llm_params_get_the_rag_defaults(self):
@@ -1702,7 +1724,7 @@ class TestApplyDefaultsTransformationLLM:
         normalized: dict = {}
         QueryTransformationValidationService(
             _transformation_defaults_registry(), lambda name, template: None
-        ).apply_defaults(normalized)
+        ).apply_defaults(normalized, is_new=True)
 
         assert normalized == {}
 
@@ -1710,7 +1732,7 @@ class TestApplyDefaultsTransformationLLM:
         normalized = {"query_transformation": None}
         QueryTransformationValidationService(
             _transformation_defaults_registry(), lambda name, template: None
-        ).apply_defaults(normalized)
+        ).apply_defaults(normalized, is_new=True)
 
         assert normalized == {"query_transformation": None}
 
@@ -1736,7 +1758,7 @@ def _decomposition_defaults_registry() -> dict:
 class TestApplyDefaultsDecompositionCap:
     """``max_subqueries`` is capped by default and unbounded on an explicit null."""
 
-    def _apply(self, params: dict) -> dict:
+    def _apply(self, params: dict, is_new: bool = True) -> dict:
         ref = {
             "component": "LLMQueryDecomposer",
             "params": {
@@ -1751,11 +1773,17 @@ class TestApplyDefaultsDecompositionCap:
         normalized = {"query_transformation": ref}
         QueryTransformationValidationService(
             _decomposition_defaults_registry(), lambda name, template: None
-        ).apply_defaults(normalized)
+        ).apply_defaults(normalized, is_new=is_new)
         return normalized["query_transformation"]["params"]
 
-    def test_omitted_cap_resolves_to_the_three_default(self):
+    def test_omitted_cap_resolves_to_the_three_default_for_a_new_session(self):
         assert self._apply({})["max_subqueries"] == DEFAULT_MAX_SUBQUERIES
+
+    def test_omitted_cap_stays_unrestricted_for_a_stored_session(self):
+        assert self._apply({}, is_new=False)["max_subqueries"] is None
+
+    def test_explicit_cap_is_kept_for_a_stored_session(self):
+        assert self._apply({"max_subqueries": 2}, is_new=False)["max_subqueries"] == 2
 
     def test_explicit_null_cap_is_preserved(self):
         """The placeholder merge must not resurrect the default over a null."""
