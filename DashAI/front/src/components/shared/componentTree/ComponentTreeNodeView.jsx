@@ -6,11 +6,6 @@ import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import PropTypes from "prop-types";
 import { resolveLocalizedText } from "../../../utils/localize";
 
-// Base horizontal unit (px) for the tree indentation. A card at depth d is
-// indented d*INDENT px, and the vertical spine that connects a level is drawn
-// INDENT/2 px to the left of the card at that level, so consecutive spine
-// columns are always exactly INDENT px apart. All geometry is expressed as
-// explicit px strings so the theme spacing multiplier does not apply.
 const INDENT = 40;
 
 /**

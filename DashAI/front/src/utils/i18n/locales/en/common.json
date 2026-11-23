@@ -295,6 +295,10 @@
     "removeNode": "Remove component",
     "selectComponent": "Component",
     "parameters": "Parameters",
-    "containerNote": "This component contains other components. Its children can be configured in the tree below."
-  }
+    "containerNote": "This component contains other components. Its children are configured in the tree, outside this dialog.",
+    "loadFailed": "Could not load the components: {{reason}}",
+    "unknownComponent": "The component {{component}} is not available, so its tree cannot be shown."
+  },
+  "component": "Component",
+  "null": "Null"
 }

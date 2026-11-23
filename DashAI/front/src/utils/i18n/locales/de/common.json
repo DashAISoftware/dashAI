@@ -295,6 +295,10 @@
     "removeNode": "Komponente entfernen",
     "selectComponent": "Komponente",
     "parameters": "Parameter",
-    "containerNote": "Diese Komponente enthält andere Komponenten. Ihre Kindkomponenten können im unteren Baum konfiguriert werden."
-  }
+    "containerNote": "Diese Komponente enthält andere Komponenten. Ihre Kindkomponenten werden im Baum außerhalb dieses Dialogs konfiguriert.",
+    "loadFailed": "Die Komponenten konnten nicht geladen werden: {{reason}}",
+    "unknownComponent": "Die Komponente {{component}} ist nicht verfügbar, daher kann ihr Baum nicht angezeigt werden."
+  },
+  "component": "Komponente",
+  "null": "Null"
 }

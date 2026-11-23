@@ -9,6 +9,30 @@
  * field becomes a container and any registry parent can be the tree's root.
  */
 
+import { SCHEMA_TYPE_ARRAY } from "../../../constants/rag";
+
+/**
+ * A node of the editable tree.
+ *
+ * @typedef {object} TreeNode
+ * @property {string} nodeId - Unique id within the tree.
+ * @property {string} component - Registered component name, empty while a new
+ *   child has not been configured yet.
+ * @property {object} params - The component params, without its children.
+ * @property {TreeNode[]} children - The configured children, empty for a
+ *   component that is not a container.
+ */
+
+/**
+ * The list-of-components property of a component schema.
+ *
+ * @typedef {object} ChildrenField
+ * @property {string} key - The property key.
+ * @property {string} parent - The parent class its items must inherit.
+ * @property {number} minItems - Minimum number of children.
+ * @property {(number|null)} maxItems - Maximum number of children, if any.
+ */
+
 /**
  * Whether a value is a non-null, non-array object.
  * @param {*} value - Value to test.
@@ -24,8 +48,7 @@ export function isPlainObject(value) {
  * Optional arrays arrive wrapped in an `anyOf`, so that shape is read too.
  *
  * @param {object|undefined} schema - A component's JSON schema.
- * @returns {{key: string, parent: string, minItems: number,
- *   maxItems: (number|null)}|null} The property key, the parent class its items
+ * @returns {ChildrenField|null} The property key, the parent class its items
  *   must inherit and its size limits, or null when the component is not a
  *   container.
  */
@@ -34,9 +57,9 @@ export function findChildrenField(schema) {
   if (!isPlainObject(properties)) return null;
   for (const [key, property] of Object.entries(properties)) {
     const array =
-      property?.type === "array"
+      property?.type === SCHEMA_TYPE_ARRAY
         ? property
-        : property?.anyOf?.find((branch) => branch?.type === "array");
+        : property?.anyOf?.find((branch) => branch?.type === SCHEMA_TYPE_ARRAY);
     const parent = array?.items?.parent;
     if (parent) {
       return {
@@ -81,12 +104,14 @@ export function getChildRefs(ref, key) {
  * Recursively maps a serialised ref into an editable tree node.
  *
  * Refs that are malformed or name an unknown component are dropped (null), so
- * unknown components never enter the tree.
+ * unknown components never enter the tree. A ref without `params` is the
+ * minimal ref `{component}`: its params are the component's defaults, which the
+ * form resolves when the node is edited.
  *
  * @param {object} ref - Serialised ref to map.
  * @param {function(string): (object|null)} findComponent - Component lookup.
  * @param {function(): string} nextId - Node id generator.
- * @returns {object|null} The tree node, or null.
+ * @returns {TreeNode|null} The tree node, or null.
  */
 export function buildNodeFromRef(ref, findComponent, nextId) {
   if (!isPlainObject(ref)) return null;
@@ -109,15 +134,15 @@ export function buildNodeFromRef(ref, findComponent, nextId) {
  * Serialises a node back to the canonical `{component, params}` ref, with the
  * children of containers under their own property key.
  *
- * @param {object} node - Tree node.
+ * @param {TreeNode} node - Tree node.
  * @param {function(string): (object|null)} findComponent - Component lookup.
  * @returns {{component: string, params: object}} The canonical ref.
  */
 export function serializeNode(node, findComponent) {
   const field = findChildrenField(findComponent(node.component)?.schema);
-  const params = { ...(node.params || {}) };
+  const params = { ...node.params };
   if (field) {
-    params[field.key] = (node.children || [])
+    params[field.key] = node.children
       .map((child) => serializeNode(child, findComponent))
       .filter((child) => child.component);
   }
@@ -134,8 +159,7 @@ export function serializeNode(node, findComponent) {
 export function updateAt(root, nodeId, fn) {
   const walk = (node) => {
     if (node.nodeId === nodeId) return fn(node);
-    if (node.children) return { ...node, children: node.children.map(walk) };
-    return node;
+    return { ...node, children: node.children.map(walk) };
   };
   return walk(root);
 }
@@ -148,7 +172,7 @@ export function updateAt(root, nodeId, fn) {
  */
 export function findNode(tree, nodeId) {
   if (tree.nodeId === nodeId) return tree;
-  for (const child of tree.children || []) {
+  for (const child of tree.children) {
     const found = findNode(child, nodeId);
     if (found) return found;
   }
@@ -162,7 +186,7 @@ export function findNode(tree, nodeId) {
  * @returns {object|null} The parent node, or null for the root or unknown ids.
  */
 export function findParentNode(tree, nodeId) {
-  for (const child of tree.children || []) {
+  for (const child of tree.children) {
     if (child.nodeId === nodeId) return tree;
     const found = findParentNode(child, nodeId);
     if (found) return found;
@@ -209,7 +233,7 @@ export function sortByCategory(components, fallback) {
 export function selectableOptions(components, fallback) {
   const seen = new Set();
   return sortByCategory(
-    (components || [])
+    components
       .filter((component) => component.configurable_object !== false)
       .filter((component) => {
         if (seen.has(component.name)) return false;

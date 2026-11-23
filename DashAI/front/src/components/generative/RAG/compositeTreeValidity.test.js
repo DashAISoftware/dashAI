@@ -2,7 +2,7 @@ import { isCompositeTreeComplete } from "./compositeTreeValidity";
 
 const childrenSchema = (extra = {}) => ({
   properties: {
-    retrievers: {
+    children: {
       type: "array",
       items: { type: "object", parent: "BaseRetriever" },
       ...extra,
@@ -14,6 +14,22 @@ const REGISTRY = {
   Dense: { schema: { properties: { top_k: { type: "integer" } } } },
   Sequential: { schema: childrenSchema() },
   Pair: { schema: childrenSchema({ minItems: 2 }) },
+  ScorerMMR: {
+    schema: {
+      properties: {
+        children: {
+          anyOf: [
+            {
+              type: "array",
+              items: { type: "object", parent: "ChunkScorer" },
+              minItems: 1,
+            },
+            { type: "null" },
+          ],
+        },
+      },
+    },
+  },
 };
 const find = (name) => REGISTRY[name] ?? null;
 
@@ -25,7 +41,7 @@ describe("isCompositeTreeComplete", () => {
   });
 
   it("rejects a composite without children", () => {
-    const ref = { component: "Sequential", params: { retrievers: [] } };
+    const ref = { component: "Sequential", params: { children: [] } };
     expect(isCompositeTreeComplete(ref, find)).toBe(false);
   });
 
@@ -38,7 +54,7 @@ describe("isCompositeTreeComplete", () => {
   it("accepts a composite with a configured child", () => {
     const ref = {
       component: "Sequential",
-      params: { retrievers: [{ component: "Dense", params: {} }] },
+      params: { children: [{ component: "Dense", params: {} }] },
     };
     expect(isCompositeTreeComplete(ref, find)).toBe(true);
   });
@@ -46,7 +62,7 @@ describe("isCompositeTreeComplete", () => {
   it("ignores children that were added but never configured", () => {
     const ref = {
       component: "Sequential",
-      params: { retrievers: [{ component: "", params: {} }] },
+      params: { children: [{ component: "", params: {} }] },
     };
     expect(isCompositeTreeComplete(ref, find)).toBe(false);
   });
@@ -55,7 +71,7 @@ describe("isCompositeTreeComplete", () => {
     const ref = {
       component: "Sequential",
       params: {
-        retrievers: [{ component: "Sequential", params: { retrievers: [] } }],
+        children: [{ component: "Sequential", params: { children: [] } }],
       },
     };
     expect(isCompositeTreeComplete(ref, find)).toBe(false);
@@ -64,13 +80,13 @@ describe("isCompositeTreeComplete", () => {
   it("honours the minimum number of children the schema declares", () => {
     const one = {
       component: "Pair",
-      params: { retrievers: [{ component: "Dense", params: {} }] },
+      params: { children: [{ component: "Dense", params: {} }] },
     };
     expect(isCompositeTreeComplete(one, find)).toBe(false);
     const two = {
       component: "Pair",
       params: {
-        retrievers: [
+        children: [
           { component: "Dense", params: {} },
           { component: "Dense", params: {} },
         ],
@@ -82,6 +98,33 @@ describe("isCompositeTreeComplete", () => {
   it("rejects an unknown component", () => {
     expect(
       isCompositeTreeComplete({ component: "Nope", params: {} }, find),
+    ).toBe(false);
+  });
+
+  it("rejects a missing or empty reference", () => {
+    expect(isCompositeTreeComplete(null, find)).toBe(false);
+    expect(isCompositeTreeComplete(undefined, find)).toBe(false);
+    expect(isCompositeTreeComplete({ component: "", params: {} }, find)).toBe(
+      false,
+    );
+  });
+
+  it("reads an optional children list declared through anyOf (a reranker)", () => {
+    const empty = { component: "ScorerMMR", params: { children: [] } };
+    const filled = {
+      component: "ScorerMMR",
+      params: { children: [{ component: "Dense", params: {} }] },
+    };
+    expect(isCompositeTreeComplete(empty, find)).toBe(false);
+    expect(isCompositeTreeComplete(filled, find)).toBe(true);
+  });
+
+  it("rejects a reranker whose children key is null", () => {
+    expect(
+      isCompositeTreeComplete(
+        { component: "ScorerMMR", params: { children: null } },
+        find,
+      ),
     ).toBe(false);
   });
 });
