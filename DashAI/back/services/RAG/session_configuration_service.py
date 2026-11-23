@@ -18,11 +18,13 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import GenerativeSession
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.RAG.RAG_constants import (
+    MAX_SUBQUERIES_KEY,
     RAG_PARAM_CHUNKING_MODEL,
     RAG_PARAM_GENERATION_MODEL,
     RAG_PARAM_PROMPT,
     RAG_PARAM_QUERY_TRANSFORMATION,
     RAG_PARAM_RETRIEVER_MODEL,
+    RERANKER_KEY,
 )
 from DashAI.back.services.RAG import chunking_presets, retriever_presets
 from DashAI.back.services.RAG.prompt_service import PromptService
@@ -39,9 +41,6 @@ CHARS_PER_TOKEN = 4
 #: Transformer parameters that declare how many queries the stage emits. A
 #: stage declaring none of them — a rewriter — hands retrieval a single query.
 QUERY_COUNT_KEYS = ("n_queries", "max_subqueries")
-
-#: Transformer parameter holding the optional reranker retriever reference.
-RERANKER_KEY = "reranker"
 
 #: Queries the retrieval stage runs when no stage multiplies them.
 SINGLE_QUERY = 1
@@ -438,7 +437,37 @@ class SessionConfigurationService:
             return retrieved
         merged = retrieved * queries
         cap = self._pool_cap(transformation)
-        return min(merged, cap) if cap is not None else merged
+        if cap is None:
+            return merged
+        # The reranker keeps ``cap`` units of the pool, and every unit is as
+        # wide as the retriever's own expansion window makes it: the reranker
+        # never expands anything itself.
+        capped = cap * retriever_presets.widest_window(retriever.get("params") or {})
+        if self._is_uncapped_decomposition(transformation):
+            # The model decides how many queries an uncapped decomposition
+            # emits, so the merged estimate is only a floor: the reranker's cap
+            # is the one bound the pool is certain to respect.
+            return capped
+        return min(merged, capped)
+
+    @staticmethod
+    def _is_uncapped_decomposition(transformation: Optional[Dict[str, Any]]) -> bool:
+        """Report whether the stage explicitly lifts its sub-query cap.
+
+        Parameters
+        ----------
+        transformation : Dict[str, Any] | None
+            The stored transformation reference.
+
+        Returns
+        -------
+        bool
+            ``True`` when ``max_subqueries`` is stored as an explicit ``None``.
+        """
+        if not isinstance(transformation, dict):
+            return False
+        params = transformation.get("params") or {}
+        return MAX_SUBQUERIES_KEY in params and params[MAX_SUBQUERIES_KEY] is None
 
     def _query_count(self, transformation: Optional[Dict[str, Any]]) -> int:
         """Return how many queries the transformation stage hands to retrieval.
@@ -494,14 +523,17 @@ class SessionConfigurationService:
         if field is None:
             return None
         placeholder = (field.json_schema_extra or {}).get("placeholder")
-        return placeholder if _is_query_count(placeholder) else field.default
+        if _is_query_count(placeholder):
+            return placeholder
+        return field.default
 
     def _pool_cap(self, transformation: Optional[Dict[str, Any]]) -> Optional[int]:
         """Return how many chunks the stage's reranker lets through to the prompt.
 
-        The reranker is a retriever, so its output is priced like one: its own
-        ``top_k`` times the expansion window of its units, which is what
-        :func:`retriever_presets.effective_chunk_count` returns.
+        The reranker is a retriever, so its output is bounded like one: its own
+        ``top_k`` units (see :func:`retriever_presets.effective_top_k`). It
+        orders units that already exist, so its own expansion window never
+        widens them; the width of the kept units is the retriever stage's.
 
         Parameters
         ----------
@@ -511,7 +543,7 @@ class SessionConfigurationService:
         Returns
         -------
         int | None
-            The number of chunks the merged pool is trimmed to, or ``None`` when
+            The number of units the merged pool is trimmed to, or ``None`` when
             no reranker is configured and the whole pool reaches the prompt.
         """
         if not isinstance(transformation, dict):
@@ -519,7 +551,7 @@ class SessionConfigurationService:
         reranker = (transformation.get("params") or {}).get(RERANKER_KEY)
         if not isinstance(reranker, dict) or not reranker.get("component"):
             return None
-        return retriever_presets.effective_chunk_count(
+        return retriever_presets.effective_top_k(
             reranker["component"], reranker.get("params") or {}
         )
 

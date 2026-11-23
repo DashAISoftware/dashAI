@@ -705,7 +705,7 @@ def test_budget_pays_for_every_expansion_query():
 
 
 def test_budget_pays_for_the_decomposition_cap_when_omitted():
-    """An omitted ``max_subqueries`` costs the runtime default of three."""
+    """An omitted ``max_subqueries`` is priced at the schema's declared three."""
     service = _transformation_budget_service()
     chunking, prompt, generation = _budget_inputs()
     transformation = {"component": "LLMQueryDecomposer", "params": {}}

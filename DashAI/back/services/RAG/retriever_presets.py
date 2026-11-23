@@ -297,6 +297,23 @@ def _max_expansion_factor(params: Dict[str, Any]) -> int:
     return factor
 
 
+def widest_window(params: Dict[str, Any]) -> int:
+    """Return how many stored chunks the widest unit of a retriever covers.
+
+    Parameters
+    ----------
+    params : Dict[str, Any]
+        Retriever parameters, possibly holding ``children`` refs.
+
+    Returns
+    -------
+    int
+        The largest retrieve-then-expand window over the retriever and its
+        descendants, or ``1`` when nothing expands.
+    """
+    return _max_expansion_factor(params)
+
+
 def _own_chunk_cap(params: Dict[str, Any]) -> Optional[int]:
     """Return the cap a retriever declares for its own output, if any.
 
