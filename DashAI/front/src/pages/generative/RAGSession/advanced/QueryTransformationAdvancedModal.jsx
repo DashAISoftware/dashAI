@@ -3,9 +3,16 @@ import PropTypes from "prop-types";
 import { Button, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import {
+  QUERY_TRANSFORMATION_BLOCK,
   isCompleteQueryTransformationRef,
+  isGeneratorDownloaded,
   resolveLabel,
 } from "../../../../utils/ragQueryTransformation";
+import {
+  LLM_MODEL_KEY,
+  MAX_SUBQUERIES_KEY,
+  RERANKER_KEY,
+} from "../../../../constants/rag";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
@@ -18,7 +25,7 @@ import { resolveRagLlmDefaults } from "./resolveRagLlmDefaults";
  * optional reranker are schema fields now, drawn by the generic form (a prompt
  * card and a component field).
  */
-const TRANSFORMER_EXCLUDED_FIELDS = ["llm_model"];
+const TRANSFORMER_EXCLUDED_FIELDS = [LLM_MODEL_KEY];
 
 /**
  * Transformer params whose cleared value is a choice the backend understands
@@ -26,7 +33,7 @@ const TRANSFORMER_EXCLUDED_FIELDS = ["llm_model"];
  * `reranker: null` means "no reranking", so the key is persisted as an explicit
  * null. Dropping it would let the schema placeholder reinstate the default.
  */
-const NULLABLE_TRANSFORMER_FIELDS = ["max_subqueries", "reranker"];
+const NULLABLE_TRANSFORMER_FIELDS = [MAX_SUBQUERIES_KEY, RERANKER_KEY];
 
 /**
  * Decide which of the transformation LLM's parameter values a form submission
@@ -53,17 +60,15 @@ const NULLABLE_TRANSFORMER_FIELDS = ["max_subqueries", "reranker"];
  * @returns {object} The params to persist for `llm_model`.
  */
 function llmParamsToPersist(carriedParams, seedDefaults, values) {
-  const carried = carriedParams || {};
-  const seed = seedDefaults || {};
   const result = {};
 
   for (const key of Object.keys(values)) {
     const value = values[key];
     if (value === "" || value === null || value === undefined) continue;
 
-    const wasCarried = Object.prototype.hasOwnProperty.call(carried, key);
+    const wasCarried = Object.prototype.hasOwnProperty.call(carriedParams, key);
     const isUntouchedDefault =
-      JSON.stringify(value) === JSON.stringify(seed[key]);
+      JSON.stringify(value) === JSON.stringify(seedDefaults[key]);
     if (!wasCarried && isUntouchedDefault) continue;
 
     result[key] = value;
@@ -90,7 +95,7 @@ function llmParamsToPersist(carriedParams, seedDefaults, values) {
  * @param {Function} props.setModel - Persists the edited ref.
  * @param {string}   [props.technique] - The transformer's technique, deciding
  *   which parameters apply.
- * @param {Array}    [props.generators] - Generator models for the model select.
+ * @param {Array}    props.generators - Generator models for the model select.
  * @returns {JSX.Element} The advanced query transformation modal.
  */
 export default function QueryTransformationAdvancedModal({
@@ -151,8 +156,22 @@ export default function QueryTransformationAdvancedModal({
       return next;
     });
 
+  /**
+   * The params the stored stage carries for the nested LLM `name`, so that
+   * switching away from it and back restores them.
+   * @param {string} key - The nested component parameter.
+   * @param {string} name - The component being selected.
+   * @returns {object} The carried params, or an empty map when nothing is
+   *   carried for that component (the backend then resolves the RAG defaults).
+   */
+  const carriedParamsFor = (key, name) => {
+    if (key !== LLM_MODEL_KEY) return {};
+    if (model?.params?.[LLM_MODEL_KEY]?.component !== name) return {};
+    return model.params[LLM_MODEL_KEY].params;
+  };
+
   /** Points a nested component parameter at `name`, keeping its params on reselect. */
-  const setComponent = (key, name, emptyParams) =>
+  const setComponent = (key, name) =>
     setParams((prev) => {
       const next = { ...prev };
       if (!name) {
@@ -163,16 +182,13 @@ export default function QueryTransformationAdvancedModal({
       // live map, so restore the original component's carried values when the
       // user returns to it. A different model starts empty and lets the
       // backend resolve the RAG defaults for it.
-      const originalLlmParams =
-        key === "llm_model" && model?.params?.llm_model?.component === name
-          ? model.params.llm_model.params
-          : undefined;
+      if (prev[key]?.component === name) {
+        next[key] = { component: name, params: prev[key].params };
+        return next;
+      }
       next[key] = {
         component: name,
-        params:
-          prev[key]?.component === name
-            ? prev[key].params
-            : { ...(originalLlmParams ?? emptyParams ?? {}) },
+        params: { ...carriedParamsFor(key, name) },
       };
       return next;
     });
@@ -199,11 +215,7 @@ export default function QueryTransformationAdvancedModal({
       return undefined;
     }
 
-    const originalLlmComponent = model?.params?.llm_model?.component;
-    const carried =
-      originalLlmComponent === llmComponent
-        ? model?.params?.llm_model?.params || {}
-        : {};
+    const carried = carriedParamsFor(LLM_MODEL_KEY, llmComponent);
     carriedParamsRef.current = carried;
     seedDefaultsRef.current = {};
     setSeededCarried(carried);
@@ -212,9 +224,8 @@ export default function QueryTransformationAdvancedModal({
     let cancelled = false;
     resolveRagLlmDefaults(model?.component, llmComponent).then((defaults) => {
       if (cancelled) return;
-      const resolved = defaults || {};
-      seedDefaultsRef.current = resolved;
-      setSeedDefaults(resolved);
+      seedDefaultsRef.current = defaults;
+      setSeedDefaults(defaults);
     });
 
     return () => {
@@ -261,11 +272,29 @@ export default function QueryTransformationAdvancedModal({
       };
     });
 
-  // A stage needs its LLM and prompt before it can be saved.
-  // A reranker that is a composite also needs its children defined.
   const [retrieversComplete, setRetrieversComplete] = useState(true);
-  const complete =
-    isCompleteQueryTransformationRef({ params }) && retrieversComplete;
+  const refComplete = isCompleteQueryTransformationRef({ params });
+  const llmDownloaded = isGeneratorDownloaded(generators, llmComponent);
+  const complete = refComplete && llmDownloaded && retrieversComplete;
+
+  const llmOptions = generators.filter(
+    (generator) => generator.downloaded || generator.name === llmComponent,
+  );
+
+  /**
+   * The i18n key suffix of what keeps the stage from being saved.
+   * @returns {string|null} The key under `rag.config.queryTransformation`, or
+   *   null when the stage is complete.
+   */
+  const incompleteReason = () => {
+    if (!refComplete) return QUERY_TRANSFORMATION_BLOCK.INCOMPLETE;
+    if (!llmDownloaded)
+      return QUERY_TRANSFORMATION_BLOCK.NEEDS_DOWNLOADED_MODEL;
+    if (!retrieversComplete)
+      return QUERY_TRANSFORMATION_BLOCK.COMPOSITE_INCOMPLETE;
+    return null;
+  };
+  const reason = incompleteReason();
 
   const handleDone = () => {
     if (!complete) return;
@@ -300,9 +329,9 @@ export default function QueryTransformationAdvancedModal({
           {model?.component}
         </Typography>
 
-        {!complete && (
+        {reason && (
           <Typography variant="caption" color="error.main">
-            {t("generative:rag.config.queryTransformation.incomplete")}
+            {t(`generative:rag.config.queryTransformation.${reason}`)}
           </Typography>
         )}
 
@@ -311,9 +340,9 @@ export default function QueryTransformationAdvancedModal({
           size="small"
           label={t("generative:rag.config.queryTransformation.llm")}
           value={params.llm_model?.component || ""}
-          onChange={(event) => setComponent("llm_model", event.target.value)}
+          onChange={(event) => setComponent(LLM_MODEL_KEY, event.target.value)}
         >
-          {(generators || []).map((generator) => (
+          {llmOptions.map((generator) => (
             <MenuItem key={generator.name} value={generator.name}>
               {resolveLabel(generator.display_name, generator.name)}
             </MenuItem>
@@ -357,5 +386,5 @@ QueryTransformationAdvancedModal.propTypes = {
   model: PropTypes.object,
   setModel: PropTypes.func.isRequired,
   technique: PropTypes.string,
-  generators: PropTypes.array,
+  generators: PropTypes.array.isRequired,
 };

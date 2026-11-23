@@ -1,3 +1,4 @@
+import { DEFAULT_PROMPT_LANGUAGE } from "../../../constants/rag";
 import {
   getModelFromSubform,
   getParamsFromSubform,
@@ -6,8 +7,7 @@ import {
 /** Parent class every prompt component inherits from. */
 export const BASE_PROMPT_PARENT = "BasePrompt";
 
-/** Language a prompt template falls back to when none is stored. */
-export const DEFAULT_PROMPT_LANGUAGE = "en";
+export { DEFAULT_PROMPT_LANGUAGE };
 
 /** Param key holding the template text. */
 export const PROMPT_TEMPLATE_PARAM = "template";
