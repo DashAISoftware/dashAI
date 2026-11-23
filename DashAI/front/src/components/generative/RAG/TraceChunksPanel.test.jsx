@@ -95,4 +95,25 @@ describe("TraceChunksPanel pool reranking", () => {
     await screen.findByTestId("trace-tree");
     expect(screen.queryByTestId("rerank-tree")).not.toBeInTheDocument();
   });
+
+  it("fails visibly when the rerank entry has no pool", async () => {
+    const { pool, ...withoutPool } = RERANK_ENTRY.reranker;
+    renderPanel([...QUERY_ENTRIES, { stage: "rerank", reranker: withoutPool }]);
+
+    expect(await screen.findByTestId("rerank-malformed")).toBeInTheDocument();
+    expect(screen.queryByTestId("rerank-tree")).not.toBeInTheDocument();
+    expect(pool).toHaveLength(3);
+  });
+
+  it("fails visibly when the rerank entry has no kept chunks", async () => {
+    const { chunks, ...withoutChunks } = RERANK_ENTRY.reranker;
+    renderPanel([
+      ...QUERY_ENTRIES,
+      { stage: "rerank", reranker: withoutChunks },
+    ]);
+
+    expect(await screen.findByTestId("rerank-malformed")).toBeInTheDocument();
+    expect(screen.queryByTestId("rerank-tree")).not.toBeInTheDocument();
+    expect(chunks).toHaveLength(1);
+  });
 });
