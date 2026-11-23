@@ -14,7 +14,10 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.exceptions import RAGRetrieverError
-from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
+from DashAI.back.models.RAG.retrievers.capabilities import (
+    ChunkScorer,
+    ScoringChild,
+)
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
@@ -91,6 +94,7 @@ class MMRRerankerRetriever(CompositeRetriever, ChunkScorer):
     """
 
     SCHEMA = MMRRerankerRetrieverSchema
+    SCORING_CHILD = ScoringChild.FIRST
     DISPLAY_NAME: str = MultilingualString(
         en="MMR Reranker",
         es="Reordenador MMR",

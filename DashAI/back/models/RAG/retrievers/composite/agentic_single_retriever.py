@@ -42,7 +42,10 @@ from DashAI.back.models.RAG.RAG_defaults import (
     default_function_calling_llm,
     default_hybrid_retriever,
 )
-from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
+from DashAI.back.models.RAG.retrievers.capabilities import (
+    ChunkScorer,
+    ScoringChild,
+)
 from DashAI.back.models.RAG.retrievers.composite.agentic_retriever import (
     AgenticRetriever,
     IncrementalFetch,
@@ -230,6 +233,7 @@ class AgenticSingleRetriever(AgenticRetriever, ChunkScorer):
     """
 
     SCHEMA = AgenticSingleRetrieverSchema
+    SCORING_CHILD = ScoringChild.FIRST
     CATEGORY: MultilingualString = LLM_RETRIEVER_CATEGORY
     DISPLAY_NAME: str = MultilingualString(
         en="Agentic Single Retriever",
