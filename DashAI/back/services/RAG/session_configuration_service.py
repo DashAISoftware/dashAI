@@ -17,8 +17,12 @@ from typing import Any, Dict, List, Optional
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import GenerativeSession
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+from DashAI.back.models.RAG.exceptions import RAGPipelineConfigError
 from DashAI.back.models.RAG.RAG_constants import (
+    COMPONENT_KEY,
     MAX_SUBQUERIES_KEY,
+    PARAMS_KEY,
+    QUERY_COUNT_KEYS,
     RAG_PARAM_CHUNKING_MODEL,
     RAG_PARAM_GENERATION_MODEL,
     RAG_PARAM_PROMPT,
@@ -37,10 +41,6 @@ log = logging.getLogger(__name__)
 
 #: Characters per token, for turning prompt text into a token estimate.
 CHARS_PER_TOKEN = 4
-
-#: Transformer parameters that declare how many queries the stage emits. A
-#: stage declaring none of them — a rewriter — hands retrieval a single query.
-QUERY_COUNT_KEYS = ("n_queries", "max_subqueries")
 
 #: Queries the retrieval stage runs when no stage multiplies them.
 SINGLE_QUERY = 1
@@ -61,6 +61,69 @@ def _is_query_count(value: Any) -> bool:
         ``True`` for an ``int`` of at least one that is not a ``bool``.
     """
     return isinstance(value, int) and not isinstance(value, bool) and value >= 1
+
+
+def _stage_params(transformation: Dict[str, Any]) -> Dict[str, Any]:
+    """Return the ``params`` of a stored query transformation stage.
+
+    Unlike the minimal reference of a retriever, a transformer stage always
+    carries its ``params`` (a prompt and a model are required).
+
+    Parameters
+    ----------
+    transformation : Dict[str, Any]
+        The stored transformation reference.
+
+    Returns
+    -------
+    Dict[str, Any]
+        The stage's parameters.
+
+    Raises
+    ------
+    RAGPipelineConfigError
+        If ``params`` is missing or not a dict.
+    """
+    params = transformation.get(PARAMS_KEY)
+    if not isinstance(params, dict):
+        raise RAGPipelineConfigError(
+            f"Stored query transformation '{transformation.get(COMPONENT_KEY)}' "
+            "has no 'params' dict."
+        )
+    return params
+
+
+def _reference_params(reference: Dict[str, Any], what: str) -> Dict[str, Any]:
+    """Return a stored component reference's ``params``.
+
+    A reference without ``params`` is the minimal ``{"component": name}`` the
+    form stores for a component chosen by name alone, so it has no parameters.
+
+    Parameters
+    ----------
+    reference : Dict[str, Any]
+        A stored component reference.
+    what : str
+        What the reference is, for the error message.
+
+    Returns
+    -------
+    Dict[str, Any]
+        The parameters, empty for the minimal reference.
+
+    Raises
+    ------
+    RAGPipelineConfigError
+        If ``params`` is present and not a dict.
+    """
+    params = reference.get(PARAMS_KEY)
+    if params is None:
+        return {}
+    if not isinstance(params, dict):
+        raise RAGPipelineConfigError(
+            f"Stored 'params' of {what} is not a dict, got {type(params).__name__}."
+        )
+    return params
 
 
 _SECTION_NAMES = {
@@ -427,8 +490,9 @@ class SessionConfigurationService:
             The number of chunks the prompt can hold, expansion and reranker cap
             included.
         """
+        retriever_params = _reference_params(retriever, "the retriever")
         retrieved = retriever_presets.effective_chunk_count(
-            retriever.get("component") or "", retriever.get("params") or {}
+            retriever[COMPONENT_KEY], retriever_params
         )
         queries = self._query_count(transformation)
         if queries <= SINGLE_QUERY:
@@ -442,7 +506,7 @@ class SessionConfigurationService:
         # The reranker keeps ``cap`` units of the pool, and every unit is as
         # wide as the retriever's own expansion window makes it: the reranker
         # never expands anything itself.
-        capped = cap * retriever_presets.widest_window(retriever.get("params") or {})
+        capped = cap * retriever_presets.max_expansion_factor(retriever_params)
         if self._is_uncapped_decomposition(transformation):
             # The model decides how many queries an uncapped decomposition
             # emits, so the merged estimate is only a floor: the reranker's cap
@@ -463,20 +527,25 @@ class SessionConfigurationService:
         -------
         bool
             ``True`` when ``max_subqueries`` is stored as an explicit ``None``.
+            An omitted cap is not counted here: the budget prices it at the
+            declared count (see :meth:`_query_count`).
         """
-        if not isinstance(transformation, dict):
+        if not transformation:
             return False
-        params = transformation.get("params") or {}
+        params = _stage_params(transformation)
         return MAX_SUBQUERIES_KEY in params and params[MAX_SUBQUERIES_KEY] is None
 
     def _query_count(self, transformation: Optional[Dict[str, Any]]) -> int:
         """Return how many queries the transformation stage hands to retrieval.
 
         A stage that declares no query count — a rewriter — retrieves once. An
-        omitted count is read from the transformer's schema, because that is the
-        value the runtime will resolve the stored configuration to; an
-        explicitly uncapped decomposition is priced at that same declared count,
-        since the model decides the real number.
+        explicit count is used as stored. A count the stored stage omits, or an
+        explicitly uncapped decomposition (``max_subqueries: null``), is priced
+        at the count the transformer's schema declares, since the model decides
+        the real number: the runtime does not cap such a stage at that count,
+        so the price is an estimate, not a bound (an uncapped decomposition
+        with a reranker is bounded by the reranker instead, see
+        :meth:`_retrieval_chunk_count`).
 
         Parameters
         ----------
@@ -487,21 +556,31 @@ class SessionConfigurationService:
         -------
         int
             The number of queries retrieval runs for one user message.
+
+        Raises
+        ------
+        RAGPipelineConfigError
+            If the stage's ``params`` is not a dict, or a stored count is neither
+            a positive integer nor ``None``.
         """
-        if not isinstance(transformation, dict):
+        if not transformation:
             return SINGLE_QUERY
-        params = transformation.get("params") or {}
-        component = transformation.get("component") or ""
+        params = _stage_params(transformation)
+        component = transformation[COMPONENT_KEY]
         for key in QUERY_COUNT_KEYS:
-            value = params.get(key)
-            if _is_query_count(value):
-                return value
+            if key in params and params[key] is not None:
+                if not _is_query_count(params[key]):
+                    raise RAGPipelineConfigError(
+                        f"Stored '{key}' of '{component}' must be a positive "
+                        f"integer or null, got {params[key]!r}."
+                    )
+                return params[key]
             declared = self._declared_query_count(component, key)
-            if _is_query_count(declared):
+            if declared is not None:
                 return declared
         return SINGLE_QUERY
 
-    def _declared_query_count(self, component: str, key: str) -> Any:
+    def _declared_query_count(self, component: str, key: str) -> Optional[int]:
         """Return the count a transformer's schema declares for ``key``.
 
         Parameters
@@ -513,19 +592,23 @@ class SessionConfigurationService:
 
         Returns
         -------
-        Any
+        Optional[int]
             The schema placeholder (or its pydantic default when the placeholder
-            is absent), or ``None`` when the transformer does not declare ``key``.
+            is absent), or ``None`` when the transformer is unknown or does not
+            declare a usable count for ``key``.
         """
         entry = self._registry_entry(component)
-        schema = getattr(entry.get("class") if entry else None, "SCHEMA", None)
-        field = (getattr(schema, "model_fields", None) or {}).get(key)
+        if entry is None:
+            return None
+        field = getattr(entry["class"].SCHEMA, "model_fields", {}).get(key)
         if field is None:
             return None
         placeholder = (field.json_schema_extra or {}).get("placeholder")
         if _is_query_count(placeholder):
             return placeholder
-        return field.default
+        if _is_query_count(field.default):
+            return field.default
+        return None
 
     def _pool_cap(self, transformation: Optional[Dict[str, Any]]) -> Optional[int]:
         """Return how many chunks the stage's reranker lets through to the prompt.
@@ -545,14 +628,24 @@ class SessionConfigurationService:
         int | None
             The number of units the merged pool is trimmed to, or ``None`` when
             no reranker is configured and the whole pool reaches the prompt.
+
+        Raises
+        ------
+        RAGPipelineConfigError
+            If a stored reranker is not a component reference.
         """
-        if not isinstance(transformation, dict):
+        if not transformation:
             return None
-        reranker = (transformation.get("params") or {}).get(RERANKER_KEY)
-        if not isinstance(reranker, dict) or not reranker.get("component"):
+        reranker = _stage_params(transformation).get(RERANKER_KEY)
+        if reranker is None:
             return None
+        if not isinstance(reranker, dict) or not reranker.get(COMPONENT_KEY):
+            raise RAGPipelineConfigError(
+                "Stored reranker of the query transformation is not a component "
+                "reference."
+            )
         return retriever_presets.effective_top_k(
-            reranker["component"], reranker.get("params") or {}
+            reranker[COMPONENT_KEY], _reference_params(reranker, "the reranker")
         )
 
     def _context_budget(
@@ -561,7 +654,7 @@ class SessionConfigurationService:
         retriever: Dict[str, Any],
         prompt: Dict[str, Any],
         generation: Dict[str, Any],
-        transformation: Optional[Dict[str, Any]] = None,
+        transformation: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
         """Compute how much of the model's context window is already spoken for.
 
@@ -582,7 +675,8 @@ class SessionConfigurationService:
         chunking, retriever, prompt, generation : Dict[str, Any]
             The stored component references the budget is derived from.
         transformation : Dict[str, Any] | None
-            The stored query transformation reference, when the stage is enabled.
+            The stored query transformation reference, or ``None`` when the
+            stage is disabled.
 
         Returns
         -------

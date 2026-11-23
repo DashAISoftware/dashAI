@@ -18,7 +18,11 @@ from DashAI.back.models.RAG.chunking_models.chunking_model_factory import (
 from DashAI.back.models.RAG.documents import Chunk, SourceDocument
 from DashAI.back.models.RAG.exceptions import RAGTransformationConfigError
 from DashAI.back.models.RAG.prompts.base_prompt import BasePrompt
-from DashAI.back.models.RAG.RAG_constants import RERANKER_KEY
+from DashAI.back.models.RAG.RAG_constants import (
+    COMPONENT_KEY,
+    PARAMS_KEY,
+    RERANKER_KEY,
+)
 from DashAI.back.models.RAG.RAG_models_factory import RAGModelsFactory
 from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline, RAGPipelineConfig
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
@@ -66,8 +70,6 @@ class IndexResult:
     chunking: ChunkingFactoryResult
     retriever: RetrieverSetupResult
     total_chunks: int
-    #: The retriever setup service that built ``retriever``.
-    retriever_service: RetrieverSetupService
     #: The query-transformation reranker built over the same index, or ``None``
     #: when the stage has none (or its transformer cannot use one).
     reranker: Optional[RetrieverSetupResult] = None
@@ -122,6 +124,12 @@ class SetupService:
         3. Get or create the chunk set (identity via SHA-256 signature)
         4. Create the chunking model and persist chunks
         5. Setup the retriever (dense embedding / sparse / composite)
+        6. Setup the query transformation's reranker, when the stage has one
+           (its own "Building the reranker" progress step)
+
+        If the reranker step (or anything after the retriever) fails, the
+        retriever and the reranker built so far are released before the error
+        propagates, so a failed run leaves nothing loaded.
 
         This stops short of the generation model on purpose: indexing must
         never load model weights it will not use. Every LLM built by the
@@ -147,6 +155,9 @@ class SetupService:
         ------
         ValueError
             If any referenced document, component or parameter is invalid.
+        RAGTransformationConfigError
+            If the configured reranker is not a ``ChunkScorer`` or its ``params``
+            is not a dict.
         RuntimeError
             If a database error occurs.
         """
@@ -199,11 +210,15 @@ class SetupService:
             config.retriever_model.params,
         )
 
-        reranker = self._build_reranker(
-            config, retriever_service, retriever_result, report
-        )
+        reranker: Optional[RetrieverSetupResult] = None
+        try:
+            reranker = self._build_reranker(config, retriever_service, report)
+            self._clear_reindex_flag(config.session_id)
+        except Exception:
+            self._close_model(reranker)
+            self._close_model(retriever_result)
+            raise
 
-        self._clear_reindex_flag(config.session_id)
         report(1.0, "Index ready")
         return IndexResult(
             pipeline_id=pipeline_id,
@@ -213,20 +228,36 @@ class SetupService:
             chunking=chunking_result,
             retriever=retriever_result,
             total_chunks=sum(len(c) for c in chunking_result.chunks.values()),
-            retriever_service=retriever_service,
             reranker=reranker,
         )
+
+    @classmethod
+    def release_index(cls, index: IndexResult) -> None:
+        """Release the retriever and the reranker an index result holds.
+
+        For callers that build an index and then discard it (the indexing job),
+        so the loaded matrices and models do not outlive the run.
+
+        Parameters
+        ----------
+        index : IndexResult
+            The result of :meth:`build_index`.
+        """
+        cls._close_model(index.reranker)
+        cls._close_model(index.retriever)
 
     def build_pipeline(self, config: RAGPipelineConfig) -> RAGPipeline:
         """Assemble a complete RAG pipeline from configuration.
 
         Sequence
         --------
-        1-5. Build the index (delegated to :meth:`build_index`)
-        6. Get or create the LLM record and a lazy proxy for it
-        7. Resolve the prompt component and persist it
-        8. Update the pipeline DB record with FK component IDs
-        9. Build and return the ``RAGPipeline`` instance
+        1-6. Build the index, including the reranker when the transformation
+             stage has one (delegated to :meth:`build_index`, which releases
+             what it built if it fails)
+        7. Get or create the LLM record and a lazy proxy for it
+        8. Resolve the prompt component and persist it
+        9. Update the pipeline DB record with FK component IDs
+        10. Build and return the ``RAGPipeline`` instance
 
         The generation and transformation models are lazy proxies: their
         configuration (including the DB row) is resolved here, but the real
@@ -247,6 +278,9 @@ class SetupService:
         ------
         ValueError
             If any referenced document, component or parameter is invalid.
+        RAGTransformationConfigError
+            If the configured reranker is not a ``ChunkScorer`` or its ``params``
+            is not a dict.
         RuntimeError
             If a database error occurs.
         """
@@ -256,8 +290,7 @@ class SetupService:
         except Exception:
             # Nothing owns the retriever and the reranker built for the index
             # once the pipeline fails to assemble, so release them here.
-            self._close_model(index.reranker)
-            self._close_model(index.retriever)
+            self.release_index(index)
             raise
 
     def _pipeline_from_index(
@@ -338,7 +371,6 @@ class SetupService:
         self,
         config: RAGPipelineConfig,
         retriever_service: RetrieverSetupService,
-        retriever_result: RetrieverSetupResult,
         report: ProgressFn,
     ) -> Optional[RetrieverSetupResult]:
         """Build the transformation stage's reranker over the same index.
@@ -359,8 +391,6 @@ class SetupService:
             Typed pipeline configuration.
         retriever_service : RetrieverSetupService
             The service that built the retriever stage's index.
-        retriever_result : RetrieverSetupResult
-            The retriever stage, released if the reranker cannot be built.
         report : ProgressFn
             Indexing progress reporter.
 
@@ -373,7 +403,8 @@ class SetupService:
         ------
         RAGTransformationConfigError
             If the configured reranker does not have the ``ChunkScorer``
-            capability and so cannot order a pool.
+            capability and so cannot order a pool, or its ``params`` is not a
+            dict.
         """
         stage = config.query_transformation
         if stage is None:
@@ -383,15 +414,25 @@ class SetupService:
         if not reference or RERANKER_KEY not in transformer_class.SCHEMA.model_fields:
             return None
 
+        reranker_name = reference[COMPONENT_KEY]
+        # A reference without ``params`` is the minimal ``{"component": name}``
+        # the form stores for a reranker chosen by name alone; the retriever
+        # setup then takes the schema defaults.
+        reranker_params = reference.get(PARAMS_KEY)
+        if reranker_params is None:
+            reranker_params = {}
+        elif not isinstance(reranker_params, dict):
+            raise RAGTransformationConfigError(
+                f"'params' of reranker '{reranker_name}' must be a dict, got "
+                f"{type(reranker_params).__name__}."
+            )
+
         report(0.85, "Building the reranker")
-        reranker = retriever_service.setup(
-            reference["component"], reference.get("params", {})
-        )
+        reranker = retriever_service.setup(reranker_name, reranker_params)
         if not isinstance(reranker.model, ChunkScorer):
             self._close_model(reranker)
-            self._close_model(retriever_result)
             raise RAGTransformationConfigError(
-                f"Reranker '{reference['component']}' does not have the ChunkScorer "
+                f"Reranker '{reranker_name}' does not have the ChunkScorer "
                 "capability and cannot order a pool."
             )
         return reranker
