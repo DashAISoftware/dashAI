@@ -3,7 +3,7 @@ import type { AxiosInstance } from "axios";
 import i18n from "../utils/i18n";
 
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL,
+  baseURL: import.meta.env.VITE_API_URL,
   paramsSerializer: (params) => {
     const sp = new URLSearchParams();
     for (const [key, val] of Object.entries(params)) {
