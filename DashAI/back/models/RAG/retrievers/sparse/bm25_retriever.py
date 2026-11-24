@@ -154,8 +154,13 @@ class BM25Retriever(SparseRetriever):
 
     @classmethod
     def _get_main_parameters(cls) -> Dict[str, str]:
-        """Return the BM25 weighting and top-k parameter paths."""
-        return {"k1": "k1", "b": "b", "top_k": "top_k"}
+        """Return the BM25 weighting, similarity function and top-k paths."""
+        return {
+            "k1": "k1",
+            "b": "b",
+            "similarity_function": "similarity_function",
+            "top_k": "top_k",
+        }
 
     def __init__(self, **kwargs):
         """Initialize the BM25 retriever.
@@ -175,6 +180,20 @@ class BM25Retriever(SparseRetriever):
         self._top_k = self.params.pop("top_k")
 
         self._converter = self.params.pop("vectorizer")
+
+    @property
+    def similarity_function(self) -> str:
+        """Return the name of the configured similarity metric component.
+
+        The raw configuration key is ``similarity_function``; the live metric is
+        stored as ``_similarity_metric`` during construction. Exposing its name
+        under the configuration key lets the schema-summary resolver find it on
+        directly constructed instances.
+
+        Returns:
+            Class name of the configured distance metric component.
+        """
+        return type(self._similarity_metric).__name__
 
     def init_model(self) -> None:
         """Restore saved state or fit BM25 from scratch."""
