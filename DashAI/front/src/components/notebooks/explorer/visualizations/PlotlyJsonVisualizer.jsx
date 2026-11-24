@@ -199,7 +199,7 @@ function PlotlyJsonVisualizer({
     },
   };
 
-  const ToolbarButtons = ({
+  const renderToolbar = ({
     plotRefProp,
     showFullscreenExit = false,
     compact = false,
@@ -304,7 +304,7 @@ function PlotlyJsonVisualizer({
           alignItems: "center",
         }}
       >
-        <ToolbarButtons plotRefProp={plotRef} compact={minimalist} />
+        {renderToolbar({ plotRefProp: plotRef, compact: minimalist })}
         {!expanded ? (
           <Plot
             ref={plotRef}
@@ -336,10 +336,10 @@ function PlotlyJsonVisualizer({
             }}
           >
             <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
-              <ToolbarButtons
-                plotRefProp={fullscreenPlotRef}
-                showFullscreenExit
-              />
+              {renderToolbar({
+                plotRefProp: fullscreenPlotRef,
+                showFullscreenExit: true,
+              })}
               <Plot
                 ref={fullscreenPlotRef}
                 data={plotData.data}
