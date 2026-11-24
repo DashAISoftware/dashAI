@@ -76,6 +76,8 @@ export default function DatasetVisualization({
     datasetsContext?.datasets ?? modelsContext?.datasets ?? [];
   const deleteDatasetById =
     datasetsContext?.deleteDatasetById ?? modelsContext?.deleteDatasetById;
+  const fetchDatasets =
+    datasetsContext?.fetchDatasets ?? modelsContext?.fetchDatasets;
   const navigate = useNavigate();
 
   const [datasetInfo, setDatasetInfo] = useState(null);
