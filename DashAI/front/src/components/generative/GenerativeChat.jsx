@@ -406,7 +406,6 @@ export default function GenerativeChat({
         // Look for the Dict type output that contains reference information
         const referenceItem = referenceRow;
         if (referenceItem) {
-          console.log("Raw reference data:", referenceItem.data);
           try {
             // The data might be a Python dict string, try to parse it as JSON
             let dataStr = referenceItem.data;
@@ -422,7 +421,6 @@ export default function GenerativeChat({
                 .replace(/None/g, "null"); // Replace Python None with JSON null
             }
 
-            console.log("Processed data string:", dataStr);
             const parsedData = JSON.parse(dataStr);
             referenceOutput = parsedData;
           } catch (e) {
@@ -436,7 +434,6 @@ export default function GenerativeChat({
                   /(\d+):\s*\{\s*['"]?document_id['"]?\s*:\s*(\d+).*?['"]?document_name['"]?\s*:\s*['"]([^'"]*)['"]\s*.*?['"]?document_position['"]?\s*:\s*(\d+).*?['"]?text['"]?\s*:\s*['"]([^'"]*)['"]/gs,
                 ),
               ];
-              console.log("Regex matches for references:", matches);
 
               if (matches.length > 0) {
                 referenceOutput = {};
@@ -449,7 +446,6 @@ export default function GenerativeChat({
                     text: match[5],
                   };
                 });
-                console.log("Fallback parsing successful:", referenceOutput);
               }
             } catch (fallbackError) {
               console.log("Fallback parsing also failed:", fallbackError);

@@ -67,11 +67,6 @@ function NestedCVSelector({
     getInnerSplitters();
   }, [outerSplit, enqueueSnackbar, t]);
 
-  console.log("outerSplit:", outerSplit);
-  console.log("innerConfig:", innerConfig);
-  console.log("splitterType:", innerConfig?.splitterType);
-  console.log("useNestedCV:", useNestedCV);
-
   const learnMoreLink = (
     <Link
       href="https://scikit-learn.org/stable/auto_examples/model_selection/plot_nested_cross_validation_iris.html"
