@@ -40,8 +40,8 @@ from DashAI.back.models.RAG.retrievers.persistence import (
     DensePersistence,
     SparsePersistence,
 )
-from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
-    strip_expansion_options,
+from DashAI.back.models.RAG.retrievers.persistence_signature import (
+    persistence_signature,
 )
 from DashAI.back.models.RAG.retrievers.retriever_factory import (
     RetrieverFactory,
@@ -183,7 +183,7 @@ class RetrieverSetupService:
         if issubclass(model_class, CompositeRetriever):
             return self._setup_composite(model_class, params)
 
-        identity_params = dict(sorted(strip_expansion_options(params).items()))
+        identity_params = persistence_signature(model_class, params, self._registry)
         loaded = self._load_unit_from_db(
             model_class, model_class.__name__, identity_params, params
         )
@@ -463,11 +463,11 @@ class RetrieverSetupService:
         sessions over the same corpus with the same configuration share one
         fitted state, while a different corpus produces a different folder.
 
-        Parameters excluded from the identity: the retrieve-then-expand options
-        (post-processing), ``top_k`` (how many rows are returned, not how they
-        are scored) and ``similarity_function`` (the distance used at query
-        time). Vectorizer, ``k1``/``b``/``delta`` and the TF-IDF settings all
-        stay, because changing them changes the fitted matrix.
+        The identity is the retriever's persistence signature: the query-time
+        parameters the class declares in ``NON_PERSISTENT_PARAMS`` (the
+        retrieve-then-expand options, ``top_k``, the distance metric) are
+        left out, while everything that changes the fitted matrix stays,
+        including the parameters of nested components such as the vectorizer.
 
         Args:
             model_class: Retriever model class.
@@ -476,9 +476,7 @@ class RetrieverSetupService:
         Returns:
             A SparsePersistence instance pointing to the computed folder.
         """
-        artifact_params = strip_expansion_options(params)
-        artifact_params.pop("top_k", None)
-        artifact_params.pop("similarity_function", None)
+        artifact_params = persistence_signature(model_class, params, self._registry)
         identity = hash_function(
             json.dumps(
                 {

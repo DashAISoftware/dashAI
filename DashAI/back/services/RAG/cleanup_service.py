@@ -4,6 +4,7 @@ from typing import Any, Sequence
 
 from sqlalchemy.orm import Session
 
+from DashAI.back.core.schema_fields.utils import normalize_payload
 from DashAI.back.dependencies.database.models import (
     RAGChunkingModel,
     RAGChunkSet,
@@ -16,46 +17,58 @@ from DashAI.back.dependencies.database.models import (
     RAGRetrieverChild,
     RAGSparseRetriever,
 )
+from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+from DashAI.back.models.RAG.exceptions import RAGComponentNotFoundError
 from DashAI.back.models.RAG.RAG_constants import (
     COMPOSITE_RETRIEVER_NAMES,
     RAG_PARAM_RETRIEVER_MODEL,
 )
-from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
-    strip_expansion_options,
+from DashAI.back.models.RAG.retrievers.persistence_signature import (
+    reference_signature,
 )
+from DashAI.back.models.RAG.retrievers.ref_utils import is_component_ref
 from DashAI.back.services.RAG.deferred_fs import remove_after_commit
 from DashAI.back.services.RAG.retriever_db_service import RetrieverDBService
 
 log = logging.getLogger(__name__)
 
 
-def _retriever_identity(reference: Any) -> Any:
-    """Return a retriever reference without its expansion options.
+def _retriever_identity(reference: Any, registry: ComponentRegistry | None) -> Any:
+    """Return a retriever reference reduced to its persistence signature.
 
-    The retrieve-then-expand options are post-processing knobs: they change
-    nothing about what is indexed, so a session that only toggled them must not
-    have its fitted retriever deleted. Stripping is recursive, so a composite's
-    children are compared without their options too.
+    Query-time parameters (``top_k``, the distance metric, the
+    retrieve-then-expand options) change nothing about what is indexed, so a
+    session that only changed them must not have its fitted retriever deleted.
+    The reduction is recursive, so a composite's children and nested components
+    are compared by their own signatures too.
 
     Parameters
     ----------
     reference : Any
         A ``{"component", "params"}`` retriever reference, or any other value.
+    registry : ComponentRegistry | None
+        Registry used to resolve the retriever classes.
 
     Returns
     -------
     Any
-        The reference with ``params`` stripped of the two options, or the value
-        unchanged when it is not a retriever reference.
+        The reference with ``params`` reduced to its persistence signature, or
+        the value unchanged when it is not a retriever reference.
+
+    Raises
+    ------
+    ValueError
+        If *reference* is a retriever reference and no registry was given.
     """
-    if not isinstance(reference, dict):
-        return reference
-    params = reference.get("params")
-    if not isinstance(params, dict):
-        return reference
-    identity = dict(reference)
-    identity["params"] = strip_expansion_options(params)
-    return identity
+    canonical = normalize_payload(reference)
+    if not is_component_ref(canonical):
+        return canonical
+    if registry is None:
+        raise ValueError(
+            "CleanupService needs a component registry to compare retriever "
+            "configurations."
+        )
+    return reference_signature(canonical, registry)
 
 
 class CleanupService:
@@ -65,10 +78,19 @@ class CleanupService:
     embedding matrices, and storage folders when a generative session is
     deleted or its parameters are updated. Order of operations is critical:
     retrievers must be cleaned up BEFORE chunking models.
+
+    Parameters
+    ----------
+    db : Session
+        SQLAlchemy session.
+    registry : ComponentRegistry | None
+        Registry used to compare retriever configurations when a session's
+        parameters are updated. Not needed for deletion-only use.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, registry: ComponentRegistry | None = None):
         self.db = db
+        self._registry = registry
         self._retriever_db = RetrieverDBService(db)
 
     def cleanup_orphaned_resources(
@@ -99,13 +121,31 @@ class CleanupService:
                 return
 
             def _component_changed(key: str) -> bool:
+                """Whether one parameter of the session really changed.
+
+                Parameters
+                ----------
+                key : str
+                    Session parameter name, such as ``retriever_model``.
+
+                Returns
+                -------
+                bool
+                    ``True`` on full session deletion, when the raw value differs
+                    for a non-retriever parameter, or when a retriever's identity
+                    differs. Identical raw values are never a change.
+                """
                 if new_parameters is None:
                     return True
                 old_value = old_parameters.get(key)
                 new_value = new_parameters.get(key)
+                # Identical raw values cannot differ in identity, so the registry
+                # is only needed when the configuration really changed.
+                if old_value == new_value:
+                    return False
                 if key != RAG_PARAM_RETRIEVER_MODEL:
-                    return old_value != new_value
-                return _retriever_identity(old_value) != _retriever_identity(new_value)
+                    return True
+                return self._retriever_changed(old_value, new_value)
 
             documents_ids = sorted(old_parameters.get("documents") or [])
 
@@ -155,6 +195,39 @@ class CleanupService:
             raise
 
     # ── Private helpers ──
+
+    def _retriever_changed(self, old_value: Any, new_value: Any) -> bool:
+        """Whether a retriever reference changed in a way that affects its fit.
+
+        An old reference whose component is no longer registered, typically
+        because its plugin was uninstalled, cannot be reduced to a signature and
+        so cannot be shown to match the new one. It is taken as changed, which
+        lets the session move off it; the orphaned fitted state is then released.
+
+        Parameters
+        ----------
+        old_value : Any
+            The retriever reference before the update.
+        new_value : Any
+            The retriever reference after the update.
+
+        Returns
+        -------
+        bool
+            ``True`` when the identities differ, or when the old reference's
+            component cannot be resolved.
+
+        Raises
+        ------
+        ValueError
+            If a retriever reference must be compared and no registry was given.
+        """
+        try:
+            old_identity = _retriever_identity(old_value, self._registry)
+        except RAGComponentNotFoundError as error:
+            log.warning("%s; treating the retriever as changed.", error)
+            return True
+        return old_identity != _retriever_identity(new_value, self._registry)
 
     def _drop_chunking_model_if_unused(self, session_id: int) -> None:
         """Release the chunking model a session's pipeline points at.
@@ -326,26 +399,53 @@ class CleanupService:
         )
 
         for bridge in composite_bridges:
-            child_links = (
-                self.db.query(RAGRetrieverChild)
-                .filter_by(parent_id=bridge.id)
-                .order_by(RAGRetrieverChild.child_order)
-                .all()
-            )
-            for link in child_links:
-                child_bridge = self.db.query(RAGRetriever).get(link.child_id)
-                if child_bridge is None:
-                    continue
-                if child_bridge.sparse_detail:
-                    detail = child_bridge.sparse_detail
-                    if not self._sparse_folder_in_use(
-                        detail.storage_folder, exclude_ids=[detail.id]
-                    ):
-                        remove_after_commit(self.db, detail.storage_folder)
-                    self.db.delete(detail)
-                elif child_bridge.dense_detail:
-                    self.db.delete(child_bridge.dense_detail)
-            self.db.delete(bridge)
+            self._release_bridge_tree(bridge)
+
+    def _release_bridge_tree(self, bridge: RAGRetriever) -> None:
+        """Delete a composite bridge together with every child bridge beneath it.
+
+        Children are released first, recursively, so a composite nested in
+        another composite leaves no orphaned bridge row. A leaf's fitted detail
+        goes with its bridge; a sparse storage folder is removed only once no
+        other row still uses it.
+
+        Parameters
+        ----------
+        bridge : RAGRetriever
+            The composite or leaf bridge to delete.
+        """
+        child_links = (
+            self.db.query(RAGRetrieverChild)
+            .filter_by(parent_id=bridge.id)
+            .order_by(RAGRetrieverChild.child_order)
+            .all()
+        )
+        for link in child_links:
+            child_bridge = self.db.get(RAGRetriever, link.child_id)
+            if child_bridge is not None:
+                self._release_bridge_tree(child_bridge)
+        if bridge.sparse_detail is not None:
+            self._cleanup_sparse_retriever(bridge)
+        elif bridge.dense_detail is not None:
+            self.db.delete(bridge.dense_detail)
+        self._delete_bridge_row(bridge)
+
+    def _delete_bridge_row(self, bridge: RAGRetriever) -> None:
+        """Delete a bridge row and every child link that points at it.
+
+        The links where the bridge is the parent are removed with it through
+        the ORM cascade. The links where it is a child are removed explicitly,
+        because nothing else would remove them and they would dangle.
+
+        Parameters
+        ----------
+        bridge : RAGRetriever
+            The bridge row to delete.
+        """
+        self.db.query(RAGRetrieverChild).filter(
+            RAGRetrieverChild.child_id == bridge.id
+        ).delete(synchronize_session="fetch")
+        self.db.delete(bridge)
 
     def _cleanup_unit_retriever(
         self,
@@ -369,22 +469,22 @@ class CleanupService:
         if pipeline_id is None:
             return
 
-        bridge = (
+        # Every bridge of the class in this pipeline belongs to the configuration
+        # being replaced, so all of them go, not only the first one found.
+        bridges = (
             self.db.query(RAGRetriever)
             .filter(
                 RAGRetriever.pipeline_id == pipeline_id,
                 RAGRetriever.class_name == retriever_model_params.get("component"),
             )
-            .first()
+            .all()
         )
-        if bridge is None:
-            return
-
-        if bridge.dense_detail is not None:
-            self._cleanup_dense_retriever(bridge, documents_ids)
-        elif bridge.sparse_detail is not None:
-            self._cleanup_sparse_retriever(bridge)
-        self.db.delete(bridge)
+        for bridge in bridges:
+            if bridge.dense_detail is not None:
+                self._cleanup_dense_retriever(bridge, documents_ids)
+            elif bridge.sparse_detail is not None:
+                self._cleanup_sparse_retriever(bridge)
+            self._delete_bridge_row(bridge)
 
     def _cleanup_dense_retriever(
         self,

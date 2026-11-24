@@ -8,6 +8,9 @@ A cached retriever is loaded with the options the caller asked for even though
 the cache key ignores them.
 """
 
+import copy
+import json
+import logging
 import uuid
 from pathlib import Path
 from typing import Any, Dict
@@ -15,6 +18,7 @@ from typing import Any, Dict
 import pytest
 from fastapi.testclient import TestClient
 
+from DashAI.back.converters.scikit_learn.bag_of_words import BagOfWordsConverter
 from DashAI.back.dependencies.database.models import (
     RAGChunkSet,
     RAGPipeline,
@@ -23,14 +27,26 @@ from DashAI.back.dependencies.database.models import (
     RAGSparseRetriever,
 )
 from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.exceptions import RAGComponentNotFoundError
+from DashAI.back.models.RAG.retrievers.composite.mmr_reranker_retriever import (
+    MMRRerankerRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.parallel_retriever import (
+    ParallelRetriever,
+)
+from DashAI.back.models.RAG.retrievers.persistence_signature import (
+    persistence_signature,
+)
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     ENABLE_FIELD,
     WINDOW_FIELD,
     strip_expansion_options,
 )
+from DashAI.back.models.RAG.retrievers.similarity import CosineSimilarity
 from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import BM25Retriever
 from DashAI.back.services.RAG import retriever_presets
 from DashAI.back.services.RAG.cleanup_service import CleanupService
+from DashAI.back.services.RAG.index_status_service import IndexStatusService
 from DashAI.back.services.RAG.retriever_setup_service import RetrieverSetupService
 from DashAI.back.services.RAG.session_configuration_service import (
     SessionConfigurationService,
@@ -54,6 +70,14 @@ def _preset(client: TestClient, key: str) -> Dict[str, Any]:
     raise AssertionError(f"preset {key} is missing")
 
 
+#: Just the classes the artifact-identity tests nest inside BM25 parameters.
+_REGISTRY = {
+    "BagOfWordsConverter": {"class": BagOfWordsConverter},
+    "CosineSimilarity": {"class": CosineSimilarity},
+    "BM25Retriever": {"class": BM25Retriever},
+}
+
+
 def _setup_service(
     db,
     chunks: Dict[int, Dict[int, Chunk]] | None = None,
@@ -64,7 +88,7 @@ def _setup_service(
     """Return a setup service with the minimal wiring the artifact hash needs."""
     return RetrieverSetupService(
         db=db,
-        registry={},
+        registry=_REGISTRY,
         env_RAG_path=env_rag_path,
         chunks=chunks or {},
         chunk_set_id=chunk_set_id,
@@ -301,7 +325,13 @@ def _sparse_retriever_state(db, session_id: int, tmp_path, params: Dict[str, Any
     return bridge, detail, folder
 
 
-def _composite_retriever_state(db, session_id: int, tmp_path, params: Dict[str, Any]):
+def _composite_retriever_state(
+    db,
+    session_id: int,
+    tmp_path,
+    params: Dict[str, Any],
+    parent_class: str = "ParallelRetriever",
+):
     """Insert a session pipeline with a composite retriever and one child."""
     chunk_set = RAGChunkSet(
         signature=uuid.uuid4().hex, parameters={}, session_id=session_id
@@ -324,7 +354,7 @@ def _composite_retriever_state(db, session_id: int, tmp_path, params: Dict[str, 
         storage_folder=str(folder),
     )
     db.add(child_detail)
-    parent = RAGRetriever(class_name="ParallelRetriever", pipeline_id=pipeline.id)
+    parent = RAGRetriever(class_name=parent_class, pipeline_id=pipeline.id)
     db.add(parent)
     db.flush()
     db.add(
@@ -357,7 +387,7 @@ def test_toggling_expansion_options_does_not_delete_a_unit_retriever(
             },
         }
 
-        CleanupService(db).cleanup_orphaned_resources(
+        CleanupService(db, _registry(client)).cleanup_orphaned_resources(
             session_id, old_parameters, new_parameters
         )
 
@@ -389,7 +419,7 @@ def test_changing_a_fitted_parameter_does_delete_the_unit_retriever(
             },
         }
 
-        CleanupService(db).cleanup_orphaned_resources(
+        CleanupService(db, _registry(client)).cleanup_orphaned_resources(
             session_id, old_parameters, new_parameters
         )
 
@@ -436,7 +466,7 @@ def test_toggling_expansion_options_does_not_delete_a_composite_retriever(
             },
         }
 
-        CleanupService(db).cleanup_orphaned_resources(
+        CleanupService(db, _registry(client)).cleanup_orphaned_resources(
             session_id, old_parameters, new_parameters
         )
 
@@ -735,3 +765,507 @@ def test_cache_hit_keeps_the_expansion_options_on_the_live_model(
         assert retrieved[0].document_position == 2
         assert retrieved[0].source_positions == (2, 3, 4)
         assert trace["chunks"] == ["1_2"]
+
+
+# ── Persistence signature ────────────────────────────────────────────────────
+
+
+def test_changing_the_distance_metric_keeps_the_sparse_storage_folder(orm_db):
+    """The distance metric acts at query time, so it never moves the folder."""
+    service = _setup_service(orm_db, chunks=_artifact_corpus())
+    params = bm25_retriever_params()
+    other_metric = {
+        **params,
+        "similarity_function": {"component": "CosineSimilarity", "params": {"x": 1}},
+    }
+
+    assert (
+        service._build_sparse_persistence_for(BM25Retriever, params).model_dir
+        == service._build_sparse_persistence_for(BM25Retriever, other_metric).model_dir
+    )
+
+
+def test_signature_drops_query_time_params_and_keeps_nested_fitted_ones():
+    """``top_k`` and the metric go; the vectorizer's parameters stay."""
+    params = bm25_retriever_params()
+    changed_vectorizer = {
+        **params,
+        "vectorizer": {"component": "BagOfWordsConverter", "params": {"lowercase": 0}},
+    }
+
+    base = persistence_signature(BM25Retriever, params, _REGISTRY)
+
+    assert "top_k" not in base
+    assert "similarity_function" not in base
+    assert base == persistence_signature(
+        BM25Retriever, {**params, "top_k": 9, **ENABLED_PARAMS}, _REGISTRY
+    )
+    assert base != persistence_signature(BM25Retriever, changed_vectorizer, _REGISTRY)
+
+
+def test_signature_uses_the_declaration_of_nested_components():
+    """A nested class's own ``NON_PERSISTENT_PARAMS`` applies inside the ref."""
+
+    class Inner:
+        NON_PERSISTENT_PARAMS = ("cache_size",)
+
+    registry = {"Inner": {"class": Inner}}
+    reference = {"component": "Inner", "params": {"cache_size": 1, "model": "m"}}
+
+    class Outer:
+        NON_PERSISTENT_PARAMS = ("top_k",)
+
+    signature = persistence_signature(
+        Outer, {"top_k": 3, "child": reference, "items": [reference]}, registry
+    )
+
+    expected = {"component": "Inner", "params": {"model": "m"}}
+    assert signature == {"child": expected, "items": [expected]}
+
+
+def test_signature_rejects_an_unregistered_nested_component():
+    """A component the registry does not know is an error, not a default."""
+    reference = {"component": "Missing", "params": {}}
+
+    with pytest.raises(RAGComponentNotFoundError):
+        persistence_signature(BM25Retriever, {"child": reference}, {})
+
+
+def test_changing_the_distance_metric_does_not_delete_a_unit_retriever(
+    client: TestClient, tmp_path
+):
+    """Only the metric and ``top_k`` changed, so the fitted retriever stays."""
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        session_id = _insert_rag_session(
+            db, f"identity_metric_{uuid.uuid4().hex[:6]}"
+        ).id
+        params = bm25_retriever_params()
+        bridge, detail, folder = _sparse_retriever_state(
+            db, session_id, tmp_path, params
+        )
+        old_parameters = {
+            "documents": [],
+            "retriever_model": {"component": "BM25Retriever", "params": params},
+        }
+        new_parameters = {
+            "documents": [],
+            "retriever_model": {
+                "component": "BM25Retriever",
+                "params": {
+                    **params,
+                    "top_k": 9,
+                    "similarity_function": {
+                        "component": "EuclideanSimilarity",
+                        "params": {},
+                    },
+                },
+            },
+        }
+
+        CleanupService(db, _registry(client)).cleanup_orphaned_resources(
+            session_id, old_parameters, new_parameters
+        )
+
+        assert db.get(RAGRetriever, bridge.id) is not None
+        assert db.get(RAGSparseRetriever, detail.id) is not None
+        assert folder.exists()
+
+
+# ── Composite and nested signatures ──────────────────────────────────────────
+
+_COMPOSITE_REGISTRY = {
+    **_REGISTRY,
+    "MMRRerankerRetriever": {"class": MMRRerankerRetriever},
+    "ParallelRetriever": {"class": ParallelRetriever},
+}
+
+
+def _mmr_params(top_k: int, mmr_lambda: float) -> Dict[str, Any]:
+    """Return MMR reranker parameters over one BM25 child."""
+    return {
+        "children": [{"component": "BM25Retriever", "params": bm25_retriever_params()}],
+        "mmr_lambda": mmr_lambda,
+        "top_k": top_k,
+    }
+
+
+def test_mmr_top_k_and_lambda_do_not_change_the_signature():
+    """MMR's selection knobs act at query time; only its child is persisted."""
+    base = persistence_signature(
+        MMRRerankerRetriever, _mmr_params(3, 0.5), _COMPOSITE_REGISTRY
+    )
+    retuned = persistence_signature(
+        MMRRerankerRetriever, _mmr_params(7, 0.9), _COMPOSITE_REGISTRY
+    )
+
+    assert base == retuned
+    assert list(base) == ["children"]
+
+
+def test_parallel_merge_strategy_does_not_change_the_signature():
+    """The merge strategy only combines child results at query time."""
+    children = [{"component": "BM25Retriever", "params": bm25_retriever_params()}]
+    round_robin = persistence_signature(
+        ParallelRetriever,
+        {"merge_strategy": "round_robin", "children": children},
+        _COMPOSITE_REGISTRY,
+    )
+    interleave = persistence_signature(
+        ParallelRetriever,
+        {"merge_strategy": "interleave", "children": children},
+        _COMPOSITE_REGISTRY,
+    )
+
+    assert round_robin == interleave
+
+
+def test_nested_key_order_does_not_change_the_serialised_signature():
+    """Natural-key lookups compare JSON text, so nested key order is canonical."""
+    params = bm25_retriever_params()
+    forward_vectorizer = {
+        "component": "BagOfWordsConverter",
+        "params": {"alpha": 1, "beta": 2},
+    }
+    backward_vectorizer = {
+        "component": "BagOfWordsConverter",
+        "params": {"beta": 2, "alpha": 1},
+    }
+    forward = persistence_signature(
+        BM25Retriever, {**params, "vectorizer": forward_vectorizer}, _REGISTRY
+    )
+    backward = persistence_signature(
+        BM25Retriever, {**params, "vectorizer": backward_vectorizer}, _REGISTRY
+    )
+
+    assert json.dumps(forward) == json.dumps(backward)
+
+
+class _Holder:
+    """A nested component class without a ``NON_PERSISTENT_PARAMS`` declaration."""
+
+
+class _Inner:
+    """A nested component class that declares one query-time parameter."""
+
+    NON_PERSISTENT_PARAMS = ("cache_size",)
+
+
+def test_refs_inside_a_plain_dict_value_are_resolved():
+    """Plain dicts are searched for refs; undeclared classes keep all params."""
+    registry = {"_Holder": {"class": _Holder}, "_Inner": {"class": _Inner}}
+    params = {
+        "kept": 1,
+        "settings": {
+            "child": {"component": "_Inner", "params": {"cache_size": 4, "model": "m"}}
+        },
+    }
+
+    signature = persistence_signature(_Holder, params, registry)
+
+    assert signature == {
+        "kept": 1,
+        "settings": {"child": {"component": "_Inner", "params": {"model": "m"}}},
+    }
+
+
+def test_a_component_ref_with_non_dict_params_names_the_component():
+    """Malformed nested params raise a clear error instead of an AttributeError."""
+    reference = {"component": "BagOfWordsConverter", "params": "lowercase"}
+
+    with pytest.raises(ValueError, match="BagOfWordsConverter"):
+        persistence_signature(BM25Retriever, {"vectorizer": reference}, _REGISTRY)
+
+
+# ── Cleanup needs the registry only when it must compare ─────────────────────
+
+
+def test_cleanup_without_a_registry_works_when_the_retriever_is_unchanged(orm_db):
+    """An unchanged retriever is compared raw, so no registry is needed."""
+    parameters = {
+        "documents": [],
+        "retriever_model": {
+            "component": "BM25Retriever",
+            "params": bm25_retriever_params(),
+        },
+    }
+
+    CleanupService(orm_db).cleanup_orphaned_resources(
+        999, parameters, copy.deepcopy(parameters)
+    )
+
+
+def test_unchanged_retriever_with_a_missing_plugin_does_not_raise(orm_db):
+    """A retriever whose plugin is gone is left alone while it is unchanged."""
+    parameters = {
+        "documents": [],
+        "retriever_model": {"component": "PluginOnlyRetriever", "params": {"x": 1}},
+    }
+
+    CleanupService(orm_db).cleanup_orphaned_resources(
+        999, parameters, copy.deepcopy(parameters)
+    )
+    CleanupService(orm_db, {}).cleanup_orphaned_resources(
+        999, parameters, copy.deepcopy(parameters)
+    )
+
+
+def test_changed_retriever_without_a_registry_raises_a_clear_error(orm_db):
+    """A real change must be compared, which needs a registry."""
+    old_parameters = {
+        "documents": [],
+        "retriever_model": {
+            "component": "BM25Retriever",
+            "params": bm25_retriever_params(),
+        },
+    }
+    new_parameters = copy.deepcopy(old_parameters)
+    new_parameters["retriever_model"]["params"]["k1"] = 2.0
+
+    with pytest.raises(ValueError, match="registry"):
+        CleanupService(orm_db).cleanup_orphaned_resources(
+            999, old_parameters, new_parameters
+        )
+
+
+def test_changed_retriever_whose_old_plugin_is_gone_is_treated_as_changed(
+    orm_db, caplog
+):
+    """An uninstalled plugin cannot be compared, so the switch must still go through.
+
+    The old reference cannot be reduced to a signature, so it is taken as a real
+    change: the session is updated and the user can move to another retriever.
+    """
+    old_parameters = {
+        "documents": [],
+        "retriever_model": {"component": "PluginOnlyRetriever", "params": {"x": 1}},
+    }
+    new_parameters = {
+        "documents": [],
+        "retriever_model": {
+            "component": "BM25Retriever",
+            "params": bm25_retriever_params(),
+        },
+    }
+
+    with caplog.at_level(logging.WARNING, logger=CleanupService.__module__):
+        CleanupService(orm_db, _REGISTRY).cleanup_orphaned_resources(
+            999, old_parameters, new_parameters
+        )
+
+    assert "PluginOnlyRetriever" in caplog.text
+
+
+_COMPOSITE_KNOB_CASES = [
+    (
+        "MMRRerankerRetriever",
+        {"top_k": 3, "mmr_lambda": 0.5},
+        {"top_k": 9, "mmr_lambda": 0.5},
+    ),
+    (
+        "MMRRerankerRetriever",
+        {"top_k": 3, "mmr_lambda": 0.5},
+        {"top_k": 3, "mmr_lambda": 0.1},
+    ),
+    (
+        "ParallelRetriever",
+        {"merge_strategy": "round_robin"},
+        {"merge_strategy": "interleave"},
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    ("parent_class", "old_knobs", "new_knobs"), _COMPOSITE_KNOB_CASES
+)
+def test_changing_a_composite_knob_keeps_its_child_state(
+    client: TestClient, tmp_path, parent_class, old_knobs, new_knobs
+):
+    """Composite knobs are query-time: the child's sparse row and folder stay."""
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        session_id = _insert_rag_session(db, f"identity_knob_{uuid.uuid4().hex[:6]}").id
+        child_params = bm25_retriever_params()
+        parent, child_bridge, folder = _composite_retriever_state(
+            db, session_id, tmp_path, child_params, parent_class=parent_class
+        )
+        children = [{"component": "BM25Retriever", "params": child_params}]
+        old_parameters = {
+            "documents": [],
+            "retriever_model": {
+                "component": parent_class,
+                "params": {**old_knobs, "children": children},
+            },
+        }
+        new_parameters = {
+            "documents": [],
+            "retriever_model": {
+                "component": parent_class,
+                "params": {**new_knobs, "children": children},
+            },
+        }
+
+        CleanupService(db, _registry(client)).cleanup_orphaned_resources(
+            session_id, old_parameters, new_parameters
+        )
+
+        assert db.get(RAGRetriever, parent.id) is not None
+        assert db.get(RAGRetriever, child_bridge.id) is not None
+        assert (
+            db.query(RAGSparseRetriever).filter_by(bridge_id=child_bridge.id).count()
+            == 1
+        )
+        assert folder.exists()
+
+
+# ── Index status readiness ───────────────────────────────────────────────────
+
+
+def test_a_composite_with_a_non_dict_child_is_not_ready(orm_db):
+    """A junk child cannot be verified, so the composite is not ready."""
+    retriever = {
+        "component": "ParallelRetriever",
+        "params": {"merge_strategy": "round_robin", "children": ["junk"]},
+    }
+    service = IndexStatusService(orm_db, _COMPOSITE_REGISTRY)
+
+    assert service._retriever_ready(retriever, 7) is False
+
+
+def test_a_composite_without_children_is_not_ready(orm_db):
+    """A composite with no ``children`` key has nothing to verify, so not ready."""
+    retriever = {
+        "component": "ParallelRetriever",
+        "params": {"merge_strategy": "round_robin"},
+    }
+    service = IndexStatusService(orm_db, _COMPOSITE_REGISTRY)
+
+    assert service._retriever_ready(retriever, 7) is False
+
+
+def test_an_unregistered_nested_component_is_not_ready(orm_db):
+    """An unknown nested component reports not-ready instead of raising."""
+    params = {
+        **bm25_retriever_params(),
+        "vectorizer": {"component": "MissingConverter", "params": {}},
+    }
+    service = IndexStatusService(orm_db, _REGISTRY)
+
+    assert (
+        service._retriever_ready({"component": "BM25Retriever", "params": params}, 7)
+        is False
+    )
+
+
+def test_a_wrapped_stored_retriever_is_matched_like_setup_matches_it(orm_db, tmp_path):
+    """A ``properties``-wrapped stored retriever resolves to its fitted row."""
+    session_id = _insert_rag_session(orm_db, f"identity_wrap_{uuid.uuid4().hex[:6]}").id
+    params = bm25_retriever_params()
+    signature = persistence_signature(BM25Retriever, params, _REGISTRY)
+    _, detail, _ = _sparse_retriever_state(orm_db, session_id, tmp_path, signature)
+    wrapped = {
+        "properties": {
+            "component": "BM25Retriever",
+            "params": {"comp": {"component": "BM25Retriever", "params": params}},
+        },
+    }
+    service = IndexStatusService(orm_db, _REGISTRY)
+
+    assert service._retriever_ready(wrapped, detail.chunk_set_id) is True
+
+
+# ── Bridge rows ──────────────────────────────────────────────────────────────
+
+
+def test_unit_cleanup_removes_every_bridge_of_the_class(client: TestClient, tmp_path):
+    """A stray bridge of the same class in the pipeline is removed too."""
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        session_id = _insert_rag_session(
+            db, f"identity_stray_{uuid.uuid4().hex[:6]}"
+        ).id
+        params = bm25_retriever_params()
+        bridge, detail, _ = _sparse_retriever_state(db, session_id, tmp_path, params)
+        stray_bridge = RAGRetriever(
+            class_name="BM25Retriever", pipeline_id=bridge.pipeline_id
+        )
+        db.add(stray_bridge)
+        db.flush()
+        db.add(
+            RAGSparseRetriever(
+                bridge_id=stray_bridge.id,
+                chunk_set_id=detail.chunk_set_id,
+                class_name="BM25Retriever",
+                parameters={"k1": 9.0},
+                storage_folder=str(tmp_path / "stray_folder"),
+            )
+        )
+        db.commit()
+        bridge_id = bridge.id
+        stray_id = stray_bridge.id
+        old_parameters = {
+            "documents": [],
+            "retriever_model": {"component": "BM25Retriever", "params": params},
+        }
+        new_parameters = {
+            "documents": [],
+            "retriever_model": {
+                "component": "BM25Retriever",
+                "params": {**params, "k1": 2.0},
+            },
+        }
+
+        CleanupService(db, _registry(client)).cleanup_orphaned_resources(
+            session_id, old_parameters, new_parameters
+        )
+
+        assert db.get(RAGRetriever, bridge_id) is None
+        assert db.get(RAGRetriever, stray_id) is None
+
+
+def test_composite_cleanup_removes_its_child_bridges(client: TestClient, tmp_path):
+    """A composite change deletes its child bridges and their links too."""
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        session_id = _insert_rag_session(
+            db, f"identity_childbr_{uuid.uuid4().hex[:6]}"
+        ).id
+        child_params = bm25_retriever_params()
+        parent, child_bridge, _ = _composite_retriever_state(
+            db, session_id, tmp_path, child_params
+        )
+        parent_id = parent.id
+        child_bridge_id = child_bridge.id
+        children = [{"component": "BM25Retriever", "params": child_params}]
+        old_parameters = {
+            "documents": [],
+            "retriever_model": {
+                "component": "ParallelRetriever",
+                "params": {"merge_strategy": "round_robin", "children": children},
+            },
+        }
+        new_parameters = {
+            "documents": [],
+            "retriever_model": {
+                "component": "ParallelRetriever",
+                "params": {
+                    "merge_strategy": "round_robin",
+                    "children": [
+                        {
+                            "component": "BM25Retriever",
+                            "params": {**child_params, "k1": 2.0},
+                        }
+                    ],
+                },
+            },
+        }
+
+        CleanupService(db, _registry(client)).cleanup_orphaned_resources(
+            session_id, old_parameters, new_parameters
+        )
+
+        assert db.get(RAGRetriever, parent_id) is None
+        assert db.get(RAGRetriever, child_bridge_id) is None
+        assert (
+            db.query(RAGRetrieverChild).filter_by(child_id=child_bridge_id).count() == 0
+        )

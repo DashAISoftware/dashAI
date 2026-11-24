@@ -95,15 +95,18 @@ class FakeValidator:
 class FakeCleanup:
     """Stands in for ``CleanupService``, recording every call."""
 
-    def __init__(self, db: Any) -> None:
-        """Keep the database session.
+    def __init__(self, db: Any, registry: Any = None) -> None:
+        """Keep the database session and registry.
 
         Parameters
         ----------
         db : Any
             Database session.
+        registry : Any
+            Component registry, as passed by the real ``CleanupService``.
         """
         self.db = db
+        self.registry = registry
 
     def cleanup_orphaned_resources(
         self,

@@ -492,7 +492,7 @@ class RAGWorkflowSessionService(WorkflowSessionService):
         """
         changes = changes or {}
         cancel_live_index_job(session, self.job_queue)
-        CleanupService(self.db).cleanup_orphaned_resources(
+        CleanupService(self.db, self.component_registry).cleanup_orphaned_resources(
             session.id, old_parameters, updated_parameters, commit=False
         )
         with self._write_errors():
