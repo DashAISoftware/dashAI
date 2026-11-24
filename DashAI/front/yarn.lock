@@ -3733,6 +3733,7 @@ __metadata:
     eslint-plugin-n: ^15.0.0
     eslint-plugin-promise: ^6.0.0
     eslint-plugin-react: ^7.34.2
+    eslint-plugin-react-hooks: ^5
     formik: ^2.2.9
     geist: ^1.7.0
     html2canvas: ^1.4.1
@@ -4521,6 +4522,15 @@ eslint-config-standard-with-typescript@latest:
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
   checksum: 5098fbf38585ad411737c389c462df72b11a7db2f0241eca23cf990e5535a2de3fac7fb24258c3e6bf05433ef2a59425ec1ca1cef456360614eb7cdbfefcec66
+  languageName: node
+  linkType: hard
+
+"eslint-plugin-react-hooks@npm:^5":
+  version: 5.2.0
+  resolution: "eslint-plugin-react-hooks@npm:5.2.0"
+  peerDependencies:
+    eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
+  checksum: 5920736a78c0075488e7e30e04fbe5dba5b6b5a6c8c4b5742fdae6f9b8adf4ee387bc45dc6e03b4012865e6fd39d134da7b83a40f57c90cc9eecf80692824e3a
   languageName: node
   linkType: hard
 
