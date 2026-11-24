@@ -1,7 +1,6 @@
 import React, { createContext, useState, useMemo, useEffect } from "react";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import getTheme from "../styles/theme";
-import { useTranslation } from "react-i18next";
 
 export const ColorModeContext = createContext({ toggleColorMode: () => {} });
 
@@ -11,7 +10,6 @@ export function CustomThemeProvider({ children }) {
     const savedMode = localStorage.getItem("themeMode");
     return savedMode || "dark";
   });
-  const { i18n } = useTranslation();
 
   // Save theme preference to localStorage whenever it changes
   useEffect(() => {

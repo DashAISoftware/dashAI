@@ -268,7 +268,7 @@ export function cleanupJobPoller() {
   }
 
   // Clear all job watcher intervals
-  for (const [jobId, watcher] of state.jobWatchers.entries()) {
+  for (const watcher of state.jobWatchers.values()) {
     if (watcher.intervalId) {
       clearInterval(watcher.intervalId);
     }

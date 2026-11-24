@@ -249,7 +249,6 @@ const JobQueueWidget = () => {
   const activeJobs = jobs.filter(
     (job) => job.status === "started" || job.status === "not_started",
   );
-  const finishedJobs = jobs.filter((job) => job.status === "finished");
   const errorJobs = jobs.filter(
     (job) => job.status === "error" || job.status === "killed",
   );
