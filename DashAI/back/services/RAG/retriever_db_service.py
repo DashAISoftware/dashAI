@@ -465,18 +465,3 @@ class RetrieverDBService:
         return record
 
     # ── Deletion helpers ───────────────────────────────────────────────
-
-    def delete_embedding_matrices_by_ids(self, matrix_ids: List[int]) -> None:
-        """Bulk-delete embedding matrices by their primary keys.
-
-        Args:
-            matrix_ids: List of primary keys to delete.
-        """
-        try:
-            self.db.query(EmbeddingMatrixDBModel).filter(
-                EmbeddingMatrixDBModel.id.in_(matrix_ids)
-            ).delete(synchronize_session="fetch")
-            self.db.commit()
-        except SQLAlchemyError:
-            self.db.rollback()
-            raise
