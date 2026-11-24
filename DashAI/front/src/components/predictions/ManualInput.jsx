@@ -34,7 +34,6 @@ export default function ManualInput({
           types={types}
           sample={sample}
           inputColumns={inputColumns}
-          onSubmit={(values) => console.log("Form submitted:", values)}
           manualInputData={manualInputData}
           setManualInputData={setManualInputData}
           predictionResults={predictionResults}

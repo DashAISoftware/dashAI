@@ -19,7 +19,6 @@ export default function ManualInputForm({
   types,
   sample,
   inputColumns,
-  onSubmit,
   manualInputData,
   setManualInputData,
   predictionResults = null,
@@ -94,7 +93,6 @@ export default function ManualInputForm({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (onSubmit) onSubmit(rows);
   };
 
   // Match the lean dataset table's look (see leanDatasetTable.css): a panelDark
