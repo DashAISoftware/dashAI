@@ -1,12 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { Box, CircularProgress, Divider } from "@mui/material";
 import NotebookView from "./NotebookView";
 import DatasetPreviewNotebook from "./DatasetPreviewNotebook";
 import DocumentNotebookView from "../documentNotebook/DocumentNotebookView";
 
 function DatasetNotebookVisualization({ notebook, existingDatasets }) {
-  const [isAccordionExpanded, setIsAccordionExpanded] = useState(true);
-
   return (
     <Box
       sx={{ display: "flex", flexDirection: "column", height: "100%" }}
@@ -16,7 +14,6 @@ function DatasetNotebookVisualization({ notebook, existingDatasets }) {
         <DatasetPreviewNotebook
           notebook={notebook}
           existingDatasets={existingDatasets}
-          onAccordionChange={setIsAccordionExpanded}
         />
       </Box>
 

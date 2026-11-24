@@ -59,7 +59,6 @@ function HubContentInner() {
   useTourStageSync(tourContext, sourceNameParam ? "grid" : "source");
 
   const [sources, setSources] = useState([]);
-  const [sourcesLoading, setSourcesLoading] = useState(true);
   const [selectedDataset, setSelectedDataset] = useState(null);
 
   const [pendingSource, setPendingSource] = useState(null);
@@ -77,8 +76,7 @@ function HubContentInner() {
   useEffect(() => {
     getComponents({ selectTypes: "DatasetSource" })
       .then(setSources)
-      .catch(() => setSources([]))
-      .finally(() => setSourcesLoading(false));
+      .catch(() => setSources([]));
   }, [t]);
 
   // Reset dataset selection when source changes

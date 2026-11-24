@@ -63,7 +63,7 @@ export default function DocumentsBar({
 
   const [documents, setDocuments] = useState([]);
   const [status, setStatus] = useState(LOAD_STATUS.LOADING);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);

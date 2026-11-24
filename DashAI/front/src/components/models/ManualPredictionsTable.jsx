@@ -137,7 +137,6 @@ export default function ManualPredictionsTable({
   const { enqueueSnackbar } = useSnackbar();
   const [allRows, setAllRows] = useState([]);
   const [columnTypes, setColumnTypes] = useState({});
-  const [loading, setLoading] = useState(true);
 
   // Row-selection mode: lets the user pick several finished predictions and
   // delete them all at once, instead of a delete icon sitting on every row.
@@ -174,11 +173,9 @@ export default function ManualPredictionsTable({
     if (finishedPredictions.length === 0) {
       setAllRows([]);
       setColumnTypes({});
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
     const targetDecimals = getTargetDecimals(datasetSample, targetColumn);
 
     // Newest prediction first, so it doesn't get pushed out of view.
@@ -202,8 +199,7 @@ export default function ManualPredictionsTable({
       ),
     )
       .then((groups) => setAllRows(groups.flat()))
-      .catch(() => setAllRows([]))
-      .finally(() => setLoading(false));
+      .catch(() => setAllRows([]));
 
     getDatasetTypesByFilePath(finishedPredictions[0].results_path)
       .then((types) => setColumnTypes(types))

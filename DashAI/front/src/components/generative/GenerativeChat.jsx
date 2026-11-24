@@ -117,7 +117,6 @@ export default function GenerativeChat({
   const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative", "credentials"]);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const pollingProcessIdsRef = useRef(new Set());
 
   const scrollToBottom = (force = false) => {
@@ -225,7 +224,6 @@ export default function GenerativeChat({
 
   const handleSendMessage = (input) => {
     setIsLoadingMessage(true);
-    setShouldAutoScroll(true); // Enable auto-scroll when sending new message
 
     // Without the error handling the composer stays disabled forever and says
     // nothing. A RAG session starts with no documents, so the backend refusing
@@ -275,7 +273,6 @@ export default function GenerativeChat({
   };
 
   const handleRetryFailed = (processId) => {
-    setShouldAutoScroll(true);
     retryProcessById(processId)
       .then((process) => {
         setMessages((prev) =>
