@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Literal, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -18,10 +18,6 @@ class ColumnSpecItemParams(BaseModel):
     dtype: str
 
 
-class ColumnsSpecParams(BaseModel):
-    columns: Dict[str, ColumnSpecItemParams]
-
-
 class DatasetUpdateParams(BaseModel):
     name: str = None
     folder_id: Optional[int] = None
@@ -34,10 +30,6 @@ class DatasetBulkDeleteParams(BaseModel):
 class DatasetRenameColumnParams(BaseModel):
     old_name: str
     new_name: str
-
-
-class DatasetUploadFromNotebookParams(BaseModel):
-    name: str
 
 
 class Dataset(BaseModel):
