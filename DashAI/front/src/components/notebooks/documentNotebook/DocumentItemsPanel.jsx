@@ -90,6 +90,21 @@ FilterPill.propTypes = {
   onClick: PropTypes.func.isRequired,
 };
 
+function ListFooter({ context }) {
+  if (!context?.loading) return null;
+  return (
+    <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
+      <CircularProgress size={20} />
+    </Box>
+  );
+}
+
+ListFooter.propTypes = {
+  context: PropTypes.shape({ loading: PropTypes.bool }),
+};
+
+const LIST_COMPONENTS = { Footer: ListFooter };
+
 function ItemRow({ item, expanded, onToggle }) {
   const { t } = useTranslation(["datasets"]);
   const theme = useTheme();
@@ -467,16 +482,8 @@ export default function DocumentItemsPanel({
                   onToggle={() => toggleExpanded(item.position)}
                 />
               )}
-              components={{
-                Footer: () =>
-                  content.loading ? (
-                    <Box
-                      sx={{ display: "flex", justifyContent: "center", py: 1 }}
-                    >
-                      <CircularProgress size={20} />
-                    </Box>
-                  ) : null,
-              }}
+              context={{ loading: content.loading }}
+              components={LIST_COMPONENTS}
             />
           )}
         </Box>
