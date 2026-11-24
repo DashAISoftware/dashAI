@@ -11,6 +11,7 @@ from DashAI.back.converters.scikit_learn.bag_of_words import BagOfWordsConverter
 from DashAI.back.converters.scikit_learn.tf_idf import TFIDFConverter
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.retrievers.persistence import SparsePersistence
+from DashAI.back.models.RAG.retrievers.similarity import CosineSimilarity
 from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import BM25Retriever
 from DashAI.back.models.RAG.retrievers.sparse.tfidf_retriever import TFIDFRetriever
 from tests.back.RAG.conftest import BOW_PARAMS, TFIDF_PARAMS
@@ -46,7 +47,7 @@ def _bm25(tmp_path):
         k1=1.5,
         b=0.75,
         delta=0.0,
-        similarity_function="cosine",
+        similarity_function=CosineSimilarity(),
         top_k=1,
     )
     retriever.inject_infra(
@@ -59,7 +60,7 @@ def _tfidf(tmp_path):
     """Build a TF-IDF retriever over the sample corpus, restored from disk."""
     retriever = TFIDFRetriever(
         vectorizer=TFIDFConverter(**TFIDF_PARAMS),
-        similarity_function="cosine",
+        similarity_function=CosineSimilarity(),
         top_k=1,
     )
     retriever.inject_infra(

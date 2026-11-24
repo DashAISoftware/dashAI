@@ -29,6 +29,7 @@ from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
     DenseEmbeddingRetriever,
 )
 from DashAI.back.models.RAG.retrievers.persistence import DensePersistence
+from DashAI.back.models.RAG.retrievers.similarity import CosineSimilarity
 from tests.back.converters.text_embedding_stub import with_fake_model
 
 
@@ -68,7 +69,7 @@ def _build_dense_retriever(n_chunks: int):
         )
         retriever = DenseEmbeddingRetriever(
             embedding_model=embedding,
-            similarity_metric="cosine",
+            similarity_metric=CosineSimilarity(),
             top_k=10,
         )
         retriever.inject_infra(os.path.dirname(matrix_dir), chunks, persistence)
@@ -151,7 +152,7 @@ def test_dense_rows_follow_document_position_not_dict_order(tmp_path):
     )
     retriever = DenseEmbeddingRetriever(
         embedding_model=embedding,
-        similarity_metric="cosine",
+        similarity_metric=CosineSimilarity(),
         top_k=1,
     )
     retriever.inject_infra(str(tmp_path), chunks, persistence)

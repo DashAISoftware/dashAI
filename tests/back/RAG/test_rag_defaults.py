@@ -104,7 +104,7 @@ class TestRetrieverFactories:
         assert params["k1"] == 1.5
         assert params["b"] == 0.75
         assert params["delta"] == 0.0
-        assert params["similarity_function"] == "cosine"
+        assert params["similarity_function"]["component"] == "CosineSimilarity"
 
         vectorizer = params["vectorizer"]
         assert vectorizer["component"] == "BagOfWordsConverter"
@@ -121,7 +121,7 @@ class TestRetrieverFactories:
         assert ref["component"] == "DenseEmbeddingRetriever"
         params = ref["params"]
         assert params["top_k"] == DEFAULT_TOP_K
-        assert params["similarity_metric"] == "cosine"
+        assert params["similarity_metric"]["component"] == "CosineSimilarity"
 
         embedding = params["embedding_model"]
         assert embedding["component"] == "ParaphraseMultilingualMiniLML12V2Embedding"

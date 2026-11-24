@@ -93,6 +93,8 @@ BAG_OF_WORDS_CONVERTER_COMPONENT = "BagOfWordsConverter"
 PARAPHRASE_MULTILINGUAL_EMBEDDING_COMPONENT = (
     "ParaphraseMultilingualMiniLML12V2Embedding"
 )
+#: Distance metric component the default retrievers rank chunks with.
+COSINE_SIMILARITY_COMPONENT = "CosineSimilarity"
 
 #: Complete bag-of-words parameters (the schema fills no missing values).
 #: ``max_features`` stays unset so BM25 weights the whole vocabulary.
@@ -121,7 +123,7 @@ _KEYWORD_PARAMS: Dict[str, Any] = {
     "k1": 1.5,
     "b": 0.75,
     "delta": 0.0,
-    "similarity_function": "cosine",
+    "similarity_function": {"component": COSINE_SIMILARITY_COMPONENT, "params": {}},
     "top_k": DEFAULT_TOP_K,
 }
 
@@ -139,7 +141,7 @@ _SEMANTIC_PARAMS: Dict[str, Any] = {
         "component": PARAPHRASE_MULTILINGUAL_EMBEDDING_COMPONENT,
         "params": _SEMANTIC_EMBEDDING_PARAMS,
     },
-    "similarity_metric": "cosine",
+    "similarity_metric": {"component": COSINE_SIMILARITY_COMPONENT, "params": {}},
     "top_k": DEFAULT_TOP_K,
 }
 

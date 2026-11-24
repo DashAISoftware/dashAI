@@ -4,12 +4,10 @@ import pickle
 from typing import Any, Dict, List, Tuple
 
 import numpy as np
-from sklearn.metrics.pairwise import pairwise_distances
 
 from DashAI.back.core.atomic import atomic_open
 from DashAI.back.core.schema_fields import (
     component_field,
-    enum_field,
     int_field,
     schema_field,
 )
@@ -17,6 +15,11 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     RetrievalExpansionSchema,
+)
+from DashAI.back.models.RAG.retrievers.similarity import (
+    BaseSimilarityMetric,
+    CosineSimilarity,
+    require_similarity_metric,
 )
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
@@ -29,7 +32,7 @@ class TFIDFRetrieverSchema(RetrievalExpansionSchema):
 
     Attributes:
         vectorizer: The TF-IDF converter fitted on the chunks.
-        similarity_function: Distance metric for vector comparison.
+        similarity_function: Distance metric component for vector comparison.
         top_k: Number of chunks to select.
     """
 
@@ -46,8 +49,8 @@ class TFIDFRetrieverSchema(RetrievalExpansionSchema):
     )  # type: ignore
 
     similarity_function: schema_field(
-        enum_field(["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]),
-        placeholder="cosine",
+        component_field(parent=BaseSimilarityMetric.__name__),
+        placeholder={"component": CosineSimilarity.__name__, "params": {}},
         description=MultilingualString(
             en="Distance metric for comparing TF-IDF vectors.",
             es="Métrica de distancia para comparar vectores TF-IDF.",
@@ -116,13 +119,19 @@ class TFIDFRetriever(SparseRetriever):
         """Initialize the TF-IDF retriever.
 
         Args:
-            **kwargs: Must contain ``vectorizer``,
-                ``similarity_function``, and ``top_k``.
+            **kwargs: Must contain ``vectorizer``, ``similarity_function``
+                (a ``BaseSimilarityMetric`` instance), and ``top_k``.
+
+        Raises:
+            TypeError: If ``similarity_function`` is not a
+                ``BaseSimilarityMetric``.
         """
         super().__init__(**kwargs)
 
         self._converter = self.params.pop("vectorizer")
-        self.similarity_function_name = self.params.pop("similarity_function")
+        self._similarity_metric = require_similarity_metric(
+            self.params.pop("similarity_function")
+        )
         self._top_k = self.params.pop("top_k")
 
     def init_model(self) -> None:
@@ -202,14 +211,14 @@ class TFIDFRetriever(SparseRetriever):
         """Return the configured similarity function.
 
         The raw configuration key is ``similarity_function``; the live value is
-        stored as ``similarity_function_name`` during construction. Exposing it
-        under the configuration name lets the schema-summary resolver find it on
-        directly constructed instances.
+        stored as ``_similarity_metric`` during construction. Exposing the name
+        of its component under the configuration name lets the schema-summary
+        resolver find it on directly constructed instances.
 
         Returns:
-            The configured distance metric name.
+            Class name of the configured distance metric component.
         """
-        return self.similarity_function_name
+        return type(self._similarity_metric).__name__
 
     @property
     def retrieval_top_k(self) -> int:
@@ -237,10 +246,8 @@ class TFIDFRetriever(SparseRetriever):
         self._check_infra()
         k = top_k if top_k is not None else self._top_k
         query_vector = self._converter.transform_matrix([query])
-        distances = pairwise_distances(
-            query_vector,
-            self._tf_idf_matrix,
-            metric=self.similarity_function_name,
+        distances = self._similarity_metric.distances(
+            query_vector, self._tf_idf_matrix
         ).flatten()
         top_indices = np.argsort(distances)[:k]
         results = [
@@ -272,10 +279,8 @@ class TFIDFRetriever(SparseRetriever):
                 valid_ids.append(cid)
         if not rows:
             return []
-        distances = pairwise_distances(
-            query_vector,
-            self._tf_idf_matrix[rows],
-            metric=self.similarity_function_name,
+        distances = self._similarity_metric.distances(
+            query_vector, self._tf_idf_matrix[rows]
         ).flatten()
         scored = list(zip(valid_ids, distances.tolist(), strict=True))
         scored.sort(key=lambda x: x[1])

@@ -18,7 +18,7 @@ DENSE_RETRIEVER = {
                 "overflow_strategy": "truncate",
             },
         },
-        "similarity_metric": "cosine",
+        "similarity_metric": {"component": "CosineSimilarity", "params": {}},
         "top_k": 5,
     },
 }

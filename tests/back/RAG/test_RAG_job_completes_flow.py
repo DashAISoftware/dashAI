@@ -106,14 +106,14 @@ def _frontend_session_parameters(doc_id: int, retriever: str, prompt: str) -> di
             "k1": 1.5,
             "b": 0.75,
             "delta": 0.0,
-            "similarity_function": "cosine",
+            "similarity_function": {"component": "CosineSimilarity", "params": {}},
             "top_k": 5,
         }
     else:
         vectorizer = {"component": "TFIDFConverter", "params": dict(TFIDF_PARAMS)}
         retriever_params = {
             "vectorizer": vectorizer,
-            "similarity_function": "cosine",
+            "similarity_function": {"component": "CosineSimilarity", "params": {}},
             "top_k": 5,
         }
 

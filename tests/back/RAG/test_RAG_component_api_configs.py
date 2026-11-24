@@ -16,6 +16,10 @@ pipeline runtime, not during session creation.
 
 from fastapi.testclient import TestClient
 
+from DashAI.back.models.RAG.retrievers.similarity import (
+    CosineSimilarity,
+    EuclideanSimilarity,
+)
 from tests.back.RAG.conftest import (
     BOW_PARAMS,
     RAG_WORKFLOW_PAYLOAD,
@@ -47,7 +51,10 @@ def _base_params() -> dict:
                     "k1": 1.5,
                     "b": 0.75,
                     "delta": 0.0,
-                    "similarity_function": "cosine",
+                    "similarity_function": {
+                        "component": "CosineSimilarity",
+                        "params": {},
+                    },
                     "top_k": 5,
                 },
             },
@@ -72,7 +79,7 @@ def _base_params() -> dict:
 
 
 def _dense_st_retriever(
-    similarity_metric: str = "cosine",
+    similarity_metric: str = CosineSimilarity.__name__,
     top_k: int = 10,
 ) -> dict:
     """Build a DenseEmbeddingRetriever + AllMiniLML6V2Embedding config."""
@@ -88,7 +95,7 @@ def _dense_st_retriever(
                     "overflow_strategy": "truncate",
                 },
             },
-            "similarity_metric": similarity_metric,
+            "similarity_metric": {"component": similarity_metric, "params": {}},
             "top_k": top_k,
         },
     }
@@ -108,7 +115,7 @@ def _dense_st_alt_retriever(top_k: int = 10) -> dict:
                     "overflow_strategy": "truncate",
                 },
             },
-            "similarity_metric": "cosine",
+            "similarity_metric": {"component": "CosineSimilarity", "params": {}},
             "top_k": top_k,
         },
     }
@@ -153,7 +160,7 @@ class TestEncodingModels:
         assert ret["params"]["k1"] == 1.5
         assert ret["params"]["b"] == 0.75
         assert ret["params"]["delta"] == 0.0
-        assert ret["params"]["similarity_function"] == "cosine"
+        assert ret["params"]["similarity_function"]["component"] == "CosineSimilarity"
         assert ret["params"]["top_k"] == 5
 
     def test_encoding_bm25_custom_hyperparams(self, client: TestClient):
@@ -171,7 +178,10 @@ class TestEncodingModels:
                 "k1": 2.0,
                 "b": 0.5,
                 "delta": 0.5,
-                "similarity_function": "euclidean",
+                "similarity_function": {
+                    "component": "EuclideanSimilarity",
+                    "params": {},
+                },
                 "top_k": 7,
             },
         }
@@ -181,7 +191,9 @@ class TestEncodingModels:
         assert ret["params"]["k1"] == 2.0
         assert ret["params"]["b"] == 0.5
         assert ret["params"]["delta"] == 0.5
-        assert ret["params"]["similarity_function"] == "euclidean"
+        assert (
+            ret["params"]["similarity_function"]["component"] == "EuclideanSimilarity"
+        )
         assert ret["params"]["top_k"] == 7
 
     def test_encoding_tfidf_default(self, client: TestClient):
@@ -195,14 +207,14 @@ class TestEncodingModels:
                     "component": "TFIDFConverter",
                     "params": dict(TFIDF_PARAMS),
                 },
-                "similarity_function": "cosine",
+                "similarity_function": {"component": "CosineSimilarity", "params": {}},
                 "top_k": 5,
             },
         }
         stored = _post_and_get(client, params)
         ret = stored["parameters"]["retriever_model"]
         assert ret["component"] == "TFIDFRetriever"
-        assert ret["params"]["similarity_function"] == "cosine"
+        assert ret["params"]["similarity_function"]["component"] == "CosineSimilarity"
         assert ret["params"]["top_k"] == 5
 
     def test_encoding_tfidf_custom(self, client: TestClient):
@@ -216,14 +228,19 @@ class TestEncodingModels:
                     "component": "TFIDFConverter",
                     "params": dict(TFIDF_PARAMS),
                 },
-                "similarity_function": "manhattan",
+                "similarity_function": {
+                    "component": "ManhattanSimilarity",
+                    "params": {},
+                },
                 "top_k": 15,
             },
         }
         stored = _post_and_get(client, params)
         ret = stored["parameters"]["retriever_model"]
         assert ret["component"] == "TFIDFRetriever"
-        assert ret["params"]["similarity_function"] == "manhattan"
+        assert (
+            ret["params"]["similarity_function"]["component"] == "ManhattanSimilarity"
+        )
         assert ret["params"]["top_k"] == 15
 
     def test_encoding_dense_sentence_transformer(self, client: TestClient):
@@ -238,7 +255,7 @@ class TestEncodingModels:
         assert embed["component"] == "AllMiniLML6V2Embedding"
         assert embed["params"]["normalize"] is True
         assert embed["params"]["device"] == "CPU"
-        assert ret["params"]["similarity_metric"] == "cosine"
+        assert ret["params"]["similarity_metric"]["component"] == "CosineSimilarity"
         assert ret["params"]["top_k"] == 10
 
     def test_encoding_dense_st_alt(self, client: TestClient):
@@ -253,7 +270,7 @@ class TestEncodingModels:
         assert embed["component"] == "AllMiniLML6V2Embedding"
         assert embed["params"]["normalize"] is True
         assert embed["params"]["device"] == "CPU"
-        assert ret["params"]["similarity_metric"] == "cosine"
+        assert ret["params"]["similarity_metric"]["component"] == "CosineSimilarity"
         assert ret["params"]["top_k"] == 10
 
 
@@ -270,11 +287,11 @@ class TestRankingFunctions:
         params = _base_params()
         params["name"] = "Rank Cosine"
         params["parameters"]["retriever_model"] = _dense_st_retriever(
-            similarity_metric="cosine", top_k=10
+            similarity_metric=CosineSimilarity.__name__, top_k=10
         )
         stored = _post_and_get(client, params)
         ret = stored["parameters"]["retriever_model"]
-        assert ret["params"]["similarity_metric"] == "cosine"
+        assert ret["params"]["similarity_metric"]["component"] == "CosineSimilarity"
         assert ret["params"]["top_k"] == 10
 
     def test_ranking_dense_euclidean(self, client: TestClient):
@@ -282,25 +299,28 @@ class TestRankingFunctions:
         params = _base_params()
         params["name"] = "Rank Euclidean"
         params["parameters"]["retriever_model"] = _dense_st_retriever(
-            similarity_metric="euclidean", top_k=10
+            similarity_metric=EuclideanSimilarity.__name__, top_k=10
         )
         stored = _post_and_get(client, params)
         ret = stored["parameters"]["retriever_model"]
-        assert ret["params"]["similarity_metric"] == "euclidean"
+        assert ret["params"]["similarity_metric"]["component"] == "EuclideanSimilarity"
         assert ret["params"]["top_k"] == 10
 
     def test_ranking_sparse_manhattan(self, client: TestClient):
         """BM25Retriever with manhattan similarity."""
         params = _base_params()
         params["name"] = "Rank Manhattan"
-        params["parameters"]["retriever_model"]["params"]["similarity_function"] = (
-            "manhattan"
-        )
+        params["parameters"]["retriever_model"]["params"]["similarity_function"] = {
+            "component": "ManhattanSimilarity",
+            "params": {},
+        }
         params["parameters"]["retriever_model"]["params"]["top_k"] = 10
         stored = _post_and_get(client, params)
         ret = stored["parameters"]["retriever_model"]
         assert ret["component"] == "BM25Retriever"  # guard: depends on _base_params
-        assert ret["params"]["similarity_function"] == "manhattan"
+        assert (
+            ret["params"]["similarity_function"]["component"] == "ManhattanSimilarity"
+        )
         assert ret["params"]["top_k"] == 10
 
     def test_ranking_mmr_reranker(self, client: TestClient):
@@ -316,7 +336,11 @@ class TestRankingFunctions:
             "params": {
                 "mmr_lambda": 0.7,
                 "top_k": 10,
-                "children": [_dense_st_retriever(similarity_metric="cosine", top_k=40)],
+                "children": [
+                    _dense_st_retriever(
+                        similarity_metric=CosineSimilarity.__name__, top_k=40
+                    )
+                ],
             },
         }
         stored = _post_and_get(client, params)
@@ -361,7 +385,7 @@ class TestTopK:
                     "component": "TFIDFConverter",
                     "params": dict(TFIDF_PARAMS),
                 },
-                "similarity_function": "cosine",
+                "similarity_function": {"component": "CosineSimilarity", "params": {}},
                 "top_k": 5,
             },
         }
@@ -402,7 +426,11 @@ class TestTopK:
             "params": {
                 "mmr_lambda": 0.5,
                 "top_k": 12,
-                "children": [_dense_st_retriever(similarity_metric="cosine", top_k=36)],
+                "children": [
+                    _dense_st_retriever(
+                        similarity_metric=CosineSimilarity.__name__, top_k=36
+                    )
+                ],
             },
         }
         stored = _post_and_get(client, params)

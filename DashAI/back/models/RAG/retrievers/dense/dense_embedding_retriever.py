@@ -2,7 +2,6 @@ import os
 from typing import Any, Dict, List, Tuple
 
 import numpy as np
-from sklearn.metrics.pairwise import pairwise_distances
 
 from DashAI.back.converters.hugging_face.text_embedding_roles import (
     PASSAGE,
@@ -11,7 +10,6 @@ from DashAI.back.converters.hugging_face.text_embedding_roles import (
 from DashAI.back.core.atomic import atomic_open
 from DashAI.back.core.schema_fields import (
     component_field,
-    enum_field,
     int_field,
     schema_field,
 )
@@ -20,10 +18,13 @@ from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     RetrievalExpansionSchema,
 )
+from DashAI.back.models.RAG.retrievers.similarity import (
+    BaseSimilarityMetric,
+    CosineSimilarity,
+    require_similarity_metric,
+)
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
-
-METRICS = ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]
 
 
 class DenseEmbeddingRetrieverSchema(RetrievalExpansionSchema):
@@ -31,7 +32,7 @@ class DenseEmbeddingRetrieverSchema(RetrievalExpansionSchema):
 
     Attributes:
         embedding_model: The embedding model component to use.
-        similarity_metric: Distance metric for vector comparison.
+        similarity_metric: Distance metric component for vector comparison.
         top_k: Number of chunks to select.
     """
 
@@ -51,8 +52,8 @@ class DenseEmbeddingRetrieverSchema(RetrievalExpansionSchema):
     )  # type: ignore
 
     similarity_metric: schema_field(
-        enum_field(enum=METRICS),
-        placeholder="cosine",
+        component_field(parent=BaseSimilarityMetric.__name__),
+        placeholder={"component": CosineSimilarity.__name__, "params": {}},
         description=MultilingualString(
             en="Distance metric for comparing dense vectors.",
             es="Métrica de distancia para comparar vectores densos.",
@@ -141,12 +142,14 @@ class DenseEmbeddingRetriever(UnitRetriever):
         ----------
         **kwargs
             Must contain ``embedding_model`` (a ``TextEmbeddingConverter``
-            instance), ``similarity_metric`` and ``top_k``.
+            instance), ``similarity_metric`` (a ``BaseSimilarityMetric``
+            instance) and ``top_k``.
 
         Raises
         ------
         TypeError
-            If ``embedding_model`` is not a ``TextEmbeddingConverter``.
+            If ``embedding_model`` is not a ``TextEmbeddingConverter`` or
+            ``similarity_metric`` is not a ``BaseSimilarityMetric``.
         """
         from DashAI.back.converters.hugging_face.text_embedding.base import (
             TextEmbeddingConverter,
@@ -158,14 +161,31 @@ class DenseEmbeddingRetriever(UnitRetriever):
                 f"Expected TextEmbeddingConverter instance, "
                 f"got {type(embedding_model).__name__}"
             )
+        self._similarity_metric = require_similarity_metric(
+            kwargs.pop("similarity_metric")
+        )
         super().__init__(**kwargs)
-        self.similarity_metric = self.params.pop("similarity_metric")
         self._top_k = self.params.pop("top_k")
         self.params["embedding_model"] = {
             "component": embedding_model.__class__.__name__,
             "params": dict(sorted(embedding_model.params.items())),
         }
         self.embedding_model = embedding_model
+
+    @property
+    def similarity_metric(self) -> str:
+        """Return the name of the configured similarity metric component.
+
+        The live instance is kept as ``_similarity_metric``. Exposing its name
+        under the configuration key lets the schema-summary resolver find it on
+        directly constructed instances.
+
+        Returns
+        -------
+        str
+            Class name of the configured metric, such as ``"CosineSimilarity"``.
+        """
+        return type(self._similarity_metric).__name__
 
     def init_model(self) -> None:
         """Embed missing chunks and build the similarity matrix.
@@ -298,10 +318,8 @@ class DenseEmbeddingRetriever(UnitRetriever):
             raise ValueError("Similarity matrix not initialized.")
         k = top_k if top_k is not None else self._top_k
         query_embedding = self.embedding_model.encode([query], role=QUERY)[0]
-        distances = pairwise_distances(
-            query_embedding.reshape(1, -1),
-            self.similarity_matrix,
-            metric=self.similarity_metric,
+        distances = self._similarity_metric.distances(
+            query_embedding.reshape(1, -1), self.similarity_matrix
         )[0]
         top_indices = np.argsort(distances)[:k]
         results = []
@@ -337,10 +355,8 @@ class DenseEmbeddingRetriever(UnitRetriever):
         if not valid_ids:
             return []
         rows = [chunk_id_to_row[cid] for cid in valid_ids]
-        distances = pairwise_distances(
-            query_embedding.reshape(1, -1),
-            self.similarity_matrix[rows],
-            metric=self.similarity_metric,
+        distances = self._similarity_metric.distances(
+            query_embedding.reshape(1, -1), self.similarity_matrix[rows]
         )[0]
         scored = list(zip(valid_ids, distances.tolist(), strict=True))
         scored.sort(key=lambda x: x[1])
