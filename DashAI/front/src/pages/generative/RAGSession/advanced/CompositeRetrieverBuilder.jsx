@@ -16,7 +16,10 @@ import {
   isComposite as isCompositeKind,
 } from "../retrieverKinds";
 import { resolveLocalizedText } from "../../../../utils/localize";
-import { resolveRetrieverRepresentation } from "../../../../components/generative/RAG/retrieverRepresentation";
+import {
+  buildComponentNameRenderer,
+  resolveRetrieverRepresentation,
+} from "../../../../components/generative/RAG/retrieverRepresentation";
 import { resolveRetrieverSchemaSummary } from "../../../../components/generative/RAG/schemaSummary";
 import { isPlainObject } from "../../../../components/generative/RAG/traceUtils";
 import RetrieverNodeConfig from "./RetrieverNodeConfig";
@@ -507,11 +510,13 @@ function TreeNodeView({
     node.params,
     findComponent,
     translateLabel,
+    buildComponentNameRenderer(findComponent, i18n),
   );
   const representation = resolveRetrieverRepresentation(
     info,
     node.params,
     i18n,
+    findComponent,
   );
   const description = resolveLocalizedText(info?.description, i18n);
   const caption = summaryText || representation || description || null;
