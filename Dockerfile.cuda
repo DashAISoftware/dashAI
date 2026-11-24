@@ -43,6 +43,7 @@ RUN apt-get update && apt-get install -y \
 
 # copy the resolved virtualenv only (not build tools)
 COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /root/.local/share/uv/python /root/.local/share/uv/python
 ENV PATH="/opt/venv/bin:$PATH"
 
 # application code
