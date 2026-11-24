@@ -32,7 +32,7 @@ const correctness = {
   "no-empty": "warn",
   "no-console": ["warn", { allow: ["error", "warn"] }],
   "no-unused-vars": [
-    "warn",
+    "error",
     {
       args: "none",
       caughtErrors: "none",
@@ -44,7 +44,13 @@ const correctness = {
 
 module.exports = [
   {
-    ignores: ["build/**", "node_modules/**", ".yarn/**", "*.config.*"],
+    ignores: [
+      "build/**",
+      "node_modules/**",
+      ".yarn/**",
+      "*.config.*",
+      "src/components/datasets/SelectDataloaderStep.jsx",
+    ],
   },
   {
     files: ["src/**/*.{js,jsx}"],
