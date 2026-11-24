@@ -3759,7 +3759,6 @@ __metadata:
     remark-gfm: ^4.0.1
     typescript: ^4.9.5
     vite: ^5.4.20
-    web-vitals: ^2.1.4
     yup: ^0.32.11
   languageName: unknown
   linkType: soft
@@ -10055,13 +10054,6 @@ eslint-config-standard-with-typescript@latest:
   version: 1.0.8
   resolution: "weak-map@npm:1.0.8"
   checksum: ce030b3c6b1a461bda6eac88b3b3be57245ce26330c6ddb98d821d85c0636117ca94693ef8292407066fd367740ec6a1ef6cd9027111453d7ced43f4f78b327a
-  languageName: node
-  linkType: hard
-
-"web-vitals@npm:^2.1.4":
-  version: 2.1.4
-  resolution: "web-vitals@npm:2.1.4"
-  checksum: 03d3f47dbf55c3dce07beb0ff5de8ddd52e2d0a53a8df5c84e7a16dda93543341d67231fa79b1d9772b091419af4ec0fd395b8bcf451a0e26846e3f76b3d0efc
   languageName: node
   linkType: hard
 

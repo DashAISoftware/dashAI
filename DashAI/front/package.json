@@ -37,7 +37,6 @@
     "react-virtuoso": "^4.14.0",
     "recharts": "^3.4.1",
     "remark-gfm": "^4.0.1",
-    "web-vitals": "^2.1.4",
     "yup": "^0.32.11"
   },
   "scripts": {
