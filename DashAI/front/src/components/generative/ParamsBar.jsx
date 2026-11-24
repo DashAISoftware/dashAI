@@ -41,9 +41,18 @@ export default function ParamsBar({ onToggle }) {
   };
 
   useEffect(() => {
-    if (!selectedSessionId) return;
-    getHistory();
-  }, []);
+    if (!selectedSessionId) {
+      setHistory([]);
+      return undefined;
+    }
+    let cancelled = false;
+    getHistoryBySessionId(selectedSessionId).then((response) => {
+      if (!cancelled) setHistory(response);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSessionId]);
 
   useEffect(() => {
     if (!selectedSessionId) return;
