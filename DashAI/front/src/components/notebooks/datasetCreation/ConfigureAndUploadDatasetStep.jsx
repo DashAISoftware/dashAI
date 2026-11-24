@@ -11,7 +11,6 @@ import {
 } from "../../../utils/nameGenerator";
 import { createDataset } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
-import { useTheme } from "@mui/material/styles";
 import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
 import ComputeMetadataConfirmDialog from "../../datasets/ComputeMetadataConfirmDialog";
 import { shouldRecommendDisableMetadata } from "../../../utils/metadataRecommendation";
@@ -55,7 +54,6 @@ export default function ConfigureAndUploadDatasetStep({
   const tourContext = useTourContext();
 
   const { enqueueSnackbar } = useSnackbar();
-  const theme = useTheme();
 
   useEffect(() => {
     if (!defaultName) return;

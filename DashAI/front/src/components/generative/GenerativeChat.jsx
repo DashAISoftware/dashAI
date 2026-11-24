@@ -1,5 +1,4 @@
 import { Box, Button, Divider, IconButton, Typography } from "@mui/material";
-import InfoIcon from "@mui/icons-material/Info";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { ChatBubble } from "./ChatBubble";
@@ -34,13 +33,9 @@ import VpnKeyOutlinedIcon from "@mui/icons-material/VpnKeyOutlined";
 import { useSnackbar } from "notistack";
 import { getApiErrorMessage } from "../../utils/apiError";
 import { MediaInput } from "./MediaInput";
-import JobQueueWidget from "../jobs/JobQueueWidget";
-import { getRunStatus } from "../../utils/runStatus";
-import TemplateModal from "../custom/TemplateModal";
 import SourcesDisplay from "./SourcesDisplay";
 import { Trans, useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
-import { useTheme } from "@mui/material/styles";
 import {
   parseRAGTraceRow,
   resolveRAGProgressText,
@@ -90,8 +85,6 @@ export default function GenerativeChat({
   generatorName,
   onProcessSettled,
 }) {
-  const theme = useTheme();
-
   const {
     selectedSessionId: sessionId,
     selectedTaskName: taskName,

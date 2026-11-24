@@ -37,7 +37,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { checkIfHaveOptimazers } from "../../utils/schema";
-import { getDatasetInfo } from "../../api/datasets";
 import { useModels } from "./ModelsContext";
 import { getApiErrorMessage } from "../../utils/apiError";
 
@@ -81,7 +80,6 @@ function AddModelDialog({
   const [hasLoadedInitialParams, setHasLoadedInitialParams] = useState(false);
   const [useNestedCV, setUseNestedCV] = useState(false);
   const [innerConfig, setInnerConfig] = useState(DEFAULT_INNER_CONFIG);
-  const [totalRows, setTotalRows] = useState(null);
   const [modelDownloaded, setModelDownloaded] = useState(true);
   const [missingNested, setMissingNested] = useState([]);
   const { datasetRowCount } = useModels();

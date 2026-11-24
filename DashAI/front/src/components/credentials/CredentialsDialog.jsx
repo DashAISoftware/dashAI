@@ -17,7 +17,6 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import CloseIcon from "@mui/icons-material/Close";
-import VpnKeyOutlinedIcon from "@mui/icons-material/VpnKeyOutlined";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import {

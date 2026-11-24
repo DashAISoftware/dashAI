@@ -1,5 +1,4 @@
 import { Box, Divider } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import FolderIcon from "@mui/icons-material/Folder";
 import SearchBar from "../threeSectionLayout/SearchBar";
@@ -45,7 +44,6 @@ export default function SessionBar({
   showHeader = true,
   title,
 }) {
-  const theme = useTheme();
   const navigate = useNavigate();
   const {
     tasks,

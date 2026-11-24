@@ -13,7 +13,7 @@ import {
   Divider,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { getComponentById, getComponents } from "../../../api/component";
+import { getComponentById } from "../../../api/component";
 import { useSnackbar } from "notistack";
 
 /**

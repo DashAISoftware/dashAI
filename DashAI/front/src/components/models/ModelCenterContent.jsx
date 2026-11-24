@@ -1,6 +1,6 @@
 import { useModels } from "./ModelsContext";
 import { useTranslation } from "react-i18next";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import CreateSessionSteps from "./CreateSessionSteps";
 import DatasetVisualization from "../DatasetVisualization";
 import SelectOptionMenu from "../threeSectionLayout/SelectOptionMenu";

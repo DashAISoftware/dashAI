@@ -1,5 +1,4 @@
 import React from "react";
-import BoxWithTitle from "./BoxWithTitle";
 import { Box } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
