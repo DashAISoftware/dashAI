@@ -252,7 +252,6 @@ SessionInfoContent.propTypes = {
     name: PropTypes.string,
     dataset_id: PropTypes.number,
     task_name: PropTypes.string,
-    task_name: PropTypes.string,
     column_roles: PropTypes.object,
     splits: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     created: PropTypes.string,
