@@ -32,7 +32,6 @@ function ResultsGraphs({
 
   // Controlled or uncontrolled split
   const selectedSplit = splitProp ?? internalSplit;
-  const handleChangeSplit = onSplitChange ?? setInternalSplit;
 
   // Metric maximize direction — reused from the caller's cache when passed,
   // otherwise fetched once on mount (e.g. when used outside the models module).

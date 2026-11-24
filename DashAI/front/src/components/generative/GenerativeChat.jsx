@@ -132,12 +132,6 @@ export default function GenerativeChat({
     }
   };
 
-  const isAtBottom = () => {
-    if (!chatContainerRef.current) return true;
-    const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
-    return Math.abs(scrollHeight - clientHeight - scrollTop) < 5; // 5px threshold
-  };
-
   const handleScroll = () => {
     const el = chatContainerRef.current;
     if (!el) return;

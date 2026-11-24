@@ -45,12 +45,6 @@ const PROPORTION_KEYS = ["train", "test", "validation"];
 
 const INDEX_MODES = [SPLIT_TYPES.MANUAL, SPLIT_TYPES.PREDEFINED];
 
-const PARTITION_INDEX_KEYS = {
-  train: "train_indexes",
-  validation: "val_indexes",
-  test: "test_indexes",
-};
-
 /**
  * Build the splits payload stored on a model session.
  *

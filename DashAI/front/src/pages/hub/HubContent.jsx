@@ -52,7 +52,6 @@ function HubContentInner() {
     addDownload,
     updateDownload,
     downloads: contextDownloads,
-    deleteDownloadById,
   } = useDatasetsAndNotebooks();
   const { sourceName: sourceNameParam } = useParams();
   const threePanelLayout = useThreePanelLayout({ storageKey: "datasets" });
@@ -172,20 +171,6 @@ function HubContentInner() {
     } finally {
       setDownloadLoading(false);
     }
-  };
-
-  const handleDeleteDownload = async (downloadId) => {
-    const name = contextDownloads.find((d) => d.id === downloadId)?.name ?? "";
-    const success = await deleteDownloadById(downloadId);
-    if (success) {
-      enqueueSnackbar(t("hub:deleteSuccess", { name }), { variant: "success" });
-    } else {
-      enqueueSnackbar(t("hub:deleteError"), { variant: "error" });
-    }
-  };
-
-  const handleImportDownload = (dl) => {
-    navigate(`/app/data/hub/import/${dl.id}`);
   };
 
   const handleOpenSource = (source) => {

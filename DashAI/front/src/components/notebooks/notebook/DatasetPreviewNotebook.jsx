@@ -89,8 +89,6 @@ export default function DatasetPreviewNotebook({
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel, sortModel) => {
-      const hasFilters =
-        filterModel?.items?.length > 0 || (sortModel && sortModel.length > 0);
       const data = await getDatasetFileFiltered(
         notebook?.file_path,
         page,

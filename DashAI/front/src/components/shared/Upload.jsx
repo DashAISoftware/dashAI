@@ -5,7 +5,6 @@ import {
   Button,
   CircularProgress,
   DialogContentText,
-  Grid,
   IconButton,
   Paper,
   Typography,
@@ -75,67 +74,6 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
     onFileUpload(null, "");
     setDatasetState(EMPTY);
     setFileNames([]);
-  };
-
-  const stateContent = (state) => {
-    switch (state) {
-      case EMPTY:
-        return (
-          <React.Fragment>
-            <Grid>
-              <input
-                type="file"
-                ref={inputRef}
-                style={{ display: "none" }}
-                onChange={handleSelect}
-                multiple={multiple}
-              />
-            </Grid>
-            {dragActive ? (
-              <Grid>
-                <Typography variant="subtitle1">
-                  Drop the file{multiple ? "s" : ""} here.
-                </Typography>
-              </Grid>
-            ) : (
-              <React.Fragment>
-                <Grid>
-                  <Typography variant="subtitle1">
-                    Drag and drop {multiple ? "your files" : "a file"} here, or
-                  </Typography>
-                </Grid>
-                <Grid>
-                  <Button variant="contained">Upload a file</Button>
-                </Grid>
-              </React.Fragment>
-            )}
-          </React.Fragment>
-        );
-
-      case LOADING:
-        return <CircularProgress color="inherit" />;
-
-      case LOADED:
-        return (
-          <>
-            <TextSnippetIcon sx={{ fontSize: "58px" }} />
-            <Grid>
-              {fileNames.map((name, index) => (
-                <Typography
-                  key={index}
-                  variant="subtitle1"
-                  sx={{
-                    color: "gray",
-                    textAlign: "center",
-                  }}
-                >
-                  {name}
-                </Typography>
-              ))}
-            </Grid>
-          </>
-        );
-    }
   };
 
   return (

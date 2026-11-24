@@ -7,10 +7,6 @@ import DescriptionText from "../shared/DescriptionText";
 import TagBadges from "../shared/TagBadges";
 import { useTheme } from "@mui/material/styles";
 
-function getLabel(component) {
-  return component.display_name || component.name;
-}
-
 function getDescription(component) {
   return component.description ?? component.schema?.description ?? "";
 }

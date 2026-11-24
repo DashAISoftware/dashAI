@@ -33,8 +33,6 @@ const ICONS = {
   Extension: ExtensionIcon,
 };
 
-const DEFAULT_ICON = ExtensionIcon;
-
 /**
  * Renders an icon component for a given category.
  *

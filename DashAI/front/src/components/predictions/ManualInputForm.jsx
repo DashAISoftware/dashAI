@@ -106,7 +106,6 @@ export default function ManualInputForm({
   const headerBorder = "rgba(128, 128, 128, 0.4)";
   const accent = "rgb(100, 150, 255)";
   const targetHeaderBg = `linear-gradient(rgba(100, 150, 255, 0.16), rgba(100, 150, 255, 0.16)), ${headerBg}`;
-  const targetCellBg = `linear-gradient(rgba(100, 150, 255, 0.08), rgba(100, 150, 255, 0.08)), ${bodyBg}`;
 
   // Hairline used for internal cell and column borders (lean's cell border).
   const divider = "rgba(128, 128, 128, 0.15)";
