@@ -141,8 +141,6 @@ function FormSchemaRenderFields({
   spacing = 1,
   excludeFields = [],
 }) {
-  if (!modelSchema) return null;
-
   const handleChange = useCallback(
     (name, subName) => (rawValue) => {
       const fieldPath = subName ? `${name}.${subName}` : name;
@@ -210,8 +208,10 @@ function FormSchemaRenderFields({
   // ever disabled just because something else has not been filled in.
   const relevance = useMemo(
     () =>
-      evaluateRules(getSchemaRules(modelSchema), formik?.values ?? {})
-        .relevance,
+      modelSchema
+        ? evaluateRules(getSchemaRules(modelSchema), formik?.values ?? {})
+            .relevance
+        : {},
     [modelSchema, formik?.values],
   );
 
@@ -363,6 +363,8 @@ function FormSchemaRenderFields({
     excludeFields,
     relevance,
   ]);
+
+  if (!modelSchema) return null;
 
   return <Stack spacing={spacing}>{renderFields()}</Stack>;
 }
