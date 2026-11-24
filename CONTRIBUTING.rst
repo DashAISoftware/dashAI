@@ -95,7 +95,7 @@ The frontend lives in ``DashAI/front`` and requires Node LTS and Yarn 3.5.0::
     yarn install
     yarn start        # dev server on http://localhost:3000
     yarn lint
-    yarn test
+    yarn build        # the frontend has no test suite; the build is the check
 
 Pull Request Guidelines
 -----------------------

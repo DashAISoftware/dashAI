@@ -63,7 +63,7 @@ if [[ "$SETUP" == true ]] || [[ -n "$CUSTOM_API_URL" ]]; then
     read -rp "Enter the production API URL (e.g. https://dashai.dcc.uchile.cl/api): " CUSTOM_API_URL
   fi
   [[ -z "$CUSTOM_API_URL" ]] && error "API URL cannot be empty."
-  echo "REACT_APP_API_URL=${CUSTOM_API_URL}" > "$ENV_LOCAL"
+  echo "VITE_API_URL=${CUSTOM_API_URL}" > "$ENV_LOCAL"
   success "Saved API URL to $ENV_LOCAL → ${CUSTOM_API_URL}"
 fi
 
@@ -106,5 +106,5 @@ success "Service restarted."
 echo ""
 echo -e "${GREEN}✓ DashAI updated successfully.${NC}"
 if [[ -f "$ENV_LOCAL" ]]; then
-  echo -e "  API URL: ${CYAN}$(grep REACT_APP_API_URL "$ENV_LOCAL" | cut -d= -f2-)${NC}"
+  echo -e "  API URL: ${CYAN}$(grep VITE_API_URL"$ENV_LOCAL" | cut -d= -f2-)${NC}"
 fi

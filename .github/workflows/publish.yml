@@ -37,8 +37,6 @@ jobs:
           name: react-build
           path: DashAI/front/build
           retention-days: 1
-      - name: Run frontend tests
-        run: yarn test --passWithNoTests
 
   # ============================================================
   # 2. Publish to PyPI
