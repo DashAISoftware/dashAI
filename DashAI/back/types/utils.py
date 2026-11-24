@@ -1,5 +1,4 @@
 import json
-import re
 from typing import Any, Dict, Final, List
 
 from DashAI.back.types.categorical import Categorical
@@ -266,103 +265,6 @@ def get_types_from_arrow_metadata(
 # Both Date and Time conversion functions are in the case
 # if DashAI decides to use pyarrow dates and times instead of strings.
 # Both should be modified accordingly to function properly.
-def pyarrow_date_conversion(column: Any, format: str = "%Y-%m-%d") -> Any:
-    """
-    Convert a PyArrow array of date strings to a PyArrow date32 array.
-
-    Parameters
-    ----------
-    column : pa.Array
-        The PyArrow array containing date strings.
-    format : str, optional
-        The format of the date strings. Default is "%Y-%m-%d".
-    Returns
-    -------
-    pa.Array
-        A PyArrow array of date32 values.
-    """
-
-    import pandas as pd  # local import
-    import pyarrow as pa  # local import
-
-    str_dates = column.to_pylist()
-
-    try:
-        parsed_dates = pd.to_datetime(str_dates, format=format, errors="coerce")
-    except ValueError as e:
-        raise ValueError(
-            f"Invalid date format: {e} - expected format is {format} "
-            f"check and clean your data and try again."
-        ) from e
-
-    return pa.array(parsed_dates, type=pa.date32())
-
-
-def pyarrow_time_conversion(column: Any, format: str = "%H:%M:%S") -> Any:
-    """
-    Convert a PyArrow array of time strings to a PyArrow time64 array.
-
-    Parameters
-    ----------
-    column : pa.Array
-        The PyArrow array containing time strings.
-    format : str, optional
-        The format of the time strings. Default is "%H:%M:%S".
-
-    Returns
-    -------
-    pa.Array
-        A PyArrow array of time32 values.
-    """
-
-    import pandas as pd  # local import
-    import pyarrow as pa  # local import
-
-    str_times = column.to_pylist()
-
-    try:
-        parsed_times = pd.to_datetime(str_times, format=format, errors="coerce")
-    except ValueError as e:
-        raise ValueError(
-            f"Invalid time format: {e} - expected format is {format} "
-            f"check and clean your data and try again."
-        ) from e
-
-    return pa.array(parsed_times, type=pa.time32("s"))
-
-
-def is_image_path(value: Any) -> bool:
-    """
-    Check if the value is an image path.
-
-    Parameters
-    ----------
-    value : Any
-        The value of the cell to check.
-    Returns
-    -------
-    bool
-        True if the value is an image path, False otherwise.
-    """
-    IMAGE_EXTENSIONS = {
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".gif",
-        ".bmp",
-        ".tiff",
-        ".webp",
-        ".svg",
-        ".ico",
-        ".heic",
-        ".heif",
-    }
-
-    if not isinstance(value, str):
-        return False
-
-    match = re.search(r"(\.[a-z0-9]+)$", value.lower())
-    return bool(match) and match.group(1) in IMAGE_EXTENSIONS
 
 
 # This function should be improved to detect complex situations
