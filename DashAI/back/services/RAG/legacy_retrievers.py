@@ -11,9 +11,15 @@ counterpart; the startup backfill saves the result only if it validates.
 """
 
 import copy
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Final, Optional
 
 from DashAI.back.core.schema_fields.defaults import resolve_component_defaults
+from DashAI.back.models.RAG.retrievers.ref_utils import is_component_ref
+from DashAI.back.models.RAG.retrievers.similarity import (
+    CosineSimilarity,
+    EuclideanSimilarity,
+    ManhattanSimilarity,
+)
 
 #: Sparse retrievers: legacy params key of their vectorizer, current vectorizer.
 _SPARSE_VECTORIZERS = {
@@ -23,6 +29,25 @@ _SPARSE_VECTORIZERS = {
 #: ``TFIDFVectorizerModel`` stored an unset ``strip_accents`` or ``norm`` as this.
 _LEGACY_NONE = "None"
 _CPU_LABEL = "CPU"
+
+#: Retrievers whose distance was a scikit-learn metric name, and the key that
+#: held it. The key now holds a similarity metric component reference.
+_SIMILARITY_KEYS: Final[Dict[str, str]] = {
+    "BM25Retriever": "similarity_function",
+    "TFIDFRetriever": "similarity_function",
+    "DenseEmbeddingRetriever": "similarity_metric",
+}
+#: Scikit-learn metric names stored by earlier versions, and the metric
+#: component computing the same distance. ``l2``, ``l1`` and ``cityblock`` are
+#: aliases of Euclidean and Manhattan.
+_LEGACY_SIMILARITY_METRICS: Final[Dict[str, str]] = {
+    "cosine": CosineSimilarity.__name__,
+    "euclidean": EuclideanSimilarity.__name__,
+    "l2": EuclideanSimilarity.__name__,
+    "cityblock": ManhattanSimilarity.__name__,
+    "l1": ManhattanSimilarity.__name__,
+    "manhattan": ManhattanSimilarity.__name__,
+}
 
 
 def translate_legacy_retriever(ref: Any, registry) -> Any:
@@ -66,7 +91,68 @@ def translate_legacy_retriever(ref: Any, registry) -> Any:
         embedding = _embedding_converter(params.get("embedding_model"), registry)
         if embedding is not None:
             params["embedding_model"] = embedding
+    _translate_similarity(name, params)
     return {"component": name, "params": _with_defaults(name, params, registry)}
+
+
+def _translate_similarity(name: Any, params: Dict[str, Any]) -> None:
+    """Replace a legacy metric name in ``params`` with its metric component.
+
+    Parameters
+    ----------
+    name : Any
+        Retriever component name.
+    params : dict
+        Parameters of that retriever, updated in place.
+
+    Raises
+    ------
+    ValueError
+        If a similarity retriever stores no metric, or the stored metric is
+        neither a current reference nor a known legacy name. Nothing is
+        defaulted, so the session asks the user to choose again.
+    """
+    key = _SIMILARITY_KEYS.get(name)
+    if key is None:
+        return
+    if key not in params:
+        raise ValueError(f"Stored {name} has no '{key}'; choose a retriever again.")
+    value = params[key]
+    if is_component_ref(value):
+        return
+    if isinstance(value, dict):
+        raise ValueError(
+            f"Malformed similarity metric reference {value!r} in a stored "
+            f"{name}; choose a retriever again."
+        )
+    component = _legacy_metric_component(value)
+    params[key] = {"component": component, "params": {}}
+
+
+def _legacy_metric_component(value: Any) -> str:
+    """Return the metric component name a legacy scikit-learn name stands for.
+
+    Parameters
+    ----------
+    value : Any
+        The stored legacy metric name.
+
+    Returns
+    -------
+    str
+        Name of the metric component computing the same distance.
+
+    Raises
+    ------
+    ValueError
+        If ``value`` is not a known legacy metric name.
+    """
+    if not isinstance(value, str) or value not in _LEGACY_SIMILARITY_METRICS:
+        raise ValueError(
+            f"Unknown similarity metric {value!r} in a stored retriever; "
+            "choose a retriever again."
+        )
+    return _LEGACY_SIMILARITY_METRICS[value]
 
 
 def _vectorizer_params(legacy: Dict[str, Any]) -> Dict[str, Any]:
