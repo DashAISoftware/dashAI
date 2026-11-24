@@ -30,6 +30,9 @@ ENABLE_FIELD: Final[str] = "enable_retrieve_then_expand"
 #: Schema param name of the expansion window size.
 WINDOW_FIELD: Final[str] = "expand_window"
 
+#: Schema param name of the number of chunks a retriever returns.
+TOP_K_FIELD: Final[str] = "top_k"
+
 #: Whether retrievers expand their final output by default.
 DEFAULT_ENABLE_RETRIEVE_THEN_EXPAND: Final[bool] = False
 

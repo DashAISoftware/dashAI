@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, Final, List
 
 import numpy as np
 
@@ -156,6 +156,10 @@ CROSS_ENCODER_MODEL_NAMES = list(CROSS_ENCODER_MODELS.keys())
 # ── Schema ────────────────────────────────────────────────────────────────────
 
 
+#: Schema param name of the cross-encoder model used for re-ranking.
+MODEL_NAME_FIELD: Final[str] = "model_name"
+
+
 class SentenceTransformerCrossEncoderRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`SentenceTransformerCrossEncoderRetriever`.
 
@@ -274,6 +278,11 @@ class SentenceTransformerCrossEncoderRetriever(CrossEncoderRetriever):
         pt="modelo {model_name} · top-k {top_k}",
         de="Modell {model_name} · top-k {top_k}",
         zh="模型 {model_name} · top-k {top_k}",
+    )
+
+    #: The cross-encoder only scores chunks at query time and persists nothing.
+    NON_PERSISTENT_PARAMS = CrossEncoderRetriever.NON_PERSISTENT_PARAMS + (
+        MODEL_NAME_FIELD,
     )
 
     @classmethod

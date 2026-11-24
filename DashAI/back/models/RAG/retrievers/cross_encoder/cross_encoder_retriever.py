@@ -15,6 +15,7 @@ from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
 from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
     unpack_retrieval_result,
 )
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import TOP_K_FIELD
 from DashAI.back.models.RAG.retrievers.trace_utils import chunk_ref, retriever_trace
 
 
@@ -45,6 +46,10 @@ class CrossEncoderRetriever(CompositeRetriever, ABC):
         "Abstract re-ranker that uses a cross-encoder model to re-score "
         "candidates retrieved by a child retriever."
     )
+
+    #: Re-ranking selects the final ``top_k`` at query time; the cross-encoder
+    #: model has no persisted state, so only the child is persisted.
+    NON_PERSISTENT_PARAMS = CompositeRetriever.NON_PERSISTENT_PARAMS + (TOP_K_FIELD,)
 
     @classmethod
     def _get_main_parameters(cls) -> Dict[str, str]:

@@ -109,6 +109,13 @@ class BaseRetriever(ConfigObject, ABC):
     #: template and never renders it.
     REPRESENTATION: ClassVar[MultilingualString | None] = None
 
+    #: Parameters that act only at query time and never change what is stored
+    #: for this retriever. They are left out of its persistence signature (see
+    #: :mod:`DashAI.back.models.RAG.retrievers.persistence_signature`), so
+    #: changing them reuses the fitted state instead of re-indexing. Subclasses
+    #: extend the tuple with their own query-time parameters.
+    NON_PERSISTENT_PARAMS: ClassVar[Tuple[str, ...]] = (ENABLE_FIELD, WINDOW_FIELD)
+
     env_RAG_path: str | os.PathLike | None  # noqa: N815
     chunks: Dict[int, Dict[int, Chunk]]
     documents: Dict[int, SourceDocument]
