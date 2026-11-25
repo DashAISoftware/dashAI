@@ -203,6 +203,7 @@ def test_the_document_tools_are_the_ones_we_think_they_are():
         "OpusMtZhEnTranslator",
         "RegexReplacer",
         "Summarizer",
+        "SuryaOCRConverter",
         "TextCleaner",
         "TextSplitter",
         "TextStatisticsExplorer",
