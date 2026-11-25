@@ -35,6 +35,8 @@ if TYPE_CHECKING:
 
 TRUNCATE = "truncate"
 AGGREGATE = "aggregate"
+#: Schema param name of the number of texts encoded together.
+BATCH_SIZE_FIELD = "batch_size"
 SPECIAL_TOKENS = 2
 #: Keeps a vector of zeros from dividing by zero while normalizing.
 NORMALIZATION_EPSILON = 1e-12
@@ -244,6 +246,10 @@ class TextEmbeddingConverter(AdvancedPreprocessingConverter, PretrainedTool):
     HF_IGNORE_PATTERNS = [*HFDownloadableMixin.HF_IGNORE_PATTERNS, "pytorch_model.bin"]
     QUERY_PROMPT: Optional[str] = None
     PASSAGE_PROMPT: Optional[str] = None
+    #: The batch size only trades memory for speed and never changes the vectors,
+    #: so it stays out of the persistence signature of any retriever that embeds
+    #: with this converter.
+    NON_PERSISTENT_PARAMS = (BATCH_SIZE_FIELD,)
 
     def close(self) -> None:
         """Release the loaded checkpoint so the next ``encode`` reloads it.

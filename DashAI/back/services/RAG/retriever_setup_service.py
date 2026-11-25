@@ -42,7 +42,9 @@ from DashAI.back.models.RAG.retrievers.persistence import (
 )
 from DashAI.back.models.RAG.retrievers.persistence_signature import (
     persistence_signature,
+    reference_signature,
 )
+from DashAI.back.models.RAG.retrievers.ref_utils import PARAMS_KEY
 from DashAI.back.models.RAG.retrievers.retriever_factory import (
     RetrieverFactory,
     resolve_component_params,
@@ -441,10 +443,13 @@ class RetrieverSetupService:
         if not class_name or not isinstance(parameters, dict):
             return DensePersistence(matrix_dirs={}, embedding_model_id=0)
 
+        # Query-time/speed knobs (e.g. batch_size) must not key the embedding
+        # row, or changing them would re-embed every document.
+        identity_parameters = reference_signature(emb_ref, self._registry)[PARAMS_KEY]
         try:
             emb_record = self._db_service.find_or_create_embedding_model(
                 class_name,
-                dict(sorted(parameters.items())),
+                identity_parameters,
                 commit=False,
             )
         except SQLAlchemyError:

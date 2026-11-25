@@ -1,4 +1,11 @@
-"""Retriever preset recipes resolved from the component registry."""
+"""Retriever preset recipes resolved from the component registry.
+
+A stored retriever configuration belongs to a preset when it equals the preset
+recipe, except for ``top_k``, which is ignored at every level because it is a
+slider. Every other parameter, including the retrieve-then-expand options, must
+match exactly. A legacy session stored without those options therefore counts
+as a custom configuration; this is deliberate.
+"""
 
 from typing import Any, Dict, Final, List, Optional, Tuple
 
@@ -11,10 +18,11 @@ from DashAI.back.models.RAG.RAG_defaults import (
     default_keyword_retriever,
     default_semantic_retriever,
 )
+from DashAI.back.models.RAG.retrievers.ref_utils import CHILDREN_KEY, PARAMS_KEY
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     ENABLE_FIELD,
+    TOP_K_FIELD,
     WINDOW_FIELD,
-    strip_expansion_options,
 )
 
 _SEMANTIC_MODEL_SHORT = DEFAULT_SEMANTIC_MODEL_NAME.rsplit("/", 1)[-1]
@@ -23,10 +31,11 @@ KEYWORD_PRESET_KEY = "keyword"
 SEMANTIC_PRESET_KEY = "semantic"
 HYBRID_PRESET_KEY = "hybrid"
 
-#: Keys that never decide which preset a configuration belongs to. ``top_k`` is
-#: a slider, and the retrieve-then-expand options are post-processing knobs, so
-#: a legacy session (without them) and one that set them still match a preset.
-_IGNORED_MATCH_KEYS: Final[Tuple[str, ...]] = ("top_k", ENABLE_FIELD, WINDOW_FIELD)
+#: Parameter names that never decide which preset a configuration belongs to.
+#: ``top_k`` is a slider: a composite splits it across its children, so it is
+#: dropped at every level. Every other parameter, including the expansion
+#: options, takes part in the match.
+_MATCH_IGNORED_KEYS: Final[Tuple[str, ...]] = (TOP_K_FIELD,)
 
 #: Preset a session gets when it does not choose one. Keyword retrieval is the
 #: only paradigm that needs no model download, so it is the one default that can
@@ -181,24 +190,109 @@ def get_default_retriever(registry, top_k: int = DEFAULT_TOP_K) -> Dict[str, Any
     return {"component": recipe["component"], "params": recipe["params"]}
 
 
-def _strip_match_ignored_keys(value: Dict[str, Any]) -> Dict[str, Any]:
-    """Drop the keys that never decide a preset match, at every level.
+def _without_match_ignored_keys(value: Any) -> Any:
+    """Copy *value* with the match-ignored keys dropped at every level.
 
-    A preset keeps its shape when the user only moves the Top-K slider or
-    toggles retrieve-then-expand, so matching a stored config against a recipe
-    has to ignore those keys at every level (composite presets split ``top_k``
-    across their children, and expansion options may sit on the parent, on a
-    child, or on neither in a legacy session).
+    Parameters
+    ----------
+    value : Any
+        A parameters mapping, a list, or a leaf.
+
+    Returns
+    -------
+    Any
+        A copy in which every key of ``_MATCH_IGNORED_KEYS`` is removed from each
+        mapping, recursively. The input is never mutated.
     """
-    return strip_expansion_options(value, _IGNORED_MATCH_KEYS)
+    if isinstance(value, dict):
+        kept: Dict[str, Any] = {}
+        for key, item in value.items():
+            if key in _MATCH_IGNORED_KEYS:
+                continue
+            kept[key] = _without_match_ignored_keys(item)
+        return kept
+    if isinstance(value, list):
+        return [_without_match_ignored_keys(item) for item in value]
+    return value
+
+
+def _normalize_children(children: Any) -> List[Dict[str, Any]]:
+    """Normalize every child ref of a composite for the preset match.
+
+    Parameters
+    ----------
+    children : Any
+        The ``children`` value of a composite's parameters.
+
+    Returns
+    -------
+    List[Dict[str, Any]]
+        New child refs whose ``params`` are normalized like the parent's.
+
+    Raises
+    ------
+    ValueError
+        If ``children`` is not a list, or a child is not a dict holding a
+        ``params`` dict.
+    """
+    if not isinstance(children, list):
+        raise ValueError(
+            f"'{CHILDREN_KEY}' must be a list of component refs, "
+            f"got {type(children).__name__}"
+        )
+    normalized: List[Dict[str, Any]] = []
+    for child in children:
+        if not isinstance(child, dict) or not isinstance(child.get(PARAMS_KEY), dict):
+            raise ValueError(
+                f"each entry of '{CHILDREN_KEY}' must be a dict with a "
+                f"'{PARAMS_KEY}' dict, got {child!r}"
+            )
+        child_params = _normalize_match_params(child[PARAMS_KEY])
+        normalized.append({**child, PARAMS_KEY: child_params})
+    return normalized
+
+
+def _normalize_match_params(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Return a copy of the configuration, normalized for the match.
+
+    ``top_k`` is dropped at every level and each composite child is checked to
+    be a well-formed ref. Nothing else is filled in or rewritten, so a missing
+    parameter stays missing and only an exact equal value counts as a match.
+
+    Parameters
+    ----------
+    params : Dict[str, Any]
+        Retriever parameters, possibly holding ``children``.
+
+    Returns
+    -------
+    Dict[str, Any]
+        A normalized copy; the input is never mutated.
+
+    Raises
+    ------
+    ValueError
+        If ``children`` is present but is not a list of well-formed refs.
+    """
+    normalized: Dict[str, Any] = _without_match_ignored_keys(params)
+    if CHILDREN_KEY in normalized:
+        normalized[CHILDREN_KEY] = _normalize_children(normalized[CHILDREN_KEY])
+    return normalized
 
 
 def match_preset_key(component: str, params: Dict[str, Any], registry) -> Optional[str]:
     """Return the preset key a retriever config corresponds to, if any.
 
-    ``top_k`` and the retrieve-then-expand options are ignored at every level,
-    so a session created before those options existed still matches its preset,
-    and so does the same recipe with them set to any value.
+    Both the stored configuration and each candidate recipe are normalized by
+    ``_normalize_match_params``, and the normalized mappings must be equal. Only
+    ``top_k`` is ignored, so moving the slider keeps a preset, while any other
+    difference (expansion enabled or its window changed, a different similarity
+    metric, a different batch size) makes the configuration custom.
+
+    This is deliberate for the expansion options: a legacy session stored before
+    they existed has no ``enable_retrieve_then_expand`` or ``expand_window`` key,
+    so it no longer equals a preset recipe and counts as a custom configuration.
+    Explicitly stating the default values does match.
 
     Parameters
     ----------
@@ -213,12 +307,17 @@ def match_preset_key(component: str, params: Dict[str, Any], registry) -> Option
     -------
     str | None
         The matching preset key, or ``None`` for a custom configuration.
+
+    Raises
+    ------
+    ValueError
+        If the configuration's ``children`` are not well-formed component refs.
     """
-    stripped = _strip_match_ignored_keys(params)
+    stored = _normalize_match_params(params)
     for preset in get_retriever_presets(DEFAULT_TOP_K, registry):
         if preset["component"] != component:
             continue
-        if _strip_match_ignored_keys(preset["params"]) == stripped:
+        if _normalize_match_params(preset["params"]) == stored:
             return preset["key"]
     return None
 

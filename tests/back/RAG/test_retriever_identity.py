@@ -2,10 +2,11 @@
 
 The two options never change what is indexed nor which stored model a
 configuration resolves to. These tests pin the consequences: the sparse storage
-hash, the cleanup decision, the preset match and the context budget all treat
-them as such, while the budget still pays for the extra chunk text they add.
-A cached retriever is loaded with the options the caller asked for even though
-the cache key ignores them.
+hash, the cleanup decision and the context budget all treat them as such, while
+the budget still pays for the extra chunk text they add. The preset match is the
+one deliberate exception: it compares the options strictly, so a configuration
+that sets or omits them differently is custom. A cached retriever is loaded with
+the options the caller asked for even though the cache key ignores them.
 """
 
 import copy
@@ -18,9 +19,20 @@ from typing import Any, Dict
 import pytest
 from fastapi.testclient import TestClient
 
+from DashAI.back.converters.hugging_face.text_embedding.e5_mistral_gguf import (
+    E5MistralGGUFEmbedding,
+)
+from DashAI.back.converters.hugging_face.text_embedding.sentence_transformer import (
+    AllMiniLML6V2Embedding,
+)
+from DashAI.back.converters.hugging_face.text_embedding.transformer import (
+    DistilBERTEmbedding,
+)
 from DashAI.back.converters.scikit_learn.bag_of_words import BagOfWordsConverter
 from DashAI.back.dependencies.database.models import (
     RAGChunkSet,
+    RAGDenseRetriever,
+    RAGEmbeddingModel,
     RAGPipeline,
     RAGRetriever,
     RAGRetrieverChild,
@@ -34,11 +46,17 @@ from DashAI.back.models.RAG.retrievers.composite.mmr_reranker_retriever import (
 from DashAI.back.models.RAG.retrievers.composite.parallel_retriever import (
     ParallelRetriever,
 )
+from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
+    DenseEmbeddingRetriever,
+)
 from DashAI.back.models.RAG.retrievers.persistence_signature import (
     persistence_signature,
 )
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    DEFAULT_ENABLE_RETRIEVE_THEN_EXPAND,
+    DEFAULT_EXPAND_WINDOW,
     ENABLE_FIELD,
+    TOP_K_FIELD,
     WINDOW_FIELD,
     strip_expansion_options,
 )
@@ -478,9 +496,13 @@ def test_toggling_expansion_options_does_not_delete_a_composite_retriever(
 # ── Preset matching ──────────────────────────────────────────────────────────
 
 
-def test_legacy_recipe_without_the_options_matches_its_preset(client: TestClient):
-    """A session stored before the options existed still matches its preset."""
-    preset = _preset(client, retriever_presets.KEYWORD_PRESET_KEY)
+@pytest.mark.parametrize(
+    "key",
+    [retriever_presets.KEYWORD_PRESET_KEY, retriever_presets.HYBRID_PRESET_KEY],
+)
+def test_legacy_recipe_without_the_options_is_custom(client: TestClient, key: str):
+    """A session stored before the options existed counts as custom, by design."""
+    preset = _preset(client, key)
     legacy = strip_expansion_options(preset["params"])
 
     assert ENABLE_FIELD not in legacy
@@ -489,14 +511,52 @@ def test_legacy_recipe_without_the_options_matches_its_preset(client: TestClient
         retriever_presets.match_preset_key(
             preset["component"], legacy, _registry(client)
         )
-        == retriever_presets.KEYWORD_PRESET_KEY
+        is None
     )
 
 
-def test_recipe_with_the_options_set_matches_its_preset(client: TestClient):
-    """Explicit (even non-default) options do not make a preset look custom."""
+def _with_top_k(params: Dict[str, Any], top_k: int) -> Dict[str, Any]:
+    """Return *params* with ``top_k`` set at the parent and on every child."""
+    retuned = {**params, TOP_K_FIELD: top_k}
+    if "children" in params:
+        retuned["children"] = [
+            {**child, "params": _with_top_k(child["params"], top_k)}
+            for child in params["children"]
+        ]
+    return retuned
+
+
+def test_recipe_with_the_options_set_to_other_values_is_custom(client: TestClient):
+    """Enabling expansion or changing its window makes the configuration custom."""
     preset = _preset(client, retriever_presets.KEYWORD_PRESET_KEY)
-    configured = {**preset["params"], ENABLE_FIELD: True, WINDOW_FIELD: 7}
+
+    enabled = {**preset["params"], ENABLE_FIELD: True}
+    widened = {**preset["params"], WINDOW_FIELD: 7}
+
+    assert (
+        retriever_presets.match_preset_key(
+            preset["component"], enabled, _registry(client)
+        )
+        is None
+    )
+    assert (
+        retriever_presets.match_preset_key(
+            preset["component"], widened, _registry(client)
+        )
+        is None
+    )
+
+
+def test_recipe_with_the_options_set_to_their_defaults_matches_its_preset(
+    client: TestClient,
+):
+    """Explicitly stating the default options still matches the preset."""
+    preset = _preset(client, retriever_presets.KEYWORD_PRESET_KEY)
+    configured = {
+        **preset["params"],
+        ENABLE_FIELD: DEFAULT_ENABLE_RETRIEVE_THEN_EXPAND,
+        WINDOW_FIELD: DEFAULT_EXPAND_WINDOW,
+    }
 
     assert (
         retriever_presets.match_preset_key(
@@ -506,24 +566,104 @@ def test_recipe_with_the_options_set_matches_its_preset(client: TestClient):
     )
 
 
-def test_nested_options_do_not_break_a_composite_preset_match(client: TestClient):
-    """Options at the parent and on a child leave the hybrid preset matching."""
+def test_options_on_the_parent_or_a_child_make_a_composite_custom(client: TestClient):
+    """Expansion on the composite or on one child is a custom configuration."""
     preset = _preset(client, retriever_presets.HYBRID_PRESET_KEY)
-    legacy = strip_expansion_options(preset["params"])
-    children = []
-    for index, child in enumerate(legacy["children"]):
-        child_params = dict(child["params"])
-        if index == 0:
-            child_params.update(ENABLED_PARAMS)
-        children.append({"component": child["component"], "params": child_params})
-    configured = {**legacy, "children": children, **ENABLED_PARAMS}
+    first, *rest = preset["params"]["children"]
+    on_parent = {**preset["params"], **ENABLED_PARAMS}
+    on_child = {
+        **preset["params"],
+        "children": [
+            {**first, "params": {**first["params"], **ENABLED_PARAMS}},
+            *rest,
+        ],
+    }
+
+    for configured in (on_parent, on_child):
+        assert (
+            retriever_presets.match_preset_key(
+                preset["component"], configured, _registry(client)
+            )
+            is None
+        )
+
+
+@pytest.mark.parametrize(
+    "key",
+    [retriever_presets.KEYWORD_PRESET_KEY, retriever_presets.HYBRID_PRESET_KEY],
+)
+def test_a_different_top_k_alone_keeps_the_preset(client: TestClient, key: str):
+    """Moving the Top-K slider never turns a preset into a custom configuration."""
+    preset = _preset(client, key)
 
     assert (
         retriever_presets.match_preset_key(
-            preset["component"], configured, _registry(client)
+            preset["component"], _with_top_k(preset["params"], 3), _registry(client)
         )
-        == retriever_presets.HYBRID_PRESET_KEY
+        == key
     )
+
+
+def test_a_different_similarity_metric_makes_the_semantic_config_custom(
+    client: TestClient,
+):
+    """The similarity metric decides the preset, so a change is a custom config."""
+    preset = _preset(client, retriever_presets.SEMANTIC_PRESET_KEY)
+    euclidean = {
+        **preset["params"],
+        "similarity_metric": {"component": "EuclideanSimilarity", "params": {}},
+    }
+
+    assert (
+        retriever_presets.match_preset_key(
+            preset["component"], euclidean, _registry(client)
+        )
+        is None
+    )
+
+
+def test_a_different_batch_size_makes_the_semantic_config_custom(client: TestClient):
+    """The preset match is strict: a batch size other than the recipe's is custom."""
+    preset = _preset(client, retriever_presets.SEMANTIC_PRESET_KEY)
+
+    assert (
+        retriever_presets.match_preset_key(
+            preset["component"],
+            _with_batch_size(preset["params"], 8),
+            _registry(client),
+        )
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    "children",
+    [
+        "junk",
+        ["junk"],
+        [{"component": "BM25Retriever", "params": "lowercase"}],
+    ],
+)
+def test_malformed_children_raise_a_value_error(client: TestClient, children):
+    """Children that are not well-formed refs raise instead of being tolerated."""
+    preset = _preset(client, retriever_presets.HYBRID_PRESET_KEY)
+    malformed = {**preset["params"], "children": children}
+
+    with pytest.raises(ValueError, match="children"):
+        retriever_presets.match_preset_key(
+            preset["component"], malformed, _registry(client)
+        )
+
+
+def test_matching_does_not_mutate_the_stored_params(client: TestClient):
+    """Normalizing for the match works on copies of the stored configuration."""
+    preset = _preset(client, retriever_presets.HYBRID_PRESET_KEY)
+    stored = _with_top_k(preset["params"], 2)
+    snapshot = copy.deepcopy(stored)
+
+    retriever_presets.match_preset_key(preset["component"], stored, _registry(client))
+
+    assert stored == snapshot
 
 
 # ── Effective chunk count ────────────────────────────────────────────────────
@@ -870,6 +1010,210 @@ def test_changing_the_distance_metric_does_not_delete_a_unit_retriever(
         assert db.get(RAGRetriever, bridge.id) is not None
         assert db.get(RAGSparseRetriever, detail.id) is not None
         assert folder.exists()
+
+
+# ── Embedding batch size ─────────────────────────────────────────────────────
+
+_EMBEDDING_PARAMS: Dict[str, Any] = {
+    "device": "cpu",
+    "batch_size": 32,
+    "normalize": True,
+    "overflow_strategy": "truncate",
+}
+_EMBEDDING_REGISTRY = {"AllMiniLML6V2Embedding": {"class": AllMiniLML6V2Embedding}}
+
+
+def _dense_params(embedding_params: Dict[str, Any]) -> Dict[str, Any]:
+    """Return dense retriever parameters around an embedding model's params."""
+    return {
+        "embedding_model": {
+            "component": "AllMiniLML6V2Embedding",
+            "params": embedding_params,
+        },
+        "similarity_metric": {"component": "CosineSimilarity", "params": {}},
+        "top_k": 5,
+    }
+
+
+def _with_batch_size(params: Dict[str, Any], batch_size: int) -> Dict[str, Any]:
+    """Return a configuration whose embedding model uses *batch_size*."""
+    embedding = params["embedding_model"]
+    return {
+        **params,
+        "embedding_model": {
+            **embedding,
+            "params": {**embedding["params"], "batch_size": batch_size},
+        },
+    }
+
+
+@pytest.mark.parametrize(
+    "embedding_class",
+    [AllMiniLML6V2Embedding, DistilBERTEmbedding, E5MistralGGUFEmbedding],
+)
+def test_batch_size_is_left_out_of_every_embedding_signature(embedding_class):
+    """Sentence-transformer, transformer and GGUF converters all inherit the rule."""
+    small = persistence_signature(embedding_class, {"batch_size": 8}, {})
+    large = persistence_signature(embedding_class, {"batch_size": 64}, {})
+
+    assert small == large == {}
+
+
+def test_batch_size_does_not_change_the_dense_signature():
+    """A memory-only knob inside the embedding ref keeps the identity."""
+    small = _dense_params({**_EMBEDDING_PARAMS, "batch_size": 8})
+    large = _dense_params({**_EMBEDDING_PARAMS, "batch_size": 64})
+
+    signature = persistence_signature(
+        DenseEmbeddingRetriever, large, _EMBEDDING_REGISTRY
+    )
+
+    assert "batch_size" not in signature["embedding_model"]["params"]
+    assert signature == persistence_signature(
+        DenseEmbeddingRetriever, small, _EMBEDDING_REGISTRY
+    )
+
+
+def test_normalization_still_changes_the_dense_signature():
+    """The control: an embedding parameter that shapes the vectors still counts."""
+    base = _dense_params(_EMBEDDING_PARAMS)
+    unnormalized = _dense_params({**_EMBEDDING_PARAMS, "normalize": False})
+
+    assert persistence_signature(
+        DenseEmbeddingRetriever, base, _EMBEDDING_REGISTRY
+    ) != persistence_signature(
+        DenseEmbeddingRetriever, unnormalized, _EMBEDDING_REGISTRY
+    )
+
+
+def test_batch_size_resolves_to_the_same_embedding_model_row(orm_db):
+    """Only a vector-shaping change resolves to a new embedding model id.
+
+    A batch size change keeps the stored embedding row, so the documents are not
+    embedded again; normalization shapes the vectors and gets its own row.
+    """
+    service = RetrieverSetupService(
+        db=orm_db,
+        registry=_EMBEDDING_REGISTRY,
+        env_RAG_path="rag-root",
+        chunks={},
+        chunk_set_id=7,
+        pipeline_id=1,
+        chunking_key="test-chunking",
+    )
+    small = service._build_dense_persistence_for(
+        _dense_params({**_EMBEDDING_PARAMS, "batch_size": 8})
+    )
+    large = service._build_dense_persistence_for(
+        _dense_params({**_EMBEDDING_PARAMS, "batch_size": 64})
+    )
+    unnormalized = service._build_dense_persistence_for(
+        _dense_params({**_EMBEDDING_PARAMS, "normalize": False})
+    )
+
+    assert small.embedding_model_id == large.embedding_model_id
+    assert unnormalized.embedding_model_id != small.embedding_model_id
+
+
+def _dense_retriever_state(db, session_id: int, params: Dict[str, Any]):
+    """Insert a session pipeline with one fitted dense retriever.
+
+    The embedding row carries a unique marker instead of the converter params,
+    because the table is unique on (class, parameters) and is shared by every
+    test in the database. Cleanup never reads that row's parameters.
+    """
+    chunk_set = RAGChunkSet(
+        signature=uuid.uuid4().hex, parameters={}, session_id=session_id
+    )
+    db.add(chunk_set)
+    db.flush()
+    pipeline = RAGPipeline(session_id=session_id, name="")
+    db.add(pipeline)
+    db.flush()
+    embedding_model = RAGEmbeddingModel(
+        class_name="AllMiniLML6V2Embedding",
+        parameters={"marker": uuid.uuid4().hex},
+    )
+    db.add(embedding_model)
+    db.flush()
+    bridge = RAGRetriever(class_name="DenseEmbeddingRetriever", pipeline_id=pipeline.id)
+    db.add(bridge)
+    db.flush()
+    detail = RAGDenseRetriever(
+        bridge_id=bridge.id,
+        chunk_set_id=chunk_set.id,
+        class_name="DenseEmbeddingRetriever",
+        parameters=params,
+        embedding_model_id=embedding_model.id,
+    )
+    db.add(detail)
+    db.commit()
+    return bridge, detail
+
+
+def test_changing_the_batch_size_does_not_delete_a_dense_retriever(
+    client: TestClient,
+):
+    """A batch size change keeps the fitted dense retriever and its embeddings."""
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        session_id = _insert_rag_session(
+            db, f"identity_batch_{uuid.uuid4().hex[:6]}"
+        ).id
+        params = _dense_params(_EMBEDDING_PARAMS)
+        bridge, detail = _dense_retriever_state(db, session_id, params)
+        old_parameters = {
+            "documents": [],
+            "retriever_model": {
+                "component": "DenseEmbeddingRetriever",
+                "params": params,
+            },
+        }
+        new_parameters = {
+            "documents": [],
+            "retriever_model": {
+                "component": "DenseEmbeddingRetriever",
+                "params": _with_batch_size(params, 8),
+            },
+        }
+
+        CleanupService(db, _registry(client)).cleanup_orphaned_resources(
+            session_id, old_parameters, new_parameters
+        )
+
+        assert db.get(RAGRetriever, bridge.id) is not None
+        assert db.get(RAGDenseRetriever, detail.id) is not None
+
+
+def test_changing_the_normalization_does_delete_a_dense_retriever(client: TestClient):
+    """The control: a change to a vector-shaping parameter still triggers cleanup."""
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        session_id = _insert_rag_session(
+            db, f"identity_norm_ctl_{uuid.uuid4().hex[:6]}"
+        ).id
+        params = _dense_params(_EMBEDDING_PARAMS)
+        bridge, _ = _dense_retriever_state(db, session_id, params)
+        old_parameters = {
+            "documents": [],
+            "retriever_model": {
+                "component": "DenseEmbeddingRetriever",
+                "params": params,
+            },
+        }
+        new_parameters = {
+            "documents": [],
+            "retriever_model": {
+                "component": "DenseEmbeddingRetriever",
+                "params": _dense_params({**_EMBEDDING_PARAMS, "normalize": False}),
+            },
+        }
+
+        CleanupService(db, _registry(client)).cleanup_orphaned_resources(
+            session_id, old_parameters, new_parameters
+        )
+
+        assert db.get(RAGRetriever, bridge.id) is None
 
 
 # ── Composite and nested signatures ──────────────────────────────────────────
