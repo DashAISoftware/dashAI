@@ -1,7 +1,20 @@
 name: Build and Test
 on:
+  # Feature branches are tested through their pull request. Running on every
+  # push as well tested each commit twice (#1011).
   push:
+    branches: [develop, production]
   pull_request:
+  # Lets a branch without a pull request still run the suite by hand.
+  workflow_dispatch:
+
+# A new push to a pull request cancels its outdated run. Every other run gets a
+# group of its own (its run id): a shared group per branch would make pushes to
+# develop wait for the previous run, and GitHub keeps only one pending run per
+# group, so a third merge in a row would cancel the second one's run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   react-build-test:
@@ -26,7 +39,7 @@ jobs:
         with:
           name: react-build
           path: DashAI/front/build
-          retention-days: 1
+          retention-days: 7
       - run: yarn test --passWithNoTests
 
   pytest:
@@ -42,9 +55,23 @@ jobs:
       matrix:
         python-version: ${{ github.event_name == 'pull_request' && fromJson('["3.11", "3.12", "3.13"]') || fromJson('["3.12"]') }}
         os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      # A known location for the models some tests download, so it can be cached.
+      HF_HOME: ${{ github.workspace }}/.hf-cache
 
     steps:
       - uses: actions/checkout@v3
+
+      # The text classification tests load ModernBERT, DeBERTa v3 and DistilBERT
+      # (about 1.5 GB). Downloading them on every run took up to five minutes on
+      # Windows (#1011). The key changes when a Hugging Face model changes;
+      # restore-keys reuses the previous cache so only new models are fetched.
+      - name: Cache Hugging Face models
+        uses: actions/cache@v4
+        with:
+          path: .hf-cache
+          key: hf-models-${{ runner.os }}-${{ hashFiles('DashAI/back/models/hugging_face/**') }}
+          restore-keys: hf-models-${{ runner.os }}-
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
