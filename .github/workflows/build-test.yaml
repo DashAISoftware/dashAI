@@ -8,10 +8,12 @@ on:
   # Lets a branch without a pull request still run the suite by hand.
   workflow_dispatch:
 
-# A new push to a pull request cancels its outdated run. Pushes to develop and
-# production are never cancelled, so every merge keeps its own result.
+# A new push to a pull request cancels its outdated run. Every other run gets a
+# group of its own (its run id): a shared group per branch would make pushes to
+# develop wait for the previous run, and GitHub keeps only one pending run per
+# group, so a third merge in a row would cancel the second one's run.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
