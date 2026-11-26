@@ -1,18 +1,14 @@
 import React from "react";
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../../test-utils/renderWithProviders";
 import RAGConfigPanel from "./RAGConfigPanel";
 
-// react-markdown ships ESM only and Create React App's jest does not transform
-// it; the panel reaches it through the prompt-aware forms.
 jest.mock("react-markdown", () => ({
   __esModule: true,
   default: ({ children }) => <span>{children}</span>,
 }));
 
-// One stable object: the panel's loader depends on `enqueueSnackbar`, so a
-// fresh reference per render would restart the load on every render.
 jest.mock("notistack", () => {
   const snackbar = { enqueueSnackbar: jest.fn() };
   return { useSnackbar: () => snackbar };
@@ -37,8 +33,6 @@ jest.mock("../../../api/session", () => ({
 jest.mock("../../../pages/generative/RAGSession/retrieverKinds", () => ({
   loadRetrieverKinds: jest.fn(),
 }));
-// The generator picker fetches components and download state of its own; the
-// panel only cares about the availability it reports back.
 jest.mock("./GeneratorPicker", () => {
   const MockGeneratorPicker = () => <div data-testid="generator-picker" />;
   return MockGeneratorPicker;
@@ -53,7 +47,54 @@ jest.mock(
 jest.mock(
   "../../../pages/generative/RAGSession/advanced/RetrieverAdvancedModal",
   () => {
-    const MockRetrieverAdvancedModal = () => null;
+    const MockRetrieverAdvancedModal = ({
+      open,
+      retrieverModel,
+      setRetrieverModel,
+    }) => {
+      if (!open) return null;
+      const setParams = (changes) =>
+        setRetrieverModel({
+          ...retrieverModel,
+          params: { ...retrieverModel.params, ...changes },
+        });
+      const setChildrenTopK = (topK) =>
+        setRetrieverModel({
+          ...retrieverModel,
+          params: {
+            ...retrieverModel.params,
+            children: retrieverModel.params.children.map((child) => ({
+              ...child,
+              params: { ...child.params, top_k: topK },
+            })),
+          },
+        });
+      return (
+        <div>
+          <button onClick={() => setParams({ top_k: 9 })}>
+            Set chunk count to 9
+          </button>
+          <button
+            onClick={() => setParams({ enable_retrieve_then_expand: true })}
+          >
+            Enable expansion
+          </button>
+          <button onClick={() => setChildrenTopK(2)}>
+            Set child chunk counts to 2
+          </button>
+          <button
+            onClick={() => setRetrieverModel({ component: "", params: {} })}
+          >
+            Clear retriever selection
+          </button>
+          <button
+            onClick={() => setRetrieverModel({ component: "BM25Retriever" })}
+          >
+            Drop retriever params
+          </button>
+        </div>
+      );
+    };
     return MockRetrieverAdvancedModal;
   },
 );
@@ -119,8 +160,6 @@ const CONFIGURATION = {
     preset_display_name: "Balanced",
     summary: "400 characters",
   },
-  // What the backend returns for a session with no query transformation:
-  // the section is always present, disabled.
   query_transformation: {
     section_name: "Query Transformation",
     component: null,
@@ -217,8 +256,6 @@ test("saving is offered only once something changed", async () => {
 test("an edit in a collapsed section is still reported and still saved", async () => {
   await renderPanel();
 
-  // Change chunking, then open a different section: the change is now
-  // collapsed, which is exactly when the panel has to keep saying it exists.
   await userEvent.click(screen.getByText("Fine"));
   await userEvent.click(screen.getByRole("button", { name: /Model/ }));
 
@@ -231,8 +268,6 @@ test("an edit in a collapsed section is still reported and still saved", async (
   await waitFor(() => expect(save).toBeEnabled());
   await userEvent.click(save);
 
-  // One request carries the whole draft: the endpoint replaces every
-  // parameter at once, so a per-tab save would be a lie.
   await waitFor(() =>
     expect(api.updateGenerativeSessionParams).toHaveBeenCalledTimes(1),
   );
@@ -259,15 +294,122 @@ test("discarding puts every tab back to the saved configuration", async () => {
 
 test("every section is mounted, so one never opened still validates", async () => {
   await renderPanel();
-  // The generator reports whether its model can run through a callback. If it
-  // only mounted once its section was opened, Save would stay enabled for a
-  // model that cannot answer.
   expect(screen.getByTestId("generator-picker")).toBeInTheDocument();
 });
 
-// ─── Indexing notices ──────────────────────────────────────────────────
-// Indexing now runs up front rather than on the first message, so the panel
-// is where its progress and its failures surface.
+test("an unsaved Top K change keeps the retriever preset, another option does not", async () => {
+  const keywordRef = {
+    component: "BM25Retriever",
+    params: {
+      top_k: 5,
+      vectorizer: "bag_of_words",
+      enable_retrieve_then_expand: false,
+      expand_window: 1,
+    },
+  };
+  api.getRetrieverPresets.mockResolvedValue([
+    {
+      key: "keyword",
+      display_name: "Keyword",
+      description: "BM25",
+      ...keywordRef,
+    },
+  ]);
+  api.getRAGSession.mockResolvedValue({
+    ...SESSION,
+    parameters: { ...SESSION.parameters, retriever_model: keywordRef },
+  });
+  await renderPanel();
+  const keywordChip = () => screen.getByRole("button", { name: /^Keyword/ });
+
+  await userEvent.click(screen.getByRole("button", { name: /Retrieval/ }));
+  const retrieval = within(
+    screen.getByRole("heading", { name: /Retrieval/, level: 3 }).parentElement,
+  );
+  await userEvent.click(
+    retrieval.getByRole("button", { name: /Advanced configuration/ }),
+  );
+
+  await userEvent.click(
+    screen.getByRole("button", { name: "Set chunk count to 9" }),
+  );
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: /Save/i })).toBeEnabled(),
+  );
+  expect(keywordChip()).toHaveAttribute("aria-pressed", "true");
+
+  await userEvent.click(
+    screen.getByRole("button", { name: "Enable expansion" }),
+  );
+  await waitFor(() =>
+    expect(keywordChip()).toHaveAttribute("aria-pressed", "false"),
+  );
+});
+
+test("an unsaved child Top K change keeps the hybrid preset selected", async () => {
+  const hybridParams = {
+    top_k: 10,
+    children: [
+      {
+        component: "BM25Retriever",
+        params: { top_k: 5, vectorizer: "bag_of_words" },
+      },
+      {
+        component: "SemanticRetriever",
+        params: { top_k: 5, similarity_metric: "cosine" },
+      },
+    ],
+  };
+  api.getRetrieverPresets.mockResolvedValue([
+    {
+      key: "hybrid",
+      display_name: "Hybrid",
+      description: "Keyword and semantic",
+      component: "HybridRetriever",
+      params: hybridParams,
+    },
+  ]);
+  api.getRAGSession.mockResolvedValue({
+    ...SESSION,
+    parameters: {
+      ...SESSION.parameters,
+      retriever_model: {
+        component: "HybridRetriever",
+        params: JSON.parse(JSON.stringify(hybridParams)),
+      },
+    },
+  });
+  api.getSessionConfiguration.mockResolvedValue({
+    ...CONFIGURATION,
+    retriever_model: {
+      ...CONFIGURATION.retriever_model,
+      component: "HybridRetriever",
+      display_name: "Hybrid",
+      preset_key: "hybrid",
+      preset_display_name: "Hybrid",
+      top_k: 10,
+    },
+  });
+  await renderPanel();
+  const hybridChip = () => screen.getByRole("button", { name: /^Hybrid/ });
+
+  await userEvent.click(screen.getByRole("button", { name: /Retrieval/ }));
+  expect(hybridChip()).toHaveAttribute("aria-pressed", "true");
+  const retrieval = within(
+    screen.getByRole("heading", { name: /Retrieval/, level: 3 }).parentElement,
+  );
+  await userEvent.click(
+    retrieval.getByRole("button", { name: /Advanced configuration/ }),
+  );
+
+  await userEvent.click(
+    screen.getByRole("button", { name: "Set child chunk counts to 2" }),
+  );
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: /Save/i })).toBeEnabled(),
+  );
+  expect(hybridChip()).toHaveAttribute("aria-pressed", "true");
+});
 
 test("a running index shows its progress, using the backend's wording", async () => {
   await renderPanel({
@@ -278,8 +420,6 @@ test("a running index shows its progress, using the backend's wording", async ()
     },
   });
 
-  // Scoped to the notice: the panel also draws a context-budget bar, and a
-  // bare progressbar query would not tell the two apart.
   const notice = screen.getByRole("alert");
   expect(
     within(notice).getByText("Indexing the documents…"),
@@ -291,7 +431,6 @@ test("a running index shows its progress, using the backend's wording", async ()
 });
 
 test("an index with no progress yet shows an indeterminate bar", async () => {
-  // A determinate bar sitting at 0% reads as stalled rather than as starting.
   await renderPanel({
     indexStatus: {
       status: "indexing",
@@ -347,4 +486,98 @@ test("a job that finished cleanly raises no alarm", async () => {
   });
 
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+test.each([
+  ["has no retriever_model", { retriever_model: undefined }, "retriever_model"],
+  [
+    "has a retriever_model with no component",
+    { retriever_model: { component: "", params: {} } },
+    "retriever_model",
+  ],
+  [
+    "has a chunking_model with no params",
+    { chunking_model: { component: "CharacterChunkModel" } },
+    "chunking_model",
+  ],
+])(
+  "a session that %s shows the load-failed alert instead of the panel",
+  async (_label, overrides, invalidSection) => {
+    const consoleError = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    try {
+      api.getRAGSession.mockResolvedValue({
+        ...SESSION,
+        parameters: { ...SESSION.parameters, ...overrides },
+      });
+      renderWithProviders(<RAGConfigPanel sessionId={1} />);
+
+      const alert = await screen.findByRole("alert");
+      expect(
+        within(alert).getByText("Failed to load RAG session"),
+      ).toBeInTheDocument();
+      expect(
+        within(alert).getByRole("button", { name: /Retry/i }),
+      ).toBeVisible();
+      expect(
+        screen.queryByRole("button", { name: /Retrieval/ }),
+      ).not.toBeInTheDocument();
+      expect(consoleError).toHaveBeenCalledWith(
+        "Failed to load RAG configuration:",
+        expect.objectContaining({
+          message: expect.stringContaining(invalidSection),
+        }),
+      );
+    } finally {
+      consoleError.mockRestore();
+    }
+  },
+);
+
+/** Opens the retrieval section's advanced dialog, which the mock renders. */
+async function openRetrievalAdvanced() {
+  await userEvent.click(screen.getByRole("button", { name: /Retrieval/ }));
+  const retrieval = within(
+    screen.getByRole("heading", { name: /Retrieval/, level: 3 }).parentElement,
+  );
+  await userEvent.click(
+    retrieval.getByRole("button", { name: /Advanced configuration/ }),
+  );
+}
+
+test("a cleared retriever selection is a custom config, not an error", async () => {
+  await renderPanel();
+  await openRetrievalAdvanced();
+
+  await userEvent.click(
+    screen.getByRole("button", { name: "Clear retriever selection" }),
+  );
+
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: /Save/i })).toBeEnabled(),
+  );
+  expect(screen.getByRole("button", { name: /^Keyword/ })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+});
+
+test("a retriever reference with no params is malformed, not a cleared selection", async () => {
+  const consoleError = jest
+    .spyOn(console, "error")
+    .mockImplementation(() => {});
+  try {
+    await renderPanel();
+    await openRetrievalAdvanced();
+
+    const dropParams = screen.getByRole("button", {
+      name: "Drop retriever params",
+    });
+    expect(() => fireEvent.click(dropParams)).toThrow(
+      "ref must be a {component, params} object",
+    );
+  } finally {
+    consoleError.mockRestore();
+  }
 });

@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { Button, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { resolveLabel } from "../../../../components/generative/RAG/QueryTransformationPicker";
+import { deepEqual } from "../../../../components/generative/RAG/configEquality";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
@@ -51,7 +52,7 @@ function llmParamsToPersist(carriedParams, seedDefaults, values) {
 
     const wasCarried = Object.prototype.hasOwnProperty.call(carried, key);
     const isUntouchedDefault =
-      JSON.stringify(value) === JSON.stringify(seed[key]);
+      seed[key] !== undefined && deepEqual(value, seed[key]);
     if (!wasCarried && isUntouchedDefault) continue;
 
     result[key] = value;

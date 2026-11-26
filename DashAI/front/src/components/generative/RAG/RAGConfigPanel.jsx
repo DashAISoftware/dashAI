@@ -44,6 +44,12 @@ import { updateGenerativeSession } from "../../../api/session";
 import { getRequiredDownloads } from "../../../api/component";
 import { subscribeAnyDownloadState } from "../../models/model/ComponentDownloadControl";
 import { getApiErrorMessage } from "../../../utils/apiError";
+import { NO_IGNORED_KEYS, deepEqual } from "./configEquality";
+import {
+  RETRIEVER_MATCH_IGNORED_KEYS,
+  findMatchingPreset,
+  isPresetReference,
+} from "./presetMatching";
 
 /**
  * Section keys, matching the RAG parameter keys the backend uses, in the order
@@ -57,6 +63,71 @@ const SECTIONS = [
   "generation_model",
   "prompt",
 ];
+
+/**
+ * Parameter keys each preset-matched section ignores when comparing its draft
+ * with a preset recipe. The retriever ignores `top_k`, a slider, so moving it
+ * keeps the preset. Chunking ignores no keys, so every parameter must match
+ * exactly.
+ */
+const PRESET_MATCH_IGNORED_KEYS = {
+  chunking_model: NO_IGNORED_KEYS,
+  retriever_model: RETRIEVER_MATCH_IGNORED_KEYS,
+};
+
+/**
+ * Whether a draft section is the unfinished reference an advanced dialog leaves
+ * when the user clears its selection: an empty component with an object
+ * `params`. No preset matches it. Any other malformed section is not cleared,
+ * and the preset matcher rejects it.
+ *
+ * @param {unknown} value - One section of the draft.
+ * @returns {boolean} True for a cleared selection.
+ */
+function isClearedReference(value) {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    value.component === "" &&
+    value.params !== null &&
+    typeof value.params === "object" &&
+    !Array.isArray(value.params)
+  );
+}
+
+/**
+ * Whether two draft values hold the same configuration.
+ *
+ * A draft value is a property of the draft, so `undefined` is absent: it equals
+ * only another absent value, as it would on the wire. Anything else is decided
+ * by the configuration contract in `configEquality.js`.
+ *
+ * @param {unknown} left - A draft, or one section of it.
+ * @param {unknown} right - The value to compare it with.
+ * @returns {boolean} True when the two hold the same configuration.
+ */
+function sameDraftValue(left, right) {
+  if (left === undefined || right === undefined) return left === right;
+  return deepEqual(left, right);
+}
+
+/**
+ * Return the earlier object while it stays deep-equal to the current value.
+ *
+ * An effect that depends on the result re-runs only when the configuration
+ * really changes, not when an equal object is rebuilt on each render.
+ *
+ * @param {unknown} value - A configuration value within the contract.
+ * @returns {unknown} The stored object while deep-equal to `value`, else `value`.
+ */
+function useStableConfig(value) {
+  const [stable, setStable] = useState(value);
+  if (!deepEqual(stable, value)) {
+    setStable(value);
+    return value;
+  }
+  return stable;
+}
 
 /**
  * Merge the parameters a save returned into the draft the panel keeps.
@@ -144,6 +215,13 @@ export default function RAGConfigPanel({
   // Which section's help modal is open, if any.
   const [helpSection, setHelpSection] = useState(null);
 
+  /**
+   * Load the session and its resolved configuration into the panel.
+   *
+   * The chunking and retriever references are preset-matched, so a session
+   * without a named reference in either fails the load: the panel does not
+   * guess a fallback, and the error names the invalid sections.
+   */
   const load = useCallback(async () => {
     if (!sessionId) return;
     // A help modal left open belongs to the section of the session being left.
@@ -156,18 +234,19 @@ export default function RAGConfigPanel({
         getSessionConfiguration(sessionId),
       ]);
       const parameters = session.parameters || {};
+      const invalidSections = ["chunking_model", "retriever_model"].filter(
+        (key) => !isPresetReference(parameters[key]),
+      );
+      if (invalidSections.length > 0) {
+        const names = invalidSections.join(", ");
+        throw new Error(`RAG session has no valid reference in: ${names}`);
+      }
       const next = {
-        chunking_model: parameters.chunking_model || {
-          component: "",
-          params: {},
-        },
+        chunking_model: parameters.chunking_model,
         // Null, not `{component: ""}`: the stage is optional and its absent
         // form is the null the endpoint expects back.
         query_transformation: parameters.query_transformation ?? null,
-        retriever_model: parameters.retriever_model || {
-          component: "",
-          params: {},
-        },
+        retriever_model: parameters.retriever_model,
         prompt: parameters.prompt || { component: "", params: {} },
         generation_model: parameters.generation_model || {
           component: "",
@@ -194,8 +273,6 @@ export default function RAGConfigPanel({
     load();
   }, [load]);
 
-  // Preset recipes come resolved from the backend; the Top-K currently in use
-  // keeps the retriever recipes comparable with what the session already has.
   useEffect(() => {
     getChunkingPresets()
       .then(setChunkingPresets)
@@ -229,12 +306,11 @@ export default function RAGConfigPanel({
     if (generatorName !== undefined) onGeneratorChange?.(generatorName);
   }, [generatorName, onGeneratorChange]);
 
-  const retrieverKey = JSON.stringify(draft?.retriever_model ?? null);
+  const retrieverModel = useStableConfig(draft?.retriever_model ?? null);
   const [missingRetrieverDownloads, setMissingRetrieverDownloads] = useState(
     [],
   );
   useEffect(() => {
-    const retrieverModel = JSON.parse(retrieverKey);
     if (!retrieverModel?.component) {
       setMissingRetrieverDownloads([]);
       return undefined;
@@ -255,7 +331,7 @@ export default function RAGConfigPanel({
       clearTimeout(timer);
       unsubscribe();
     };
-  }, [retrieverKey]);
+  }, [retrieverModel]);
   const retrieverDownloadMessage =
     missingRetrieverDownloads.length > 0
       ? t("common:componentDownload.mustDownloadNested", {
@@ -266,7 +342,7 @@ export default function RAGConfigPanel({
       : null;
 
   const dirty = useMemo(
-    () => JSON.stringify(draft) !== JSON.stringify(savedDraft),
+    () => !sameDraftValue(draft, savedDraft),
     [draft, savedDraft],
   );
 
@@ -276,7 +352,7 @@ export default function RAGConfigPanel({
   const dirtySections = useMemo(() => {
     if (!draft || !savedDraft) return [];
     return SECTIONS.filter(
-      (key) => JSON.stringify(draft[key]) !== JSON.stringify(savedDraft[key]),
+      (key) => !sameDraftValue(draft[key], savedDraft[key]),
     );
   }, [draft, savedDraft]);
 
@@ -305,8 +381,10 @@ export default function RAGConfigPanel({
       setDraft((prev) => {
         const next = { ...prev };
         for (const key of SECTIONS) {
-          const unchangedWhileSaving =
-            JSON.stringify(prev?.[key]) === JSON.stringify(requestDraft?.[key]);
+          const unchangedWhileSaving = sameDraftValue(
+            prev?.[key],
+            requestDraft?.[key],
+          );
           if (unchangedWhileSaving) next[key] = saved[key];
         }
         return next;
@@ -418,23 +496,26 @@ export default function RAGConfigPanel({
   /**
    * The preset recipe the unsaved draft currently matches, if any.
    *
-   * Clicking a chip applies that recipe verbatim, so an exact comparison
-   * against the recipe is enough to keep the panel in step with the draft — no
-   * waiting for a save round-trip, and no domain knowledge here.
+   * Clicking a chip applies that recipe verbatim, so comparing the draft with
+   * the recipe, after dropping the section's ignored keys, keeps the panel in
+   * step with the draft without waiting for a save round-trip.
+   *
+   * A cleared selection (an empty component left by an advanced dialog) is an
+   * unfinished draft, not a malformed one: no preset matches it, so it yields
+   * null. Any other malformed reference reaches the matcher, which throws.
    *
    * @param {string} key - The configuration section key.
    * @param {Array} presets - The preset recipes for that section.
    * @returns {object|null} The matching recipe, or null for a custom config.
+   * @throws {Error} When the section has no preset match rule.
    */
   const matchedPreset = (key, presets) => {
-    const ref = draft[key];
-    return (
-      presets.find(
-        (preset) =>
-          preset.component === ref?.component &&
-          JSON.stringify(preset.params) === JSON.stringify(ref?.params),
-      ) ?? null
-    );
+    const ignoredKeys = PRESET_MATCH_IGNORED_KEYS[key];
+    if (!ignoredKeys) {
+      throw new Error(`No preset match rule for section "${key}"`);
+    }
+    if (isClearedReference(draft[key])) return null;
+    return findMatchingPreset(draft[key], presets, ignoredKeys);
   };
 
   /**
@@ -450,13 +531,9 @@ export default function RAGConfigPanel({
   };
 
   /**
-   * One-line description of a section, shown while it is collapsed.
-   *
-   * Prefers the preset the *draft* matches so an unsaved change is reflected
-   * right away; falls back to the backend's resolved answer otherwise.
-   *
-   * @param {string} key - The configuration section key.
-   * @returns {string} The summary line.
+   * Translated display name of a retriever component.
+   * @param {string|undefined} component - The retriever component name.
+   * @returns {string|null} The display name, the raw name as fallback, or null.
    */
   const retrieverDisplayName = (component) => {
     if (!component) return null;
@@ -470,6 +547,15 @@ export default function RAGConfigPanel({
     return displayName[i18n.language] || displayName.en || component;
   };
 
+  /**
+   * One-line description of a section, shown while it is collapsed.
+   *
+   * Prefers the preset the *draft* matches so an unsaved change is reflected
+   * right away; falls back to the backend's resolved answer otherwise.
+   *
+   * @param {string} key - The configuration section key.
+   * @returns {string} The summary line.
+   */
   const sectionSummary = (key) => {
     const section = configuration[key];
     if (!section) return "";
@@ -488,8 +574,7 @@ export default function RAGConfigPanel({
 
     if (key === "retriever_model") {
       const ref = draft.retriever_model;
-      const unchanged =
-        JSON.stringify(ref) === JSON.stringify(savedDraft?.retriever_model);
+      const unchanged = sameDraftValue(ref, savedDraft?.retriever_model);
       const preset = matchedPreset(key, retrieverPresets);
       const presetLabel =
         preset?.display_name ||
