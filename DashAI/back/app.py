@@ -20,6 +20,7 @@ from DashAI.back.dependencies.database.backfill import (
     backfill_rag_retrievers,
 )
 from DashAI.back.dependencies.database.migrate import migrate_on_startup
+from DashAI.back.dependencies.model_cache_status import clear_loaded_models
 from DashAI.back.plugins.environment import activate_plugins_directory
 from DashAI.back.seeds import seed_datasets_if_first_run
 
@@ -106,6 +107,12 @@ def create_app(
     migrate_on_startup(
         sqlite_file_path=pathlib.Path(config["SQLITE_DB_PATH"]),
     )
+
+    # No worker is alive yet, so rows left by a previous run are stale
+    try:
+        clear_loaded_models(di["session_factory"])
+    except Exception:
+        logger.exception("Could not clear stale loaded model rows")
 
     logger.debug("4b. Backfilling dataset row/column counts.")
     backfill_dataset_counts(di["session_factory"])

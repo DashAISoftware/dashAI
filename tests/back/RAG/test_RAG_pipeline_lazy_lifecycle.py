@@ -459,3 +459,53 @@ def test_lifecycle_probe_prints_construction_and_close_order() -> None:
     ]
     assert _RecordingBackend.max_live == 1
     assert _RecordingBackend.live == 0
+
+
+def test_lazy_llm_reuses_cached_instance_with_own_generation_params() -> None:
+    """Two stages with the same load params share one model, each with its own
+    generation parameters."""
+    from pydantic import BaseModel
+
+    from DashAI.back.dependencies.model_cache import (
+        get_model_cache,
+        reset_model_cache,
+    )
+    from DashAI.back.services.RAG.llm_service import _build_lazy_factory
+
+    class _FakeSchema(BaseModel):
+        temperature: float = 0.0
+
+    class _CacheableBackend(_RecordingBackend):
+        SCHEMA = _FakeSchema
+        CACHEABLE = True
+        GENERATION_PARAMS = frozenset({"temperature"})
+        temperatures: List[float] = []
+
+        def __init__(self, temperature: float = 0.0, **kwargs) -> None:
+            super().__init__("cached")
+            self.temperature = temperature
+
+        def set_generation_params(self, **params) -> None:
+            self.temperature = params["temperature"]
+
+        def generate(self, prompt):
+            type(self).temperatures.append(self.temperature)
+            return super().generate(prompt)
+
+    registry = {"Fake": {"class": _CacheableBackend}}
+    reset_model_cache()
+    try:
+        with get_model_cache().job_scope():
+            for temperature in (0.1, 0.7):
+                factory, release = _build_lazy_factory(
+                    registry, "Fake", {"temperature": temperature}
+                )
+                lazy = LazyLLM(factory, label="Fake", release=release)
+                lazy.generate([{"role": "user", "content": "hi"}])
+                lazy.close()
+                assert lazy._model is None
+            assert _CacheableBackend.construction_count == 1
+            assert _CacheableBackend.close_count == 0
+            assert _CacheableBackend.temperatures == [0.1, 0.7]
+    finally:
+        reset_model_cache()
