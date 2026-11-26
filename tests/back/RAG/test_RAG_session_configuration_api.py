@@ -57,9 +57,9 @@ def register_stub_llm(client: TestClient) -> None:
 
 
 @pytest.fixture
-def written_documents() -> list:
+def written_documents() -> list[str]:
     """Collect the document files written by a test, and clean them up."""
-    paths: list = []
+    paths: list[str] = []
     yield paths
     for path in paths:
         with contextlib.suppress(OSError):
@@ -135,7 +135,7 @@ def _run_one_chat_turn(client: TestClient, session_id: int) -> None:
 
 
 def test_configuration_never_exposes_class_names(
-    client: TestClient, written_documents: list
+    client: TestClient, written_documents: list[str]
 ):
     session_id, _ = _create_minimal_session(
         client, "config_no_class_names", written_documents
@@ -155,7 +155,7 @@ def test_configuration_never_exposes_class_names(
 
 
 def test_configuration_labels_every_parameter(
-    client: TestClient, written_documents: list
+    client: TestClient, written_documents: list[str]
 ):
     session_id, _ = _create_minimal_session(client, "config_labels", written_documents)
     data = client.get(f"/api/v1/rag/sessions/{session_id}/configuration").json()
@@ -167,7 +167,7 @@ def test_configuration_labels_every_parameter(
 
 
 def test_configuration_names_the_matching_presets(
-    client: TestClient, written_documents: list
+    client: TestClient, written_documents: list[str]
 ):
     session_id, _ = _create_minimal_session(client, "config_presets", written_documents)
     data = client.get(f"/api/v1/rag/sessions/{session_id}/configuration").json()
@@ -194,7 +194,7 @@ def test_configuration_is_localized(client: TestClient, written_documents: list)
 
 
 def test_configuration_reports_the_context_budget(
-    client: TestClient, written_documents: list
+    client: TestClient, written_documents: list[str]
 ):
     session_id, _ = _create_minimal_session(client, "config_budget", written_documents)
     budget = client.get(f"/api/v1/rag/sessions/{session_id}/configuration").json()[
@@ -215,7 +215,7 @@ def test_configuration_reports_the_context_budget(
 
 
 def test_default_session_context_budget_is_usable(
-    client: TestClient, written_documents: list
+    client: TestClient, written_documents: list[str]
 ):
     """A session created from the defaults must actually fit in its context.
 
@@ -238,7 +238,7 @@ def test_default_session_context_budget_is_usable(
 
 
 def test_explicit_context_window_survives_the_override(
-    client: TestClient, written_documents: list
+    client: TestClient, written_documents: list[str]
 ):
     """A context window the caller sets is never overridden."""
     base = _base_generation_model()
@@ -259,7 +259,7 @@ def test_explicit_context_window_survives_the_override(
 
 
 def test_configuration_survives_an_unregistered_component(
-    client: TestClient, written_documents: list
+    client: TestClient, written_documents: list[str]
 ):
     """An uninstalled plugin must degrade to a raw name, not break the page."""
     session_id, _ = _create_minimal_session(client, "config_unknown", written_documents)
@@ -293,6 +293,28 @@ def test_configuration_404s_for_an_unknown_session(client: TestClient):
     assert client.get("/api/v1/rag/sessions/999999/configuration").status_code == 404
 
 
+def test_configuration_422s_for_malformed_stored_data(
+    client: TestClient, written_documents: list[str]
+):
+    """Malformed stored data is an invalid session, not a missing one."""
+    session_id, _ = _create_minimal_session(
+        client, "config_malformed", written_documents
+    )
+
+    session_factory = client.app.container["session_factory"]
+    from DashAI.back.dependencies.database.models import GenerativeSession
+
+    with session_factory() as db:
+        session = db.get(GenerativeSession, session_id)
+        parameters = dict(session.parameters)
+        parameters["retriever_model"] = {"component": "BM25Retriever"}
+        session.parameters = parameters
+        db.commit()
+
+    response = client.get(f"/api/v1/rag/sessions/{session_id}/configuration")
+    assert response.status_code == 422, response.text
+
+
 # ===================================================================
 # Resolved query transformation section
 # ===================================================================
@@ -322,7 +344,7 @@ def _enable_transformation(client: TestClient, session_id: int) -> None:
 
 
 def test_transformation_section_is_disabled_without_the_key(
-    client: TestClient, written_documents: list
+    client: TestClient, written_documents: list[str]
 ):
     session_id, _ = _create_minimal_session(
         client, "config_transformation_disabled", written_documents
@@ -342,7 +364,7 @@ def test_transformation_section_is_disabled_without_the_key(
 
 
 def test_transformation_section_name_is_localized(
-    client: TestClient, written_documents: list
+    client: TestClient, written_documents: list[str]
 ):
     session_id, _ = _create_minimal_session(
         client, "config_transformation_localized", written_documents
@@ -358,7 +380,7 @@ def test_transformation_section_name_is_localized(
 
 
 def test_configuration_describes_an_enabled_transformation(
-    client: TestClient, written_documents: list
+    client: TestClient, written_documents: list[str]
 ):
     session_id, _ = _create_minimal_session(
         client, "config_transformation_enabled", written_documents
@@ -382,7 +404,7 @@ def test_configuration_describes_an_enabled_transformation(
 
 
 def test_configuration_survives_an_unregistered_transformer(
-    client: TestClient, written_documents: list
+    client: TestClient, written_documents: list[str]
 ):
     """A stale transformer reference must degrade, not break the page."""
     session_id, _ = _create_minimal_session(
@@ -434,7 +456,7 @@ def test_index_status_starts_not_indexed(client: TestClient, written_documents: 
 
 
 def test_index_status_becomes_indexed_then_stale(
-    client: TestClient, written_documents: list
+    client: TestClient, written_documents: list[str]
 ):
     session_id, _ = _create_minimal_session(
         client, "index_lifecycle", written_documents

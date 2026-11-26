@@ -17,7 +17,9 @@ from DashAI.back.dependencies.database.models import GenerativeSession
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_KEYS as _RAG_PARAM_KEYS
 from DashAI.back.models.RAG.RAG_pipeline import RAGPipelineConfig
+from DashAI.back.services.RAG.cleanup_service import run_post_index_cleanup
 from DashAI.back.services.RAG.prompt_service import PromptService
+from DashAI.back.services.RAG.session_params import filter_pipeline_params
 from DashAI.back.services.RAG.session_validation_service import (
     SessionValidationService,
 )
@@ -106,9 +108,7 @@ class RAGIndexJob(BaseJob):
                     session_id,
                     dict(session.parameters or {}),
                 )
-                clean_params = {
-                    k: v for k, v in raw_params.items() if k in _RAG_PARAM_KEYS
-                }
+                clean_params = filter_pipeline_params(raw_params, _RAG_PARAM_KEYS)
                 if not (clean_params.get("documents") or []):
                     raise JobError(f"Session {session_id} has no documents to index.")
 
@@ -135,15 +135,26 @@ class RAGIndexJob(BaseJob):
                     pipeline_config,
                     progress=self.report_progress,
                 )
+                # Captured before the cleanup, which may roll the session back.
+                chunk_set_id = result.chunk_set_id
+                total_chunks = result.total_chunks
+                root_bridge_id = result.retriever.db_record_id
+                run_post_index_cleanup(
+                    db,
+                    component_registry,
+                    session_id,
+                    root_bridge_id,
+                    config["RAG_PATH"],
+                )
                 log.debug(
                     "Indexed session %d: chunk set %d, %d chunks",
                     session_id,
-                    result.chunk_set_id,
-                    result.total_chunks,
+                    chunk_set_id,
+                    total_chunks,
                 )
                 return {
-                    "chunk_set_id": result.chunk_set_id,
-                    "total_chunks": result.total_chunks,
+                    "chunk_set_id": chunk_set_id,
+                    "total_chunks": total_chunks,
                 }
         except JobError:
             self.set_status_as_error()

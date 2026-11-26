@@ -21,6 +21,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from DashAI.back.core.schema_fields.utils import normalize_payload
+from DashAI.back.dependencies.database.models import RAGRetriever
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.RAG.documents.chunk import Chunk
 from DashAI.back.models.RAG.documents.source_document import SourceDocument
@@ -54,6 +55,10 @@ from DashAI.back.models.RAG.utils import hash_function
 from DashAI.back.services.RAG.embedding_storage_service import EmbeddingStorageService
 from DashAI.back.services.RAG.retrieval_llm_service import RetrievalLLMService
 from DashAI.back.services.RAG.retriever_db_service import RetrieverDBService
+from DashAI.back.services.RAG.storage_layout import (
+    EMBEDDINGS_DIRNAME,
+    SPARSE_RETRIEVERS_DIRNAME,
+)
 from DashAI.back.services.RAG.utils import build_corpus_content_hash
 
 log = logging.getLogger(__name__)
@@ -80,9 +85,11 @@ class RetrieverSetupService:
         2. Initialization — heavy I/O (embeddings, similarity matrices).
         3. Persistence — save to DB (bridge records, sub-table rows).
 
-    **Composite retrievers** are never cached in the DB.  They are always
-    reconstructed fresh because they are lightweight to build (their
-    children are individually cached).
+    **Composite retrievers** are never cached in the DB.  Their live object is
+    always reconstructed fresh because it is lightweight to build (their
+    children are individually cached). Their bridge row is reused when the same
+    children are wired again in the same order, so a rebuild with an unchanged
+    composite creates no new root.
     """
 
     def __init__(
@@ -238,19 +245,46 @@ class RetrieverSetupService:
         )
         model.inject_infra(self._env_RAG_path, self._chunks, None, self._documents)
 
+        bridge = self._composite_bridge(
+            model_class.__name__, [c.db_record_id for c in children]
+        )
+        model.set_id(bridge.id)
+        return RetrieverSetupResult(db_record_id=bridge.id, model=model)
+
+    def _composite_bridge(
+        self, class_name: str, child_bridge_ids: list[int]
+    ) -> RAGRetriever:
+        """Return the composite bridge over these children, creating it if absent.
+
+        The bridge is matched by class, pipeline and the ordered child bridge
+        ids. Creating a new root on every setup would make an unchanged index
+        look rebuilt, so the existing root is reused whenever there is one.
+
+        Args:
+            class_name: The composite class name.
+            child_bridge_ids: Ordered bridge ids of the composite's children.
+
+        Returns:
+            The existing or newly saved composite bridge record.
+
+        Raises:
+            SQLAlchemyError: If the lookup or the save fails.
+        """
+        existing = self._db_service.find_composite(
+            class_name, self._pipeline_id, child_bridge_ids
+        )
+        if existing is not None:
+            return existing
         try:
-            bridge = self._db_service.save_composite(
-                model_class.__name__,
+            return self._db_service.save_composite(
+                class_name,
                 self._pipeline_id,
-                [c.db_record_id for c in children],
+                child_bridge_ids,
                 commit=True,
             )
         except SQLAlchemyError:
             log.exception("Failed to save composite retriever.")
             raise
-
-        model.set_id(bridge.id)
-        return RetrieverSetupResult(db_record_id=bridge.id, model=model)
 
     def _setup_child(self, child_config: dict) -> RetrieverSetupResult:
         if "component" not in child_config or "params" not in child_config:
@@ -495,7 +529,7 @@ class RetrieverSetupService:
         )[:16]
         storage_folder = os.path.join(
             self._env_RAG_path,
-            "sparse_retrievers",
+            SPARSE_RETRIEVERS_DIRNAME,
             f"sparse_retriever_id-{identity}",
         )
         return SparsePersistence(model_dir=storage_folder)
@@ -535,7 +569,7 @@ class RetrieverSetupService:
                 embedding_model_id,
             )
             matrix_dirs[doc_id] = self._existing_matrix_dir(
-                os.path.join(self._env_RAG_path, "embeddings", folder),
+                os.path.join(self._env_RAG_path, EMBEDDINGS_DIRNAME, folder),
                 doc_id,
                 embedding_model_id,
             )
@@ -567,7 +601,7 @@ class RetrieverSetupService:
             return content_dir
         legacy_dir = os.path.join(
             self._env_RAG_path,
-            "embeddings",
+            EMBEDDINGS_DIRNAME,
             f"doc_id-{doc_id}__chunk_set_id-{self._chunk_set_id}__"
             f"embedding_model_id-{embedding_model_id}",
         )

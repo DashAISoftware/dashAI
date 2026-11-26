@@ -1,6 +1,8 @@
 """Index cleanup never leaves the session it was asked to clean."""
 
+import logging
 import uuid
+from typing import Any
 
 from DashAI.back.dependencies.database.models import (
     RAGChunkSet,
@@ -12,8 +14,32 @@ from DashAI.back.dependencies.database.models import (
     RAGRetrieverChild,
     RAGSparseRetriever,
 )
-from DashAI.back.services.RAG.cleanup_service import CleanupService
+from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_RETRIEVER_MODEL
+from DashAI.back.services.RAG.cleanup_service import (
+    CleanupService,
+    _retriever_component_name,
+)
 from tests.back.RAG.conftest import _insert_data_document, _insert_rag_session
+
+CLEANUP_LOGGER = "DashAI.back.services.RAG.cleanup_service"
+
+
+def test_a_retriever_reference_without_a_component_is_logged(caplog):
+    """A retriever reference that names no component yields None, with a warning."""
+    with caplog.at_level(logging.WARNING, logger=CLEANUP_LOGGER):
+        name = _retriever_component_name({RAG_PARAM_RETRIEVER_MODEL: {"params": {}}})
+
+    assert name is None
+    assert "no component" in caplog.text
+
+
+def test_a_session_without_a_retriever_is_not_logged(caplog):
+    """Only a reference that exists but names no component is worth a warning."""
+    with caplog.at_level(logging.WARNING, logger=CLEANUP_LOGGER):
+        name = _retriever_component_name({})
+
+    assert name is None
+    assert caplog.text == ""
 
 
 def _chunk_set_with_sparse_index(db, session_id, document_id, storage) -> int:
@@ -159,7 +185,7 @@ def test_composite_cleanup_keeps_a_shared_sparse_folder(orm_db, tmp_path):
     )
     orm_db.commit()
 
-    CleanupService(orm_db)._cleanup_composite_retriever(
+    CleanupService(orm_db)._cleanup_retriever(
         {"retriever_model": {"component": "ParallelRetriever"}}, first.id
     )
     orm_db.flush()
@@ -169,7 +195,7 @@ def test_composite_cleanup_keeps_a_shared_sparse_folder(orm_db, tmp_path):
     assert storage.exists(), "the second session still references the folder"
 
 
-def _embedding_matrix_state(db, session_id, document_id, storage) -> list:
+def _embedding_matrix_state(db, session_id, document_id, storage) -> list[Any]:
     """Insert one embedding model and two matrix rows sharing one folder."""
     chunk_set = RAGChunkSet(
         signature=uuid.uuid4().hex, parameters={}, session_id=session_id

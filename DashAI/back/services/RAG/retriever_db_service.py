@@ -343,6 +343,82 @@ class RetrieverDBService:
             raise
         return bridge_record
 
+    def find_composite(
+        self,
+        class_name: str,
+        pipeline_id: int,
+        child_bridge_ids: List[int],
+    ) -> Optional[RetrieverDBModel]:
+        """Find the composite bridge of a pipeline over these children, in order.
+
+        A composite matches when its class and pipeline are the same and its
+        child links, read in ``child_order``, name exactly ``child_bridge_ids``.
+        The oldest such bridge is returned.
+
+        Parameters
+        ----------
+        class_name : str
+            "SequentialRetriever" or "ParallelRetriever".
+        pipeline_id : int
+            Owning pipeline.
+        child_bridge_ids : list[int]
+            Ordered list of child bridge ids (RAG_retriever.id). Must not be
+            empty: a composite always has at least one child, and an empty list
+            would otherwise match a childless bridge.
+
+        Returns
+        -------
+        RetrieverDBModel or None
+            The matching bridge record, or ``None`` when none exists.
+
+        Raises
+        ------
+        ValueError
+            If *child_bridge_ids* is empty.
+        """
+        wanted = list(child_bridge_ids)
+        if not wanted:
+            raise ValueError(
+                "find_composite needs at least one child bridge id to match."
+            )
+        candidates = (
+            self.db.query(RetrieverDBModel)
+            .filter_by(class_name=class_name, pipeline_id=pipeline_id)
+            .order_by(RetrieverDBModel.id)
+            .all()
+        )
+        for candidate in candidates:
+            if self.child_ids_in_order(candidate.id) == wanted:
+                return candidate
+        return None
+
+    def child_ids_in_order(self, parent_id: int) -> List[int]:
+        """List the child bridge ids of a composite, in ``child_order``.
+
+        A link may name a bridge that no longer exists, so callers must not
+        assume that every returned id is still a bridge.
+
+        Parameters
+        ----------
+        parent_id : int
+            The composite bridge id.
+
+        Returns
+        -------
+        list[int]
+            Child bridge ids in their stored order.
+        """
+        links = (
+            self.db.query(RAGRetrieverChild)
+            .filter_by(parent_id=parent_id)
+            .order_by(RAGRetrieverChild.child_order)
+            .all()
+        )
+        child_ids: List[int] = []
+        for link in links:
+            child_ids.append(link.child_id)
+        return child_ids
+
     # ── Embedding model / matrix ───────────────────────────────────────
 
     def find_or_create_embedding_model(

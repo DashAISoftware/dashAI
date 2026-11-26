@@ -31,6 +31,7 @@ from DashAI.back.services.RAG.retriever_presets import (
     get_retriever_presets as resolve_retriever_presets,
 )
 from DashAI.back.services.RAG.session_configuration_service import (
+    RAGSessionNotFoundError,
     SessionConfigurationService,
 )
 from DashAI.back.services.RAG.session_defaults_service import build_default_parameters
@@ -165,16 +166,21 @@ def session_configuration(
     Raises
     ------
     HTTPException
-        404 if the session does not exist.
+        404 if the session does not exist, 422 if its stored configuration is
+        malformed.
     """
     with session_factory() as db:
         try:
             configuration = SessionConfigurationService(
                 db, component_registry
             ).get_configuration(session_id)
-        except ValueError as e:
+        except RAGSessionNotFoundError as e:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+            ) from e
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
             ) from e
     return localize(configuration, accept_language)
 
