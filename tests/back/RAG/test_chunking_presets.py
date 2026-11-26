@@ -1,6 +1,11 @@
 """Tests for the chunking-presets endpoint."""
 
+from typing import Any
+
+import pytest
 from fastapi.testclient import TestClient
+
+from DashAI.back.services.RAG import chunking_presets
 
 
 def test_chunking_presets_returns_four_presets(client: TestClient):
@@ -97,3 +102,102 @@ def test_session_defaults_follow_the_request_language(client: TestClient):
         "/api/v1/rag/session-defaults", headers={"Accept-Language": "de"}
     ).json()
     assert german["prompt"]["params"]["language"] == "en"
+
+
+# ── Preset matching ──────────────────────────────────────────────────────────
+
+
+def _registry(client: TestClient):
+    """Return the application's component registry."""
+    return client.app.container["component_registry"]
+
+
+def _recipe(client: TestClient, key: str) -> dict[str, Any]:
+    """Return one chunking preset recipe resolved against the registry."""
+    presets = chunking_presets.get_chunking_presets(_registry(client))
+    return next(preset for preset in presets if preset["key"] == key)
+
+
+def test_every_exact_recipe_matches_its_own_preset(client: TestClient):
+    registry = _registry(client)
+    for recipe in chunking_presets.get_chunking_presets(registry):
+        assert (
+            chunking_presets.match_preset_key(
+                recipe["component"], recipe["params"], registry
+            )
+            == recipe["key"]
+        )
+
+
+def test_extra_parameter_makes_the_chunking_config_custom(client: TestClient):
+    """A stored chunker with a parameter the recipe lacks no longer matches."""
+    recipe = _recipe(client, "paragraph")
+    with_extra = {**recipe["params"], "unexpected_parameter": 1}
+
+    assert (
+        chunking_presets.match_preset_key(
+            recipe["component"], with_extra, _registry(client)
+        )
+        is None
+    )
+
+
+def test_missing_parameter_makes_the_chunking_config_custom(client: TestClient):
+    recipe = _recipe(client, "paragraph")
+    missing = {k: v for k, v in recipe["params"].items() if k != "chunk_overlap"}
+
+    assert (
+        chunking_presets.match_preset_key(
+            recipe["component"], missing, _registry(client)
+        )
+        is None
+    )
+
+
+def test_changed_chunk_size_is_custom_not_the_neighbouring_preset(client: TestClient):
+    recipe = _recipe(client, "paragraph")
+    resized = {**recipe["params"], "chunk_size": 501}
+
+    assert (
+        chunking_presets.match_preset_key(
+            recipe["component"], resized, _registry(client)
+        )
+        is None
+    )
+
+
+def test_key_order_does_not_change_the_chunking_match(client: TestClient):
+    recipe = _recipe(client, "page")
+    reordered = dict(reversed(list(recipe["params"].items())))
+
+    assert list(reordered) != list(recipe["params"])
+    assert (
+        chunking_presets.match_preset_key(
+            recipe["component"], reordered, _registry(client)
+        )
+        == "page"
+    )
+
+
+def test_another_chunker_is_never_a_preset(client: TestClient):
+    recipe = _recipe(client, "paragraph")
+
+    assert (
+        chunking_presets.match_preset_key(
+            "SomeOtherChunker", recipe["params"], _registry(client)
+        )
+        is None
+    )
+
+
+def test_malformed_params_raise_even_for_another_chunker(client: TestClient):
+    """The contract is checked before a non-default component returns early."""
+    registry = _registry(client)
+    with pytest.raises(TypeError):
+        chunking_presets.match_preset_key(
+            "SomeOtherChunker", {"chunk_size": (500,)}, registry
+        )
+    with pytest.raises(ValueError, match="non-finite"):
+        chunking_presets.match_preset_key(
+            "SomeOtherChunker", {"chunk_size": float("nan")}, registry
+        )

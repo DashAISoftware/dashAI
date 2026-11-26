@@ -10,6 +10,7 @@ from typing import Any, Dict, List
 
 from DashAI.back.core.schema_fields.defaults import resolve_component_defaults
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.services.RAG.config_equality import configs_equal
 
 #: Chunker every preset is built on. Character based so no download is needed.
 DEFAULT_CHUNKER = "CharacterChunkModel"
@@ -113,14 +114,32 @@ def get_chunking_presets(registry) -> List[Dict[str, Any]]:
 
 
 def get_default_chunking(registry) -> Dict[str, Any]:
-    """Return the ``{component, params}`` ref for the default preset."""
-    preset = next(p for p in _PRESETS if p["key"] == DEFAULT_PRESET_KEY)
+    """Return the ``{component, params}`` ref for the default preset.
+
+    Raises
+    ------
+    ValueError
+        If no preset carries the default key.
+    """
+    preset = None
+    for candidate in _PRESETS:
+        if candidate["key"] == DEFAULT_PRESET_KEY:
+            preset = candidate
+    if preset is None:
+        raise ValueError(
+            f"No chunking preset has the default key {DEFAULT_PRESET_KEY!r}."
+        )
     recipe = _build(preset, registry)
     return {"component": recipe["component"], "params": recipe["params"]}
 
 
-def match_preset_key(component: str, params: Dict[str, Any]) -> str | None:
+def match_preset_key(component: str, params: Dict[str, Any], registry) -> str | None:
     """Return the preset key a chunking config corresponds to, if any.
+
+    The configuration must equal a preset's full recipe, as built by
+    :func:`_build` and resolved against the registry, under
+    :func:`DashAI.back.services.RAG.config_equality.configs_equal`. A stored
+    configuration with an extra parameter, or a missing one, is custom.
 
     Parameters
     ----------
@@ -128,16 +147,29 @@ def match_preset_key(component: str, params: Dict[str, Any]) -> str | None:
         Chunker class name.
     params : dict
         Chunker parameters.
+    registry : ComponentRegistry
+        Registry used to resolve each preset's full recipe.
 
     Returns
     -------
     str | None
         The matching preset key, or ``None`` for a custom configuration.
+
+    Raises
+    ------
+    TypeError
+        If the configuration holds a value outside the configuration contract.
+    ValueError
+        If the configuration holds a non-finite number, or an integer beyond the
+        safe integer range.
     """
+    # configs_equal validates both of its arguments before comparing, so checking
+    # the stored params against themselves enforces the contract for every
+    # component, not only the one a preset can match.
+    configs_equal(params, params)
     if component != DEFAULT_CHUNKER:
         return None
-    for preset in _PRESETS:
-        config = preset["config"]
-        if all(params.get(key) == value for key, value in config.items()):
-            return preset["key"]
+    for recipe in get_chunking_presets(registry):
+        if configs_equal(recipe["params"], params):
+            return recipe["key"]
     return None

@@ -49,6 +49,7 @@ from DashAI.back.models.RAG.retrievers.ref_utils import (
 )
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 from DashAI.back.services.RAG.chunking_service import ChunkingService
+from DashAI.back.services.RAG.config_equality import configs_equal
 from DashAI.back.services.RAG.index_job_service import get_index_job, get_live_index_job
 from DashAI.back.services.RAG.retriever_db_service import RetrieverDBService
 
@@ -170,9 +171,10 @@ class IndexStatusService:
         # Read from the parameters rather than the session's documents
         # relationship: _was_indexed_before compares against historized
         # parameters, and both sides have to come from the same source.
-        document_ids = [
-            doc_id for doc_id in parameters.get(RAG_PARAM_DOCUMENTS) or [] if doc_id
-        ]
+        document_ids: list[int] = []
+        for doc_id in parameters.get(RAG_PARAM_DOCUMENTS) or []:
+            if doc_id:
+                document_ids.append(doc_id)
 
         chunk_set = self._find_chunk_set(session_id, document_ids, parameters)
         counts = self._chunk_counts(chunk_set.id, document_ids) if chunk_set else {}
@@ -306,11 +308,12 @@ class IndexStatusService:
         for entry in history:
             parameters = dict(entry.parameters or {})
             config = self._pipeline_config(parameters)
-            if config is None or config == current:
+            if config is None or configs_equal(config, current):
                 continue
-            document_ids = [
-                doc_id for doc_id in parameters.get(RAG_PARAM_DOCUMENTS) or [] if doc_id
-            ]
+            document_ids: List[int] = []
+            for doc_id in parameters.get(RAG_PARAM_DOCUMENTS) or []:
+                if doc_id:
+                    document_ids.append(doc_id)
             chunk_set = self._find_chunk_set(session_id, document_ids, parameters)
             if chunk_set and self._chunk_counts(chunk_set.id, document_ids):
                 return True

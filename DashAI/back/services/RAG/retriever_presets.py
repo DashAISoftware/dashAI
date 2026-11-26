@@ -24,6 +24,7 @@ from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     TOP_K_FIELD,
     WINDOW_FIELD,
 )
+from DashAI.back.services.RAG.config_equality import configs_equal
 
 _SEMANTIC_MODEL_SHORT = DEFAULT_SEMANTIC_MODEL_NAME.rsplit("/", 1)[-1]
 
@@ -190,102 +191,45 @@ def get_default_retriever(registry, top_k: int = DEFAULT_TOP_K) -> Dict[str, Any
     return {"component": recipe["component"], "params": recipe["params"]}
 
 
-def _without_match_ignored_keys(value: Any) -> Any:
-    """Copy *value* with the match-ignored keys dropped at every level.
+def _check_children(params: Dict[str, Any]) -> None:
+    """Check that every composite ``children`` entry is a well-formed ref.
 
-    Parameters
-    ----------
-    value : Any
-        A parameters mapping, a list, or a leaf.
-
-    Returns
-    -------
-    Any
-        A copy in which every key of ``_MATCH_IGNORED_KEYS`` is removed from each
-        mapping, recursively. The input is never mutated.
-    """
-    if isinstance(value, dict):
-        kept: Dict[str, Any] = {}
-        for key, item in value.items():
-            if key in _MATCH_IGNORED_KEYS:
-                continue
-            kept[key] = _without_match_ignored_keys(item)
-        return kept
-    if isinstance(value, list):
-        return [_without_match_ignored_keys(item) for item in value]
-    return value
-
-
-def _normalize_children(children: Any) -> List[Dict[str, Any]]:
-    """Normalize every child ref of a composite for the preset match.
-
-    Parameters
-    ----------
-    children : Any
-        The ``children`` value of a composite's parameters.
-
-    Returns
-    -------
-    List[Dict[str, Any]]
-        New child refs whose ``params`` are normalized like the parent's.
-
-    Raises
-    ------
-    ValueError
-        If ``children`` is not a list, or a child is not a dict holding a
-        ``params`` dict.
-    """
-    if not isinstance(children, list):
-        raise ValueError(
-            f"'{CHILDREN_KEY}' must be a list of component refs, "
-            f"got {type(children).__name__}"
-        )
-    normalized: List[Dict[str, Any]] = []
-    for child in children:
-        if not isinstance(child, dict) or not isinstance(child.get(PARAMS_KEY), dict):
-            raise ValueError(
-                f"each entry of '{CHILDREN_KEY}' must be a dict with a "
-                f"'{PARAMS_KEY}' dict, got {child!r}"
-            )
-        child_params = _normalize_match_params(child[PARAMS_KEY])
-        normalized.append({**child, PARAMS_KEY: child_params})
-    return normalized
-
-
-def _normalize_match_params(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Return a copy of the configuration, normalized for the match.
-
-    ``top_k`` is dropped at every level and each composite child is checked to
-    be a well-formed ref. Nothing else is filled in or rewritten, so a missing
-    parameter stays missing and only an exact equal value counts as a match.
+    Nested children are checked too, through each child's own ``params``.
 
     Parameters
     ----------
     params : Dict[str, Any]
         Retriever parameters, possibly holding ``children``.
 
-    Returns
-    -------
-    Dict[str, Any]
-        A normalized copy; the input is never mutated.
-
     Raises
     ------
     ValueError
-        If ``children`` is present but is not a list of well-formed refs.
+        If ``children`` is present but is not a list of dicts that each hold a
+        ``params`` dict.
     """
-    normalized: Dict[str, Any] = _without_match_ignored_keys(params)
-    if CHILDREN_KEY in normalized:
-        normalized[CHILDREN_KEY] = _normalize_children(normalized[CHILDREN_KEY])
-    return normalized
+    if CHILDREN_KEY not in params:
+        return
+    children = params[CHILDREN_KEY]
+    if not isinstance(children, list):
+        raise ValueError(
+            f"'{CHILDREN_KEY}' must be a list of component refs, "
+            f"got {type(children).__name__}"
+        )
+    for child in children:
+        if not isinstance(child, dict) or not isinstance(child.get(PARAMS_KEY), dict):
+            raise ValueError(
+                f"each entry of '{CHILDREN_KEY}' must be a dict with a "
+                f"'{PARAMS_KEY}' dict, got {child!r}"
+            )
+        _check_children(child[PARAMS_KEY])
 
 
 def match_preset_key(component: str, params: Dict[str, Any], registry) -> Optional[str]:
     """Return the preset key a retriever config corresponds to, if any.
 
-    Both the stored configuration and each candidate recipe are normalized by
-    ``_normalize_match_params``, and the normalized mappings must be equal. Only
-    ``top_k`` is ignored, so moving the slider keeps a preset, while any other
+    The stored configuration and each candidate recipe are compared with
+    :func:`DashAI.back.services.RAG.config_equality.configs_equal`, ignoring
+    ``top_k`` at every level. Moving the slider keeps a preset, while any other
     difference (expansion enabled or its window changed, a different similarity
     metric, a different batch size) makes the configuration custom.
 
@@ -311,13 +255,16 @@ def match_preset_key(component: str, params: Dict[str, Any], registry) -> Option
     Raises
     ------
     ValueError
-        If the configuration's ``children`` are not well-formed component refs.
+        If the configuration's ``children`` are not well-formed component refs,
+        or it holds a non-finite number or an integer beyond the safe range.
+    TypeError
+        If the configuration holds a value outside the configuration contract.
     """
-    stored = _normalize_match_params(params)
+    _check_children(params)
     for preset in get_retriever_presets(DEFAULT_TOP_K, registry):
         if preset["component"] != component:
             continue
-        if _normalize_match_params(preset["params"]) == stored:
+        if configs_equal(preset["params"], params, _MATCH_IGNORED_KEYS):
             return preset["key"]
     return None
 
