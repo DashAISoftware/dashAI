@@ -34,9 +34,10 @@
 
 - **`n` transformed queries mean `n` retriever calls per turn.** Retrieval runs
   once per query and merges the ranked lists round-robin, de-duplicating by
-  `(document_id, document_position)`; there is no score fusion or re-ranking
-  beyond that interleave. The stored trace also carries one node per query, so
-  the process output grows with the query count.
+  `(document_id, document_position)`; there is no score fusion. The only
+  re-ranking is the optional reranker of the transformation stage (see
+  [Query transformation reranker](#query-transformation-reranker)). The stored trace also carries one node per
+  query, so the process output grows with the query count.
 
 - **LLM stages are not resident simultaneously, but a nested retriever can
   exceed one model.** Each top-level stage's model is a lazy proxy: it loads
@@ -178,6 +179,150 @@
 - **`prompt` and `llm_model` refs are mandatory.** A transformer is built only
   from an explicit prompt component and an explicit text-to-text model
   reference; neither has an implicit default.
+
+## Query transformation reranker
+
+The query-transformation stage has an optional `reranker` parameter. It is a
+component field whose parent is the `ChunkScorer` capability, so the offered
+components are the retrievers whose class inherits that interface (the dense,
+sparse, cross-encoder, MMR, sequential and agentic-single/reranker retrievers).
+The parallel and agentic-ensemble retrievers do not inherit it: they average
+children that may score different chunks, so their scores are not comparable.
+The default is the semantic retriever (multilingual paraphrase MiniLM L12 v2),
+and `null` disables reranking.
+
+The reranker orders the merged multi-query pool against the original user
+message with its `score_chunks`, and keeps its `retrieval_top_k` (`ChunkScorer.rerank_chunks`). It is set up
+through the same retriever setup as the retrieval stage, so it has the same
+index infrastructure. Known limitations of the current implementation:
+
+- **The reranking step is a trailing trace entry, shown only in the "All"
+  view.** `RAGPipeline._rerank_pool()` appends
+  `{"stage": "rerank", "reranker": <node>}` after the per-query entries. The
+  node is a retriever trace node: `chunks` are the kept chunks and `pool` every
+  candidate the reranker received. The entry has no `retriever`, so consumers that render
+  per-query entries skip it, and the Pipeline panel draws it under the query
+  trees only when no single query is selected. The node carries no per-chunk
+  scores.
+
+- **Every pooled chunk must be scorable.** A chunk without an id, or whose
+  ids the reranker's index does not hold, makes the scorer raise
+  `RAGRetrieverRerankError` instead of keeping the chunk unranked, so the pool
+  is never returned as if it had been ordered. The pipeline re-raises it as a
+  `RAGPipelineRuntimeError` ("Failed during pool reranking") whose `__cause__`
+  is the scorer's `RAGRetrieverRerankError`.
+
+- **A retrieve-then-expand window is ranked by its best chunk.** A window has
+  the id of its first covered chunk, but the reranker scores every stored chunk
+  it spans (through `source_positions`) and ranks the window by the lowest
+  distance among them. A scorer that has a chunk store but cannot resolve any
+  of a window's `source_positions` in it fails with `RAGRetrieverRerankError`.
+  Only a scorer with no chunk store at all (`chunks` is absent or `None`)
+  cannot resolve the covered ids, and it ranks the window by its own id.
+
+- **Reranking cost grows with the pool, not with the corpus.** The reranker
+  scores only the chunks of the merged pool: at most the number of queries
+  times the retrieval stage's `top_k`, fewer once queries return the same
+  chunk, and more when retrieve-then-expand windows are scored through every
+  chunk they cover. For a cross-encoder reranker that is one model forward
+  pass per pooled chunk on every turn. The context budget does not price it,
+  because the budget only counts the tokens of the chunks that reach the
+  generator. Building the chunk lookup the cross-encoder needs walks the whole
+  corpus on each call, which is cheap next to that inference and only matters
+  for very large corpora.
+
+- **A reranker has its own index cost.** Its setup goes through the retriever
+  setup, so it reuses a stored index only when the embedding and corpus
+  identity match the retrieval stage. A reranker with a different embedding is
+  indexed again. It is built together with the retriever stage, by the indexing
+  run (`SetupService.build_index`, "Building the reranker" progress step), so
+  the first chat turn after indexing no longer embeds the corpus silently.
+  Composite rerankers reuse their stored composite row when the children are
+  unchanged. If the reranker step fails, `build_index` releases the retriever
+  and the reranker it had built before the error propagates, and the indexing
+  job releases the ones of a successful run once it has recorded the result.
+
+- **A composite reranker must score through a chunk scorer.** A composite
+  scorer reports the scores of one child (`ChunkScorer.SCORING_CHILD`: the last
+  child of a sequential retriever, the single child of the MMR and the agentic
+  single and reranker retrievers). Validation follows that chain through the
+  nested references and rejects a reranker such as a sequential retriever whose
+  last child is a parallel retriever, because the averaged scores a parallel or
+  ensemble retriever returns are not comparable across the pool. A composite
+  scorer without children, or a reranker whose `params` is not a dict, is
+  rejected too. A reference without `params` is the minimal
+  `{"component": name}` and takes the schema defaults.
+
+- **The rewriter has no reranker.** The `reranker` field lives on
+  `MultiQueryTransformationSchema`, shared by decomposition and expansion. A
+  rewrite emits one query and merges nothing, so there is no pool to reorder.
+  Validation rejects a non-null `reranker` on a rewriter, and the setup never
+  builds one for it.
+
+- **An absent `reranker` key means "off" for stored sessions.** The default
+  semantic reranker is injected only when a session is created. A session that
+  stores a stage without the key keeps running without reranking, and an update
+  that resends such a stage keeps it off (it never turns reranking, and its
+  index, on silently). Send the key explicitly to enable it.
+
+- **A stored decomposition without `max_subqueries` is not capped.** The
+  schema placeholder and a new session suggest three sub-queries
+  (`DEFAULT_MAX_SUBQUERIES`), but a stored stage that omits the key keeps
+  running uncapped, and an update that resends the stage without it keeps it
+  uncapped. An explicit `null` also means no limit; an explicit integer caps
+  the result. This holds through the job path too: the transformer factory
+  restores the omitted key to "no cap" (`STORED_ABSENT_VALUES`) after the
+  schema has filled in its default. The context budget prices an omitted cap
+  and an explicit `null` alike, at the declared three queries, so it is an
+  estimate that under-counts when the model emits more, not a bound.
+
+- **Cleanup tells the stages apart by their stored parameters.** The retriever
+  stage and the reranker keep their rows in the same pipeline and one row can
+  serve both. When either changes, the other's rows are protected, the
+  reranker's rows are removed when only its configuration changes, and rows
+  are matched by their stored parameters: a unit by its parameters, a
+  composite by its ordered children. Class name alone is only the fallback,
+  used when nothing matches exactly (rows whose stored children no longer equal
+  the saved reference, such as the duplicates composite setup used to insert
+  every turn); it never selects a protected row, but it cannot tell such a row
+  from another stage's row of the same class. Embedding matrices are keyed by
+  chunk set, embedding model and document, not by retriever, so dropping a
+  dense reranker keeps the matrices a retained dense retriever with the same
+  embedding still reads.
+
+- **A malformed stored structure fails instead of being patched.** Cleanup and
+  the context budget raise `RAGPipelineConfigError` for a stored reference
+  that is not a component reference, a `params` that is not a dict, a composite
+  without a list of children, a query count that is not a positive integer or
+  `null`, or a transformer stage without a `params` dict. A reference without
+  `params` is the one documented minimal form; a disabled stage is an absent or
+  empty `query_transformation`.
+
+- **The context budget prices the reranker as a cap on units.** The reranker's
+  `top_k` bounds how many units of the merged pool reach the prompt, and each
+  unit is as wide as the retriever stage's retrieve-then-expand window; the
+  reranker's own expansion options never widen the pool. An explicitly uncapped
+  decomposition (`max_subqueries: null`) is priced at the reranker's cap when
+  there is one; without a reranker it is still priced at the declared count
+  although the model may emit more.
+
+- **Transformation config errors are pipeline runtime errors by design.**
+  `RAGTransformationError` (and therefore `RAGTransformationConfigError`)
+  inherits from `RAGQueryTransformationError` → `RAGPipelineRuntimeError`
+  instead of `RAGWorkflowError`, so existing `RAGPipelineRuntimeError` handlers
+  keep catching the stage. Any such handler therefore also catches its
+  configuration failures. The stage raises four types: the generic
+  `RAGQueryTransformationError`, `RAGTransformationConfigError`,
+  `RAGTransformationOutputError` (the model's output could not be parsed) and
+  `RAGTransformationGenerationError` (the model call failed). The transformer
+  does catch two of them by subtype: on the function-calling route an output
+  error or a generation error is retried, up to `function_call_max_trials`
+  attempts including the first, and the last error is raised once they are
+  exhausted. A configuration error is never retried, and the text route makes a
+  single attempt. Nothing above the transformer distinguishes the subtypes: the
+  pipeline wraps them and the job error message shows their text only, not their
+  class, so a configuration failure is not answered differently from a model
+  failure there.
 
 ## Maintenance
 

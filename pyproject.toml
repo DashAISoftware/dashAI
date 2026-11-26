@@ -55,7 +55,8 @@ dependencies = [
     # uv sync is unaffected: the lock pins a compatible pair.
     "torch>=2.6",
     "torchvision>=0.21",
-    "transformers>=5.0.0",
+    # Surya OCR's Qwen3.5 checkpoint needs transformers 5.12.1 or newer.
+    "transformers>=5.12.1",
     "sentence-transformers",
     "controlnet_aux",
     "sacrebleu",

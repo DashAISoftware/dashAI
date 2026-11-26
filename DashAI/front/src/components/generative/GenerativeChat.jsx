@@ -745,8 +745,7 @@ export default function GenerativeChat({
                             cannot render (unknown stage, missing queries)
                             must still fall back to the waiting bubble instead
                             of leaving the in-flight row blank. */}
-                        {isRAGSession &&
-                        resolveRAGProgressText(message.progress) ? (
+                        {resolveRAGProgressText(message.progress) ? (
                           <RAGChatProgress progress={message.progress} />
                         ) : (
                           <ChatBubble isWaiting={true} sender="Model" />

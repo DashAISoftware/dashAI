@@ -706,7 +706,7 @@ class BaseRetriever(ConfigObject, ABC):
         """
         raise NotImplementedError
 
-    # ── Child management (Composite pattern) ────────────────────────
+    # ── Child management (Composite pattern) ────────────────────
 
     def add(self, child: "BaseRetriever") -> None:
         """Add a child retriever (Composite pattern).

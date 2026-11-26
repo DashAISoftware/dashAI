@@ -295,6 +295,39 @@ class RetrieverDBService:
 
     # ── Composite retriever ────────────────────────────────────────────
 
+    def find_composite(
+        self,
+        class_name: str,
+        pipeline_id: int,
+        child_bridge_ids: List[int],
+    ) -> Optional[RetrieverDBModel]:
+        """Look up a composite bridge by class, pipeline and ordered children.
+
+        Parameters
+        ----------
+        class_name : str
+            Composite retriever class name.
+        pipeline_id : int
+            Owning pipeline.
+        child_bridge_ids : list[int]
+            Ordered child bridge ids (``RAG_retriever.id``).
+
+        Returns
+        -------
+        RetrieverDBModel or None
+            The matching bridge record, or ``None`` when there is none.
+        """
+        candidates = (
+            self.db.query(RetrieverDBModel)
+            .filter_by(class_name=class_name, pipeline_id=pipeline_id)
+            .all()
+        )
+        for candidate in candidates:
+            links = sorted(candidate.children, key=lambda link: link.child_order)
+            if [link.child_id for link in links] == list(child_bridge_ids):
+                return candidate
+        return None
+
     def save_composite(
         self,
         class_name: str,
@@ -318,8 +351,13 @@ class RetrieverDBService:
         Returns
         -------
         RetrieverDBModel
-            The persisted bridge record.
+            The persisted bridge record, or the existing one when the pipeline
+            already holds a composite of this class over the same ordered
+            children, so setting up the same composite every turn adds no rows.
         """
+        existing = self.find_composite(class_name, pipeline_id, child_bridge_ids)
+        if existing is not None:
+            return existing
         bridge_record = RetrieverDBModel(
             class_name=class_name,
             pipeline_id=pipeline_id,

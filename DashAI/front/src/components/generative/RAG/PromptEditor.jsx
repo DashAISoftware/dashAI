@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   IconButton,
+  ListSubheader,
   MenuItem,
   Stack,
   TextField,
@@ -16,7 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import HighlightedTextarea from "./HighlightedTextarea";
 import PlaceholdersList from "./PlaceholdersList";
-import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
+import RAGAdvancedDialog from "../../shared/RAGAdvancedDialog";
 import {
   createRAGPrompt,
   getDefaultPrompts,
@@ -24,6 +25,7 @@ import {
 } from "../../../api/rag";
 import { getChildComponents } from "../../../api/component";
 import { getApiErrorMessage } from "../../../utils/apiError";
+import { isPlainObject } from "../../../utils/objects";
 import { LANGUAGE_CODES } from "../../../constants/languages";
 import {
   DEFAULT_PROMPT_LANGUAGE,
@@ -49,6 +51,22 @@ function selectableSeedLanguage(candidate) {
   return LANGUAGE_CODES.includes(candidate)
     ? candidate
     : DEFAULT_PROMPT_LANGUAGE;
+}
+
+/**
+ * The language a saved prompt loads in: the requested one when the prompt has
+ * it, else the language it was stored in, else its first language.
+ *
+ * @param {string} requested - The language the editor asked for.
+ * @param {string} storedShape - The language the prompt was stored in.
+ * @param {string[]} languages - The selectable languages the prompt has.
+ * @returns {string} The language to load.
+ */
+function preferredSavedLanguage(requested, storedShape, languages) {
+  if (languages.includes(requested)) return requested;
+  if (languages.includes(storedShape)) return storedShape;
+  if (languages.length > 0) return languages[0];
+  return selectableSeedLanguage(requested);
 }
 
 /**
@@ -88,6 +106,11 @@ export default function PromptEditor({
   const [seeds, setSeeds] = useState([]);
   const [savedPrompts, setSavedPrompts] = useState([]);
   const [libraryVersion, setLibraryVersion] = useState(0);
+  const [incompletePrompts, setIncompletePrompts] = useState([]);
+  const [seedsLoaded, setSeedsLoaded] = useState(false);
+  const [savedLoaded, setSavedLoaded] = useState(!showSeeding);
+  const [selection, setSelection] = useState("");
+  const selectionInferredRef = useRef(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -118,22 +141,29 @@ export default function PromptEditor({
     let cancelled = false;
     getLibraryPrompts()
       .then((options) => {
-        // Built-in templates are already offered by the "Start from" select;
-        // only user-saved prompts belong in the second one. This editor writes
-        // a generation template, so query-rewriting or agentic retriever
-        // prompts would be loaded into a slot that never runs them.
-        if (!cancelled) {
-          setSavedPrompts(
-            options.filter(
-              (prompt) =>
-                prompt.is_library && prompt.prompt_type === "generation",
-            ),
-          );
-        }
+        if (cancelled) return;
+        const library = options.filter(
+          (prompt) => prompt.is_library && prompt.prompt_type === "generation",
+        );
+        const complete = library.filter((prompt) =>
+          isPlainObject(prompt.parameters),
+        );
+        const incomplete = library.filter(
+          (prompt) => !isPlainObject(prompt.parameters),
+        );
+        setSavedPrompts(complete);
+        setIncompletePrompts((previous) => [
+          ...previous,
+          ...incomplete.map((prompt) => prompt.name ?? String(prompt.id)),
+        ]);
+        setSavedLoaded(true);
       })
       .catch((error) => {
         console.error("Failed to load saved prompts:", error);
-        if (!cancelled) setSavedPrompts([]);
+        if (!cancelled) {
+          setSavedPrompts([]);
+          setSavedLoaded(true);
+        }
       });
     return () => {
       cancelled = true;
@@ -147,7 +177,19 @@ export default function PromptEditor({
         if (cancelled) return;
         // CustomRAGGenerationPrompt is the base class a hand-written template
         // is stored under, not a template to start from.
-        setSeeds(options.filter((o) => o.name !== CUSTOM_PROMPT_COMPONENT));
+        const startingPoints = options.filter(
+          (o) => o.name !== CUSTOM_PROMPT_COMPONENT,
+        );
+        setSeeds(
+          startingPoints.filter((o) => isPlainObject(o.metadata?.templates)),
+        );
+        setIncompletePrompts((previous) => [
+          ...previous,
+          ...startingPoints
+            .filter((o) => !isPlainObject(o.metadata?.templates))
+            .map((o) => o.name),
+        ]);
+        setSeedsLoaded(true);
         const base = options.find((o) => o.name === CUSTOM_PROMPT_COMPONENT);
         if (base?.metadata) {
           generationMetadataRef.current = base.metadata;
@@ -163,7 +205,10 @@ export default function PromptEditor({
       })
       .catch((error) => {
         console.error("Failed to load prompt templates:", error);
-        if (!cancelled) setSeeds([]);
+        if (!cancelled) {
+          setSeeds([]);
+          setSeedsLoaded(true);
+        }
       });
     return () => {
       cancelled = true;
@@ -222,49 +267,98 @@ export default function PromptEditor({
     [componentName, setPromptModel],
   );
 
-  /**
-   * Replaces the template with a registry template.
-   *
-   * Seeding is explicit rather than a side effect of picking a language: the
-   * language select used to silently overwrite whatever the user had written.
-   *
-   * @param {string} name - The seed component's name.
-   */
-  const handleSeed = (name) => {
-    const seed = seeds.find((option) => option.name === name);
-    const seeded = seed?.metadata?.templates?.[seedLanguage];
-    if (seeded === undefined) return;
-    update(seeded);
-  };
+  /** Selectable languages a default prompt ships a template for. */
+  const defaultLanguages = useCallback(
+    (name) =>
+      Object.keys(
+        seeds.find((option) => option.name === name).metadata.templates,
+      ).filter((code) => LANGUAGE_CODES.includes(code)),
+    [seeds],
+  );
+
+  /** The template a saved prompt loads, preferring `language`. */
+  const savedTemplate = useCallback((prompt, language) => {
+    const { parameters } = prompt;
+    const shape = storedPromptShape(parameters);
+    const languages = storedPromptLanguages(parameters).filter((code) =>
+      LANGUAGE_CODES.includes(code),
+    );
+    if (shape.usesTemplates && languages.length === 0) return null;
+    const preferred = preferredSavedLanguage(
+      language,
+      shape.language,
+      languages,
+    );
+    const text = resolveStoredPromptTemplate(parameters, preferred);
+    return text ? { text, language: selectableSeedLanguage(preferred) } : null;
+  }, []);
+
+  useEffect(() => {
+    if (selectionInferredRef.current || !seedsLoaded || !savedLoaded) return;
+    selectionInferredRef.current = true;
+    if (!showSeeding || !template) return;
+    for (const seed of seeds) {
+      const { templates } = seed.metadata;
+      const code = Object.keys(templates).find(
+        (language) =>
+          LANGUAGE_CODES.includes(language) && templates[language] === template,
+      );
+      if (code) {
+        setSelection(`default:${seed.name}`);
+        setSeedLanguage(code);
+        return;
+      }
+    }
+    const saved = savedPrompts.find(
+      (prompt) => savedTemplate(prompt, seedLanguage)?.text === template,
+    );
+    if (saved) setSelection(`saved:${saved.id}`);
+  }, [
+    seedsLoaded,
+    savedLoaded,
+    showSeeding,
+    seeds,
+    savedPrompts,
+    template,
+    seedLanguage,
+    savedTemplate,
+  ]);
 
   /**
-   * Replaces the template with one saved in the prompt library.
+   * Loads the chosen prompt, default or saved, into the editable template.
    *
-   * A saved prompt stores either one template or one per language; the shared
-   * resolver loads the variant selected here when available, then falls back
-   * to a supported stored language.
-   *
-   * @param {string} value - The selected prompt id, as a string.
+   * @param {string} value - `default:<component>` or `saved:<id>`.
    */
-  const handleSeedSaved = (value) => {
-    const prompt = savedPrompts.find((item) => String(item.id) === value);
-    if (!prompt) return;
-    const parameters = prompt.parameters ?? {};
-    const shape = storedPromptShape(parameters);
-    const languages = storedPromptLanguages(parameters).filter((language) =>
-      LANGUAGE_CODES.includes(language),
-    );
-    if (shape.usesTemplates && languages.length === 0) return;
-    const preferredLanguage = languages.includes(seedLanguage)
-      ? seedLanguage
-      : languages.includes(shape.language)
-        ? shape.language
-        : (languages[0] ?? selectableSeedLanguage(seedLanguage));
-    const language = selectableSeedLanguage(preferredLanguage);
-    const templateText = resolveStoredPromptTemplate(parameters, language);
-    if (!templateText) return;
-    update(templateText);
+  const handleSelectPrompt = (value) => {
+    if (value.startsWith("default:")) {
+      const name = value.slice("default:".length);
+      const languages = defaultLanguages(name);
+      const language = languages.includes(seedLanguage)
+        ? seedLanguage
+        : (languages[0] ?? seedLanguage);
+      const seeded = seeds.find((option) => option.name === name).metadata
+        .templates[language];
+      if (seeded === undefined) return;
+      setSelection(value);
+      setSeedLanguage(language);
+      update(seeded);
+      return;
+    }
+    const prompt = savedPrompts.find((item) => `saved:${item.id}` === value);
+    const loaded = prompt && savedTemplate(prompt, seedLanguage);
+    if (!loaded) return;
+    setSelection(value);
+    setSeedLanguage(loaded.language);
+    update(loaded.text);
+  };
+
+  /** Switches the selected default prompt to another language's template. */
+  const handleLanguageChange = (language) => {
     setSeedLanguage(language);
+    const name = selection.slice("default:".length);
+    const seeded = seeds.find((option) => option.name === name).metadata
+      .templates[language];
+    if (seeded !== undefined) update(seeded);
   };
 
   /**
@@ -349,57 +443,58 @@ export default function PromptEditor({
   return (
     <Stack spacing={2}>
       {showSeeding && (
-        <>
-          <Stack direction="row" spacing={1}>
-            <TextField
-              select
-              size="small"
-              fullWidth
-              label={t("generative:rag.prompt.editor.startFrom")}
-              value=""
-              onChange={(event) => handleSeed(event.target.value)}
-              helperText={t("generative:rag.prompt.editor.startFromHelp")}
-            >
-              {seeds.map((seed) => (
-                <MenuItem key={seed.name} value={seed.name}>
-                  {seed.name}
-                </MenuItem>
-              ))}
-            </TextField>
+        <Stack direction="row" spacing={1}>
+          <TextField
+            select
+            size="small"
+            fullWidth
+            label={t("generative:rag.prompt.editor.selectPrompt")}
+            value={selection}
+            onChange={(event) => handleSelectPrompt(event.target.value)}
+          >
+            {seeds.length > 0 && (
+              <ListSubheader>
+                {t("generative:rag.prompt.editor.defaultPrompts")}
+              </ListSubheader>
+            )}
+            {seeds.map((seed) => (
+              <MenuItem key={seed.name} value={`default:${seed.name}`}>
+                {seed.name}
+              </MenuItem>
+            ))}
+            {savedPrompts.length > 0 && (
+              <ListSubheader>
+                {t("generative:rag.prompt.editor.savedPrompt")}
+              </ListSubheader>
+            )}
+            {savedPrompts.map((prompt) => (
+              <MenuItem key={prompt.id} value={`saved:${prompt.id}`}>
+                {prompt.name ||
+                  t("generative:rag.prompt.editor.unnamedPrompt", {
+                    id: prompt.id,
+                  })}
+              </MenuItem>
+            ))}
+          </TextField>
+          {selection.startsWith("default:") && (
             <TextField
               select
               size="small"
               label={t("generative:rag.prompt.editor.seedLanguage")}
               value={seedLanguage}
-              onChange={(event) => setSeedLanguage(event.target.value)}
+              onChange={(event) => handleLanguageChange(event.target.value)}
               sx={{ minWidth: 96 }}
             >
-              {LANGUAGE_CODES.map((code) => (
-                <MenuItem key={code} value={code}>
-                  {code}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Stack>
-
-          {savedPrompts.length > 0 && (
-            <TextField
-              select
-              size="small"
-              fullWidth
-              label={t("generative:rag.prompt.editor.savedPrompt")}
-              value=""
-              onChange={(event) => handleSeedSaved(event.target.value)}
-              helperText={t("generative:rag.prompt.editor.savedPromptHelp")}
-            >
-              {savedPrompts.map((prompt) => (
-                <MenuItem key={prompt.id} value={String(prompt.id)}>
-                  {prompt.name || `Prompt ${prompt.id}`}
-                </MenuItem>
-              ))}
+              {defaultLanguages(selection.slice("default:".length)).map(
+                (code) => (
+                  <MenuItem key={code} value={code}>
+                    {code}
+                  </MenuItem>
+                ),
+              )}
             </TextField>
           )}
-        </>
+        </Stack>
       )}
 
       <PlaceholdersList
@@ -475,6 +570,14 @@ export default function PromptEditor({
             </Button>
           )}
         </Box>
+      )}
+
+      {incompletePrompts.length > 0 && (
+        <Alert severity="error" sx={{ py: 0.5 }}>
+          {t("generative:rag.prompt.editor.malformedData", {
+            names: incompletePrompts.join(", "),
+          })}
+        </Alert>
       )}
 
       {missing.length > 0 && (

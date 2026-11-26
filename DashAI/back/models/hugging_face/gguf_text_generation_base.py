@@ -13,6 +13,10 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.downloads.downloadable import HFDownloadableMixin
+from DashAI.back.models.generation_result import (
+    GenerationResult,
+    result_from_chat_completion,
+)
 from DashAI.back.models.hugging_face.llama_utils import load_llama_or_raise
 from DashAI.back.models.text_to_text_generation_model import (
     FunctionCallResult,
@@ -666,6 +670,9 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
                 return False
         return True
 
+    CACHEABLE = True
+    GENERATION_PARAMS = frozenset({"max_tokens", "temperature", "frequency_penalty"})
+
     def __init__(self, **kwargs):
         """Load a GGUF checkpoint from disk and initialise the llama.cpp model.
 
@@ -802,6 +809,18 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
         self._template_chat_handler = handler
         log.debug("Applied chat-template kwargs %s to %s", template_kwargs, label)
 
+    def set_generation_params(self, **params) -> None:
+        """Update the generation parameters of an already loaded model.
+
+        Parameters
+        ----------
+        **params
+            Generation parameters. Keys outside ``GENERATION_PARAMS`` are ignored.
+        """
+        for name, value in params.items():
+            if name in self.GENERATION_PARAMS:
+                setattr(self, name, value)
+
     def close(self) -> None:
         """Release the llama.cpp backend and reclaim its accelerator memory.
 
@@ -822,6 +841,34 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
             return
         _release_llama_model(model, type(self).__name__)
 
+    def _chat_completion_result(self, prompt: List[Dict[str, str]]) -> GenerationResult:
+        """Run the chat completion and build the typed result."""
+        response = self.model.create_chat_completion(
+            messages=prompt,
+            max_tokens=self.max_tokens,
+            temperature=self.temperature,
+            frequency_penalty=self.frequency_penalty,
+        )
+        return result_from_chat_completion(response)
+
+    def generate_result(self, prompt: List[Dict[str, str]]) -> GenerationResult:
+        """Generate a reply and report usage and finish reason.
+
+        Parameters
+        ----------
+        prompt : list of dict
+            Conversation history in OpenAI chat format.
+
+        Returns
+        -------
+        GenerationResult
+            Reply text with token usage and finish reason. A subclass that
+            overrides ``generate`` is served through the base wrapper.
+        """
+        if type(self).generate is not GGUFTextGenerationModel.generate:
+            return super().generate_result(prompt)
+        return self._chat_completion_result(prompt)
+
     def generate(self, prompt: List[Dict[str, str]]) -> List[str]:
         """Generate a reply for the given chat prompt.
 
@@ -838,13 +885,10 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
             A single-element list containing the model's reply text, extracted
             from ``choices[0]["message"]["content"]``.
         """
-        output = self.model.create_chat_completion(
-            messages=prompt,
-            max_tokens=self.max_tokens,
-            temperature=self.temperature,
-            frequency_penalty=self.frequency_penalty,
-        )
-        return [output["choices"][0]["message"]["content"]]
+        if type(self).generate is not GGUFTextGenerationModel.generate:
+            # Reached through super() from a subclass override of generate.
+            return self._chat_completion_result(prompt).to_outputs()
+        return self.generate_result(prompt).to_outputs()
 
     def generate_function_call(
         self,

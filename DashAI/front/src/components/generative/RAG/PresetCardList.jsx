@@ -17,9 +17,15 @@ import CheckIcon from "@mui/icons-material/Check";
  * @param {string}   [props.activeKey] - The preset the draft currently matches,
  *   or null when the configuration is custom.
  * @param {Function} props.onSelect - Called with the chosen preset.
+ * @param {boolean}  [props.disabled] - Renders every card inert.
  * @returns {JSX.Element} The card list.
  */
-export default function PresetCardList({ presets, activeKey, onSelect }) {
+export default function PresetCardList({
+  presets,
+  activeKey,
+  onSelect,
+  disabled = false,
+}) {
   return (
     <Stack spacing={1}>
       {presets.map((preset) => {
@@ -28,6 +34,7 @@ export default function PresetCardList({ presets, activeKey, onSelect }) {
           <ButtonBase
             key={preset.key}
             onClick={() => onSelect(preset)}
+            disabled={disabled}
             aria-pressed={isSelected}
             sx={{
               display: "block",
@@ -93,4 +100,5 @@ PresetCardList.propTypes = {
   presets: PropTypes.array.isRequired,
   activeKey: PropTypes.string,
   onSelect: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
 };

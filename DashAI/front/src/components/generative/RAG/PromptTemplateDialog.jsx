@@ -4,7 +4,7 @@ import { Alert, Button, MenuItem, Stack, TextField } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import HighlightedTextarea from "./HighlightedTextarea";
 import PlaceholdersList from "./PlaceholdersList";
-import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
+import RAGAdvancedDialog from "../../shared/RAGAdvancedDialog";
 import {
   DEFAULT_PROMPT_LANGUAGE,
   getMissingPromptPlaceholders,

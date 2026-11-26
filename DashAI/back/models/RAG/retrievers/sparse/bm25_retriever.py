@@ -15,6 +15,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     RetrievalExpansionSchema,
 )
@@ -117,7 +118,7 @@ class BM25RetrieverSchema(RetrievalExpansionSchema):
     )  # type: ignore
 
 
-class BM25Retriever(SparseRetriever):
+class BM25Retriever(SparseRetriever, ChunkScorer):
     """Sparse retriever using BM25 (Okapi) ranking for document retrieval.
 
     Computes BM25-weighted term-frequency vectors and retrieves via

@@ -15,6 +15,7 @@ from DashAI.back.models.RAG.exceptions import (
     RAGComponentNotFoundError,
     RAGTransformationConfigError,
 )
+from DashAI.back.models.RAG.RAG_constants import RERANKER_KEY
 from DashAI.back.models.RAG.transformation.base_query_transformation import (
     BaseQueryTransformation,
 )
@@ -91,10 +92,22 @@ class TransformationFactory:
             )
 
         validated = model_class.SCHEMA.model_validate(params)
+        # ``validated`` fills an omitted parameter with its schema default, but
+        # a stored configuration that omits some keys means something else
+        # (see ``STORED_ABSENT_VALUES``), so those are restored below.
+        # The reranker is a retriever, and a retriever needs the retrieval
+        # infrastructure (chunks, persistence, index). That is supplied by the
+        # index setup, which builds it and attaches it to the transformer. Here
+        # it is left out so ``fill_objects`` does not build it bare.
+        if RERANKER_KEY in type(validated).model_fields:
+            validated = validated.model_copy(update={RERANKER_KEY: None})
         resolved = fill_objects(
             validated,
             self._registry,
             lazy_model_classes=(TextToTextGenerationTaskModel,),
         )
+        for key, absent_value in model_class.STORED_ABSENT_VALUES.items():
+            if key not in validated.model_fields_set:
+                resolved[key] = absent_value
         model = model_class(**resolved)
         return TransformationFactoryResult(model=model)

@@ -265,7 +265,7 @@ def _expansion_factor(params: Dict[str, Any]) -> int:
     return window if window > 1 else 1
 
 
-def _max_expansion_factor(params: Dict[str, Any]) -> int:
+def max_expansion_factor(params: Dict[str, Any]) -> int:
     """Return the largest expansion factor over a retriever and its children.
 
     A parent that caps its own output still returns units produced deeper in the
@@ -291,7 +291,7 @@ def _max_expansion_factor(params: Dict[str, Any]) -> int:
     for child in children:
         if not isinstance(child, dict):
             continue
-        child_factor = _max_expansion_factor(child.get("params", {}) or {})
+        child_factor = max_expansion_factor(child.get("params", {}) or {})
         if child_factor > factor:
             factor = child_factor
     return factor
@@ -348,7 +348,7 @@ def effective_chunk_count(component: str, params: Dict[str, Any]) -> int:
     """
     cap = _own_chunk_cap(params)
     if cap is not None:
-        return cap * _max_expansion_factor(params)
+        return cap * max_expansion_factor(params)
     children = params.get("children")
     if isinstance(children, list) and children:
         base = 0

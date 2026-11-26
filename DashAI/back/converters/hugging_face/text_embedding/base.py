@@ -26,6 +26,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.downloads.downloadable import HFDownloadableMixin
+from DashAI.back.dependencies.model_cache import cache_key, get_model_cache
 from DashAI.back.models.utils import DEVICE_PLACEHOLDER
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Float, Text
@@ -245,6 +246,35 @@ class TextEmbeddingConverter(AdvancedPreprocessingConverter, PretrainedTool):
     QUERY_PROMPT: Optional[str] = None
     PASSAGE_PROMPT: Optional[str] = None
 
+    def pretrained(self) -> Any:
+        """Return the loaded checkpoint, using the model cache inside a job.
+
+        Inside an active job scope the checkpoint comes from the ``embedding``
+        slot of the worker's model cache, so it can be reused across chat
+        messages. Outside a job scope it loads and closes as usual.
+
+        Returns
+        -------
+        Any
+            The loaded checkpoint.
+        """
+        if getattr(self, "_pretrained", None) is not None:
+            return self._pretrained
+        cache = get_model_cache()
+        if not cache.in_job_scope():
+            return super().pretrained()
+        load_params = {"device": self.device}
+        entry = cache.acquire(
+            "embedding",
+            cache_key(type(self), load_params),
+            lambda: self.load_pretrained(self._pretrained_source()),
+            label=type(self).__name__,
+            load_params=load_params,
+        )
+        self._cache_entry = entry
+        self._pretrained = entry.obj
+        return self._pretrained
+
     def close(self) -> None:
         """Release the loaded checkpoint so the next ``encode`` reloads it.
 
@@ -259,6 +289,12 @@ class TextEmbeddingConverter(AdvancedPreprocessingConverter, PretrainedTool):
         """
         model = getattr(self, "_pretrained", None)
         self._pretrained = None
+        entry = getattr(self, "_cache_entry", None)
+        self._cache_entry = None
+        if entry is not None:
+            del model
+            get_model_cache().release(entry)
+            return
         if model is None:
             return
         close_model = getattr(model, "close", None)

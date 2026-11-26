@@ -116,10 +116,44 @@ def _worker_loop(in_q, out_q) -> None:
     if _sys.platform != "win32":
         _signal.signal(_signal.SIGTERM, _signal.SIG_DFL)
 
-    # Job loop — one blocking iteration per job
+    import queue as _queue
+
+    from DashAI.back.dependencies.model_cache import (
+        WORKER_POLL_SECONDS,
+        get_model_cache,
+        prepare_cache_for_job,
+    )
+
+    # The cache reads its settings from the DI container built above
+    _cache = get_model_cache()
+    try:
+        from kink import di as _di
+
+        from DashAI.back.dependencies.model_cache_status import (
+            SqlCacheReporter,
+            clear_loaded_models,
+        )
+
+        _cache.reporter = SqlCacheReporter(_di["session_factory"], _os.getpid())
+        # Rows of other (dead) workers are stale
+        clear_loaded_models(_di["session_factory"], except_pid=_os.getpid())
+    except Exception:
+        log.exception("Could not set up the loaded model reporter")
+
+    # Job loop. While idle, the poll timeout lets the worker evict idle models.
     while True:
         try:
-            job_bytes = in_q.get()
+            job_bytes = in_q.get(timeout=WORKER_POLL_SECONDS)
+        except _queue.Empty:
+            try:
+                _cache.evict_idle()
+            except Exception:
+                log.exception("Model cache idle eviction failed")
+            try:
+                _cache.apply_pending_unloads()
+            except Exception:
+                log.exception("Model cache pending unloads failed")
+            continue
         except (EOFError, OSError):
             break  # Parent closed the queue — shut down
 
@@ -128,6 +162,10 @@ def _worker_loop(in_q, out_q) -> None:
 
         try:
             job = _dill.loads(job_bytes)
+            try:
+                prepare_cache_for_job(job, _cache)
+            except Exception:
+                log.exception("Model cache preparation failed")
             result = job.run()
             out_q.put(_dill.dumps({"ok": True, "result": result}))
         except Exception as _exc:
@@ -278,11 +316,26 @@ class HueyJobQueue(BaseJobQueue):
                 with suppress(Exception):
                     if self._worker_proc is not None:
                         self._terminate_worker(self._worker_proc, self._worker_pid)
+                self._clear_model_rows()
             if self._cancel_requested(huey_id):
                 self._finalize_interrupted(job, huey_id)
                 raise _JobCancelledError(f"Job {huey_id} was cancelled while running")
             return result
         return self._run_in_subprocess(job, huey_id)
+
+    @staticmethod
+    def _clear_model_rows() -> None:
+        """Delete the loaded model rows of a worker that was just reset."""
+        try:
+            from kink import di
+
+            from DashAI.back.dependencies.model_cache_status import (
+                clear_loaded_models,
+            )
+
+            clear_loaded_models(di["session_factory"])
+        except Exception:
+            log.exception("Could not clear loaded model rows")
 
     def _cancel_requested(self, huey_id: str) -> bool:
         """Tell whether the job with *huey_id* was cancelled or killed.
@@ -409,8 +462,21 @@ class HueyJobQueue(BaseJobQueue):
         if self._worker_proc is not None and self._worker_proc.is_alive():
             return
 
+        # A worker killed by a cancel or a crash leaves its rows behind
+        try:
+            from kink import di
+
+            from DashAI.back.dependencies.model_cache_status import (
+                clear_loaded_models,
+            )
+
+            clear_loaded_models(di["session_factory"])
+        except Exception:
+            log.exception("Could not clear stale loaded model rows")
+
         ctx = multiprocessing.get_context("spawn")
-        self._worker_in_q = ctx.SimpleQueue()
+        self._worker_in_q = ctx.Queue()
+        self._worker_in_q.cancel_join_thread()
         self._worker_out_q = ctx.Queue()
         proc = ctx.Process(
             target=_worker_loop,
@@ -580,6 +646,7 @@ class HueyJobQueue(BaseJobQueue):
                 pass
 
         if killed_externally:
+            self._clear_model_rows()
             self._finalize_interrupted(job, huey_id)
             if self._cancel_requested(huey_id):
                 raise _JobCancelledError(f"Job {huey_id} was cancelled or killed")
@@ -596,6 +663,7 @@ class HueyJobQueue(BaseJobQueue):
             with suppress(Exception):
                 self._terminate_worker(proc, worker_pid)
                 proc.join(timeout=5)
+            self._clear_model_rows()
             self._finalize_interrupted(job, huey_id)
             raise _JobCancelledError(f"Job {huey_id} was cancelled while finishing")
 

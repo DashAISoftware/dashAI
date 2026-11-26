@@ -10,9 +10,19 @@ from DashAI.back.dependencies.database.models import (
     GenerativeSession,
     ProcessData,
 )
+from DashAI.back.dependencies.model_cache import (
+    cache_key,
+    get_model_cache,
+    split_params,
+    validated_generation_params,
+)
 from DashAI.back.job.base_job import BaseJob, JobError, _release_frames
 from DashAI.back.job.generative_failure import fail_process
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
+from DashAI.back.models.RAG.RAG_constants import (
+    RAG_PROGRESS_STAGE_KEY,
+    RAG_PROGRESS_STAGE_LOADING_MODEL,
+)
 from DashAI.back.services.workflows import job_name_for
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
@@ -24,6 +34,8 @@ log = logging.getLogger(__name__)
 
 class GenerativeJob(BaseJob):
     """GenerativeJob class to infer with generative models ."""
+
+    USES_MODEL_CACHE = True
 
     @inject
     def set_status_as_delivered(
@@ -113,6 +125,7 @@ class GenerativeJob(BaseJob):
         from kink import di
 
         component_registry = di["component_registry"]
+        cache = get_model_cache()
         session_factory = di["session_factory"]
         config = di["config"]
 
@@ -141,184 +154,226 @@ class GenerativeJob(BaseJob):
                             raise JobError(f"Job '{job_name}' is not registered.")
                         job_class = component_registry[job_name]["class"]
                         workflow_job = job_class(**self.kwargs)
-        if workflow_job is not None:
-            workflow_job.run()
-            return
+        with get_model_cache().job_scope():
+            if workflow_job is not None:
+                workflow_job.run()
+                return
 
-        model = None
-        generative_process = None
-        failure = None
-        with session_factory() as db:
-            try:
-                generative_process_id: int = self.kwargs["generative_process_id"]
-
+            model = None
+            entry = None
+            generative_process = None
+            failure = None
+            with session_factory() as db:
                 try:
-                    generative_process: GenerativeProcess = db.get(
-                        GenerativeProcess, generative_process_id
-                    )
-                    if not generative_process:
-                        raise JobError(
-                            f"Generative process {generative_process_id} "
-                            "not found in DB."
+                    generative_process_id: int = self.kwargs["generative_process_id"]
+
+                    try:
+                        generative_process: GenerativeProcess = db.get(
+                            GenerativeProcess, generative_process_id
                         )
-                except Exception as e:
-                    log.exception(e)
-                    message = "Error retrieving generative process."
-                    fail_process(db, generative_process, message, e)
-                    raise JobError(message) from e
-
-                try:
-                    generative_session: GenerativeSession = db.get(
-                        GenerativeSession, generative_process.session_id
-                    )
-                    if not generative_session:
-                        raise JobError(
-                            f"Session {generative_process.session_id} not found in DB."
-                        )
-                except Exception as e:
-                    log.exception(e)
-                    message = "Error retrieving generative session."
-                    fail_process(db, generative_process, message, e)
-                    raise JobError(message) from e
-
-                try:
-                    model_class = component_registry[generative_session.model_name][
-                        "class"
-                    ]
-                    if (
-                        getattr(model_class, "REQUIRES_DOWNLOAD", False)
-                        and not model_class.is_downloaded()
-                    ):
-                        raise JobError(
-                            f"Model {generative_session.model_name} is not downloaded."
-                            " Download it before use."
-                        )
-                    params = generative_session.parameters
-                    model: BaseGenerativeModel = model_class(**params)
-                except JobError as e:
-                    fail_process(db, generative_process, str(e))
-                    raise
-                except Exception as e:
-                    log.exception(e)
-                    message = "Error instantiating model with given parameters."
-                    fail_process(db, generative_process, message, e)
-                    raise JobError(message) from e
-
-                input_data = generative_process.input
-
-                try:
-                    task_class = component_registry[generative_session.task_name][
-                        "class"
-                    ]
-                    task: BaseGenerativeTask = task_class()
-                except KeyError as e:
-                    log.exception(e)
-                    message = (
-                        f"Task '{generative_session.task_name}' not found in registry."
-                    )
-                    fail_process(db, generative_process, message)
-                    raise JobError(message) from e
-                except Exception as e:
-                    log.exception(e)
-                    message = "Error instantiating task."
-                    fail_process(db, generative_process, message, e)
-                    raise JobError(message) from e
-
-                try:
-                    use_history = getattr(task_class, "USE_HISTORY", False)
-                    if use_history:
-                        # Only the turns before this one: a retried turn keeps
-                        # its place in the conversation (#969), so the turns
-                        # that came after it are not its history.
-                        history = []
-                        for proc in (
-                            db.query(GenerativeProcess)
-                            .filter(
-                                GenerativeProcess.session_id == generative_session.id
-                            )
-                            .filter(GenerativeProcess.status == RunStatus.FINISHED)
-                            .filter(GenerativeProcess.id < generative_process.id)
-                            .order_by(GenerativeProcess.id)
-                            .all()
-                        ):
-                            message = task.extract_message_from_output(proc.output)
-                            if message is not None:
-                                history.append((proc.input[0].data, message))
-                        input_data = task.prepare_for_task(
-                            input_data,
-                            history=history,
-                        )
-                    else:
-                        input_data = task.prepare_for_task(input_data)
-                except Exception as e:
-                    log.exception(e)
-                    message = "Error preparing task with history."
-                    fail_process(db, generative_process, message, e)
-                    raise JobError(message) from e
-
-                try:
-                    generative_process.set_status_as_started()
-                    db.commit()
-                except exc.SQLAlchemyError as e:
-                    log.exception(e)
-                    message = "Failed to update process status in database."
-                    fail_process(db, generative_process, message, e)
-                    raise JobError(message) from e
-
-                try:
-                    output: Any = model.generate(input_data)
-                except Exception as e:
-                    log.exception(e)
-                    message = "Error during model generation."
-                    fail_process(db, generative_process, message, e)
-                    raise JobError(message) from e
-
-                try:
-                    output: Any = task.process_output(
-                        output, images_path=config["IMAGES_PATH"]
-                    )
-                    outputs_for_database = []
-                    for o in output:
-                        if not isinstance(o, tuple) or len(o) != 2:
+                        if not generative_process:
                             raise JobError(
-                                (
-                                    "Output from task must be a list of "
-                                    "tuples (data, type)."
-                                )
+                                f"Generative process {generative_process_id} "
+                                "not found in DB."
                             )
-                        output_data, output_type = o
-                        process_data = ProcessData(
-                            data=output_data,
-                            data_type=output_type,
-                            process_id=generative_process.id,
-                            is_input=False,
+                    except Exception as e:
+                        log.exception(e)
+                        message = "Error retrieving generative process."
+                        fail_process(db, generative_process, message, e)
+                        raise JobError(message) from e
+
+                    try:
+                        generative_session: GenerativeSession = db.get(
+                            GenerativeSession, generative_process.session_id
                         )
-                        outputs_for_database.append(process_data)
+                        if not generative_session:
+                            raise JobError(
+                                f"Session {generative_process.session_id} "
+                                "not found in DB."
+                            )
+                    except Exception as e:
+                        log.exception(e)
+                        message = "Error retrieving generative session."
+                        fail_process(db, generative_process, message, e)
+                        raise JobError(message) from e
 
-                    db.add_all(outputs_for_database)
-                    db.commit()
+                    try:
+                        model_class = component_registry[generative_session.model_name][
+                            "class"
+                        ]
+                        if (
+                            getattr(model_class, "REQUIRES_DOWNLOAD", False)
+                            and not model_class.is_downloaded()
+                        ):
+                            raise JobError(
+                                f"Model {generative_session.model_name} "
+                                "is not downloaded. Download it before use."
+                            )
+                        params = generative_session.parameters
+                        if getattr(model_class, "CACHEABLE", False):
+                            load_params, _ = split_params(model_class, params)
+                            loading = False
 
-                    # Update the generative process with the output
-                    db.refresh(generative_process)
-                    generative_process.set_status_as_finished()
-                    db.commit()
-                except Exception as e:
-                    log.exception(e)
-                    message = "Error processing and saving generation output."
-                    fail_process(db, generative_process, message, e)
-                    raise JobError(message) from e
+                            def _report_loading() -> None:
+                                nonlocal loading
+                                loading = True
+                                generative_process.set_progress(
+                                    {
+                                        RAG_PROGRESS_STAGE_KEY: (
+                                            RAG_PROGRESS_STAGE_LOADING_MODEL
+                                        )
+                                    }
+                                )
+                                db.commit()
 
-            except BaseException as error:
-                failure = error
+                            entry = cache.acquire(
+                                "llm",
+                                cache_key(model_class, load_params),
+                                lambda: model_class(**params),
+                                label=generative_session.model_name,
+                                load_params=load_params,
+                                on_miss=_report_loading,
+                            )
+                            if loading:
+                                generative_process.set_progress(None)
+                                db.commit()
+                            model: BaseGenerativeModel = entry.obj
+                            model.set_generation_params(
+                                **validated_generation_params(model_class, params)
+                            )
+                        else:
+                            cache.clear("non_cacheable_model", slot="llm")
+                            model: BaseGenerativeModel = model_class(**params)
+                    except JobError as e:
+                        fail_process(db, generative_process, str(e))
+                        raise
+                    except Exception as e:
+                        log.exception(e)
+                        message = "Error instantiating model with given parameters."
+                        fail_process(db, generative_process, message, e)
+                        raise JobError(message) from e
 
-        # Cleanup runs here, after the except block, because while an exception
-        # is propagating its traceback still references the model. gc.collect()
-        # goes first so empty_cache() can hand the freed blocks back to CUDA.
-        model = None
-        if failure is not None:
-            _release_frames(failure)
-        gc.collect()
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-        if failure is not None:
-            raise failure
+                    input_data = generative_process.input
+
+                    try:
+                        task_class = component_registry[generative_session.task_name][
+                            "class"
+                        ]
+                        task: BaseGenerativeTask = task_class()
+                    except KeyError as e:
+                        log.exception(e)
+                        message = (
+                            f"Task '{generative_session.task_name}' "
+                            "not found in registry."
+                        )
+                        fail_process(db, generative_process, message)
+                        raise JobError(message) from e
+                    except Exception as e:
+                        log.exception(e)
+                        message = "Error instantiating task."
+                        fail_process(db, generative_process, message, e)
+                        raise JobError(message) from e
+
+                    try:
+                        use_history = getattr(task_class, "USE_HISTORY", False)
+                        if use_history:
+                            # Only the turns before this one: a retried turn keeps
+                            # its place in the conversation (#969), so the turns
+                            # that came after it are not its history.
+                            history = []
+                            for proc in (
+                                db.query(GenerativeProcess)
+                                .filter(
+                                    GenerativeProcess.session_id
+                                    == generative_session.id
+                                )
+                                .filter(GenerativeProcess.status == RunStatus.FINISHED)
+                                .filter(GenerativeProcess.id < generative_process.id)
+                                .order_by(GenerativeProcess.id)
+                                .all()
+                            ):
+                                message = task.extract_message_from_output(proc.output)
+                                if message is not None:
+                                    history.append((proc.input[0].data, message))
+                            input_data = task.prepare_for_task(
+                                input_data,
+                                history=history,
+                            )
+                        else:
+                            input_data = task.prepare_for_task(input_data)
+                    except Exception as e:
+                        log.exception(e)
+                        message = "Error preparing task with history."
+                        fail_process(db, generative_process, message, e)
+                        raise JobError(message) from e
+
+                    try:
+                        generative_process.set_status_as_started()
+                        db.commit()
+                    except exc.SQLAlchemyError as e:
+                        log.exception(e)
+                        message = "Failed to update process status in database."
+                        fail_process(db, generative_process, message, e)
+                        raise JobError(message) from e
+
+                    try:
+                        result = model.generate_result(input_data)
+                        output: Any = result.to_outputs()
+                    except Exception as e:
+                        log.exception(e)
+                        message = "Error during model generation."
+                        fail_process(db, generative_process, message, e)
+                        raise JobError(message) from e
+
+                    try:
+                        output: Any = task.process_output(
+                            output, images_path=config["IMAGES_PATH"]
+                        )
+                        outputs_for_database = []
+                        for o in output:
+                            if not isinstance(o, tuple) or len(o) != 2:
+                                raise JobError(
+                                    (
+                                        "Output from task must be a list of "
+                                        "tuples (data, type)."
+                                    )
+                                )
+                            output_data, output_type = o
+                            process_data = ProcessData(
+                                data=output_data,
+                                data_type=output_type,
+                                process_id=generative_process.id,
+                                is_input=False,
+                            )
+                            outputs_for_database.append(process_data)
+
+                        generative_process.generation_metadata = result.metadata()
+                        db.add_all(outputs_for_database)
+                        db.commit()
+
+                        # Update the generative process with the output
+                        db.refresh(generative_process)
+                        generative_process.set_status_as_finished()
+                        db.commit()
+                    except Exception as e:
+                        log.exception(e)
+                        message = "Error processing and saving generation output."
+                        fail_process(db, generative_process, message, e)
+                        raise JobError(message) from e
+
+                except BaseException as error:
+                    failure = error
+
+            # Cleanup runs here, after the except block, because while an exception
+            # is propagating its traceback still references the model. gc.collect()
+            # goes first so empty_cache() can hand the freed blocks back to CUDA.
+            model = None
+            entry = None
+            result = None
+            if failure is not None:
+                _release_frames(failure)
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            if failure is not None:
+                raise failure

@@ -51,23 +51,16 @@ export function applyPlaceholderParams(defaults, schema) {
  *
  * `resolveDefaults` remains the source of the form-shaped defaults; this
  * wrapper only augments them with the placeholder params the shared formatter
- * cannot see. If the raw schema cannot be fetched, the shared defaults are
- * returned unchanged.
+ * cannot see. If the raw schema cannot be fetched the promise rejects, so the
+ * caller reports the failure instead of saving defaults without the RAG
+ * overrides.
  *
  * @param {string} modelName - Registered retriever component name.
  * @returns {Promise<object>} The form-shaped defaults for the retriever.
  */
 export async function resolveRetrieverDefaults(modelName) {
   const defaults = await resolveDefaults(modelName);
-  try {
-    const response = await getComponents({ model: modelName });
-    const component = Array.isArray(response) ? response[0] : response;
-    return applyPlaceholderParams(defaults, component?.schema);
-  } catch (error) {
-    console.warn(
-      `[resolveRetrieverDefaults] Failed to read placeholders for ${modelName}:`,
-      error,
-    );
-    return defaults;
-  }
+  const response = await getComponents({ model: modelName });
+  const component = Array.isArray(response) ? response[0] : response;
+  return applyPlaceholderParams(defaults, component?.schema);
 }
