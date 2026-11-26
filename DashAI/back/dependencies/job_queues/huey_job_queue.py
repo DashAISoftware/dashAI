@@ -939,8 +939,10 @@ class HueyJobQueue(BaseJobQueue):
 
     def put(self, job: BaseJob) -> int:
         # Remember who enqueued the job (the user of the request, or the owner
-        # of the job that enqueues this one), so it runs with their credentials
-        job.kwargs.setdefault(OWNER_USER_KWARG, get_acting_user_id())
+        # of the job that enqueues this one), so it runs with their credentials.
+        # Always overwritten: kwargs can come from the client, and keeping a
+        # value sent there would let anyone run a job as another user
+        job.kwargs[OWNER_USER_KWARG] = get_acting_user_id()
         result = self._execute(job)
 
         return result

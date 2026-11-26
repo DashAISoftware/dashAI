@@ -213,3 +213,17 @@ def test_jobs_run_as_the_user_that_enqueued_them(test_job_queue: HueyJobQueue):
     assert job.kwargs["owner_user_id"] == 7
     assert anonymous_job.kwargs["owner_user_id"] is None
     assert ActingUserJob.seen == [7, None]
+
+
+def test_jobs_ignore_the_owner_sent_by_the_client(test_job_queue: HueyJobQueue):
+    ActingUserJob.seen = []
+
+    with acting_as(7):
+        job = ActingUserJob(owner_user_id=1)
+        test_job_queue.put(job)
+    anonymous_job = ActingUserJob(owner_user_id=1)
+    test_job_queue.put(anonymous_job)
+
+    assert job.kwargs["owner_user_id"] == 7
+    assert anonymous_job.kwargs["owner_user_id"] is None
+    assert ActingUserJob.seen == [7, None]
