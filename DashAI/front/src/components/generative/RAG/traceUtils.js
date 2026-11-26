@@ -3,6 +3,9 @@
  * data-shaping primitives the panel and its tests rely on.
  */
 
+import { TRACE_STAGE_RERANK } from "../../../constants/rag";
+import { isPlainObject } from "../../../utils/objects";
+
 /**
  * Coerces a possibly-missing list into an array.
  * @param {*} value - The value to coerce.
@@ -12,14 +15,7 @@ export function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
-/**
- * Checks whether a value is a non-null, non-array object.
- * @param {*} value - The value to inspect.
- * @returns {boolean} True for plain objects only.
- */
-export function isPlainObject(value) {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
+export { isPlainObject };
 
 /**
  * Checks whether a trace entry carries a retriever object.
@@ -54,6 +50,22 @@ export function isQueryTransformed(entries, userMessage) {
  */
 export function filterRenderableEntries(trace) {
   return Array.isArray(trace) ? trace.filter(hasObjectRetriever) : [];
+}
+
+/**
+ * Finds the pool-reranking node of a trace, if the transformation stage
+ * reranked the merged multi-query pool.
+ * @param {*} trace - The raw trace prop.
+ * @returns {object|null} The reranker trace node (with `chunks` kept and
+ *   `pool` received), or null when the trace has no reranking entry.
+ */
+export function findRerankNode(trace) {
+  if (!Array.isArray(trace)) return null;
+  const entry = trace.find(
+    (item) =>
+      item?.stage === TRACE_STAGE_RERANK && isPlainObject(item.reranker),
+  );
+  return entry ? entry.reranker : null;
 }
 
 /**

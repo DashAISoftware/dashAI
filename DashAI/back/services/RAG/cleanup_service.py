@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from DashAI.back.core.schema_fields.utils import normalize_payload
 from DashAI.back.dependencies.database.models import (
+    GenerativeSession,
     RAGChunkingModel,
     RAGChunkSet,
     RAGChunkSetDocument,
@@ -22,15 +23,25 @@ from DashAI.back.dependencies.database.models import (
     RAGSparseRetriever,
 )
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
-from DashAI.back.models.RAG.exceptions import RAGComponentNotFoundError
+from DashAI.back.models.RAG.exceptions import (
+    RAGComponentNotFoundError,
+    RAGPipelineConfigError,
+)
 from DashAI.back.models.RAG.RAG_constants import (
+    COMPOSITE_RETRIEVER_NAMES,
     RAG_PARAM_CHUNKING_MODEL,
+    RAG_PARAM_QUERY_TRANSFORMATION,
     RAG_PARAM_RETRIEVER_MODEL,
+    RERANKER_KEY,
 )
 from DashAI.back.models.RAG.retrievers.persistence_signature import (
     reference_signature,
 )
-from DashAI.back.models.RAG.retrievers.ref_utils import COMPONENT_KEY, is_component_ref
+from DashAI.back.models.RAG.retrievers.ref_utils import (
+    CHILDREN_KEY,
+    COMPONENT_KEY,
+    PARAMS_KEY,
+)
 from DashAI.back.services.RAG.config_equality import configs_equal
 from DashAI.back.services.RAG.deferred_fs import remove_after_commit
 from DashAI.back.services.RAG.retriever_db_service import RetrieverDBService
@@ -75,8 +86,10 @@ class _LiveIndex:
     ----------
     pipeline_id : int
         The session's pipeline, which owns every bridge of the index.
-    root_id : int
-        The bridge the reindex returned, which roots the live tree.
+    root_ids : frozenset[int]
+        The retriever's root, and the reranker's root when the session has one:
+        the root the reindex built, or the session's current reranker rows when
+        the reindex built none. Each roots a live tree.
     chunk_set_id : int
         The chunk set the live retrievers read, owned by the session.
     dense_model_ids : frozenset[int]
@@ -84,7 +97,7 @@ class _LiveIndex:
     """
 
     pipeline_id: int
-    root_id: int
+    root_ids: frozenset[int]
     chunk_set_id: int
     dense_model_ids: frozenset[int]
 
@@ -182,22 +195,42 @@ def _retriever_identity(reference: Any, registry: ComponentRegistry | None) -> A
     -------
     Any
         The reference with ``params`` reduced to its persistence signature, or
-        the value unchanged when it is not a retriever reference.
+        the value unchanged when it is not a component reference. A minimal
+        ``{component}`` reference is completed with empty params first, so it
+        has the identity of its explicit form.
 
     Raises
     ------
     ValueError
         If *reference* is a retriever reference and no registry was given.
+    RAGPipelineConfigError
+        If *reference* names a component that is malformed.
     """
     canonical = normalize_payload(reference)
-    if not is_component_ref(canonical):
+    if not _names_component(canonical):
         return canonical
     if registry is None:
         raise ValueError(
             "CleanupService needs a component registry to compare retriever "
             "configurations."
         )
-    return reference_signature(canonical, registry)
+    return reference_signature(_component_reference(canonical), registry)
+
+
+def _names_component(value: Any) -> bool:
+    """Whether a value is an object that carries a ``component`` key.
+
+    Parameters
+    ----------
+    value : Any
+        A normalised configuration value.
+
+    Returns
+    -------
+    bool
+        ``True`` for an object with a ``component`` key, minimal or complete.
+    """
+    return isinstance(value, dict) and COMPONENT_KEY in value
 
 
 def _stored_reference(parameters: dict[str, Any], key: str) -> dict[str, Any]:
@@ -221,15 +254,91 @@ def _stored_reference(parameters: dict[str, Any], key: str) -> dict[str, Any]:
 
     Raises
     ------
-    ValueError
+    RAGPipelineConfigError
         If the stored value is neither null nor an object.
     """
     reference = parameters.get(key)
     if reference is None:
         return {}
     if not isinstance(reference, dict):
-        raise ValueError(
+        raise RAGPipelineConfigError(
             f"Stored parameter {key!r} must be a component reference object."
+        )
+    return reference
+
+
+def _reranker_reference(parameters: dict[str, Any] | None) -> dict[str, Any]:
+    """Return the query-transformation reranker reference of session parameters.
+
+    The stage is optional and so is its reranker, so ``{}`` says there is none.
+
+    Parameters
+    ----------
+    parameters : dict[str, Any] | None
+        A session's parameters, or ``None`` for a session without any.
+
+    Returns
+    -------
+    dict[str, Any]
+        The ``reranker`` reference nested in ``query_transformation``, or ``{}``.
+
+    Raises
+    ------
+    RAGPipelineConfigError
+        If the stage's params are not an object, or a stored reranker is not an
+        object.
+    """
+    if not parameters:
+        return {}
+    transformation = _stored_reference(parameters, RAG_PARAM_QUERY_TRANSFORMATION)
+    if not transformation:
+        return {}
+    params = transformation.get(PARAMS_KEY)
+    if params is None:
+        return {}
+    if not isinstance(params, dict):
+        raise RAGPipelineConfigError(
+            "Stored params of the query transformation must be an object."
+        )
+    return _stored_reference(params, RERANKER_KEY)
+
+
+def _component_reference(reference: Any) -> dict[str, Any]:
+    """Return a stored reference with its ``params`` present.
+
+    A reference stored without ``params`` is the minimal ``{"component": name}``
+    the form saves for a component chosen by name alone, so it has no
+    parameters and is completed with an empty mapping.
+
+    Parameters
+    ----------
+    reference : Any
+        A stored ``{component, params}`` reference, possibly the minimal form.
+
+    Returns
+    -------
+    dict[str, Any]
+        The reference with ``params``.
+
+    Raises
+    ------
+    RAGPipelineConfigError
+        If the value is not an object naming its component, or its ``params``
+        is present and not an object.
+    """
+    if not isinstance(reference, dict) or not isinstance(
+        reference.get(COMPONENT_KEY), str
+    ):
+        raise RAGPipelineConfigError(
+            f"Stored configuration {reference!r} is not a component reference."
+        )
+    if PARAMS_KEY not in reference:
+        return {**reference, PARAMS_KEY: {}}
+    params = reference[PARAMS_KEY]
+    if not isinstance(params, dict):
+        raise RAGPipelineConfigError(
+            f"'params' of stored component '{reference[COMPONENT_KEY]}' must be a "
+            f"dict, got {type(params).__name__}."
         )
     return reference
 
@@ -432,49 +541,10 @@ class CleanupService:
             if not old_parameters:
                 return
 
-            def _component_changed(key: str) -> bool:
-                """Whether one parameter of the session really changed.
-
-                Parameters
-                ----------
-                key : str
-                    Session parameter name, such as ``retriever_model``.
-
-                Returns
-                -------
-                bool
-                    ``True`` on full session deletion, when the raw value differs
-                    for a non-retriever parameter, or when a retriever's identity
-                    differs. Identical raw values are never a change.
-                """
-                if new_parameters is None:
-                    return True
-                old_value = old_parameters.get(key)
-                new_value = new_parameters.get(key)
-                # Identical raw values cannot differ in identity, so the registry
-                # is only needed when the configuration really changed.
-                if configs_equal(old_value, new_value):
-                    return False
-                if key != RAG_PARAM_RETRIEVER_MODEL:
-                    return True
-                return self._retriever_changed(old_value, new_value)
-
             # ── Retriever cleanup (MUST run BEFORE chunking) ──
-            retriever_model_params = _stored_reference(
-                old_parameters, RAG_PARAM_RETRIEVER_MODEL
+            self._release_retriever_and_reranker(
+                session_id, old_parameters, new_parameters
             )
-
-            # The retriever rows deleted below hang off this session's chunk
-            # set, which no other session can share now that documents belong
-            # to one session. Rows keyed by configuration alone -- the chunking
-            # model here, the embedding model in _release_dense_storage -- *are*
-            # shared, and are guarded where they are deleted.
-            should_cleanup_retriever = bool(retriever_model_params) and (
-                _component_changed(RAG_PARAM_RETRIEVER_MODEL)
-            )
-
-            if should_cleanup_retriever:
-                self._cleanup_retriever(old_parameters, session_id)
 
             # ── Chunking model cleanup (AFTER retriever) ──
             chunking_model_params = _stored_reference(
@@ -482,7 +552,9 @@ class CleanupService:
             )
 
             should_cleanup_chunking = bool(chunking_model_params) and (
-                _component_changed(RAG_PARAM_CHUNKING_MODEL)
+                self._component_changed(
+                    RAG_PARAM_CHUNKING_MODEL, old_parameters, new_parameters
+                )
             )
 
             if should_cleanup_chunking:
@@ -500,6 +572,90 @@ class CleanupService:
             raise
 
     # ── Private helpers ──
+
+    def _component_changed(
+        self,
+        key: str,
+        old_parameters: dict[str, Any],
+        new_parameters: dict[str, Any] | None,
+    ) -> bool:
+        """Whether one parameter of the session really changed.
+
+        Parameters
+        ----------
+        key : str
+            Session parameter name, such as ``retriever_model``.
+        old_parameters : dict[str, Any]
+            The session's parameters before the change.
+        new_parameters : dict[str, Any] | None
+            The parameters after the change, or ``None`` on full session deletion.
+
+        Returns
+        -------
+        bool
+            ``True`` on full session deletion, when the raw value differs for a
+            non-retriever parameter, or when a retriever's identity differs.
+            Identical raw values are never a change.
+        """
+        if new_parameters is None:
+            return True
+        old_value = old_parameters.get(key)
+        new_value = new_parameters.get(key)
+        # Identical raw values cannot differ in identity, so the registry is only
+        # needed when the configuration really changed.
+        if configs_equal(old_value, new_value):
+            return False
+        if key != RAG_PARAM_RETRIEVER_MODEL:
+            return True
+        return self._retriever_changed(old_value, new_value)
+
+    def _release_retriever_and_reranker(
+        self,
+        session_id: int,
+        old_parameters: dict[str, Any],
+        new_parameters: dict[str, Any] | None,
+    ) -> None:
+        """Release the retriever and reranker rows a parameter change replaces.
+
+        The retriever rows deleted here hang off this session's chunk set, which
+        no other session can share now that documents belong to one session. Rows
+        keyed by configuration alone -- the chunking model here, the embedding
+        model in _release_dense_storage -- *are* shared, and are guarded where they
+        are deleted.
+
+        The retriever stage and the query-transformation reranker store their rows
+        under the same pipeline, and one row can serve both when their
+        configurations are equal. Whatever the new parameters still reference must
+        survive the cleanup of the other stage.
+
+        Parameters
+        ----------
+        session_id : int
+            Generative session identifier.
+        old_parameters : dict[str, Any]
+            The session's parameters before the change, not empty.
+        new_parameters : dict[str, Any] | None
+            The parameters after the change, or ``None`` on full session deletion.
+        """
+        retriever_model_params = _stored_reference(
+            old_parameters, RAG_PARAM_RETRIEVER_MODEL
+        )
+        should_cleanup_retriever = bool(retriever_model_params) and (
+            self._component_changed(
+                RAG_PARAM_RETRIEVER_MODEL, old_parameters, new_parameters
+            )
+        )
+        old_reranker = _reranker_reference(old_parameters)
+        should_cleanup_reranker = bool(old_reranker) and self._reranker_changed(
+            old_reranker, new_parameters
+        )
+        protected: set[int] = set()
+        if should_cleanup_retriever or should_cleanup_reranker:
+            protected = self._protected_bridge_ids(session_id, new_parameters)
+        if should_cleanup_retriever:
+            self._cleanup_retriever(old_parameters, session_id, protected)
+        if should_cleanup_reranker:
+            self._cleanup_reranker(old_reranker, session_id, protected)
 
     def _retriever_changed(self, old_value: Any, new_value: Any) -> bool:
         """Whether a retriever reference changed in a way that affects its fit.
@@ -778,7 +934,10 @@ class CleanupService:
         return pipeline.id if pipeline else None
 
     def _cleanup_retriever(
-        self, old_parameters: dict[str, Any], session_id: int
+        self,
+        old_parameters: dict[str, Any],
+        session_id: int,
+        protected: set[int],
     ) -> None:
         """Release the retriever bridges that a session's parameter update replaces.
 
@@ -788,8 +947,10 @@ class CleanupService:
         sparse folder goes once no other row uses it, and its dense matrices and
         model go once nothing reads them. A unit bridge that a surviving composite
         still reads is kept, with that composite. The other pipeline roots are
-        kept too. The matrices and models of the dense leaves that were deleted
-        are released by :meth:`_release_dense_storage`.
+        kept too, and so is every protected bridge (the trees the new parameters
+        still reference, such as a reranker that shares the class). The matrices
+        and models of the dense leaves that were deleted are released by
+        :meth:`_release_dense_storage`.
 
         Parameters
         ----------
@@ -797,6 +958,8 @@ class CleanupService:
             Session parameters before the update, holding the old retriever.
         session_id : int
             Generative session identifier.
+        protected : set[int]
+            Bridge ids the session's new parameters still reference.
         """
         class_name = _retriever_component_name(old_parameters)
         if class_name is None:
@@ -804,9 +967,11 @@ class CleanupService:
             # release. Querying with no class would match only rows that have
             # no class name at all, which is never what a session means.
             return
-        self._release_class_bridges(session_id, class_name)
+        self._release_class_bridges(session_id, class_name, protected)
 
-    def _release_class_bridges(self, session_id: int, class_name: str) -> None:
+    def _release_class_bridges(
+        self, session_id: int, class_name: str, protected: set[int]
+    ) -> None:
         """Release every bridge of one class in a session's pipeline.
 
         Parameters
@@ -815,6 +980,8 @@ class CleanupService:
             Generative session identifier.
         class_name : str
             The class whose bridges are released, composite or unit.
+        protected : set[int]
+            Bridge ids that survive, even when they share the class.
         """
         pipeline_id = self._find_pipeline_id(session_id)
         if pipeline_id is None:
@@ -825,7 +992,234 @@ class CleanupService:
         bridge_ids = self._bridge_ids_of_class(pipeline_id, class_name)
         release = self._release_bridge_trees(
             bridge_ids,
-            self._other_roots(pipeline_id, bridge_ids),
+            self._keep_roots(pipeline_id, bridge_ids, protected),
+            frozenset(),
+        )
+        self._release_dense_storage(release)
+
+    def _keep_roots(
+        self, pipeline_id: int, released: Sequence[int], protected: set[int]
+    ) -> list[int]:
+        """List the roots whose trees must survive a release of ``released``.
+
+        Parameters
+        ----------
+        pipeline_id : int
+            The pipeline being released.
+        released : Sequence[int]
+            Bridge ids being released, whose roots are not kept.
+        protected : set[int]
+            Bridge ids the session's new parameters still reference.
+
+        Returns
+        -------
+        list[int]
+            The other pipeline roots, then the protected bridges in ascending order.
+        """
+        return [
+            *self._other_roots(pipeline_id, released),
+            *sorted(protected),
+        ]
+
+    def _reranker_changed(
+        self, old_reference: dict[str, Any], new_parameters: dict[str, Any] | None
+    ) -> bool:
+        """Whether the query-transformation reranker of a session changed.
+
+        Parameters
+        ----------
+        old_reference : dict[str, Any]
+            The reranker reference before the update, not empty.
+        new_parameters : dict[str, Any] | None
+            The parameters after the update, or ``None`` on session deletion.
+
+        Returns
+        -------
+        bool
+            ``True`` when the reranker was removed or its persistence identity
+            differs. Identical raw references are never a change.
+        """
+        if new_parameters is None:
+            return True
+        new_reference = _reranker_reference(new_parameters)
+        if configs_equal(old_reference, new_reference):
+            return False
+        return self._retriever_changed(old_reference, new_reference)
+
+    def _protected_bridge_ids(
+        self, session_id: int, new_parameters: dict[str, Any] | None
+    ) -> set[int]:
+        """Collect the bridge rows the session's new parameters still reference.
+
+        Matching is by stored shape: a bridge is protected when its fitted
+        parameters, or its ordered children, equal the persistence signature of
+        a reference the new parameters carry. Both the retriever and the
+        reranker are protected.
+
+        Parameters
+        ----------
+        session_id : int
+            Generative session identifier.
+        new_parameters : dict[str, Any] | None
+            The parameters after the change, or ``None`` when the session is
+            being deleted (nothing is protected).
+
+        Returns
+        -------
+        set[int]
+            The ids of the bridges that realize a reference of the new parameters.
+
+        Raises
+        ------
+        RAGPipelineConfigError
+            If a stored reference is malformed.
+        ValueError
+            If a reference must be compared and no registry was given.
+        """
+        if new_parameters is None:
+            return set()
+        pipeline_id = self._find_pipeline_id(session_id)
+        if pipeline_id is None:
+            return set()
+        references = [
+            _stored_reference(new_parameters, RAG_PARAM_RETRIEVER_MODEL),
+            _reranker_reference(new_parameters),
+        ]
+        protected: set[int] = set()
+        for reference in references:
+            for bridge in self._matching_bridges(pipeline_id, reference):
+                protected.add(bridge.id)
+        return protected
+
+    def _matching_bridges(
+        self, pipeline_id: int, reference: dict[str, Any]
+    ) -> list[RAGRetriever]:
+        """Return the bridges that realize a retriever reference exactly.
+
+        The reference is reduced to its persistence signature, the same identity
+        the bridges were stored under. A unit bridge matches when its fitted
+        parameters equal that signature; a composite matches when its ordered
+        children match the signature's children recursively.
+
+        Parameters
+        ----------
+        pipeline_id : int
+            The owning pipeline.
+        reference : dict[str, Any]
+            A ``{component, params}`` reference, or ``{}`` for none.
+
+        Returns
+        -------
+        list[RAGRetriever]
+            The matching bridges, empty for ``{}``.
+
+        Raises
+        ------
+        RAGPipelineConfigError
+            If the reference or one of its children is malformed.
+        """
+        if not reference:
+            return []
+        identity = _retriever_identity(_component_reference(reference), self._registry)
+        component = identity[COMPONENT_KEY]
+        candidates = (
+            self.db.query(RAGRetriever)
+            .filter(
+                RAGRetriever.pipeline_id == pipeline_id,
+                RAGRetriever.class_name == component,
+            )
+            .order_by(RAGRetriever.id)
+            .all()
+        )
+        matches: list[RAGRetriever] = []
+        for bridge in candidates:
+            if self._bridge_matches(bridge, identity):
+                matches.append(bridge)
+        return matches
+
+    def _bridge_matches(self, bridge: RAGRetriever, identity: dict[str, Any]) -> bool:
+        """Check whether a bridge row realizes a reference's persistence signature.
+
+        Parameters
+        ----------
+        bridge : RAGRetriever
+            The candidate bridge row, of the reference's class.
+        identity : dict[str, Any]
+            A ``{component, params}`` reference reduced to its signature.
+
+        Returns
+        -------
+        bool
+            ``True`` when a unit's fitted parameters equal the signature, or when
+            a composite's ordered children match its child references.
+
+        Raises
+        ------
+        RAGPipelineConfigError
+            If a composite has no list of children, or a child is malformed.
+        """
+        if bridge.class_name != identity[COMPONENT_KEY]:
+            return False
+        params = identity[PARAMS_KEY]
+        if identity[COMPONENT_KEY] not in COMPOSITE_RETRIEVER_NAMES:
+            if bridge.dense_detail is not None:
+                detail = bridge.dense_detail
+            else:
+                detail = bridge.sparse_detail
+            return detail is not None and configs_equal(detail.parameters, params)
+        child_refs = params.get(CHILDREN_KEY)
+        if not isinstance(child_refs, list):
+            raise RAGPipelineConfigError(
+                f"Stored composite retriever '{identity[COMPONENT_KEY]}' has no "
+                "list of children."
+            )
+        links = sorted(bridge.children, key=lambda link: link.child_order)
+        if len(links) != len(child_refs):
+            return False
+        for link, child_ref in zip(links, child_refs, strict=True):
+            child = self.db.get(RAGRetriever, link.child_id)
+            if child is None or not self._bridge_matches(
+                child, _component_reference(child_ref)
+            ):
+                return False
+        return True
+
+    def _cleanup_reranker(
+        self,
+        reference: dict[str, Any],
+        session_id: int,
+        protected: set[int],
+    ) -> None:
+        """Release the rows the query-transformation reranker owned.
+
+        The reranker is released like a retriever, but its rows are matched by
+        the stored shape of its old reference, never by class name, so the
+        retriever stage's rows of the same class are not swept. A matched tree
+        is released top-down, except for what a surviving or protected tree
+        still reads. Its dense matrices and models go through
+        :meth:`_release_dense_storage`, which keeps any pair a surviving dense
+        leaf reads.
+
+        Parameters
+        ----------
+        reference : dict[str, Any]
+            The old ``{component, params}`` reranker reference.
+        session_id : int
+            Generative session identifier.
+        protected : set[int]
+            Bridge ids the session's new parameters still reference.
+        """
+        pipeline_id = self._find_pipeline_id(session_id)
+        if pipeline_id is None:
+            return
+        bridge_ids = [
+            bridge.id for bridge in self._matching_bridges(pipeline_id, reference)
+        ]
+        if not bridge_ids:
+            return
+        release = self._release_bridge_trees(
+            bridge_ids,
+            self._keep_roots(pipeline_id, bridge_ids, protected),
             frozenset(),
         )
         self._release_dense_storage(release)
@@ -1208,6 +1602,57 @@ class CleanupService:
                 roots.append(row[0])
         return roots
 
+    def stray_root_ids(self, session_id: int) -> list[int]:
+        """List the pipeline roots that match neither the retriever nor the reranker.
+
+        A healthy session has the retriever's tree and, when its stored parameters
+        carry a reranker stored as its own tree, the reranker's tree. A pipeline
+        with one root has no stray one, since its retriever and reranker share it
+        or the reranker has no row. With more roots, a root is stray when neither
+        stored reference realizes it, by stored shape. A session without stored
+        parameters names neither, so every root of its pipeline is stray.
+
+        Parameters
+        ----------
+        session_id : int
+            Generative session identifier.
+
+        Returns
+        -------
+        list[int]
+            The stray root bridge ids, ascending. Empty for a healthy session.
+
+        Raises
+        ------
+        RAGPipelineConfigError
+            If a stored reference is malformed.
+        ValueError
+            If a reference must be compared and no registry was given.
+        """
+        pipeline_id = self._find_pipeline_id(session_id)
+        if pipeline_id is None:
+            return []
+        roots = self._pipeline_root_ids(pipeline_id)
+        if len(roots) <= 1:
+            return []
+        session = self.db.get(GenerativeSession, session_id)
+        parameters: dict[str, Any] = {}
+        if session is not None and session.parameters is not None:
+            parameters = session.parameters
+        expected: set[int] = set()
+        references = [
+            _stored_reference(parameters, RAG_PARAM_RETRIEVER_MODEL),
+            _reranker_reference(parameters),
+        ]
+        for reference in references:
+            for bridge in self._matching_bridges(pipeline_id, reference):
+                expected.add(bridge.id)
+        stray: list[int] = []
+        for root_id in roots:
+            if root_id not in expected:
+                stray.append(root_id)
+        return stray
+
     def _other_roots(self, pipeline_id: int, excluded: Sequence[int]) -> list[int]:
         """List the pipeline's roots that are not in ``excluded``.
 
@@ -1406,13 +1851,20 @@ class CleanupService:
         return model_ids
 
     def cleanup_after_reindex(
-        self, session_id: int, live_root_bridge_id: int
+        self,
+        session_id: int,
+        live_root_bridge_id: int,
+        live_reranker_root_bridge_id: int | None,
     ) -> IndexCleanupSummary:
         """Release what a session's reindex left behind, in one transaction.
 
-        The live index is the tree under ``live_root_bridge_id``: the root and
-        every bridge reached through the child links. Its leaves fix the live
-        chunk set, which must belong to the session. Anything else of the
+        The live index is the tree under ``live_root_bridge_id`` together with
+        the tree under ``live_reranker_root_bridge_id`` when the session has a
+        query-transformation reranker. The reranker shares the index's chunk set
+        and may share rows with the retriever, so both trees are live: a stale
+        release never takes a row either of them reaches. Each root's tree
+        holds every bridge reached through the child links. The leaves fix the
+        live chunk set, which must belong to the session. Anything else of the
         session is an orphan:
 
         1. chunk sets of the session other than the live one, with their
@@ -1443,6 +1895,11 @@ class CleanupService:
             The session that was just indexed.
         live_root_bridge_id : int
             Bridge id of the root of the retriever the reindex built.
+        live_reranker_root_bridge_id : int | None
+            Bridge id of the root of the reranker the reindex built. ``None`` when
+            the reindex built none, which is normal for a session whose reranker
+            the index job does not build: the session's current reranker rows, the
+            ones matching its stored reranker on the live chunk set, are then live.
 
         Returns
         -------
@@ -1453,8 +1910,9 @@ class CleanupService:
         ------
         ValueError
             If no RAG storage root was given to the service, the session has no
-            pipeline, the root is unknown or belongs to another pipeline, or the
-            live retrievers do not read exactly one chunk set owned by the
+            pipeline, a root is unknown or belongs to another pipeline, a reranker
+            root was built although the session's parameters name no reranker, or
+            the live retrievers do not read exactly one chunk set owned by the
             session. Nothing is deleted in that case.
         """
         if self._rag_path is None:
@@ -1463,7 +1921,12 @@ class CleanupService:
                 "folders it removes; construct CleanupService with rag_path."
             )
         try:
-            live = self._live_index(session_id, live_root_bridge_id)
+            live = self._live_index(
+                session_id,
+                self._live_root_ids(
+                    session_id, live_root_bridge_id, live_reranker_root_bridge_id
+                ),
+            )
             chunk_sets = self._invalidate_stale_chunk_sets(
                 session_id, live.chunk_set_id
             )
@@ -1480,16 +1943,135 @@ class CleanupService:
             embedding_models=matrices.models,
         )
 
-    def _live_index(self, session_id: int, root_id: int) -> _LiveIndex:
-        """Resolve and validate the live index rooted at ``root_id``.
+    def _live_root_ids(
+        self,
+        session_id: int,
+        root_id: int,
+        reranker_root_id: int | None,
+    ) -> list[int]:
+        """List the live roots: the retriever's, and the reranker's current one.
+
+        A reranker root the index built is live as it is. An index that built no
+        reranker does not mean the session has none: the index job leaves the
+        query transformation out, so a session with a reranker is usually indexed
+        this way. Then the session's current reranker rows are live instead (see
+        :meth:`_current_reranker_roots`), so they are neither released as stale
+        nor reported as a violation. When nothing matches, nothing is protected.
+
+        A built reranker root that the stored parameters do not name is the
+        opposite inconsistency, and is refused.
+
+        Parameters
+        ----------
+        session_id : int
+            The generative session that was just indexed.
+        root_id : int
+            Bridge id of the retriever's root.
+        reranker_root_id : int | None
+            Bridge id of the reranker's root the index built, or ``None``.
+
+        Returns
+        -------
+        list[int]
+            The retriever root, then the reranker root or roots when there are any.
+
+        Raises
+        ------
+        ValueError
+            If the session has no record, or a reranker root was built although
+            the session's stored parameters name none.
+        RAGPipelineConfigError
+            If the stored reranker reference is malformed.
+        """
+        session = self.db.get(GenerativeSession, session_id)
+        if session is None:
+            raise ValueError(f"Session {session_id} does not exist.")
+        stored_reranker = _reranker_reference(session.parameters)
+        if reranker_root_id is not None:
+            if not stored_reranker:
+                raise ValueError(
+                    f"The reranker built for session {session_id} does not match its "
+                    "stored parameters; the index is kept and nothing is released."
+                )
+            return [root_id, reranker_root_id]
+        if not stored_reranker:
+            return [root_id]
+        current = self._current_reranker_roots(session_id, root_id, stored_reranker)
+        return [root_id, *current]
+
+    def _current_reranker_roots(
+        self, session_id: int, root_id: int, reference: dict[str, Any]
+    ) -> list[int]:
+        """List the bridges that realize the stored reranker on the live chunk set.
+
+        A bridge is current when it matches the stored reranker reference by
+        shape and every leaf under it reads the chunk set the retriever's live
+        tree reads. A matching tree over an older chunk set is not current: it
+        is stale, and the next build recreates the reranker on the live chunk set.
+
+        Parameters
+        ----------
+        session_id : int
+            The generative session that was just indexed.
+        root_id : int
+            Bridge id of the retriever's root, which fixes the live chunk set.
+        reference : dict[str, Any]
+            The stored ``{component, params}`` reranker reference, not empty.
+
+        Returns
+        -------
+        list[int]
+            The current reranker bridge ids, ascending. Empty when none matches.
+        """
+        pipeline_id = self._find_pipeline_id(session_id)
+        if pipeline_id is None:
+            return []
+        live_chunk_sets = self._tree_chunk_sets([root_id])
+        current: list[int] = []
+        for bridge in self._matching_bridges(pipeline_id, reference):
+            if self._tree_chunk_sets([bridge.id]) == live_chunk_sets:
+                current.append(bridge.id)
+        return current
+
+    def _tree_chunk_sets(self, root_ids: Sequence[int]) -> set[int]:
+        """List the chunk sets that every leaf under the given roots reads.
+
+        Parameters
+        ----------
+        root_ids : Sequence[int]
+            The roots whose trees are read.
+
+        Returns
+        -------
+        set[int]
+            The chunk set ids of the sparse and dense leaves of the trees.
+        """
+        bridge_ids = self._tree_order(root_ids)
+        sparse_rows = (
+            self.db.query(RAGSparseRetriever.chunk_set_id)
+            .filter(RAGSparseRetriever.bridge_id.in_(bridge_ids))
+            .all()
+        )
+        dense_rows = (
+            self.db.query(RAGDenseRetriever.chunk_set_id)
+            .filter(RAGDenseRetriever.bridge_id.in_(bridge_ids))
+            .all()
+        )
+        chunk_sets: set[int] = set()
+        for row in sparse_rows + dense_rows:
+            chunk_sets.add(row[0])
+        return chunk_sets
+
+    def _live_index(self, session_id: int, root_ids: Sequence[int]) -> _LiveIndex:
+        """Resolve and validate the live index rooted at ``root_ids``.
 
         Parameters
         ----------
         session_id : int
             The generative session that owns the index.
-        root_id : int
-            The root bridge of the index. It must belong to the session's
-            pipeline.
+        root_ids : Sequence[int]
+            The root bridges of the index, the retriever and the reranker. Each
+            must belong to the session's pipeline.
 
         Returns
         -------
@@ -1498,23 +2080,25 @@ class CleanupService:
         Raises
         ------
         ValueError
-            If the session has no pipeline, or the root is unknown or belongs
-            to another pipeline.
+            If the session has no pipeline, or a root is unknown or belongs to
+            another pipeline.
         """
         pipeline_id = self._find_pipeline_id(session_id)
         if pipeline_id is None:
             raise ValueError(f"Session {session_id} has no pipeline to clean up.")
-        root = self.db.get(RAGRetriever, root_id)
-        if root is None or root.pipeline_id != pipeline_id:
-            raise ValueError(
-                f"Retriever {root_id} is not a retriever of session {session_id}."
-            )
-        bridge_ids = set(self._tree_order([root_id]))
+        bridge_ids: set[int] = set()
+        for root_id in root_ids:
+            root = self.db.get(RAGRetriever, root_id)
+            if root is None or root.pipeline_id != pipeline_id:
+                raise ValueError(
+                    f"Retriever {root_id} is not a retriever of session {session_id}."
+                )
+            bridge_ids |= set(self._tree_order([root_id]))
         self._assert_same_pipeline(session_id, bridge_ids, pipeline_id)
         leaves = self._live_leaves(session_id, bridge_ids)
         return _LiveIndex(
             pipeline_id=pipeline_id,
-            root_id=root_id,
+            root_ids=frozenset(root_ids),
             chunk_set_id=leaves.chunk_set_id,
             dense_model_ids=leaves.dense_model_ids,
         )
@@ -1664,14 +2248,15 @@ class CleanupService:
         """Release every pipeline tree other than the live one.
 
         The roots of the other trees are torn down top-down, so composites nested
-        at any depth go with their children. The live root is kept, and with it
-        every bridge the live tree reaches. A dense detail is deleted, but its
-        embedding model is left to the caller to release.
+        at any depth go with their children. The live roots are kept, and with
+        them every bridge the live trees reach, the reranker's included. A dense
+        detail is deleted, but its embedding model is left to the caller to
+        release.
 
         Parameters
         ----------
         live : _LiveIndex
-            The validated live index, whose tree must survive.
+            The validated live index, whose trees must survive.
 
         Returns
         -------
@@ -1679,8 +2264,9 @@ class CleanupService:
             The number of bridges released, and the embedding models their
             dense details used.
         """
-        roots = self._other_roots(live.pipeline_id, [live.root_id])
-        return self._release_bridge_trees(roots, [live.root_id], frozenset())
+        live_roots = sorted(live.root_ids)
+        roots = self._other_roots(live.pipeline_id, live_roots)
+        return self._release_bridge_trees(roots, live_roots, frozenset())
 
     def _drop_sparse_detail(
         self, detail: RAGSparseRetriever, stale_sparse_ids: Sequence[int]
@@ -1838,14 +2424,19 @@ def capture_index_footprint(db: Session, session_id: int) -> IndexFootprint:
     )
 
 
-def has_stale_index_rows(db: Session, session_id: int) -> bool:
+def has_stale_index_rows(
+    db: Session, session_id: int, registry: ComponentRegistry
+) -> bool:
     """Whether a session holds rows that a cleanup would release, without a rebuild.
 
-    A healthy session has one pipeline root, the live tree, and one chunk set,
-    the live one. More than one of either is left over from a cleanup that
-    failed. A build that reused its index would never retry that cleanup, so the
-    chat path asks this as well. It reads two counts and no tree, so it is cheap
-    enough to ask on every turn.
+    A healthy session owns one chunk set, the live one. Its pipeline has the
+    retriever's root and, when the session has a query-transformation reranker
+    stored as its own tree, the reranker's root as well. Anything beyond those is
+    left over from a cleanup that failed: a second chunk set, or a root that
+    neither stored reference realizes. A build that reused its index would never
+    retry that cleanup, so the chat path asks this as well. It reads two counts
+    and, only when the pipeline has more than one root, matches the stored
+    references, so it is cheap enough to ask on every turn.
 
     Parameters
     ----------
@@ -1853,12 +2444,14 @@ def has_stale_index_rows(db: Session, session_id: int) -> bool:
         SQLAlchemy session.
     session_id : int
         The generative session to check.
+    registry : ComponentRegistry
+        Registry used to match the stored references against the pipeline's rows.
 
     Returns
     -------
     bool
         ``True`` when the session owns more than one chunk set, or its pipeline
-        has more than one root bridge.
+        has a root bridge that neither stored reference realizes.
     """
     chunk_set_count = (
         db.query(RAGChunkSet.id).filter(RAGChunkSet.session_id == session_id).count()
@@ -1877,7 +2470,9 @@ def has_stale_index_rows(db: Session, session_id: int) -> bool:
         )
         .count()
     )
-    return root_count > 1
+    if root_count <= 1:
+        return False
+    return bool(CleanupService(db, registry).stray_root_ids(session_id))
 
 
 def run_post_index_cleanup(
@@ -1886,6 +2481,7 @@ def run_post_index_cleanup(
     session_id: int,
     live_root_bridge_id: int | None,
     rag_path: str | Path,
+    live_reranker_root_bridge_id: int | None,
 ) -> None:
     """Run the post-index cleanup for a session, without ever failing the caller.
 
@@ -1908,6 +2504,10 @@ def run_post_index_cleanup(
         refused inside the guarded path, so it is logged rather than raised.
     rag_path : str | Path
         The RAG storage root (``RAG_PATH``). Removals are confined to it.
+    live_reranker_root_bridge_id : int | None
+        Bridge id of the root of the reranker the index built, or ``None`` when
+        the index built none. A built root must agree with the session's
+        parameters; with ``None`` the session's current reranker rows are kept.
     """
     try:
         if live_root_bridge_id is None:
@@ -1916,7 +2516,7 @@ def run_post_index_cleanup(
                 "the index is kept and nothing is released."
             )
         summary = CleanupService(db, registry, rag_path=rag_path).cleanup_after_reindex(
-            session_id, live_root_bridge_id
+            session_id, live_root_bridge_id, live_reranker_root_bridge_id
         )
     except Exception:
         db.rollback()

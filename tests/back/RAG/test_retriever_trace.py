@@ -112,18 +112,17 @@ def test_retriever_trace_node_shape():
     assert "children" not in node
 
 
-def test_retriever_trace_omits_schema_summary_when_it_raises():
-    """A broken schema summary is omitted instead of breaking the trace."""
+def test_retriever_trace_fails_when_the_schema_summary_raises():
+    """A broken schema summary fails the trace instead of being omitted."""
 
     class _BrokenSummaryRetriever(_StubRetriever):
         def get_schema_summary(self):
             raise RuntimeError("broken summary")
 
     retriever = _BrokenSummaryRetriever([], top_k=1)
-    node = retriever_trace(retriever, [])
 
-    assert "schema_summary" not in node
-    assert node["name"] == "_BrokenSummaryRetriever"
+    with pytest.raises(RuntimeError, match="broken summary"):
+        retriever_trace(retriever, [])
 
 
 def test_retriever_trace_canonical_schema_summary_cannot_be_overridden():

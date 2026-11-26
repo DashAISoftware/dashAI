@@ -31,7 +31,6 @@ import GeneratorPicker from "./GeneratorPicker";
 import QueryTransformationPicker from "./QueryTransformationPicker";
 import ChunkingAdvancedModal from "../../../pages/generative/RAGSession/advanced/ChunkingAdvancedModal";
 import RetrieverAdvancedModal from "../../../pages/generative/RAGSession/advanced/RetrieverAdvancedModal";
-import { loadRetrieverKinds } from "../../../pages/generative/RAGSession/retrieverKinds";
 import {
   getChunkingPresets,
   getRAGSession,
@@ -281,11 +280,8 @@ export default function RAGConfigPanel({
       );
   }, []);
 
-  // The advanced retriever builder needs the full component list, and its
-  // grouping needs the retriever taxonomy the backend exposes.
   useEffect(() => {
-    loadRetrieverKinds()
-      .then(() => getRetrieverComponents("BaseRetriever"))
+    getRetrieverComponents("BaseRetriever")
       .then(setRetrieverComponents)
       .catch((error) =>
         console.error("Failed to load retriever components:", error),

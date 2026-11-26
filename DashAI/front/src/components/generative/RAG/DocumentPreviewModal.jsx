@@ -16,7 +16,7 @@ import {
   LoadMoreFooter,
   usePagedContent,
 } from "../../documents/DocumentReader";
-import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
+import RAGAdvancedDialog from "../../shared/RAGAdvancedDialog";
 import { getDocument, getDocumentContent } from "../../../api/documents";
 import { DOCUMENT_STATUS } from "../../../hooks/datasets/useDocuments";
 

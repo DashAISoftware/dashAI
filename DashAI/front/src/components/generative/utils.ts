@@ -109,6 +109,7 @@ export const RAG_TRACE_DATA_TYPE = "Trace";
 export const RAG_TIMINGS_DATA_TYPE = "Timings";
 export const RAG_MESSAGE_DATA_TYPE = "str";
 
+export const RAG_PROGRESS_STAGE_LOADING_MODEL = "loading_model";
 export const RAG_PROGRESS_STAGE_TRANSFORMING = "transforming";
 export const RAG_PROGRESS_STAGE_RETRIEVING = "retrieving";
 export const RAG_PROGRESS_STAGE_GENERATING = "generating";
@@ -198,6 +199,8 @@ function resolveRAGStageText(
   progress: RAGProgressPayload,
 ): RAGProgressText | null {
   switch (progress.stage) {
+    case RAG_PROGRESS_STAGE_LOADING_MODEL:
+      return { key: "generative:rag.chatProgress.loadingModel" };
     case RAG_PROGRESS_STAGE_TRANSFORMING:
       return { key: "generative:rag.chatProgress.transformingQuery" };
     case RAG_PROGRESS_STAGE_RETRIEVING: {

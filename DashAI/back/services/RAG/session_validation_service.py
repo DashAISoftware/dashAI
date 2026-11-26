@@ -202,7 +202,7 @@ class SessionValidationService:
         # ── 2b. Fill in the picked generation model's parameters ──
         self._apply_generation_model_defaults(normalized)
 
-        self._transformation_validator.apply_defaults(normalized)
+        self._transformation_validator.apply_defaults(normalized, is_new=True)
         self._apply_retriever_evaluation_defaults(normalized)
 
         # ── 3. Strictly validate every component's params against its schema ──
@@ -282,7 +282,7 @@ class SessionValidationService:
         # ── 2b. Fill in the picked generation model's parameters ──
         self._apply_generation_model_defaults(normalized)
 
-        self._transformation_validator.apply_defaults(normalized)
+        self._transformation_validator.apply_defaults(normalized, is_new=False)
         self._apply_retriever_evaluation_defaults(normalized)
 
         # ── 3. Strictly validate every component's params against its schema ──

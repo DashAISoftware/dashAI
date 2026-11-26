@@ -1,5 +1,6 @@
 {
   "actions": "Ações",
+  "copyFailed": "Não foi possível copiar: {{reason}}",
   "copy": "Copiar",
   "copied": "Copiado",
   "holdout": "Reservado",
@@ -92,6 +93,19 @@
     "connecting": "Conectando ao monitor de hardware...",
     "cpu": "CPU",
     "gpu": "GPU",
+    "loadedModels": {
+      "empty": "Nenhum modelo carregado",
+      "error": "Não foi possível liberar o modelo",
+      "inUse": "Em uso",
+      "lastUsed": "Último uso: {{time}}",
+      "params": {
+        "context_window": "Janela de contexto",
+        "device": "Dispositivo"
+      },
+      "title": "Modelos carregados",
+      "unload": "Liberar",
+      "unloading": "Liberando..."
+    },
     "overall": "Geral",
     "ram": "RAM",
     "title": "Monitor de Hardware",
@@ -299,5 +313,21 @@
     "document": "Documento",
     "localExplainer": "Explicador_local",
     "globalExplainer": "Explicador_global"
-  }
+  },
+  "componentTree": {
+    "configureNode": "Configurar componente",
+    "addChild": "Adicionar componente filho",
+    "removeNode": "Remover componente",
+    "selectComponent": "Componente",
+    "parameters": "Parâmetros",
+    "containerNote": "Este componente contém outros componentes. Seus filhos são configurados na árvore, fora deste diálogo.",
+    "loadFailed": "Não foi possível carregar os componentes: {{reason}}",
+    "unknownComponent": "O componente {{component}} não está disponível, então sua árvore não pode ser exibida.",
+    "unknownChild": "O componente {{component}} não está disponível. Substitua-o ou remova-o antes de salvar.",
+    "configureNodeNamed": "Configurar o componente {{name}}",
+    "noSchema": "O componente {{component}} não tem esquema de configuração e não pode ser selecionado.",
+    "formUnavailable": "O formulário de configurações ainda não está pronto. Tente novamente em instantes."
+  },
+  "component": "Componente",
+  "null": "Nulo"
 }

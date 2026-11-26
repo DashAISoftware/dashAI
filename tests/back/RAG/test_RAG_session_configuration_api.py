@@ -307,7 +307,10 @@ def test_configuration_422s_for_malformed_stored_data(
     with session_factory() as db:
         session = db.get(GenerativeSession, session_id)
         parameters = dict(session.parameters)
-        parameters["retriever_model"] = {"component": "BM25Retriever"}
+        parameters["retriever_model"] = {
+            "component": "BM25Retriever",
+            "params": "not a dict",
+        }
         session.parameters = parameters
         db.commit()
 

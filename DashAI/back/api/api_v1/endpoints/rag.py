@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from DashAI.back.core.utils import localize
 from DashAI.back.dependencies.database.models import GenerativeSession
 from DashAI.back.job.RAG_index_job import RAGIndexJob
+from DashAI.back.models.RAG.exceptions import RAGPipelineConfigError
 from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_KEYS
 from DashAI.back.services.RAG.chunking_presets import (
     get_chunking_presets as resolve_chunking_presets,
@@ -178,7 +179,7 @@ def session_configuration(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
             ) from e
-        except ValueError as e:
+        except (ValueError, RAGPipelineConfigError) as e:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
             ) from e

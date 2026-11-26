@@ -185,8 +185,14 @@ def test_composite_cleanup_keeps_a_shared_sparse_folder(orm_db, tmp_path):
     )
     orm_db.commit()
 
-    CleanupService(orm_db)._cleanup_retriever(
-        {"retriever_model": {"component": "ParallelRetriever"}}, first.id
+    reference = {
+        "component": "ParallelRetriever",
+        "params": {
+            "children": [{"component": detail.class_name, "params": detail.parameters}]
+        },
+    }
+    CleanupService(orm_db).cleanup_orphaned_resources(
+        first.id, {RAG_PARAM_RETRIEVER_MODEL: reference}, None
     )
     orm_db.flush()
 

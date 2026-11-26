@@ -214,12 +214,15 @@ def _run_cleanup_if_rebuilt(
     footprint_before : IndexFootprint
         The session's footprint captured before the build.
     model : RAGPipeline
-        The pipeline the build returned; its root retriever is the live index.
+        The pipeline the build returned; its root retriever and its reranker, if
+        any, are the live index.
     rag_path : str | Path
         The RAG storage root (``RAG_PATH``).
     """
     footprint_after = capture_index_footprint(db, session_id)
-    if footprint_after == footprint_before and not has_stale_index_rows(db, session_id):
+    if footprint_after == footprint_before and not has_stale_index_rows(
+        db, session_id, component_registry
+    ):
         return
     run_post_index_cleanup(
         db,
@@ -227,7 +230,28 @@ def _run_cleanup_if_rebuilt(
         session_id,
         model.retriever.get_id(),
         rag_path,
+        _reranker_root_id(model),
     )
+
+
+def _reranker_root_id(model: RAGPipeline) -> int | None:
+    """Return the bridge id of the reranker a built pipeline holds.
+
+    Parameters
+    ----------
+    model : RAGPipeline
+        The pipeline the build returned.
+
+    Returns
+    -------
+    int | None
+        The reranker's bridge id, or ``None`` when the transformation stage is
+        disabled or carries no reranker.
+    """
+    transformation = model.query_transformation
+    if transformation is None or transformation.reranker is None:
+        return None
+    return transformation.reranker.get_id()
 
 
 def _build_turn_pipeline(
@@ -511,6 +535,8 @@ def _release_run_resources(failure: BaseException | None) -> None:
 
 class RAGJob(BaseJob):
     """RAGJob handles the full RAG pipeline lifecycle as a background job."""
+
+    USES_MODEL_CACHE = True
 
     @inject
     def set_status_as_delivered(

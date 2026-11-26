@@ -1,5 +1,6 @@
 import { getComponents } from "../../../../api/component";
 import { resolveDefaults } from "../../../../utils/schema";
+import { LLM_MODEL_KEY } from "../../../../constants/rag";
 
 /**
  * The only LLM parameters RAG overrides for its helper stages.
@@ -34,6 +35,8 @@ const RAG_LLM_OVERRIDE_KEYS = ["temperature", "context_window", "max_tokens"];
  * @param {string} llmComponent - Registered name of the selected LLM.
  * @returns {Promise<object>} The LLM's schema defaults with the RAG-owned
  *   placeholder params applied on top.
+ * @throws {Error} When the owner component cannot be read, so a stage is never
+ *   seeded without the overrides it declares.
  */
 export async function resolveRagLlmDefaults(ownerComponent, llmComponent) {
   const defaults = await resolveDefaults(llmComponent);
@@ -41,34 +44,29 @@ export async function resolveRagLlmDefaults(ownerComponent, llmComponent) {
   // then simply gets the LLM's own defaults, exactly as before.
   if (!ownerComponent) return defaults;
 
-  try {
-    const response = await getComponents({ model: ownerComponent });
-    const owner = Array.isArray(response) ? response[0] : response;
-    const placeholderParams =
-      owner?.schema?.properties?.llm_model?.placeholder?.params ?? {};
-    const overrides = {};
-    for (const key of RAG_LLM_OVERRIDE_KEYS) {
-      const ownerDeclaresKey = Object.prototype.hasOwnProperty.call(
-        placeholderParams,
-        key,
-      );
-      // Only seed a key the selected LLM actually declares; a model with a
-      // differently named context window (DeepSeek's `n_ctx`) must not receive
-      // a `context_window` it would silently ignore.
-      const modelDeclaresKey = Object.prototype.hasOwnProperty.call(
-        defaults,
-        key,
-      );
-      if (ownerDeclaresKey && modelDeclaresKey) {
-        overrides[key] = placeholderParams[key];
-      }
-    }
-    return { ...defaults, ...overrides };
-  } catch (error) {
-    console.warn(
-      `[resolveRagLlmDefaults] Failed to read the RAG overrides of ${ownerComponent}:`,
-      error,
-    );
-    return defaults;
+  const response = await getComponents({ model: ownerComponent });
+  const owner = Array.isArray(response) ? response[0] : response;
+  if (!owner) {
+    throw new Error(`The component ${ownerComponent} was not found.`);
   }
+  const placeholderParams =
+    owner.schema?.properties?.[LLM_MODEL_KEY]?.placeholder?.params ?? {};
+  const overrides = {};
+  for (const key of RAG_LLM_OVERRIDE_KEYS) {
+    const ownerDeclaresKey = Object.prototype.hasOwnProperty.call(
+      placeholderParams,
+      key,
+    );
+    // Only seed a key the selected LLM actually declares; a model with a
+    // differently named context window (DeepSeek's `n_ctx`) must not receive
+    // a `context_window` it would silently ignore.
+    const modelDeclaresKey = Object.prototype.hasOwnProperty.call(
+      defaults,
+      key,
+    );
+    if (ownerDeclaresKey && modelDeclaresKey) {
+      overrides[key] = placeholderParams[key];
+    }
+  }
+  return { ...defaults, ...overrides };
 }

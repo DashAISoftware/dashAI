@@ -17,6 +17,7 @@ from DashAI.back.models.RAG.documents.chunk import Chunk
 from DashAI.back.models.RAG.exceptions import (
     RAGPipelineConfigError,
     RAGPipelineRuntimeError,
+    RAGRetrieverRerankError,
     RAGTransformationError,
 )
 from DashAI.back.models.RAG.RAG_pipeline import (
@@ -114,11 +115,16 @@ def _transformer(queries=None) -> MagicMock:
     result = MagicMock()
     result.queries = ["q1", "q2"] if queries is None else queries
     transformer.transform.return_value = result
+    # A MagicMock would otherwise expose an auto-created, truthy reranker.
+    transformer.reranker = None
     return transformer
 
 
 class _StubTransformer:
     """Tiny non-mock transformer returning a fixed query list."""
+
+    #: Part of the stage contract: an absent reranker means no pool reranking.
+    reranker = None
 
     def __init__(self, queries):
         self.queries = list(queries)
@@ -134,6 +140,8 @@ class _StubTransformer:
 class _SleepingTransformer:
     """Non-mock transformer whose transform() sleeps to make timing observable."""
 
+    reranker = None
+
     def __init__(self, sleep_seconds: float, queries=None):
         self.sleep_seconds = sleep_seconds
         self.queries = ["q1"] if queries is None else list(queries)
@@ -148,8 +156,49 @@ class _SleepingTransformer:
 class _NoQueriesTransformer:
     """Transformer returning a result object that lacks ``.queries``."""
 
+    reranker = None
+
     def transform(self, message, history):
         return object()
+
+
+class _RecordingReranker:
+    """Non-mock pool reranker: reverses the pool, then keeps ``top_k``."""
+
+    def __init__(self, top_k):
+        self.top_k = top_k
+        self.calls = []
+        self.closed = 0
+        self.error = None
+
+    @classmethod
+    def get_representation(cls):
+        return None
+
+    def rerank_chunks(self, chunks, query):
+        if self.error is not None:
+            raise self.error
+        self.calls.append((list(chunks), query))
+        return list(reversed(chunks))[: self.top_k]
+
+    def trace_node(self, input_count, output_count):
+        return {
+            "component": type(self).__name__.lstrip("_"),
+            "params": {"top_k": self.top_k},
+            "input_chunks": input_count,
+            "output_chunks": output_count,
+        }
+
+    def close(self):
+        self.closed += 1
+
+
+class _RerankedTransformer(_StubTransformer):
+    """Stub transformer that carries a pool reranker, like the real stage."""
+
+    def __init__(self, queries, reranker):
+        super().__init__(queries)
+        self.reranker = reranker
 
 
 # ===================================================================
@@ -256,7 +305,7 @@ class TestUniformRetrievalPath:
         retriever.retrieve.return_value = _retriever_stub([first, second])
         pipeline = _make_pipeline(retriever=retriever)
 
-        result, trace = pipeline.multi_query_retrieval(["only"])
+        result, trace = pipeline.multi_query_retrieval(["only"], "only")
 
         retriever.retrieve.assert_called_once_with("only")
         # A one-element list is a merge no-op: content and order are preserved.
@@ -282,7 +331,7 @@ class TestUniformRetrievalPath:
         )
         pipeline = _make_pipeline(retriever=retriever)
 
-        result, trace = pipeline.multi_query_retrieval(["q1", "q2"])
+        result, trace = pipeline.multi_query_retrieval(["q1", "q2"], "q1")
 
         assert [c.document_position for c in result] == [0, 0]
         assert [entry["query"] for entry in trace] == ["q1", "q2"]
@@ -496,6 +545,124 @@ class TestGenerateWithTransformation:
         ):
             pipeline.generate(({"role": "user", "content": "msg"},))
         retriever.retrieve.assert_not_called()
+
+    def test_failed_transformation_raises_typed_error_without_fallback(self):
+        """A failing transformer ends the turn with the typed error, no fallback."""
+        from DashAI.back.models.RAG.exceptions import RAGQueryTransformationError
+
+        transformer = MagicMock()
+        transformer.reranker = None
+        transformer.transform.side_effect = RAGTransformationError("boom")
+        retriever = MagicMock()
+        pipeline = _make_pipeline(retriever=retriever, query_transformation=transformer)
+        with pytest.raises(
+            RAGQueryTransformationError, match="Query transformation failed"
+        ):
+            pipeline.generate(({"role": "user", "content": "msg"},))
+        retriever.retrieve.assert_not_called()
+
+    def test_typed_transformation_error_is_a_pipeline_runtime_error(self):
+        """Existing ``RAGPipelineRuntimeError`` handlers keep catching it."""
+        from DashAI.back.models.RAG.exceptions import RAGQueryTransformationError
+
+        assert issubclass(RAGQueryTransformationError, RAGPipelineRuntimeError)
+
+    def test_pipeline_runtime_error_from_transformer_is_typed(self):
+        """Even a runtime error raised by a transformer is re-wrapped as typed."""
+        from DashAI.back.models.RAG.exceptions import RAGQueryTransformationError
+
+        transformer = MagicMock()
+        transformer.reranker = None
+        transformer.transform.side_effect = RAGPipelineRuntimeError("inner")
+        pipeline = _make_pipeline(
+            retriever=MagicMock(), query_transformation=transformer
+        )
+        with pytest.raises(RAGQueryTransformationError) as excinfo:
+            pipeline.generate(({"role": "user", "content": "msg"},))
+        assert str(excinfo.value) == "Query transformation failed: inner"
+
+    def test_empty_queries_raise_typed_error(self):
+        from DashAI.back.models.RAG.exceptions import RAGQueryTransformationError
+
+        pipeline = _make_pipeline(
+            retriever=MagicMock(), query_transformation=_transformer([])
+        )
+        with pytest.raises(RAGQueryTransformationError, match="returned no queries"):
+            pipeline.generate(({"role": "user", "content": "msg"},))
+
+    def test_reranker_null_keeps_the_merged_round_robin_output(self):
+        """With no reranker the pool, order and trace are the current ones."""
+        pipeline = _make_pipeline(
+            retriever=self._retriever(),
+            query_transformation=_transformer(["q1", "q2"]),
+        )
+        result = pipeline.generate(({"role": "user", "content": "msg"},))
+        assert list(result.chunks) == ["1_0", "1_1", "2_1", "2_0", "3_0"]
+        assert all("reranker" not in entry for entry in result.trace)
+
+    def test_reranker_orders_the_pool_against_the_original_message(self):
+        reranker = _RecordingReranker(top_k=3)
+        pipeline = _make_pipeline(
+            retriever=self._retriever(),
+            query_transformation=_RerankedTransformer(["q1", "q2"], reranker),
+        )
+        result = pipeline.generate(({"role": "user", "content": "raw message"},))
+
+        pool, query = reranker.calls[0]
+        assert query == "raw message"
+        assert [chunk_ref(c) for c in pool] == ["1_0", "1_1", "2_1", "2_0", "3_0"]
+        assert list(result.chunks) == ["3_0", "2_0", "2_1"]
+
+    def test_reranker_is_recorded_after_the_query_entries(self):
+        """One entry per query, then a rerank stage entry with pool and kept."""
+        reranker = _RecordingReranker(top_k=3)
+        pipeline = _make_pipeline(
+            retriever=self._retriever(),
+            query_transformation=_RerankedTransformer(["q1", "q2"], reranker),
+        )
+        result = pipeline.generate(({"role": "user", "content": "msg"},))
+
+        assert [entry["query"] for entry in result.trace[:2]] == ["q1", "q2"]
+        assert all("reranker" not in entry for entry in result.trace[:2])
+        assert len(result.trace) == 3
+        stage = result.trace[2]
+        assert stage["stage"] == "rerank"
+        assert stage["reranker"]["chunks"] == ["3_0", "2_0", "2_1"]
+        assert set(stage["reranker"]["chunks"]) <= set(stage["reranker"]["pool"])
+        assert list(result.chunks) == ["3_0", "2_0", "2_1"]
+
+    def test_reranker_is_released_after_retrieval(self):
+        reranker = _RecordingReranker(top_k=3)
+        pipeline = _make_pipeline(
+            retriever=self._retriever(),
+            query_transformation=_RerankedTransformer(["q1", "q2"], reranker),
+        )
+        pipeline.generate(({"role": "user", "content": "msg"},))
+        assert reranker.closed >= 1
+
+    def test_reranker_failure_is_wrapped(self):
+        reranker = _RecordingReranker(top_k=3)
+        reranker.error = RuntimeError("embedding down")
+        pipeline = _make_pipeline(
+            retriever=self._retriever(),
+            query_transformation=_RerankedTransformer(["q1", "q2"], reranker),
+        )
+        with pytest.raises(
+            RAGPipelineRuntimeError, match="Failed during pool reranking"
+        ):
+            pipeline.generate(({"role": "user", "content": "msg"},))
+        assert reranker.closed >= 1
+
+    def test_unrankable_pool_fails_the_turn_and_releases_the_reranker(self):
+        reranker = _RecordingReranker(top_k=3)
+        reranker.error = RAGRetrieverRerankError("could not score any chunk")
+        pipeline = _make_pipeline(
+            retriever=self._retriever(),
+            query_transformation=_RerankedTransformer(["q1", "q2"], reranker),
+        )
+        with pytest.raises(RAGPipelineRuntimeError, match="could not score"):
+            pipeline.generate(({"role": "user", "content": "msg"},))
+        assert reranker.closed >= 1
 
     def test_stub_transformer_timing_and_result_flow_through(self):
         """A real (non-mock) transformer is timed and its query is retrieved."""

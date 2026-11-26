@@ -27,12 +27,23 @@ jest.mock("../../../api/rag", () => ({
   getQueryTransformationPrompts: jest.fn(),
   getGeneratorComponents: jest.fn(),
 }));
+// The picker loads its options through this hook, which updates state after
+// the test body has finished; the panel only needs a settled, empty answer.
+jest.mock("../../../hooks/useQueryTransformationOptions", () => {
+  const options = {
+    transformers: [],
+    prompts: [],
+    generators: [],
+    loading: false,
+    loadError: null,
+  };
+  return { __esModule: true, default: () => options };
+});
 jest.mock("../../../api/session", () => ({
   updateGenerativeSession: jest.fn(),
 }));
-jest.mock("../../../pages/generative/RAGSession/retrieverKinds", () => ({
-  loadRetrieverKinds: jest.fn(),
-}));
+// The generator picker fetches components and download state of its own; the
+// panel only cares about the availability it reports back.
 jest.mock("./GeneratorPicker", () => {
   const MockGeneratorPicker = () => <div data-testid="generator-picker" />;
   return MockGeneratorPicker;
@@ -100,9 +111,6 @@ jest.mock(
 );
 
 const api = require("../../../api/rag");
-const {
-  loadRetrieverKinds,
-} = require("../../../pages/generative/RAGSession/retrieverKinds");
 
 const CHUNKING_PRESETS = [
   {
@@ -216,7 +224,6 @@ beforeEach(() => {
   api.getQueryTransformationComponents.mockResolvedValue([]);
   api.getQueryTransformationPrompts.mockResolvedValue([]);
   api.getGeneratorComponents.mockResolvedValue([]);
-  loadRetrieverKinds.mockResolvedValue({});
 });
 
 /** Renders the panel and waits for its initial load. */

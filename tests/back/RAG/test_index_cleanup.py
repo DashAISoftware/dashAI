@@ -42,12 +42,19 @@ from DashAI.back.dependencies.database.models import (
 from DashAI.back.job.base_job import JobError
 from DashAI.back.job.RAG_index_job import RAGIndexJob
 from DashAI.back.job.RAG_job import RAGJob
+from DashAI.back.models.RAG.RAG_constants import (
+    RAG_PARAM_KEYS,
+    RAG_PARAM_QUERY_TRANSFORMATION,
+)
+from DashAI.back.models.RAG.RAG_pipeline import RAGPipelineConfig
 from DashAI.back.services.RAG import cleanup_service
 from DashAI.back.services.RAG.chunking_service import chunk_document_dir
 from DashAI.back.services.RAG.cleanup_service import (
     CleanupService,
     IndexCleanupSummary,
 )
+from DashAI.back.services.RAG.prompt_service import PromptService
+from DashAI.back.services.RAG.session_params import filter_pipeline_params
 from DashAI.back.services.RAG.setup_service import SetupService
 from tests.back.RAG.conftest import (
     _insert_data_document,
@@ -81,6 +88,7 @@ LIVE_K1 = 1.5
 # Unusual values, so no other test in this module shares the fitted folders.
 OLD_K1 = 1.37
 NEW_K1 = 1.91
+RERANKER_K1 = 2.73
 UNKNOWN_BRIDGE_ID = 999_999
 # Storage sub-folders of the RAG root, spelled out here on purpose: the tests
 # check the layout the services write, not the constants they import.
@@ -349,7 +357,7 @@ def _counts(db: Session) -> _Counts:
 def _cleanup(db: Session, index: _Index) -> IndexCleanupSummary:
     """Run the cleanup for an index built by :func:`_build_index`."""
     service = CleanupService(db, rag_path=index.rag_path)
-    return service.cleanup_after_reindex(index.session_id, index.root_id)
+    return service.cleanup_after_reindex(index.session_id, index.root_id, None)
 
 
 # ===================================================================
@@ -754,7 +762,9 @@ def test_cleanup_without_a_rag_path_is_refused(orm_db, tmp_path):
     before = _counts(orm_db)
 
     with pytest.raises(ValueError, match="rag_path"):
-        CleanupService(orm_db).cleanup_after_reindex(index.session_id, index.root_id)
+        CleanupService(orm_db).cleanup_after_reindex(
+            index.session_id, index.root_id, None
+        )
 
     assert _counts(orm_db) == before
     assert index.stale_sparse_folder.exists()
@@ -771,10 +781,10 @@ def test_a_second_cleanup_changes_nothing(orm_db, tmp_path):
     document = _insert_data_document(orm_db, tmp_path / "docs", "idem.txt", ["i"])
     index = _build_index(orm_db, tmp_path, session.id, document.id)
     service = CleanupService(orm_db, rag_path=index.rag_path)
-    service.cleanup_after_reindex(index.session_id, index.root_id)
+    service.cleanup_after_reindex(index.session_id, index.root_id, None)
     state = _counts(orm_db)
 
-    second = service.cleanup_after_reindex(index.session_id, index.root_id)
+    second = service.cleanup_after_reindex(index.session_id, index.root_id, None)
 
     assert (
         second.chunk_sets,
@@ -821,7 +831,7 @@ def test_malformed_live_root_raises_and_deletes_nothing(
 
     with pytest.raises(ValueError, match=message):
         CleanupService(orm_db, rag_path=index.rag_path).cleanup_after_reindex(
-            index.session_id, root_id
+            index.session_id, root_id, None
         )
 
     assert _counts(orm_db) == before
@@ -835,7 +845,7 @@ def test_a_session_without_a_pipeline_is_rejected(orm_db, tmp_path):
 
     with pytest.raises(ValueError, match="has no pipeline"):
         CleanupService(orm_db, rag_path=_rag(tmp_path)).cleanup_after_reindex(
-            session.id, UNKNOWN_BRIDGE_ID
+            session.id, UNKNOWN_BRIDGE_ID, None
         )
 
 
@@ -884,7 +894,7 @@ def test_the_entry_point_swallows_failures_but_not_cancellation(
     registry = client.app.container["component_registry"]
     session_id = _create_session(client, "entry_point")
 
-    def explode(self, session_id, live_root_bridge_id):
+    def explode(self, session_id, live_root_bridge_id, live_reranker_root_bridge_id):
         """Fail the way a broken cleanup would."""
         raise RuntimeError("cleanup broke")
 
@@ -894,18 +904,18 @@ def test_the_entry_point_swallows_failures_but_not_cancellation(
         session_factory() as db,
     ):
         cleanup_service.run_post_index_cleanup(
-            db, registry, session_id, UNKNOWN_BRIDGE_ID, _rag(tmp_path)
+            db, registry, session_id, UNKNOWN_BRIDGE_ID, _rag(tmp_path), None
         )
     assert any(record.exc_info for record in caplog.records)
 
-    def cancel(self, session_id, live_root_bridge_id):
+    def cancel(self, session_id, live_root_bridge_id, live_reranker_root_bridge_id):
         """Raise the cancellation the queue delivers to a running job."""
         raise _Cancelled
 
     monkeypatch.setattr(CleanupService, "cleanup_after_reindex", cancel)
     with session_factory() as db, pytest.raises(_Cancelled):
         cleanup_service.run_post_index_cleanup(
-            db, registry, session_id, UNKNOWN_BRIDGE_ID, _rag(tmp_path)
+            db, registry, session_id, UNKNOWN_BRIDGE_ID, _rag(tmp_path), None
         )
 
 
@@ -922,7 +932,7 @@ def test_a_missing_live_root_is_logged_and_not_fatal(
         session_factory() as db,
     ):
         result = cleanup_service.run_post_index_cleanup(
-            db, registry, session_id, None, _rag(tmp_path)
+            db, registry, session_id, None, _rag(tmp_path), None
         )
 
     assert result is None
@@ -944,7 +954,7 @@ def test_index_job_succeeds_when_the_post_index_cleanup_fails(
         client, "cleanup_failure", document_files
     )
 
-    def explode(self, session_id, live_root_bridge_id):
+    def explode(self, session_id, live_root_bridge_id, live_reranker_root_bridge_id):
         """Fail the way a broken cleanup would."""
         raise RuntimeError("cleanup broke")
 
@@ -957,6 +967,49 @@ def test_index_job_succeeds_when_the_post_index_cleanup_fails(
     assert any(record.exc_info for record in caplog.records)
     status = client.get(f"/api/v1/rag/sessions/{session_id}/index-status").json()
     assert status["status"] == "indexed", status
+
+
+class _ClosableModel:
+    """A model stand-in that records whether the index job released it."""
+
+    def __init__(self) -> None:
+        self.closed = 0
+
+    def close(self) -> None:
+        self.closed += 1
+
+
+@pytest.mark.usefixtures("_register_stub_llm")
+def test_index_job_hands_the_reranker_root_to_the_cleanup(
+    client: TestClient, document_files: list[str], monkeypatch
+):
+    """The index job passes the reranker's bridge id, so its rows count as live."""
+    session_id, _ = _create_session_with_document(
+        client, "index_reranker_root", document_files
+    )
+    retriever_model, reranker_model = _ClosableModel(), _ClosableModel()
+    index = SimpleNamespace(
+        chunk_set_id=1,
+        total_chunks=1,
+        retriever=SimpleNamespace(db_record_id=11, model=retriever_model),
+        reranker=SimpleNamespace(db_record_id=22, model=reranker_model),
+    )
+    calls: list[tuple] = []
+    monkeypatch.setattr(
+        SetupService, "build_index", lambda self, config, progress=None: index
+    )
+    monkeypatch.setattr(
+        index_job_module,
+        "run_post_index_cleanup",
+        lambda *args: calls.append(args[2:]),
+    )
+
+    RAGIndexJob(session_id=session_id).run()
+
+    rag_path = client.app.container["config"]["RAG_PATH"]
+    assert calls == [(session_id, 11, rag_path, 22)]
+    assert retriever_model.closed == 1
+    assert reranker_model.closed == 1
 
 
 def test_index_job_returns_its_result_when_the_live_root_is_missing(
@@ -975,6 +1028,7 @@ def test_index_job_returns_its_result_when_the_live_root_is_missing(
             chunk_set_id=result.chunk_set_id,
             total_chunks=result.total_chunks,
             retriever=SimpleNamespace(db_record_id=None),
+            reranker=None,
         )
 
     monkeypatch.setattr(SetupService, "build_index", build_index_without_root)
@@ -1012,7 +1066,7 @@ def test_index_job_passes_the_configured_rag_path_to_the_cleanup(
     RAGIndexJob(session_id=session_id).run()
 
     rag_path = client.app.container["config"]["RAG_PATH"]
-    assert calls == [(session_id, roots[0], rag_path)]
+    assert calls == [(session_id, roots[0], rag_path, None)]
 
 
 def _raise_build_failure(error: BaseException):
@@ -1209,7 +1263,7 @@ def test_chat_turn_cleans_up_after_the_pipeline_is_built(
     rag_path = client.app.container["config"]["RAG_PATH"]
     (build_kind, root_id), (cleanup_kind, cleanup_args) = events
     assert (build_kind, cleanup_kind) == ("build", "cleanup")
-    assert cleanup_args == (session_id, root_id, rag_path)
+    assert cleanup_args == (session_id, root_id, rag_path, None)
 
 
 def test_chat_turn_does_not_clean_up_when_the_pipeline_cannot_be_built(
@@ -1242,7 +1296,7 @@ def test_chat_turn_finishes_when_the_post_index_cleanup_fails(
     """A cleanup failure is logged and the answered turn still finishes."""
     _session_id, process_id = _chat_process(client, document_files, "cleanup_fails")
 
-    def explode(self, session_id, live_root_bridge_id):
+    def explode(self, session_id, live_root_bridge_id, live_reranker_root_bridge_id):
         """Fail the way a broken cleanup would."""
         raise RuntimeError("cleanup broke")
 
@@ -1322,7 +1376,7 @@ def test_chat_turn_cleans_up_when_the_identity_changed_before_the_turn(
     rag_path = client.app.container["config"]["RAG_PATH"]
     (build_kind, root_id), (cleanup_kind, cleanup_args) = events
     assert (build_kind, cleanup_kind) == ("build", "cleanup")
-    assert cleanup_args == (session_id, root_id, rag_path)
+    assert cleanup_args == (session_id, root_id, rag_path, None)
 
 
 def test_chat_turn_releases_the_index_it_replaced(
@@ -1354,26 +1408,30 @@ def _pipeline_id_of(db: Session, session_id: int) -> int:
     return db.query(RAGPipeline.id).filter_by(session_id=session_id).scalar()
 
 
-def test_stale_row_probe_sees_leftovers_only(orm_db, tmp_path):
+def test_stale_row_probe_sees_leftovers_only(client: TestClient, orm_db, tmp_path):
     """The probe is false for a clean index and true once a stale root or set exists."""
+    registry = client.app.container["component_registry"]
     session = _insert_rag_session(orm_db, f"probe_{uuid.uuid4().hex[:8]}")
     document = _insert_data_document(orm_db, tmp_path / "docs", "probe.txt", ["p"])
     index = _build_index(orm_db, tmp_path, session.id, document.id)
-    assert cleanup_service.has_stale_index_rows(orm_db, session.id) is True
+    assert cleanup_service.has_stale_index_rows(orm_db, session.id, registry) is True
 
     _cleanup(orm_db, index)
-    assert cleanup_service.has_stale_index_rows(orm_db, session.id) is False
+    assert cleanup_service.has_stale_index_rows(orm_db, session.id, registry) is False
 
     _chunk_set(orm_db, session.id, document.id, index.rag_path)
     orm_db.commit()
-    assert cleanup_service.has_stale_index_rows(orm_db, session.id) is True
+    assert cleanup_service.has_stale_index_rows(orm_db, session.id, registry) is True
 
 
-def test_stale_row_probe_is_false_for_a_session_without_rows(orm_db):
+def test_stale_row_probe_is_false_for_a_session_without_rows(
+    client: TestClient, orm_db
+):
     """A session that never indexed has nothing to clean."""
+    registry = client.app.container["component_registry"]
     session = _insert_rag_session(orm_db, f"probe_empty_{uuid.uuid4().hex[:8]}")
 
-    assert cleanup_service.has_stale_index_rows(orm_db, session.id) is False
+    assert cleanup_service.has_stale_index_rows(orm_db, session.id, registry) is False
 
 
 def _add_leftover_root(client: TestClient, session_id: int) -> int:
@@ -1414,3 +1472,114 @@ def test_chat_turn_retries_leftover_stale_rows_once(
     RAGJob(generative_process_id=third_turn).run()
 
     assert len(calls) == 1, "a clean index must not trigger the cleanup again"
+
+
+# ===================================================================
+# The index job against a reranker it does not build
+# ===================================================================
+
+
+def _store_reranked_parameters(client: TestClient, session_id: int) -> None:
+    """Store a BM25 retriever and a query transformation whose reranker is BM25."""
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        session = db.get(GenerativeSession, session_id)
+        parameters = dict(session.parameters or {})
+        parameters["retriever_model"] = {
+            "component": SPARSE_CLASS,
+            "params": {**bm25_retriever_params(), "k1": LIVE_K1},
+        }
+        reranker = {
+            "component": SPARSE_CLASS,
+            "params": {**bm25_retriever_params(), "k1": RERANKER_K1},
+        }
+        parameters["query_transformation"] = {
+            "component": "LLMQueryExpander",
+            "params": {"n_queries": 2, "reranker": reranker},
+        }
+        session.parameters = parameters
+        db.commit()
+
+
+def _build_with_transformation(client: TestClient, session_id: int) -> int:
+    """Build the session's index with its query transformation, as a chat turn does.
+
+    The index job never builds the transformation, so the reranker rows this
+    build leaves are the reranker's current rows.
+
+    Returns
+    -------
+    int
+        The bridge id of the reranker the build created.
+    """
+    container = client.app.container
+    registry = container["component_registry"]
+    rag_path = container["config"]["RAG_PATH"]
+    with container["session_factory"]() as db:
+        session = db.get(GenerativeSession, session_id)
+        materialized = PromptService(db, registry).materialize_session_parameters(
+            session_id, dict(session.parameters)
+        )
+        clean = filter_pipeline_params(
+            materialized, {*RAG_PARAM_KEYS, RAG_PARAM_QUERY_TRANSFORMATION}
+        )
+        config = RAGPipelineConfig.from_kwargs(
+            db=db,
+            component_registry=registry,
+            session_id=session_id,
+            env_RAG_path=rag_path,
+            **clean,
+        )
+        result = SetupService(db, registry, rag_path).build_index(config)
+        try:
+            return result.reranker.db_record_id
+        finally:
+            SetupService.release_index(result)
+
+
+@pytest.mark.usefixtures("_register_stub_llm")
+def test_index_job_keeps_a_reranker_it_did_not_build(
+    client: TestClient, document_files: list[str], caplog
+):
+    """The reranker built with the transformation survives an index-job rebuild.
+
+    The index job filters out the query transformation, so it builds no
+    reranker. The rows built with the transformation are still the session's
+    current reranker, so the post-index cleanup keeps them and logs no error.
+    """
+    session_id, _ = _create_session_with_document(
+        client, "index_unbuilt_reranker", document_files
+    )
+    _store_reranked_parameters(client, session_id)
+    reranker_root = _build_with_transformation(client, session_id)
+
+    with caplog.at_level(logging.ERROR, logger=cleanup_service.__name__):
+        RAGIndexJob(session_id=session_id).run()
+
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        assert db.get(RAGRetriever, reranker_root) is not None
+        reranker_row = db.query(RAGSparseRetriever).filter_by(bridge_id=reranker_root)
+        assert os.path.isdir(reranker_row.one().storage_folder)
+    cleanup_errors = [
+        r
+        for r in caplog.records
+        if r.name == cleanup_service.__name__ and r.levelno >= logging.ERROR
+    ]
+    assert not cleanup_errors
+
+
+def test_index_job_refuses_a_session_without_stored_parameters(
+    client: TestClient, document_files: list[str]
+):
+    """A session with no stored parameters is refused, as the chat job refuses it."""
+    session_id, _ = _create_session_with_document(
+        client, "index_no_params", document_files
+    )
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        db.get(GenerativeSession, session_id).parameters = None
+        db.commit()
+
+    with pytest.raises(JobError, match="no stored parameters"):
+        RAGIndexJob(session_id=session_id).run()

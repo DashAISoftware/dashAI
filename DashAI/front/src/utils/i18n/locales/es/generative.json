@@ -238,6 +238,7 @@
     },
     "chatProgress": {
       "generatingAnswer": "Usando fuentes para generar respuesta",
+      "loadingModel": "Cargando modelo...",
       "searchingSources": "Buscando fuentes con query: {{queries}}",
       "transformingQuery": "Transformando query…"
     },
@@ -254,19 +255,17 @@
     },
     "composite": {
       "addChild": "Añadir nodo recuperador",
-      "allChunks": "Todos los fragmentos",
       "chunkFusion": "Fusión de chunks",
       "compositeInstructions": "Haz clic en el botón + para añadir un recuperador hijo a este compuesto. Haz clic sobre una tarjeta para editar sus parámetros o elegir otro modelo.",
       "configureNode": "Configurar nodo",
       "mergeStrategyInterleave": "Intercalar",
       "mergeStrategyRoundRobin": "Round robin",
-      "nestedCompositeNote": "Este es un recuperador compuesto. Sus hijos pueden configurarse en el árbol inferior.",
+      "nestedCompositeNote": "Este es un recuperador compuesto. Sus hijos se configuran en el árbol, fuera de este diálogo.",
       "parameters": "Parámetros",
       "removeNode": "Eliminar nodo",
       "reranking": "Reordenamiento",
       "retrieverDescription": "Elige un recuperador para configurar sus parámetros. Los recuperadores por palabras clave (BM25, TF-IDF) encuentran documentos por frecuencia de términos, los recuperadores densos capturan el significado semántico con vectores densos llamados embeddings y los recuperadores compuestos encadenan varios recuperadores, de forma secuencial o en paralelo.",
-      "selectModel": "Seleccionar modelo recuperador",
-      "selectedChunks": "Fragmentos seleccionados"
+      "selectModel": "Seleccionar modelo recuperador"
     },
     "config": {
       "advanced": "Configuración avanzada",
@@ -278,14 +277,19 @@
         "advanced": "Configuración avanzada",
         "enable": "Habilitar transformación de consultas",
         "historyWindow": "Ventana de historial",
+        "incomplete": "Elige un prompt y un modelo de lenguaje antes de guardar.",
         "language": "Idioma",
         "llm": "Modelo de lenguaje",
+        "loadFailed": "No se pudieron cargar las opciones de transformación de consultas: {{reason}}",
         "maxSubqueries": "Subconsultas máximas",
+        "needsDownloadedModel": "Descarga primero un modelo de lenguaje y luego habilita esta etapa.",
         "nQueries": "Número de consultas",
         "noneAvailable": "No hay técnicas de transformación de consultas registradas.",
         "off": "Desactivada",
         "prompt": "Prompt",
-        "unknownComponent": "este transformador no está registrado; elige un prompt y un modelo para continuar."
+        "promptRequired": "Esta técnica no tiene un prompt por defecto, así que no puede habilitarse.",
+        "unknownComponent": "{{component}}: este transformador no está registrado; elige un prompt y un modelo para continuar.",
+        "compositeIncomplete": "Agrega al menos un hijo a cada componente compuesto antes de guardar."
       },
       "unsavedIn": "Cambios sin guardar en: {{sections}}"
     },
@@ -422,9 +426,13 @@
         "seedLanguage": "Idioma de la plantilla",
         "sessionOnlyHelp": "Los cambios aquí solo afectan a esta sesión. Edita los prompts compartidos desde la biblioteca de prompts.",
         "startFrom": "Partir de",
+        "selectPrompt": "Prompt",
+        "defaultPrompts": "Prompts por defecto",
         "startFromHelp": "Reemplaza la plantilla de abajo. La tuya se conserva hasta que elijas una.",
         "template": "Plantilla",
-        "templatePlaceholder": "Cada mensaje del usuario llega como {input}\nLos fragmentos recuperados llegan como {chunks}"
+        "templatePlaceholder": "Cada mensaje del usuario llega como {input}\nLos fragmentos recuperados llegan como {chunks}",
+        "unnamedPrompt": "Prompt {{id}}",
+        "malformedData": "Algunos prompts devueltos por el servidor están incompletos y se omitieron: {{names}}"
       },
       "field": {
         "edit": "Editar plantilla",
@@ -582,6 +590,7 @@
     "queryCandidates_one": "{{count}} candidato",
     "queryCandidates_other": "{{count}} candidatos",
     "queryTooltip": "Consulta {{index}}",
+    "rerankTitle": "Reordenamiento del pool ({{pool}} candidatos → {{kept}} conservados)",
     "receivedCount_many": "{{chunks}} fragmentos de {{documents}} documentos",
     "receivedCount_one": "{{chunks}} fragmento de {{documents}} documento",
     "receivedCount_other": "{{chunks}} fragmentos de {{documents}} documentos",
@@ -600,7 +609,8 @@
     "storyRewritten_one": "Tu mensaje se reescribió en {{count}} query de búsqueda.",
     "storyRewritten_other": "Tu mensaje se reescribió en {{count}} queries de búsqueda.",
     "title": "Fuentes del mensaje",
-    "yourMessage": "Tu mensaje fue"
+    "yourMessage": "Tu mensaje fue",
+    "rerankMalformed": "La entrada de reordenamiento de este trace está incompleta: faltan los candidatos o los chunks conservados."
   },
   "validation": {
     "apiKeyMissingDescription": "Este modelo requiere una API key para funcionar. Abre la configuración avanzada para añadir tu API key.",

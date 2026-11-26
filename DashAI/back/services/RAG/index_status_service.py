@@ -29,7 +29,10 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.dependencies.job_queues.base_job_queue import BaseJobQueue
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
-from DashAI.back.models.RAG.exceptions import RAGComponentNotFoundError
+from DashAI.back.models.RAG.exceptions import (
+    RAGComponentNotFoundError,
+    RAGPipelineConfigError,
+)
 from DashAI.back.models.RAG.RAG_constants import (
     COMPOSITE_RETRIEVER_NAMES,
     RAG_PARAM_CHUNKING_MODEL,
@@ -248,10 +251,16 @@ class IndexStatusService:
         chunking = parameters.get(RAG_PARAM_CHUNKING_MODEL)
         if not isinstance(chunking, dict) or not chunking.get("component"):
             return None
+        params = chunking.get(PARAMS_KEY, {})
+        if not isinstance(params, dict):
+            raise RAGPipelineConfigError(
+                "Stored 'params' of the chunking model is not a dict, got "
+                f"{type(params).__name__}."
+            )
         return {
             RAG_PARAM_CHUNKING_MODEL: {
                 "component": chunking["component"],
-                "params": chunking.get("params") or {},
+                "params": params,
             }
         }
 

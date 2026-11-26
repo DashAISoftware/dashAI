@@ -20,6 +20,7 @@ from DashAI.back.models.hugging_face.gguf_text_generation_base import (
 )
 from DashAI.back.models.RAG.exceptions import (
     RAGTransformationConfigError,
+    RAGTransformationGenerationError,
     RAGTransformationOutputError,
 )
 from DashAI.back.models.RAG.progress_utils import progress_scope
@@ -36,12 +37,29 @@ from DashAI.back.models.RAG.RAG_defaults import (
     MAX_FUNCTION_CALL_TRIALS,
     default_function_calling_llm,
 )
+from DashAI.back.models.RAG.retrievers.composite.mmr_reranker_retriever import (
+    MMRRerankerRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.parallel_retriever import (
+    ParallelRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.sequential_retriever import (
+    SequentialRetriever,
+)
+from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
+    DenseEmbeddingRetriever,
+)
+from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import BM25Retriever
 from DashAI.back.models.RAG.transformation import (
     BaseQueryTransformation,
     LLMQueryDecomposer,
     LLMQueryExpander,
     LLMQueryRewriter,
     QueryTransformationResult,
+)
+from DashAI.back.models.RAG.transformation.decomposition import (
+    DEFAULT_MAX_SUBQUERIES,
+    LLMQueryDecomposerSchema,
 )
 from DashAI.back.models.RAG.transformation.llm_output_parser import (
     parse_function_call_output,
@@ -653,30 +671,30 @@ class TestFunctionCallingRoute:
         ):
             _expander(None, llm_model=stub).transform("hi", [])
 
-    def test_function_calling_runtime_error_wrapped_as_output_error(self):
-        stub = FunctionCallingStubLLM(
-            generate_error=RuntimeError(
-                "The function calling model did not emit a call for 'expand_query'."
-            )
+    def test_function_calling_runtime_error_wrapped_as_generation_error(self):
+        error = RuntimeError(
+            "The function calling model did not emit a call for 'expand_query'."
         )
+        stub = FunctionCallingStubLLM(generate_error=error)
         with pytest.raises(
-            RAGTransformationOutputError, match="Function calling failed"
-        ):
+            RAGTransformationGenerationError, match="Function calling failed"
+        ) as excinfo:
             _expander(None, llm_model=stub).transform("hi", [])
+        assert excinfo.value.__cause__ is error
 
-    def test_function_calling_value_error_wrapped_as_output_error(self):
+    def test_function_calling_value_error_wrapped_as_generation_error(self):
         stub = FunctionCallingStubLLM(generate_error=ValueError("bad function spec"))
         with pytest.raises(
-            RAGTransformationOutputError, match="Function calling failed"
+            RAGTransformationGenerationError, match="Function calling failed"
         ):
             _expander(None, llm_model=stub).transform("hi", [])
 
-    def test_function_calling_type_error_wrapped_as_output_error(self):
+    def test_function_calling_type_error_wrapped_as_generation_error(self):
         stub = FunctionCallingStubLLM(
             generate_error=TypeError("string indices must be integers")
         )
         with pytest.raises(
-            RAGTransformationOutputError, match="Function calling failed"
+            RAGTransformationGenerationError, match="Function calling failed"
         ):
             _expander(None, llm_model=stub).transform("hi", [])
 
@@ -1095,6 +1113,33 @@ class TestLLMQueryDecomposer:
         result = _decomposer(['["s1", "s2"]'], cap=None).transform("hi", [])
         assert result.queries == ["s1", "s2"]
 
+    def test_omitted_cap_leaves_the_decomposition_unrestricted(self):
+        """No ``max_subqueries`` argument means no cap, as a stored session runs."""
+        raw = json.dumps(
+            {
+                "name": "decompose_query",
+                "arguments": {"queries": ["s1", "s2", "s3", "s4", "s5"]},
+            }
+        )
+        decomposer = LLMQueryDecomposer(
+            prompt=DefaultQueryDecompositionPrompt(language="en"),
+            llm_model=StubTransformationLLM(response=[raw]),
+            history_window=2,
+        )
+        assert decomposer.transform("hi", []).queries == [
+            "s1",
+            "s2",
+            "s3",
+            "s4",
+            "s5",
+        ]
+
+    def test_schema_default_and_placeholder_are_three(self):
+        """A new session starts from three; the transformer itself has no default."""
+        schema = LLMQueryDecomposer.get_schema()
+        assert schema["properties"]["max_subqueries"]["placeholder"] == 3
+        assert LLMQueryDecomposerSchema.model_fields["max_subqueries"].default == 3
+
 
 # ===================================================================
 # LLM-authored progress narrative
@@ -1428,6 +1473,11 @@ def _validator_registry() -> _FakeRegistry:
             "DefaultQueryExpansionPrompt": DefaultQueryExpansionPrompt,
             "DefaultQueryDecompositionPrompt": DefaultQueryDecompositionPrompt,
             "StubTransformationLLM": StubTransformationLLM,
+            "DenseEmbeddingRetriever": DenseEmbeddingRetriever,
+            "ParallelRetriever": ParallelRetriever,
+            "SequentialRetriever": SequentialRetriever,
+            "MMRRerankerRetriever": MMRRerankerRetriever,
+            "BM25Retriever": BM25Retriever,
         }
     )
 
@@ -1485,6 +1535,160 @@ class TestTransformationPromptFamily:
         assert "DefaultQueryRewritingPrompt" in message
 
 
+class TestTransformationRerankerValidation:
+    """The optional reranker reference is a pool reranker or nothing at all."""
+
+    def _ref_with_reranker(self, reranker: Any) -> dict:
+        ref = _transformation_ref("LLMQueryExpander", "DefaultQueryExpansionPrompt")
+        ref["params"]["reranker"] = reranker
+        return ref
+
+    def test_absent_reranker_accepted(self):
+        _validate_transformation(
+            _transformation_ref("LLMQueryExpander", "DefaultQueryExpansionPrompt")
+        )
+
+    def test_rewriter_with_a_reranker_is_rejected(self):
+        ref = _transformation_ref("LLMQueryRewriter", "DefaultQueryRewritingPrompt")
+        ref["params"]["reranker"] = {
+            "component": "DenseEmbeddingRetriever",
+            "params": {},
+        }
+
+        with pytest.raises(ValueError, match="single query"):
+            _validate_transformation(ref)
+
+    def test_rewriter_with_a_null_reranker_is_accepted(self):
+        ref = _transformation_ref("LLMQueryRewriter", "DefaultQueryRewritingPrompt")
+        ref["params"]["reranker"] = None
+
+        _validate_transformation(ref)
+
+    def test_null_reranker_accepted(self):
+        _validate_transformation(self._ref_with_reranker(None))
+
+    def test_retriever_reference_accepted_as_reranker(self):
+        _validate_transformation(
+            self._ref_with_reranker(
+                {"component": "DenseEmbeddingRetriever", "params": {"top_k": 5}}
+            )
+        )
+
+    def test_retriever_without_the_scorer_capability_rejected(self):
+        """Parallel fuses its children, so it does not inherit ChunkScorer."""
+        with pytest.raises(ValueError, match="ChunkScorer") as exc_info:
+            _validate_transformation(
+                self._ref_with_reranker(
+                    {"component": "ParallelRetriever", "params": {}}
+                )
+            )
+        assert "ParallelRetriever" in str(exc_info.value)
+
+    def test_non_retriever_component_rejected(self):
+        with pytest.raises(ValueError, match="ChunkScorer") as exc_info:
+            _validate_transformation(
+                self._ref_with_reranker({"component": "LLMQueryExpander", "params": {}})
+            )
+        message = str(exc_info.value)
+        assert "LLMQueryExpander" in message
+        assert "reranker" in message
+
+    def test_reference_without_component_rejected(self):
+        with pytest.raises(ValueError, match="reranker") as exc_info:
+            _validate_transformation(self._ref_with_reranker({}))
+        assert "component reference" in str(exc_info.value)
+
+    def test_non_dict_reference_rejected(self):
+        with pytest.raises(ValueError, match="reranker") as exc_info:
+            _validate_transformation(self._ref_with_reranker("DenseEmbeddingRetriever"))
+        assert "component reference" in str(exc_info.value)
+
+    def test_non_string_component_rejected(self):
+        with pytest.raises(ValueError, match="must be a string") as exc_info:
+            _validate_transformation(self._ref_with_reranker({"component": 3}))
+        assert "reranker" in str(exc_info.value)
+
+    def test_non_dict_params_rejected(self):
+        with pytest.raises(ValueError, match="must be a dict") as exc_info:
+            _validate_transformation(
+                self._ref_with_reranker(
+                    {"component": "DenseEmbeddingRetriever", "params": "abc"}
+                )
+            )
+        assert "reranker" in str(exc_info.value)
+
+    def test_reference_without_params_is_the_minimal_reference(self):
+        _validate_transformation(
+            self._ref_with_reranker({"component": "DenseEmbeddingRetriever"})
+        )
+
+    @staticmethod
+    def _composite(component: str, *children: str) -> dict:
+        return {
+            "component": component,
+            "params": {
+                "children": [{"component": child, "params": {}} for child in children]
+            },
+        }
+
+    def test_composite_scoring_through_a_non_scorer_last_child_is_rejected(self):
+        with pytest.raises(ValueError, match="ChunkScorer") as exc_info:
+            _validate_transformation(
+                self._ref_with_reranker(
+                    self._composite("SequentialRetriever", "ParallelRetriever")
+                )
+            )
+        assert "ParallelRetriever" in str(exc_info.value)
+
+    def test_composite_scoring_through_a_non_scorer_first_child_is_rejected(self):
+        with pytest.raises(ValueError, match="ChunkScorer") as exc_info:
+            _validate_transformation(
+                self._ref_with_reranker(
+                    self._composite("MMRRerankerRetriever", "ParallelRetriever")
+                )
+            )
+        assert "ParallelRetriever" in str(exc_info.value)
+
+    def test_sequential_only_needs_its_last_child_to_be_a_scorer(self):
+        _validate_transformation(
+            self._ref_with_reranker(
+                self._composite(
+                    "SequentialRetriever",
+                    "ParallelRetriever",
+                    "DenseEmbeddingRetriever",
+                )
+            )
+        )
+
+    def test_composite_scorer_with_scorer_children_is_accepted(self):
+        _validate_transformation(
+            self._ref_with_reranker(
+                self._composite("MMRRerankerRetriever", "DenseEmbeddingRetriever")
+            )
+        )
+
+    def test_composite_scorer_without_children_is_rejected(self):
+        with pytest.raises(ValueError, match="at least one child"):
+            _validate_transformation(
+                self._ref_with_reranker(
+                    {"component": "SequentialRetriever", "params": {}}
+                )
+            )
+
+    def test_nested_non_scorer_is_rejected_through_the_chain(self):
+        nested = {
+            "component": "SequentialRetriever",
+            "params": {
+                "children": [
+                    self._composite("MMRRerankerRetriever", "ParallelRetriever")
+                ]
+            },
+        }
+        with pytest.raises(ValueError, match="ChunkScorer") as exc_info:
+            _validate_transformation(self._ref_with_reranker(nested))
+        assert "MMRRerankerRetriever" in str(exc_info.value)
+
+
 # ===================================================================
 # apply_defaults: transformation LLM context window override
 # ===================================================================
@@ -1526,7 +1730,7 @@ class TestApplyDefaultsTransformationLLM:
             _transformation_defaults_registry(), lambda name, template: None
         )
         normalized = {"query_transformation": ref}
-        service.apply_defaults(normalized)
+        service.apply_defaults(normalized, is_new=True)
         return normalized["query_transformation"]
 
     def test_omitted_llm_params_get_the_rag_defaults(self):
@@ -1608,7 +1812,7 @@ class TestApplyDefaultsTransformationLLM:
         normalized: dict = {}
         QueryTransformationValidationService(
             _transformation_defaults_registry(), lambda name, template: None
-        ).apply_defaults(normalized)
+        ).apply_defaults(normalized, is_new=True)
 
         assert normalized == {}
 
@@ -1616,6 +1820,84 @@ class TestApplyDefaultsTransformationLLM:
         normalized = {"query_transformation": None}
         QueryTransformationValidationService(
             _transformation_defaults_registry(), lambda name, template: None
-        ).apply_defaults(normalized)
+        ).apply_defaults(normalized, is_new=True)
 
         assert normalized == {"query_transformation": None}
+
+
+# ===================================================================
+# apply_defaults: the decomposition cap keeps an explicit null
+# ===================================================================
+
+
+def _decomposition_defaults_registry() -> dict:
+    """Registry carrying the decomposer's real schema, prompt and stub LLM."""
+    classes = {
+        "LLMQueryDecomposer": LLMQueryDecomposer,
+        "DefaultQueryDecompositionPrompt": DefaultQueryDecompositionPrompt,
+        "StubTransformationLLM": StubTransformationLLM,
+    }
+    return {
+        name: {"class": klass, "schema": klass.get_schema()}
+        for name, klass in classes.items()
+    }
+
+
+class TestApplyDefaultsDecompositionCap:
+    """``max_subqueries`` is capped by default and unbounded on an explicit null."""
+
+    def _apply(self, params: dict, is_new: bool = True) -> dict:
+        ref = {
+            "component": "LLMQueryDecomposer",
+            "params": {
+                "prompt": {
+                    "component": "DefaultQueryDecompositionPrompt",
+                    "params": {},
+                },
+                "llm_model": {"component": "StubTransformationLLM", "params": {}},
+                **params,
+            },
+        }
+        normalized = {"query_transformation": ref}
+        QueryTransformationValidationService(
+            _decomposition_defaults_registry(), lambda name, template: None
+        ).apply_defaults(normalized, is_new=is_new)
+        return normalized["query_transformation"]["params"]
+
+    def test_omitted_cap_resolves_to_the_three_default_for_a_new_session(self):
+        assert self._apply({})["max_subqueries"] == DEFAULT_MAX_SUBQUERIES
+
+    def test_omitted_cap_stays_unrestricted_for_a_stored_session(self):
+        assert self._apply({}, is_new=False)["max_subqueries"] is None
+
+    def test_explicit_cap_is_kept_for_a_stored_session(self):
+        assert self._apply({"max_subqueries": 2}, is_new=False)["max_subqueries"] == 2
+
+    def test_explicit_null_cap_is_preserved(self):
+        """The placeholder merge must not resurrect the default over a null."""
+        assert self._apply({"max_subqueries": None})["max_subqueries"] is None
+
+    def test_explicit_null_cap_keeps_every_subquery(self):
+        raw = json.dumps(
+            {
+                "name": "decompose_query",
+                "arguments": {"queries": ["s1", "s2", "s3", "s4", "s5"]},
+            }
+        )
+        stored = self._apply({"max_subqueries": None})
+
+        decomposer = LLMQueryDecomposer(
+            prompt=DefaultQueryDecompositionPrompt(language="en"),
+            llm_model=StubTransformationLLM(response=[raw]),
+            max_subqueries=stored["max_subqueries"],
+            history_window=stored["history_window"],
+            function_call_max_trials=stored["function_call_max_trials"],
+        )
+
+        assert decomposer.transform("hi", []).queries == [
+            "s1",
+            "s2",
+            "s3",
+            "s4",
+            "s5",
+        ]

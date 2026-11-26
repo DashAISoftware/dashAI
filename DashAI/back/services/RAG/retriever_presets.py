@@ -182,13 +182,16 @@ def get_default_retriever(registry, top_k: int = DEFAULT_TOP_K) -> Dict[str, Any
     -------
     Dict[str, Any]
         The default retriever configuration.
+
+    Raises
+    ------
+    ValueError
+        If no preset carries the default key.
     """
-    recipe = next(
-        preset
-        for preset in get_retriever_presets(top_k, registry)
-        if preset["key"] == DEFAULT_PRESET_KEY
-    )
-    return {"component": recipe["component"], "params": recipe["params"]}
+    for preset in get_retriever_presets(top_k, registry):
+        if preset["key"] == DEFAULT_PRESET_KEY:
+            return {"component": preset["component"], "params": preset["params"]}
+    raise ValueError(f"No retriever preset is keyed {DEFAULT_PRESET_KEY!r}.")
 
 
 def _check_children(params: Dict[str, Any]) -> None:
@@ -275,6 +278,7 @@ def effective_top_k(component: str, params: Dict[str, Any]) -> int:
     A composite retriever's own ``top_k`` (when it has one) bounds the result;
     otherwise the children's values add up.
     """
+    _check_children(params)
     if "top_k" in params and isinstance(params["top_k"], int):
         return params["top_k"]
     if "max_chunks" in params and isinstance(params["max_chunks"], int):
@@ -282,9 +286,8 @@ def effective_top_k(component: str, params: Dict[str, Any]) -> int:
     children = params.get("children")
     if isinstance(children, list) and children:
         return sum(
-            effective_top_k(child.get("component", ""), child.get("params", {}) or {})
+            effective_top_k(child.get("component", ""), child[PARAMS_KEY])
             for child in children
-            if isinstance(child, dict)
         )
     return 0
 
@@ -311,7 +314,7 @@ def _expansion_factor(params: Dict[str, Any]) -> int:
     return window if window > 1 else 1
 
 
-def _max_expansion_factor(params: Dict[str, Any]) -> int:
+def max_expansion_factor(params: Dict[str, Any]) -> int:
     """Return the largest expansion factor over a retriever and its children.
 
     A parent that caps its own output still returns units produced deeper in the
@@ -330,14 +333,13 @@ def _max_expansion_factor(params: Dict[str, Any]) -> int:
     int
         The maximum ``_expansion_factor`` over this node and its descendants.
     """
+    _check_children(params)
     factor = _expansion_factor(params)
     children = params.get("children")
     if not isinstance(children, list):
         return factor
     for child in children:
-        if not isinstance(child, dict):
-            continue
-        child_factor = _max_expansion_factor(child.get("params", {}) or {})
+        child_factor = max_expansion_factor(child[PARAMS_KEY])
         if child_factor > factor:
             factor = child_factor
     return factor
@@ -392,17 +394,14 @@ def effective_chunk_count(component: str, params: Dict[str, Any]) -> int:
     int
         The context cost of this retriever in chunks, expansion included.
     """
+    _check_children(params)
     cap = _own_chunk_cap(params)
     if cap is not None:
-        return cap * _max_expansion_factor(params)
+        return cap * max_expansion_factor(params)
     children = params.get("children")
     if isinstance(children, list) and children:
         base = 0
         for child in children:
-            if not isinstance(child, dict):
-                continue
-            base += effective_chunk_count(
-                child.get("component", ""), child.get("params", {}) or {}
-            )
+            base += effective_chunk_count(child.get("component", ""), child[PARAMS_KEY])
         return base * _expansion_factor(params)
     return effective_top_k(component, params) * _expansion_factor(params)

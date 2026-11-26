@@ -1,5 +1,6 @@
 {
   "actions": "操作",
+  "copyFailed": "复制失败：{{reason}}",
   "copy": "复制",
   "copied": "已复制",
   "holdout": "保留数据",
@@ -88,6 +89,19 @@
     "connecting": "正在连接硬件监控...",
     "cpu": "CPU",
     "gpu": "GPU",
+    "loadedModels": {
+      "empty": "没有已加载的模型",
+      "error": "无法释放模型",
+      "inUse": "使用中",
+      "lastUsed": "最近使用：{{time}}",
+      "params": {
+        "context_window": "上下文窗口",
+        "device": "设备"
+      },
+      "title": "已加载的模型",
+      "unload": "释放",
+      "unloading": "正在释放..."
+    },
     "overall": "整体",
     "ram": "内存",
     "title": "硬件监控",
@@ -277,5 +291,21 @@
     "document": "文档",
     "localExplainer": "局部解释器",
     "globalExplainer": "全局解释器"
-  }
+  },
+  "componentTree": {
+    "configureNode": "配置组件",
+    "addChild": "添加子组件",
+    "removeNode": "移除组件",
+    "selectComponent": "组件",
+    "parameters": "参数",
+    "containerNote": "此组件包含其他组件。其子组件在此对话框之外的树中配置。",
+    "loadFailed": "无法加载组件：{{reason}}",
+    "unknownComponent": "组件 {{component}} 不可用，因此无法显示其树。",
+    "unknownChild": "组件 {{component}} 不可用。保存前请替换或删除它。",
+    "configureNodeNamed": "配置组件 {{name}}",
+    "noSchema": "组件 {{component}} 没有配置模式，因此无法选择。",
+    "formUnavailable": "设置表单尚未就绪，请稍后重试。"
+  },
+  "component": "组件",
+  "null": "空"
 }

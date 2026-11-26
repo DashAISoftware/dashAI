@@ -206,7 +206,8 @@ both kept mounted so chunk expansion and query selection survive a view switch:
 - **Pipeline** — a one-line summary of whether the query was transformed and
   how many candidates survived (kept vs. total, from `collectTraceStats`), a
   selected-chunk panel (or a hint), a per-query selector ("All" plus one chip
-  per query when there are several), one `RetrieverTraceTree` per query, and
+  per query when there are several), one `RetrieverTraceTree` per query (plus
+  the pool-reranking tree in the "All" view), and
   the discarded candidates as chips. Clicking a surviving tree chunk
   highlights its final card and fills the selected-chunk panel; clicking a
   discarded one raises a warning snackbar instead. The selected-chunk panel

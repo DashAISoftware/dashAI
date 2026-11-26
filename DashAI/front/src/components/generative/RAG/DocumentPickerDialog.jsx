@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { Button, useMediaQuery } from "@mui/material";
-import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
+import RAGAdvancedDialog from "../../shared/RAGAdvancedDialog";
 
 /**
  * Dialog shell shared by the document pickers.

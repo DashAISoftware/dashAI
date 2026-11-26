@@ -13,6 +13,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     TOP_K_FIELD,
     RetrievalExpansionSchema,
@@ -77,7 +78,7 @@ class TFIDFRetrieverSchema(RetrievalExpansionSchema):
     )  # type: ignore
 
 
-class TFIDFRetriever(SparseRetriever):
+class TFIDFRetriever(SparseRetriever, ChunkScorer):
     """Sparse retriever using TF-IDF vectorization for document retrieval.
 
     Fits a :class:`sklearn.feature_extraction.text.TfidfVectorizer` on

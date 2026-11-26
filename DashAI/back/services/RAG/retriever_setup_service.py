@@ -45,7 +45,7 @@ from DashAI.back.models.RAG.retrievers.persistence_signature import (
     persistence_signature,
     reference_signature,
 )
-from DashAI.back.models.RAG.retrievers.ref_utils import PARAMS_KEY
+from DashAI.back.models.RAG.retrievers.ref_utils import CHILDREN_KEY, PARAMS_KEY
 from DashAI.back.models.RAG.retrievers.retriever_factory import (
     RetrieverFactory,
     resolve_component_params,
@@ -53,7 +53,10 @@ from DashAI.back.models.RAG.retrievers.retriever_factory import (
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 from DashAI.back.models.RAG.utils import hash_function
 from DashAI.back.services.RAG.embedding_storage_service import EmbeddingStorageService
-from DashAI.back.services.RAG.retrieval_llm_service import RetrievalLLMService
+from DashAI.back.services.RAG.retrieval_llm_service import (
+    RetrievalLLMService,
+    RetrievalLLMServiceResult,
+)
 from DashAI.back.services.RAG.retriever_db_service import RetrieverDBService
 from DashAI.back.services.RAG.storage_layout import (
     EMBEDDINGS_DIRNAME,
@@ -136,6 +139,7 @@ class RetrieverSetupService:
         self._embedding_service = EmbeddingStorageService(
             env_RAG_path, self._db_service
         )
+        self._retrieval_llms: dict[int, RetrievalLLMServiceResult] = {}
 
     # ── Public API ─────────────────────────────────────────────────────
 
@@ -227,15 +231,19 @@ class RetrieverSetupService:
         Raises:
             RAGRetrieverEmptyChildrenError: If ``children`` is empty.
         """
-        children_configs = params.get("children", [])
+        children_configs = params.get(CHILDREN_KEY, [])
         if not children_configs:
             raise RAGRetrieverEmptyChildrenError(
                 "Composite retriever must have at least one child"
             )
         children = [self._setup_child(c) for c in children_configs]
+        own_params: dict[str, Any] = {}
+        for key, value in params.items():
+            if key != CHILDREN_KEY:
+                own_params[key] = value
         resolved_params = resolve_component_params(
             model_class,
-            {k: v for k, v in params.items() if k != "children"},
+            own_params,
             self._registry,
             llm_resolver=self._resolve_retrieval_llm,
         )
@@ -257,8 +265,9 @@ class RetrieverSetupService:
         """Return the composite bridge over these children, creating it if absent.
 
         The bridge is matched by class, pipeline and the ordered child bridge
-        ids. Creating a new root on every setup would make an unchanged index
-        look rebuilt, so the existing root is reused whenever there is one.
+        ids, and :meth:`RetrieverDBService.save_composite` returns the existing
+        root when there is one. Creating a new root on every setup would make an
+        unchanged index look rebuilt, so the existing root is reused.
 
         Args:
             class_name: The composite class name.
@@ -270,11 +279,6 @@ class RetrieverSetupService:
         Raises:
             SQLAlchemyError: If the lookup or the save fails.
         """
-        existing = self._db_service.find_composite(
-            class_name, self._pipeline_id, child_bridge_ids
-        )
-        if existing is not None:
-            return existing
         try:
             return self._db_service.save_composite(
                 class_name,
@@ -296,8 +300,16 @@ class RetrieverSetupService:
             params=child_config["params"],
         )
 
-    def _resolve_retrieval_llm(self, component_name: str, params: dict):
+    def _resolve_retrieval_llm(
+        self, component_name: str, params: dict
+    ) -> RetrievalLLMServiceResult:
         """Resolve a nested ``llm_model`` reference through the DB-backed service.
+
+        The lookup-or-create still runs for every reference, so the stored record
+        is found or created exactly as before. Identical configurations (same
+        ``db_record_id``) within this service share one lazy proxy, so sibling
+        retrievers that nest the same helper LLM load its backend once. Sharing
+        is safe because :class:`LazyLLM` reloads itself after ``close()``.
 
         Parameters
         ----------
@@ -314,7 +326,12 @@ class RetrieverSetupService:
             and released when the retriever's stage ends.
         """
         service = RetrievalLLMService(self._db, self._registry)
-        return service.get_or_create_lazy(component_name, params)
+        lookup = service.get_or_create_lazy(component_name, params)
+        shared = self._retrieval_llms.get(lookup.db_record_id)
+        if shared is None:
+            self._retrieval_llms[lookup.db_record_id] = lookup
+            return lookup
+        return shared
 
     # ── Private: Unit ──────────────────────────────────────────────────
 

@@ -318,8 +318,13 @@ class RetrieverDBService:
         Returns
         -------
         RetrieverDBModel
-            The persisted bridge record.
+            The persisted bridge record, or the existing one when the pipeline
+            already holds a composite of this class over the same ordered
+            children, so setting up the same composite every turn adds no rows.
         """
+        existing = self.find_composite(class_name, pipeline_id, child_bridge_ids)
+        if existing is not None:
+            return existing
         bridge_record = RetrieverDBModel(
             class_name=class_name,
             pipeline_id=pipeline_id,
