@@ -19,6 +19,10 @@ from typing import Any, Dict
 import pytest
 from fastapi.testclient import TestClient
 
+from DashAI.back.converters.hugging_face.text_embedding.base import (
+    BATCH_SIZE_FIELD,
+    DEVICE_FIELD,
+)
 from DashAI.back.converters.hugging_face.text_embedding.e5_mistral_gguf import (
     E5MistralGGUFEmbedding,
 )
@@ -636,6 +640,28 @@ def test_a_different_batch_size_makes_the_semantic_config_custom(client: TestCli
     )
 
 
+def test_a_different_device_makes_the_semantic_config_custom(client: TestClient):
+    """The preset match is strict on the device: another device is a custom config."""
+    preset = _preset(client, retriever_presets.SEMANTIC_PRESET_KEY)
+    recipe_device = preset["params"]["embedding_model"]["params"][DEVICE_FIELD]
+
+    assert recipe_device != _GPU_DEVICE
+    assert (
+        retriever_presets.match_preset_key(
+            preset["component"], preset["params"], _registry(client)
+        )
+        == retriever_presets.SEMANTIC_PRESET_KEY
+    )
+    assert (
+        retriever_presets.match_preset_key(
+            preset["component"],
+            _with_device(preset["params"], _GPU_DEVICE),
+            _registry(client),
+        )
+        is None
+    )
+
+
 @pytest.mark.parametrize(
     "children",
     [
@@ -1021,6 +1047,8 @@ _EMBEDDING_PARAMS: Dict[str, Any] = {
     "overflow_strategy": "truncate",
 }
 _EMBEDDING_REGISTRY = {"AllMiniLML6V2Embedding": {"class": AllMiniLML6V2Embedding}}
+#: A device other than the CPU label, used to show the device never keys a row.
+_GPU_DEVICE = "cuda:0"
 
 
 def _dense_params(embedding_params: Dict[str, Any]) -> Dict[str, Any]:
@@ -1214,6 +1242,150 @@ def test_changing_the_normalization_does_delete_a_dense_retriever(client: TestCl
         )
 
         assert db.get(RAGRetriever, bridge.id) is None
+
+
+# ── Embedding device ─────────────────────────────────────────────────────────
+
+
+def _with_device(params: Dict[str, Any], device: str) -> Dict[str, Any]:
+    """Return a configuration whose embedding model runs on *device*."""
+    embedding = params["embedding_model"]
+    return {
+        **params,
+        "embedding_model": {
+            **embedding,
+            "params": {**embedding["params"], DEVICE_FIELD: device},
+        },
+    }
+
+
+def _embedding_service(db) -> RetrieverSetupService:
+    """Return a setup service whose registry knows the MiniLM embedding class."""
+    return RetrieverSetupService(
+        db=db,
+        registry=_EMBEDDING_REGISTRY,
+        env_RAG_path="rag-root",
+        chunks={},
+        chunk_set_id=7,
+        pipeline_id=1,
+        chunking_key="test-chunking",
+    )
+
+
+@pytest.mark.parametrize(
+    "embedding_class",
+    [AllMiniLML6V2Embedding, DistilBERTEmbedding, E5MistralGGUFEmbedding],
+)
+def test_device_is_left_out_of_every_embedding_signature(embedding_class):
+    """The device only picks hardware, so every embedding converter ignores it."""
+    cpu = persistence_signature(embedding_class, {DEVICE_FIELD: "cpu"}, {})
+    gpu = persistence_signature(embedding_class, {DEVICE_FIELD: _GPU_DEVICE}, {})
+
+    assert cpu == gpu == {}
+
+
+def test_device_does_not_change_the_dense_signature():
+    """A device change keeps the dense identity; the normalization control differs."""
+    cpu = _dense_params(_EMBEDDING_PARAMS)
+    gpu = _dense_params({**_EMBEDDING_PARAMS, DEVICE_FIELD: _GPU_DEVICE})
+    unnormalized = _dense_params({**_EMBEDDING_PARAMS, "normalize": False})
+
+    signature = persistence_signature(DenseEmbeddingRetriever, gpu, _EMBEDDING_REGISTRY)
+
+    assert DEVICE_FIELD not in signature["embedding_model"]["params"]
+    assert signature == persistence_signature(
+        DenseEmbeddingRetriever, cpu, _EMBEDDING_REGISTRY
+    )
+    assert signature != persistence_signature(
+        DenseEmbeddingRetriever, unnormalized, _EMBEDDING_REGISTRY
+    )
+
+
+def test_device_resolves_to_the_same_embedding_model_row(orm_db):
+    """A device change keeps the stored row, so documents are not embedded again."""
+    service = _embedding_service(orm_db)
+    cpu = service._build_dense_persistence_for(_dense_params(_EMBEDDING_PARAMS))
+    gpu = service._build_dense_persistence_for(
+        _dense_params({**_EMBEDDING_PARAMS, DEVICE_FIELD: _GPU_DEVICE})
+    )
+    unnormalized = service._build_dense_persistence_for(
+        _dense_params({**_EMBEDDING_PARAMS, "normalize": False})
+    )
+
+    assert gpu.embedding_model_id == cpu.embedding_model_id
+    assert unnormalized.embedding_model_id != cpu.embedding_model_id
+
+
+def test_persisted_embedding_row_leaves_out_the_query_time_params(orm_db):
+    """The stored row keeps the vector-shaping options and drops batch and device."""
+    service = _embedding_service(orm_db)
+    persistence = service._build_dense_persistence_for(
+        _dense_params(
+            {**_EMBEDDING_PARAMS, BATCH_SIZE_FIELD: 8, DEVICE_FIELD: _GPU_DEVICE}
+        )
+    )
+    row = orm_db.get(RAGEmbeddingModel, persistence.embedding_model_id)
+    vector_params = {
+        name: value
+        for name, value in _EMBEDDING_PARAMS.items()
+        if name not in (BATCH_SIZE_FIELD, DEVICE_FIELD)
+    }
+
+    assert BATCH_SIZE_FIELD not in row.parameters
+    assert DEVICE_FIELD not in row.parameters
+    assert row.parameters == vector_params
+
+
+def test_legacy_embedding_row_with_query_time_params_is_not_reused(orm_db):
+    """A row stored with batch size and device misses the cache and stays in place."""
+    legacy = RAGEmbeddingModel(
+        class_name="AllMiniLML6V2Embedding", parameters=dict(_EMBEDDING_PARAMS)
+    )
+    orm_db.add(legacy)
+    orm_db.commit()
+    service = _embedding_service(orm_db)
+
+    first = service._build_dense_persistence_for(_dense_params(_EMBEDDING_PARAMS))
+    second = service._build_dense_persistence_for(_dense_params(_EMBEDDING_PARAMS))
+
+    created = orm_db.get(RAGEmbeddingModel, first.embedding_model_id)
+    assert first.embedding_model_id != legacy.id
+    assert BATCH_SIZE_FIELD not in created.parameters
+    assert DEVICE_FIELD not in created.parameters
+    assert orm_db.get(RAGEmbeddingModel, legacy.id) is not None
+    assert second.embedding_model_id == first.embedding_model_id
+
+
+def test_changing_the_device_does_not_delete_a_dense_retriever(client: TestClient):
+    """A device change keeps the fitted dense retriever and its embeddings."""
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        session_id = _insert_rag_session(
+            db, f"identity_device_{uuid.uuid4().hex[:6]}"
+        ).id
+        params = _dense_params(_EMBEDDING_PARAMS)
+        bridge, detail = _dense_retriever_state(db, session_id, params)
+        old_parameters = {
+            "documents": [],
+            "retriever_model": {
+                "component": "DenseEmbeddingRetriever",
+                "params": params,
+            },
+        }
+        new_parameters = {
+            "documents": [],
+            "retriever_model": {
+                "component": "DenseEmbeddingRetriever",
+                "params": _with_device(params, _GPU_DEVICE),
+            },
+        }
+
+        CleanupService(db, _registry(client)).cleanup_orphaned_resources(
+            session_id, old_parameters, new_parameters
+        )
+
+        assert db.get(RAGRetriever, bridge.id) is not None
+        assert db.get(RAGDenseRetriever, detail.id) is not None
 
 
 # ── Composite and nested signatures ──────────────────────────────────────────
