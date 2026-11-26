@@ -15,18 +15,19 @@ from DashAI.back.models.RAG.prompts.transformation.transformation_prompt import 
     QueryExpansionPrompt,
 )
 from DashAI.back.models.RAG.RAG_constants import (
+    N_QUERIES_KEY,
     RAG_PROGRESS_JUSTIFICATION_KEY,
     RAG_PROGRESS_MESSAGE_KEY,
 )
 from DashAI.back.models.RAG.transformation.llm_query_transformation import (
     LLMQueryTransformation,
-    LLMQueryTransformationSchema,
+    MultiQueryTransformationSchema,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class LLMQueryExpanderSchema(LLMQueryTransformationSchema):
+class LLMQueryExpanderSchema(MultiQueryTransformationSchema):
     """Schema for :class:`LLMQueryExpander`.
 
     Attributes:
@@ -144,7 +145,7 @@ class LLMQueryExpander(LLMQueryTransformation):
         prompt, llm_model, history_window
             Forwarded to :class:`LLMQueryTransformation`.
         """
-        self.n_queries = kwargs.pop("n_queries", 3)
+        self.n_queries = kwargs.pop(N_QUERIES_KEY, 3)
         super().__init__(**kwargs)
 
     def _render_prompt(self, message: str, history_block: str) -> str:

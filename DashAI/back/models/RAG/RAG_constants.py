@@ -57,6 +57,31 @@ RAG_OUTPUT_MESSAGE_TYPE = "str"
 
 RAG_WORKFLOW_NAME = "RAGWorkflow"
 
+# Trace entry marking the pool-reranking stage:
+# ``{"stage": TRACE_STAGE_RERANK, "reranker": <trace node>}``.
+TRACE_STAGE_RERANK = "rerank"
+
+# Key of the optional reranker retriever inside a multi-query transformer's
+# params.
+RERANKER_KEY = "reranker"
+
+# Key of the decomposition transformer's optional cap on its sub-queries;
+# an explicit ``None`` lifts the cap.
+MAX_SUBQUERIES_KEY = "max_subqueries"
+
+# Key of the expansion transformer's number of queries.
+N_QUERIES_KEY = "n_queries"
+
+# Transformer parameters that declare how many queries the stage emits. A stage
+# declaring none of them (a rewriter) hands retrieval a single query.
+QUERY_COUNT_KEYS = (N_QUERIES_KEY, MAX_SUBQUERIES_KEY)
+
+# Keys of a component reference (``{"component": name, "params": {...}}``) and
+# of a composite retriever's child list inside its params.
+COMPONENT_KEY = "component"
+PARAMS_KEY = "params"
+CHILDREN_KEY = "children"
+
 # Live stage progress
 # -------------------
 # While a RAG process runs, ``GenerativeProcess.progress`` holds exactly one of

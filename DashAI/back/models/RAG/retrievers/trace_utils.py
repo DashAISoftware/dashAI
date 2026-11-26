@@ -21,7 +21,6 @@ example cascade stages of a sequential retriever or re-rank candidates), so a
 missing reference resolves to nothing and is not an error.
 """
 
-import logging
 import re
 from typing import Any, Dict, List
 
@@ -29,8 +28,6 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.retrievers.ref_utils import is_component_ref
 from DashAI.back.models.RAG.retrievers.retrieval_contracts import SchemaSummary
-
-log = logging.getLogger(__name__)
 
 #: Text rendered when a representation placeholder cannot be resolved.
 _MISSING_VALUE = "—"
@@ -149,7 +146,7 @@ def _serialize_description(model: Any) -> Dict[str, str] | None:
 
 
 def _serialize_schema_summary(model: Any) -> SchemaSummary | None:
-    """Return the model's recursive schema summary, or ``None`` on failure.
+    """Return the model's recursive schema summary.
 
     Parameters
     ----------
@@ -159,22 +156,18 @@ def _serialize_schema_summary(model: Any) -> SchemaSummary | None:
     Returns
     -------
     SchemaSummary | None
-        The summary, or ``None`` when the model exposes no summary method or
-        raises while building it. Unexpected failures are logged so a broken
-        retriever does not degrade traces silently.
+        The summary, or ``None`` when the model exposes no summary method.
+
+    Raises
+    ------
+    Exception
+        Whatever the model's ``get_schema_summary`` raises: a broken summary
+        is a defect of the retriever and fails the trace explicitly.
     """
     getter = getattr(model, "get_schema_summary", None)
     if getter is None:
         return None
-    try:
-        return getter()
-    except Exception:  # noqa: BLE001 - a broken summary must not break the trace
-        log.warning(
-            "Failed to build the schema summary for %s.",
-            type(model).__name__,
-            exc_info=True,
-        )
-        return None
+    return getter()
 
 
 def chunk_ref(chunk: Chunk) -> str:

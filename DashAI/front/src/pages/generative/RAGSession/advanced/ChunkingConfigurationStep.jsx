@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { getChunkingComponents } from "../../../../api/rag";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
-import { resolveLabel } from "../../../../components/generative/RAG/QueryTransformationPicker";
+import { resolveLabel } from "../../../../utils/ragQueryTransformation";
 import {
   resolveDefaults,
   getModelFromSubform,

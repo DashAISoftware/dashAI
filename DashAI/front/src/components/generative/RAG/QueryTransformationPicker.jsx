@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Alert,
   Button,
+  CircularProgress,
   FormControlLabel,
   Stack,
   Switch,
@@ -11,105 +12,21 @@ import {
 import { useTranslation } from "react-i18next";
 import PresetCardList from "./PresetCardList";
 import QueryTransformationAdvancedModal from "../../../pages/generative/RAGSession/advanced/QueryTransformationAdvancedModal";
+import useQueryTransformationOptions from "../../../hooks/useQueryTransformationOptions";
 import {
-  getGeneratorComponents,
-  getQueryTransformationComponents,
-  getQueryTransformationPrompts,
-} from "../../../api/rag";
-
-/**
- * Reads the `llm_model` placeholder a transformer's schema declares.
- *
- * All transformation techniques share their schema, so the first component
- * carrying the placeholder carries the backend-declared default generator.
- *
- * @param {Array} transformers - The transformation components from the API.
- * @returns {string|null} The default generator name, or null when no schema
- *   declares one.
- */
-export function resolveDefaultGeneratorName(transformers) {
-  const declaring = (transformers || []).find(
-    (component) =>
-      component.schema?.properties?.llm_model?.placeholder?.component,
-  );
-  return declaring?.schema.properties.llm_model.placeholder.component ?? null;
-}
-
-/**
- * Resolves a component's display name or description, whether the API shipped
- * it as a localized string or as a multilingual object (legacy endpoints may
- * emit the raw object shape).
- *
- * @param {string|object|undefined} value - The multilingual or plain value.
- * @param {string} fallback - What to return when nothing resolvable is there.
- * @returns {string} A renderable plain string.
- */
-export function resolveLabel(value, fallback = "") {
-  if (!value) return fallback;
-  if (typeof value === "string") return value;
-  return value.en ?? value.es ?? fallsBackToFirstString(value, fallback);
-}
-
-/**
- * First string field of a multilingual object, or the fallback.
- * @param {object} value - A multilingual-shaped object.
- * @param {string} fallback - What to return when no field is a string.
- * @returns {string} The first string found, or the fallback.
- */
-function fallsBackToFirstString(value, fallback) {
-  const first = Object.values(value || {}).find(
-    (candidate) => typeof candidate === "string",
-  );
-  return typeof first === "string" ? first : fallback;
-}
-
-/**
- * Build the `{component, params}` reference a freshly enabled stage PUTs.
- *
- * The backend fills omitted defaults server-side, but it validates that
- * `llm_model` and `prompt` are present, so both are seeded here: the
- * backend-declared default generator (the transformation schema's
- * `llm_model` placeholder, resolved against the offered list) and the
- * technique's default prompt. Everything else is left out so the server
- * supplies it.
- *
- * @param {object} transformerComponent - The transformer component to enable.
- * @param {string} technique - Its `metadata.technique`, to pick the prompt.
- * @param {object|null} firstGenerator - The generator to prefill, if any.
- * @param {Array} prompts - The transformation prompts to choose from.
- * @returns {object} The `{component, params}` session parameter value.
- */
-export function buildQueryTransformationRef(
-  transformerComponent,
-  technique,
-  firstGenerator,
-  prompts,
-) {
-  const params = {};
-  if (firstGenerator) {
-    params.llm_model = { component: firstGenerator.name, params: {} };
-  }
-  const defaultPrompt = (prompts || []).find(
-    (prompt) =>
-      prompt.metadata?.technique === technique &&
-      prompt.metadata?.variant === "default",
-  );
-  if (defaultPrompt) {
-    params.prompt = {
-      component: defaultPrompt.name,
-      params: { language: "en" },
-    };
-  }
-  return { component: transformerComponent.name, params };
-}
+  canPersistQueryTransformationRef,
+  prepareEnableRef,
+  resolveDefaultGeneratorName,
+  resolveLabel,
+} from "../../../utils/ragQueryTransformation";
 
 /**
  * The optional query transformation stage, edited as a `{component, params}`
  * reference or `null` when disabled.
  *
  * Wears the retrieval card's shape: a technique card list over the resolution
- * API, with an advanced modal for the full reference. It owns its own option
- * loading so the panel only has to wire the section.
+ * API, with an advanced modal for the full reference. The options come from
+ * `useQueryTransformationOptions`, so the panel only has to wire the section.
  *
  * @param {object}   props
  * @param {object|null} props.value - The current stage ref, or null when off.
@@ -124,54 +41,17 @@ export default function QueryTransformationPicker({
   section,
 }) {
   const { t } = useTranslation(["generative"]);
-  const [transformers, setTransformers] = useState([]);
-  const [generators, setGenerators] = useState([]);
-  const [prompts, setPrompts] = useState([]);
-  const [loadingTransformers, setLoadingTransformers] = useState(true);
+  const { transformers, generators, prompts, loading, loadError } =
+    useQueryTransformationOptions();
+  const [blockMessage, setBlockMessage] = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
-
-  useEffect(() => {
-    getQueryTransformationComponents()
-      .then((data) => setTransformers(data || []))
-      .catch((error) =>
-        console.error("Failed to load query transformers:", error),
-      )
-      .finally(() => setLoadingTransformers(false));
-    getQueryTransformationPrompts()
-      .then((data) => setPrompts(data || []))
-      .catch((error) =>
-        console.error("Failed to load query transformation prompts:", error),
-      );
-    getGeneratorComponents()
-      .then((data) => setGenerators(data || []))
-      .catch((error) =>
-        console.error("Failed to load generation models:", error),
-      );
-  }, []);
 
   const enabled = value != null;
 
-  // The generator the ref points at, else the backend-declared default (the
-  // transformer schemas' `llm_model` placeholder), else the first downloaded
-  // one, else the first listed: pre-selecting one is what the backend
-  // requires on enable.
   const defaultGeneratorName = useMemo(
     () => resolveDefaultGeneratorName(transformers),
     [transformers],
   );
-  const firstGenerator = useMemo(() => {
-    const current = value?.params?.llm_model?.component;
-    return (
-      (current && generators.find((generator) => generator.name === current)) ||
-      (defaultGeneratorName &&
-        generators.find(
-          (generator) => generator.name === defaultGeneratorName,
-        )) ||
-      generators.find((generator) => generator.downloaded) ||
-      generators[0] ||
-      null
-    );
-  }, [generators, value, defaultGeneratorName]);
 
   const technique = useMemo(
     () =>
@@ -180,9 +60,6 @@ export default function QueryTransformationPicker({
     [transformers, value?.component],
   );
 
-  // The card list is per-technique, so a card is matched on the component
-  // alone: its `params` carry server-filled defaults that always differ from
-  // the `{}` a card seeds.
   const presets = useMemo(
     () =>
       transformers.map((component) => ({
@@ -195,25 +72,62 @@ export default function QueryTransformationPicker({
     [transformers],
   );
 
-  const enableWith = (transformer) =>
-    onChange(
-      buildQueryTransformationRef(
-        transformer,
-        transformer?.metadata?.technique,
-        firstGenerator,
-        prompts,
-      ),
-    );
+  /**
+   * Enables the stage with a transformer, or explains why it cannot be.
+   * @param {object} transformer - The transformer component to enable.
+   */
+  const enableWith = (transformer) => {
+    if (!transformer) {
+      setBlockMessage(
+        t("generative:rag.config.queryTransformation.noneAvailable"),
+      );
+      return;
+    }
+    const { ref, blockedBy } = prepareEnableRef({
+      transformer,
+      generators,
+      defaultGeneratorName,
+      prompts,
+    });
+    if (blockedBy) {
+      setBlockMessage(
+        t(`generative:rag.config.queryTransformation.${blockedBy}`),
+      );
+      return;
+    }
+    setBlockMessage(null);
+    onChange(ref);
+  };
 
+  /**
+   * Persists a ref edited in the advanced modal. Only a complete ref with a
+   * downloaded model is accepted; turning the stage off is always allowed.
+   * @param {object|null} ref - The edited stage ref, or null to disable.
+   */
+  const commitStage = (ref) => {
+    if (ref && !canPersistQueryTransformationRef(ref, generators)) return;
+    onChange(ref);
+  };
+
+  /**
+   * Enables the stage with the technique a card stands for.
+   * @param {object} preset - The selected technique card.
+   */
   const handleSelect = (preset) => {
-    const transformer =
-      transformers.find((component) => component.name === preset.component) ||
-      preset;
+    const transformer = transformers.find(
+      (component) => component.name === preset.component,
+    );
+    if (!transformer) {
+      setBlockMessage(
+        t("generative:rag.config.queryTransformation.unknownComponent", {
+          component: preset.component,
+        }),
+      );
+      return;
+    }
     enableWith(transformer);
   };
 
-  // An enabled component the registry does not know about: the saved section
-  // reports it unregistered, and a freshly chosen one is absent from the list.
   const unregistered =
     enabled &&
     section?.registered !== true &&
@@ -226,7 +140,10 @@ export default function QueryTransformationPicker({
           <Switch
             size="small"
             checked={enabled}
-            disabled={transformers.length === 0}
+            disabled={
+              !enabled &&
+              (loading || Boolean(loadError) || transformers.length === 0)
+            }
             onChange={(event) =>
               event.target.checked
                 ? enableWith(transformers[0])
@@ -237,7 +154,30 @@ export default function QueryTransformationPicker({
         label={t("generative:rag.config.queryTransformation.enable")}
       />
 
-      {!loadingTransformers && transformers.length === 0 && (
+      {loading && (
+        <Stack direction="row" spacing={1} alignItems="center">
+          <CircularProgress size={14} />
+          <Typography variant="caption" color="text.secondary">
+            {t("common:loading")}
+          </Typography>
+        </Stack>
+      )}
+
+      {loadError && (
+        <Alert severity="error" sx={{ py: 0.5 }}>
+          {t("generative:rag.config.queryTransformation.loadFailed", {
+            reason: loadError,
+          })}
+        </Alert>
+      )}
+
+      {blockMessage && !loading && !loadError && (
+        <Alert severity="warning" sx={{ py: 0.5 }}>
+          {blockMessage}
+        </Alert>
+      )}
+
+      {!loading && !loadError && transformers.length === 0 && (
         <Typography variant="caption" color="text.secondary">
           {t("generative:rag.config.queryTransformation.noneAvailable")}
         </Typography>
@@ -247,12 +187,14 @@ export default function QueryTransformationPicker({
         presets={presets}
         activeKey={enabled ? value?.component : null}
         onSelect={handleSelect}
+        disabled={loading || Boolean(loadError)}
       />
 
       {unregistered && (
         <Alert severity="info" sx={{ py: 0.5 }}>
-          {value?.component}:{" "}
-          {t("generative:rag.config.queryTransformation.unknownComponent")}
+          {t("generative:rag.config.queryTransformation.unknownComponent", {
+            component: value?.component,
+          })}
         </Alert>
       )}
 
@@ -266,14 +208,16 @@ export default function QueryTransformationPicker({
         {t("generative:rag.config.queryTransformation.advanced")}
       </Button>
 
-      <QueryTransformationAdvancedModal
-        open={showAdvanced}
-        onClose={() => setShowAdvanced(false)}
-        model={value}
-        setModel={onChange}
-        technique={technique}
-        generators={generators}
-      />
+      {enabled && (
+        <QueryTransformationAdvancedModal
+          open={showAdvanced}
+          onClose={() => setShowAdvanced(false)}
+          model={value}
+          setModel={commitStage}
+          technique={technique}
+          generators={generators}
+        />
+      )}
     </Stack>
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { Box, Stack } from "@mui/material";
 import useFormSchema from "../../../hooks/useFormSchema";
@@ -7,9 +7,24 @@ import FormSchemaParameterContainer from "../../shared/FormSchemaParameterContai
 import FormSchemaRenderFields from "../../shared/FormSchemaRenderFields";
 import PromptFieldCard from "./PromptFieldCard";
 import RagLlmModelField, { LLM_MODEL_PARENT } from "./RagLlmModelField";
+import RagRetrieverComponentField, {
+  retrieverFieldInfo,
+} from "./RagRetrieverComponentField";
 import { isPromptFieldSchema } from "./promptSchema";
 import { getSchemaRules } from "../../../utils/schema";
+import {
+  OPTIMIZE_PLACEHOLDER_KEY,
+  SCHEMA_TYPE_OBJECT,
+} from "../../../constants/rag";
 import { evaluateRules } from "../../../utils/ruleEngine";
+
+/** The renderer that draws a run of consecutive schema fields. */
+const SEGMENT_KIND = Object.freeze({
+  PROMPT: "prompt",
+  LLM: "llm",
+  RETRIEVER: "retriever",
+  FIELDS: "fields",
+});
 
 /** Matches FormSchemaRenderFields' own default spacing. */
 const FIELD_SPACING = 1;
@@ -31,11 +46,25 @@ function isLlmModelFieldSchema(fieldSchema) {
   // Mirror FormSchemaRenderFields' precedence: an optimizer or union field is
   // never rendered by the generic nested-component branch either.
   return Boolean(
-    fieldSchema?.type === "object" &&
+    fieldSchema?.type === SCHEMA_TYPE_OBJECT &&
     fieldSchema?.parent === LLM_MODEL_PARENT &&
-    fieldSchema?.placeholder?.optimize === undefined &&
+    fieldSchema?.placeholder?.[OPTIMIZE_PLACEHOLDER_KEY] === undefined &&
     !fieldSchema?.anyOf,
   );
+}
+
+/**
+ * The message a retriever field's card shows: the rules' message, else the
+ * form's own string error.
+ *
+ * @param {string|undefined} rulesMessage - The message from the schema rules.
+ * @param {*} fieldError - The form's error for the field.
+ * @returns {string|undefined} The message, or undefined when there is none.
+ */
+function retrieverFieldError(rulesMessage, fieldError) {
+  if (rulesMessage) return rulesMessage;
+  if (typeof fieldError === "string") return fieldError;
+  return undefined;
 }
 
 /**
@@ -50,18 +79,22 @@ function isLlmModelFieldSchema(fieldSchema) {
  * @param {string[]} keys - Renderable schema keys, in declaration order.
  * @param {Set<string>} promptKeys - The subset of keys holding a prompt ref.
  * @param {Set<string>} llmKeys - The subset of keys holding a nested LLM ref.
- * @returns {Array<{kind: "prompt"|"llm"|"fields", keys: string[]}>} The ordered
- *   segments.
+ * @param {Set<string>} retrieverKeys - The subset of keys holding a retriever
+ *   ref, optional or not.
+ * @returns {Array<{kind: string, keys: string[]}>} The ordered segments, each
+ *   of one `SEGMENT_KIND`.
  */
-function buildFieldSegments(keys, promptKeys, llmKeys) {
+function buildFieldSegments(keys, promptKeys, llmKeys, retrieverKeys) {
   const segments = [];
 
   for (const key of keys) {
-    let kind = "fields";
+    let kind = SEGMENT_KIND.FIELDS;
     if (promptKeys.has(key)) {
-      kind = "prompt";
+      kind = SEGMENT_KIND.PROMPT;
     } else if (llmKeys.has(key)) {
-      kind = "llm";
+      kind = SEGMENT_KIND.LLM;
+    } else if (retrieverKeys.has(key)) {
+      kind = SEGMENT_KIND.RETRIEVER;
     }
     const current = segments[segments.length - 1];
     if (current && current.kind === kind) {
@@ -104,6 +137,9 @@ function buildFieldSegments(keys, promptKeys, llmKeys) {
  * @param {string[]} [props.excludeFields] - Fields the caller renders itself.
  * @param {Function} [props.promptFilter] - `(fieldName, option) => boolean`
  *   deciding which prompt components a prompt field offers.
+ * @param {Function} [props.onRetrieversCompleteChange] - Receives `false` while
+ *   a retriever field holds a composite without children, `true` otherwise, so
+ *   the owner can keep its Done/Save action disabled.
  * @returns {JSX.Element} The schema form with prompt cards.
  */
 function FormSchemaWithPrompts({
@@ -122,6 +158,7 @@ function FormSchemaWithPrompts({
   hideButtons = false,
   excludeFields = EMPTY_FIELDS,
   promptFilter,
+  onRetrieversCompleteChange,
 }) {
   const { formik, modelSchema, handleUpdateSchema } = useFormSchema({
     model,
@@ -151,15 +188,50 @@ function FormSchemaWithPrompts({
     [orderedKeys, modelSchema],
   );
 
+  const retrieverKeys = useMemo(
+    () => orderedKeys.filter((key) => retrieverFieldInfo(modelSchema?.[key])),
+    [orderedKeys, modelSchema],
+  );
+
   const segments = useMemo(
     () =>
       buildFieldSegments(
         orderedKeys,
         new Set(promptKeys),
         new Set(llmModelKeys),
+        new Set(retrieverKeys),
       ),
-    [orderedKeys, promptKeys, llmModelKeys],
+    [orderedKeys, promptKeys, llmModelKeys, retrieverKeys],
   );
+
+  const [incompleteRetrievers, setIncompleteRetrievers] = useState(
+    () => new Set(),
+  );
+  const validityHandlers = useRef({});
+  /**
+   * The validity callback of one retriever field. It is created once per key so
+   * the field's effects do not re-run on every render.
+   * @param {string} key - The retriever field name.
+   * @returns {function(boolean): void} Marks the field complete or incomplete.
+   */
+  const handleRetrieverValidity = (key) => {
+    if (!validityHandlers.current[key]) {
+      validityHandlers.current[key] = (valid) =>
+        setIncompleteRetrievers((prev) => {
+          if (valid === !prev.has(key)) return prev;
+          const next = new Set(prev);
+          if (valid) next.delete(key);
+          else next.add(key);
+          return next;
+        });
+    }
+    return validityHandlers.current[key];
+  };
+
+  const retrieversComplete = incompleteRetrievers.size === 0;
+  useEffect(() => {
+    onRetrieversCompleteChange?.(retrieversComplete);
+  }, [retrieversComplete, onRetrieversCompleteChange]);
 
   // The same relevance pass `FormSchemaRenderFields` runs for every other
   // field: a prompt card or nested LLM has to honour "hide"/"omit" and
@@ -242,6 +314,43 @@ function FormSchemaWithPrompts({
   };
 
   /**
+   * Draw one retriever field (selector, inline tree for composites), or
+   * nothing when the schema rules take it away.
+   *
+   * @param {string} key - The field name.
+   * @returns {JSX.Element|null} The retriever field.
+   */
+  const renderRetrieverField = (key) => {
+    const presentation = fieldPresentation(key);
+    if (!presentation) return null;
+    const { fieldSchema, description, disabled } = presentation;
+    const info = retrieverFieldInfo(fieldSchema);
+    const fieldError = formik.errors?.[key];
+
+    return (
+      <RagRetrieverComponentField
+        key={key}
+        name={key}
+        parent={info.parent}
+        label={fieldSchema.title ?? key}
+        description={description}
+        errorMessage={retrieverFieldError(
+          errorsMessage?.[key]?.message,
+          fieldError,
+        )}
+        nullable={info.nullable}
+        placeholder={fieldSchema.placeholder}
+        disabled={disabled}
+        field={{
+          value: formik.values?.[key],
+          onChange: (value) => handleEmbeddedFieldChange(key, value),
+        }}
+        onValidityChange={handleRetrieverValidity(key)}
+      />
+    );
+  };
+
+  /**
    * Draw one nested LLM field, or nothing when the schema rules take it away.
    *
    * @param {string} key - The field name.
@@ -283,11 +392,14 @@ function FormSchemaWithPrompts({
       <FormSchemaParameterContainer showBorder={showBorder}>
         <Stack spacing={FIELD_SPACING}>
           {segments.map((segment) => {
-            if (segment.kind === "prompt") {
+            if (segment.kind === SEGMENT_KIND.PROMPT) {
               return segment.keys.map((key) => renderPromptCard(key));
             }
-            if (segment.kind === "llm") {
+            if (segment.kind === SEGMENT_KIND.LLM) {
               return segment.keys.map((key) => renderLlmModelField(key));
+            }
+            if (segment.kind === SEGMENT_KIND.RETRIEVER) {
+              return segment.keys.map((key) => renderRetrieverField(key));
             }
             return (
               <FormSchemaRenderFields
@@ -341,6 +453,7 @@ FormSchemaWithPrompts.propTypes = {
   hideButtons: PropTypes.bool,
   excludeFields: PropTypes.arrayOf(PropTypes.string),
   promptFilter: PropTypes.func,
+  onRetrieversCompleteChange: PropTypes.func,
 };
 
 export default FormSchemaWithPrompts;

@@ -17,11 +17,13 @@ from DashAI.back.core.schema_fields import (
     BaseSchema,
     component_field,
     int_field,
+    none_type,
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.exceptions import (
     RAGTransformationConfigError,
+    RAGTransformationGenerationError,
     RAGTransformationOutputError,
 )
 from DashAI.back.models.RAG.progress_utils import (
@@ -36,11 +38,13 @@ from DashAI.back.models.RAG.RAG_constants import (
     RAG_PROGRESS_JUSTIFICATION_KEY,
     RAG_PROGRESS_MESSAGE_KEY,
     RAG_PROGRESS_STAGE_TRANSFORMING,
+    RERANKER_KEY,
 )
 from DashAI.back.models.RAG.RAG_defaults import (
     DEFAULT_FUNCTION_CALL_MAX_TRIALS,
     MAX_FUNCTION_CALL_TRIALS,
     default_function_calling_llm,
+    default_query_reranker,
 )
 from DashAI.back.models.RAG.transformation.base_query_transformation import (
     BaseQueryTransformation,
@@ -208,6 +212,55 @@ class LLMQueryTransformationSchema(BaseSchema):
     ) = DEFAULT_FUNCTION_CALL_MAX_TRIALS  # type: ignore
 
 
+class MultiQueryTransformationSchema(LLMQueryTransformationSchema):
+    """Schema for transformers that emit several queries (decomposition, expansion).
+
+    Adds the optional reranker, which only makes sense when more than one
+    query's results have to be merged. Query rewriting emits a single query and
+    uses :class:`LLMQueryTransformationSchema` directly.
+
+    Attributes:
+        reranker: Optional chunk scorer applied to the merged multi-query pool.
+    """
+
+    # Intentional Pydantic default: persisted session configs created before
+    # the reranker existed keep validating and run without reranking. The
+    # placeholder is what new stages store. When set, the reranker is any
+    # retriever: it scores the merged multi-query pool against the original
+    # user message and keeps its own top-k.
+    reranker: schema_field(
+        none_type(component_field(parent="ChunkScorer")),
+        placeholder=default_query_reranker(),
+        description=MultilingualString(
+            en="Optional chunk scorer that reorders the merged chunks of every"
+            " transformed query against the original user message and keeps its"
+            " top-k. Only retrievers that can score chunks are offered; choose"
+            " null to disable reranking.",
+            es="Recuperador opcional que reordena los fragmentos fusionados de cada"
+            " consulta transformada según el mensaje original del usuario y conserva"
+            " su top-k. Puede ser cualquier recuperador; elige null para desactivar"
+            " el reordenamiento.",
+            pt="Recuperador opcional que reordena os fragmentos mesclados de cada"
+            " consulta transformada em relação à mensagem original do usuário e"
+            " mantém seu top-k. Pode ser qualquer recuperador; escolha null para"
+            " desativar o reordenamento.",
+            de="Optionaler Retriever, der die zusammengeführten Chunks aller"
+            " transformierten Anfragen anhand der ursprünglichen Benutzernachricht"
+            " ordnet und sein top-k behält. Jeder Retriever ist möglich; null"
+            " wählen, um das Reranking zu deaktivieren.",
+            zh="可选的检索器，根据原始用户消息对每个转换查询合并后的块进行重新排序，"
+            "并保留其 top-k。可以使用任意检索器；选择 null 以禁用重排序。",
+        ),
+        alias=MultilingualString(
+            en="Reranker",
+            es="Reordenador",
+            pt="Reordenador",
+            de="Reranker",
+            zh="重排序器",
+        ),
+    ) = None
+
+
 class LLMQueryTransformation(BaseQueryTransformation):
     """Shared implementation for the LLM-backed transformers.
 
@@ -274,6 +327,9 @@ class LLMQueryTransformation(BaseQueryTransformation):
         function_call_max_trials : int, optional
             Maximum number of function-call attempts, the first call included.
             Defaults to :data:`DEFAULT_FUNCTION_CALL_MAX_TRIALS`.
+        reranker : ChunkScorer, optional
+            Retriever the pipeline uses to reorder the merged multi-query pool.
+            Defaults to ``None`` (no reranking).
 
         Raises
         ------
@@ -287,6 +343,7 @@ class LLMQueryTransformation(BaseQueryTransformation):
         self.function_call_max_trials = kwargs.pop(
             "function_call_max_trials", DEFAULT_FUNCTION_CALL_MAX_TRIALS
         )
+        self.reranker = kwargs.pop(RERANKER_KEY, None)
         if self.prompt is None:
             raise RAGTransformationConfigError(
                 "A prompt instance is required to build a query transformer; "
@@ -355,9 +412,10 @@ class LLMQueryTransformation(BaseQueryTransformation):
         RAGTransformationConfigError
             If the function-calling route is selected but misconfigured, or the
             prompt/model prerequisites are missing.
+        RAGTransformationGenerationError
+            If the function-calling backend failed to emit a call.
         RAGTransformationOutputError
-            If the model produced no usable output or the function-calling
-            backend failed to emit a call.
+            If the model produced no usable output.
         """
         history_block = format_history(history, self.history_window)
         arguments = self._obtain_arguments(message, history_block)
@@ -446,18 +504,23 @@ class LLMQueryTransformation(BaseQueryTransformation):
         RAGTransformationConfigError
             If the technique declares no function spec, or the model reports
             function-calling support without implementing it.
+        RAGTransformationGenerationError
+            If the function-calling backend raised before emitting a call.
         RAGTransformationOutputError
-            If the backend failed to emit a call, the model did not call the
-            expected function, or it returned arguments that are not a JSON
-            object. Retried up to ``function_call_max_trials`` attempts; the
-            last error is raised once the attempts are exhausted.
+            If the model did not call the expected function, or it returned
+            arguments that are not a JSON object. Retried up to
+            ``function_call_max_trials`` attempts; the last error is raised
+            once the attempts are exhausted.
         """
         spec = self._function_call_spec()
         messages = [{"role": "user", "content": prompt_text}]
         for attempt in range(1, self.function_call_max_trials):
             try:
                 return self._attempt_function_call(messages, spec)
-            except RAGTransformationOutputError as err:
+            except (
+                RAGTransformationOutputError,
+                RAGTransformationGenerationError,
+            ) as err:
                 logger.warning(
                     "Function-calling attempt %d of %d failed for %s; retrying: %s",
                     attempt,
@@ -514,8 +577,11 @@ class LLMQueryTransformation(BaseQueryTransformation):
         RAGTransformationConfigError
             If the model reports support but implements no function-calling
             method.
+        RAGTransformationGenerationError
+            If the backend failed to emit a call.
         RAGTransformationOutputError
-            If the backend failed or returned an unusable call.
+            If the returned call is unusable (wrong function, non-object
+            arguments or an unexpected result shape).
         """
         try:
             result = self.llm_model.generate_function_call(
@@ -528,11 +594,11 @@ class LLMQueryTransformation(BaseQueryTransformation):
                 "not implement generate_function_call."
             ) from err
         except Exception as err:
-            # Normalize every backend failure (RuntimeError/ValueError raised by
-            # the base implementations, or unexpected KeyError/TypeError from a
-            # drifted backend) so RAG_pipeline's RAGTransformationError handling
-            # degrades the chat turn gracefully.
-            raise RAGTransformationOutputError(
+            # The backend was reached but failed to emit a call. Keep this
+            # distinct from an unparseable output so callers can tell a broken
+            # model/backend from a model that answered in the wrong shape. The
+            # cause chain preserves the original exception for diagnostics.
+            raise RAGTransformationGenerationError(
                 f"Function calling failed: {err}"
             ) from err
         return self._validate_function_call_result(result)

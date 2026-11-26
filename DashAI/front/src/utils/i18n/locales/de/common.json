@@ -1,5 +1,6 @@
 {
   "actions": "Aktionen",
+  "copyFailed": "Kopieren fehlgeschlagen: {{reason}}",
   "copy": "Kopieren",
   "copied": "Kopiert",
   "holdout": "Zurückgehalten",
@@ -300,5 +301,21 @@
     "document": "Dokument",
     "localExplainer": "Erklaerung_lokal",
     "globalExplainer": "Erklaerung_global"
-  }
+  },
+  "componentTree": {
+    "configureNode": "Komponente konfigurieren",
+    "addChild": "Kindkomponente hinzufügen",
+    "removeNode": "Komponente entfernen",
+    "selectComponent": "Komponente",
+    "parameters": "Parameter",
+    "containerNote": "Diese Komponente enthält andere Komponenten. Ihre Kindkomponenten werden im Baum außerhalb dieses Dialogs konfiguriert.",
+    "loadFailed": "Die Komponenten konnten nicht geladen werden: {{reason}}",
+    "unknownComponent": "Die Komponente {{component}} ist nicht verfügbar, daher kann ihr Baum nicht angezeigt werden.",
+    "unknownChild": "Die Komponente {{component}} ist nicht verfügbar. Ersetze oder entferne sie vor dem Speichern.",
+    "configureNodeNamed": "Komponente {{name}} konfigurieren",
+    "noSchema": "Die Komponente {{component}} hat kein Konfigurationsschema und kann nicht ausgewählt werden.",
+    "formUnavailable": "Das Einstellungsformular ist noch nicht bereit. Versuche es gleich noch einmal."
+  },
+  "component": "Komponente",
+  "null": "Null"
 }

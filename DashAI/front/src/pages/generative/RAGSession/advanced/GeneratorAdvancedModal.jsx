@@ -3,7 +3,7 @@ import { Button } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
 import GeneratorConfigurationStep from "./GeneratorConfigurationStep";
-import RAGAdvancedDialog from "./RAGAdvancedDialog";
+import RAGAdvancedDialog from "../../../../components/shared/RAGAdvancedDialog";
 
 /**
  * Full-screen modal dialog for advanced generator (LLM) configuration.

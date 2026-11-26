@@ -39,6 +39,8 @@ def _transformer(queries, message="", justification=""):
     result.message = message
     result.justification = justification
     transformer.transform.return_value = result
+    # A MagicMock would otherwise expose an auto-created, truthy reranker.
+    transformer.reranker = None
     return transformer
 
 
@@ -53,6 +55,8 @@ def _legacy_transformer(queries):
     """A transformer stub whose result predates the narrative fields."""
     transformer = MagicMock()
     transformer.transform.return_value = _LegacyTransformationResult(queries)
+    # A MagicMock would otherwise expose an auto-created, truthy reranker.
+    transformer.reranker = None
     return transformer
 
 

@@ -83,6 +83,9 @@ def _reset_recording() -> None:
 class _ProxyTransformer:
     """Transformer whose model call goes through its lazy proxy."""
 
+    #: Stage contract: no pool reranker means no reranking after retrieval.
+    reranker = None
+
     def __init__(
         self,
         llm_model: LazyLLM,

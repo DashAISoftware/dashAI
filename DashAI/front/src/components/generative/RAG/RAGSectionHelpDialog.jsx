@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { Alert, Box, Button, Divider, Stack, Typography } from "@mui/material";
-import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
+import RAGAdvancedDialog from "../../shared/RAGAdvancedDialog";
 
 /**
  * Translation root of every help string. Kept as one constant because the
