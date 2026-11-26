@@ -1819,3 +1819,28 @@ class Credential(Base):
         default=datetime.now,
         onupdate=datetime.now,
     )
+
+
+class LoadedModel(Base):
+    """A model the job worker currently keeps loaded in memory.
+
+    The worker writes one row per cached model and the API reads them, since
+    both live in different processes.
+    """
+
+    __tablename__ = "loaded_model"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    worker_pid: Mapped[int] = mapped_column(Integer, nullable=False)
+    slot: Mapped[str] = mapped_column(String, nullable=False)
+    key: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    label: Mapped[str] = mapped_column(String, nullable=False)
+    load_params: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    ram_bytes: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    gpu_bytes: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    loaded_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    last_used_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    in_use: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    unload_requested: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )

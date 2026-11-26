@@ -9,6 +9,7 @@ from DashAI.back.converters.document.image_captioning import (
 from DashAI.back.converters.document.item_filter import DocumentItemFilter
 from DashAI.back.converters.document.language_filter import LanguageFilter
 from DashAI.back.converters.document.ocr import OCRConverter
+from DashAI.back.converters.document.surya_ocr import SuryaOCRConverter
 from DashAI.back.converters.document.text_splitter import TextSplitter
 
 # Hugging Face module
@@ -85,6 +86,7 @@ from DashAI.back.converters.simple_converters.column_remover import ColumnRemove
 from DashAI.back.converters.simple_converters.date_features import (
     DateFeaturesConverter,
 )
+from DashAI.back.converters.simple_converters.date_range import DateRangeConverter
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
 from DashAI.back.converters.simple_converters.numeric_expansion import NumericExpansion
 from DashAI.back.converters.simple_converters.regex_replacer import RegexReplacer
@@ -1007,12 +1009,14 @@ def get_initial_components():
         TextSplitter,
         LanguageFilter,
         OCRConverter,
+        SuryaOCRConverter,
         ImageCaptioningConverter,
         Summarizer,
         ColumnArithmetic,
         ColumnConcat,
         NumericExpansion,
         DateFeaturesConverter,
+        DateRangeConverter,
         TimeResamplerConverter,
         TimeSeriesWindowConverter,
         TypeCast,

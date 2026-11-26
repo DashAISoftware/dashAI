@@ -15,6 +15,13 @@ from sqlalchemy.orm import Session
 from DashAI.back.dependencies.database.models import (
     RAGGenerationModel as GenerationDBModel,
 )
+from DashAI.back.dependencies.model_cache import (
+    cache_key,
+    close_object,
+    get_model_cache,
+    split_params,
+    validated_generation_params,
+)
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.lazy_llm import LazyLLM
 from DashAI.back.models.RAG.exceptions import (
@@ -48,8 +55,16 @@ def _build_lazy_factory(
     registry: ComponentRegistry,
     component_name: str,
     params: dict[str, Any],
-) -> Callable[[], TextToTextGenerationTaskModel]:
+) -> tuple[
+    Callable[[], TextToTextGenerationTaskModel],
+    Callable[[Any], None] | None,
+]:
     """Capture the construction inputs for a :class:`LazyLLM`.
+
+    For a cacheable class the factory, inside an active job scope, acquires the
+    ``llm`` slot of the model cache and applies this stage's generation
+    parameters to the (possibly reused) model. Outside a job scope, or for a
+    non-cacheable class, the model is built and closed as usual.
 
     Parameters
     ----------
@@ -62,16 +77,52 @@ def _build_lazy_factory(
 
     Returns
     -------
-    Callable[[], TextToTextGenerationTaskModel]
-        Zero-argument factory that builds the real model.
+    tuple
+        ``(factory, release)``. ``factory`` builds the real model. ``release``
+        takes over the model on ``LazyLLM.close`` and is ``None`` for classes
+        that are not cacheable, so the model is closed directly.
     """
     class_name = component_name
     captured_params = dict(params)
+    try:
+        model_class = registry[class_name]["class"]
+    except KeyError:
+        model_class = None
+    cacheable = bool(getattr(model_class, "CACHEABLE", False))
+    entries: dict[int, Any] = {}
 
-    def _create() -> TextToTextGenerationTaskModel:
+    def _build() -> TextToTextGenerationTaskModel:
         return RAGModelsFactory(registry).create_llm(class_name, captured_params).model
 
-    return _create
+    def _create() -> TextToTextGenerationTaskModel:
+        cache = get_model_cache()
+        if not cache.in_job_scope():
+            return _build()
+        if not cacheable:
+            cache.clear("non_cacheable_model", slot="llm")
+            return _build()
+        load_params, _ = split_params(model_class, captured_params)
+        entry = cache.acquire(
+            "llm",
+            cache_key(model_class, load_params),
+            _build,
+            label=class_name,
+            load_params=load_params,
+        )
+        entry.obj.set_generation_params(
+            **validated_generation_params(model_class, captured_params)
+        )
+        entries[id(entry.obj)] = entry
+        return entry.obj
+
+    def _release(model: Any) -> None:
+        entry = entries.pop(id(model), None)
+        if entry is None:
+            close_object(model)
+        else:
+            get_model_cache().release(entry)
+
+    return _create, (_release if cacheable else None)
 
 
 class LLMService:
@@ -382,10 +433,14 @@ class LLMService:
             db_record_id = db_record.id
 
         lazy_class = cast(type[TextToTextGenerationTaskModel], model_class)
+        factory, release = _build_lazy_factory(
+            self._registry, class_name, effective_params
+        )
         lazy_model = LazyLLM(
-            _build_lazy_factory(self._registry, class_name, effective_params),
+            factory,
             label=class_name,
             supports_function_calling=lazy_class.supports_function_calling(),
+            release=release,
         )
         return self._result_class(
             db_record_id=db_record_id,

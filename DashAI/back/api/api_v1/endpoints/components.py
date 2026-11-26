@@ -37,6 +37,12 @@ def _delete_class(component_dict: Dict[str, Any]) -> Dict[str, Any]:
     return {key: value for key, value in component_dict.items() if key != "class"}
 
 
+def _runs_in_session(component_dict: Dict[str, Any]) -> bool:
+    """Whether a session can run a component; any non-converter can."""
+    runs_in_session = getattr(component_dict.get("class"), "runs_in_session", None)
+    return runs_in_session() if callable(runs_in_session) else True
+
+
 @router.get("/")
 @inject
 async def get_components(
@@ -47,6 +53,7 @@ async def get_components(
     component_parent: Union[str, None] = None,
     has_related_of_type: Union[str, None] = None,
     data_kind: Annotated[Union[Literal["dataset", "document"], None], Query()] = None,
+    in_session: bool = False,
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ) -> List[Dict[str, Any]]:
     """Retrieve components from the register according to the provided parameters.
@@ -86,6 +93,10 @@ async def get_components(
         If specified, the function returns only the components whose metadata
         lists that data kind. Components without data kinds (models, tasks)
         are left out, by default None.
+    in_session : bool, optional
+        If True, converters a model session cannot run are left out
+        (``BaseConverter.runs_in_session``). The session's converter catalog
+        asks for it; other components pass untouched, by default False.
     component_registry: ComponentRegistry
         Registry that provides metadata and class references for the
         components available in DashAI.
@@ -196,6 +207,13 @@ async def get_components(
             for name, component_dict in selected_components.items()
             if data_kind
             in ((component_dict.get("metadata") or {}).get("data_kinds") or [])
+        }
+
+    if in_session:
+        selected_components = {
+            name: component_dict
+            for name, component_dict in selected_components.items()
+            if _runs_in_session(component_dict)
         }
 
     # Reconcile the download state of download required components against the

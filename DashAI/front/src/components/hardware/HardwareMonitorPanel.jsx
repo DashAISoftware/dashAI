@@ -4,14 +4,8 @@ import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import Chip from "@mui/material/Chip";
 import { useTranslation } from "react-i18next";
-
-function formatBytes(bytes) {
-  if (bytes === null || bytes === undefined) return "N/A";
-  const gb = bytes / (1024 * 1024 * 1024);
-  if (gb >= 1) return `${gb.toFixed(1)} GB`;
-  const mb = bytes / (1024 * 1024);
-  return `${mb.toFixed(0)} MB`;
-}
+import { formatBytes } from "./formatBytes";
+import LoadedModelsSection from "./LoadedModelsSection";
 
 function UsageBar({ label, value, detail, color = "primary" }) {
   const percent = value ?? 0;
@@ -44,12 +38,15 @@ function UsageBar({ label, value, detail, color = "primary" }) {
   );
 }
 
+// Fixed so the popover does not shift when the loaded models arrive.
+const PANEL_WIDTH = 400;
+
 export default function HardwareMonitorPanel({ stats, connected }) {
   const { t } = useTranslation(["common"]);
 
   if (!connected || !stats) {
     return (
-      <Box sx={{ p: 8, minWidth: 320 }}>
+      <Box sx={{ p: 8, width: PANEL_WIDTH, maxWidth: "100%" }}>
         <Typography variant="body2" color="text.secondary" textAlign="center">
           {t("common:hardwareMonitor.connecting")}
         </Typography>
@@ -60,7 +57,7 @@ export default function HardwareMonitorPanel({ stats, connected }) {
   const { cpu, ram, gpus } = stats;
 
   return (
-    <Box sx={{ p: 4, minWidth: 320, maxWidth: 400 }}>
+    <Box sx={{ p: 4, width: PANEL_WIDTH, maxWidth: "100%" }}>
       <Typography variant="subtitle2" gutterBottom>
         {t("common:hardwareMonitor.cpu")}
         {cpu.frequency_mhz != null && (
@@ -125,7 +122,9 @@ export default function HardwareMonitorPanel({ stats, connected }) {
               />
               {gpu.memory_percent != null && (
                 <UsageBar
-                  label={`VRAM · ${formatBytes(gpu.memory_used)} / ${formatBytes(gpu.memory_total)}`}
+                  label={`VRAM · ${formatBytes(
+                    gpu.memory_used,
+                  )} / ${formatBytes(gpu.memory_total)}`}
                   value={gpu.memory_percent}
                   color="warning"
                 />
@@ -134,6 +133,9 @@ export default function HardwareMonitorPanel({ stats, connected }) {
           ))}
         </>
       )}
+
+      <Divider sx={{ my: 6 }} />
+      <LoadedModelsSection tick={stats} />
     </Box>
   );
 }

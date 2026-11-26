@@ -416,6 +416,7 @@
     "cardinalityMax": "Dieser Converter akzeptiert höchstens {{max}} Spalten, ausgewählt sind {{selected}}.",
     "rows_not_supported": "Converter, die die Zeilenanzahl ändern, sind in Sitzungen noch nicht verfügbar.",
     "changes_rows": "Diese Aufgabe liest ihre Zeilen in zeitlicher Reihenfolge und nimmt daher keinen Converter, der Zeilen entfernt oder hinzufügt. Füllen Sie Lücken stattdessen mit einem Imputer.",
+    "notebook_only": "Dieser Converter läuft nur in einem Notizbuch: Eine Sitzung transformiert jede Aufteilung für sich. Wenden Sie ihn zuerst in einem Notizbuch auf den Datensatz an.",
     "n_components_exceeds": "Es werden {{n_components}} Komponenten angefordert, aber nur {{columns}} Spalten sind ausgewählt.",
     "unknown_converter": "Der Converter \"{{converter}}\" ist nicht verfügbar.",
     "invalid_params": "Ungültige Parameter: {{detail}}",
