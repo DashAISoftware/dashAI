@@ -214,6 +214,18 @@ def client(test_path: Path):
     _mark_download_required_components_present(app)
 
     test_client = TestClient(app)
+    # Every route outside /auth needs a session, so the client starts logged
+    # in as a member
+    response = test_client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": "testmember",
+            "email": "testmember@example.com",
+            "password": "secret-pass-123",
+            "social_name": "Test Member",
+        },
+    )
+    assert response.status_code == 201, response.text
     yield test_client
 
     if job_queue and isinstance(job_queue, HueyJobQueue):

@@ -11,6 +11,7 @@ import { useSharedDatasets } from "../../contexts/DatasetsContext";
 import { useSessions } from "../../hooks/models/useSessions";
 import { useModelComponents } from "../../hooks/models/useModelComponents";
 import { useJobTracker } from "../../hooks/useJobPolling";
+import { useSession } from "../../pages/profile/mem-utils/SessionContext";
 const ModelsContext = createContext(null);
 
 export const useModels = () => useContext(ModelsContext);
@@ -23,6 +24,7 @@ export const OptionsEnum = Object.freeze({
 
 export function ModelsProvider({ children }) {
   const { t, i18n } = useTranslation(["models", "datasets", "common"]);
+  const { user } = useSession();
 
   const {
     datasets,
@@ -157,12 +159,16 @@ export function ModelsProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    // Without a session (as on the login page) the API answers 401; the
+    // provider is mounted again once the user logs in (see ProjectScope)
+    if (!user) return;
     // Datasets are fetched by the shared DatasetsProvider on its own mount;
     // fetching them here too would duplicate GET /datasets on every app boot.
     fetchSessions();
   }, []);
 
   useEffect(() => {
+    if (!user) return;
     fetchTasks();
   }, [i18n.language]);
 

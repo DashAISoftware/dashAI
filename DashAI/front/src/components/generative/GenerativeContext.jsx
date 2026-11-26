@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useSessions } from "../../hooks/generative/useSessions";
+import { useSession } from "../../pages/profile/mem-utils/SessionContext";
 const GenerativeContext = createContext(null);
 
 export const useGenerative = () => useContext(GenerativeContext);
@@ -17,6 +18,7 @@ export const useGenerative = () => useContext(GenerativeContext);
  */
 export function GenerativeProvider({ children, sessionFilter }) {
   const { t, i18n } = useTranslation(["generative", "common"]);
+  const { user } = useSession();
 
   const {
     selectedSessionId,
@@ -41,10 +43,14 @@ export function GenerativeProvider({ children, sessionFilter }) {
   const [openSections, setOpenSections] = useState({});
 
   useEffect(() => {
+    // Without a session (as on the login page) the API answers 401; the
+    // provider is mounted again once the user logs in (see ProjectScope)
+    if (!user) return;
     fetchSessions();
   }, [fetchSessions]);
 
   useEffect(() => {
+    if (!user) return;
     fetchTasks();
   }, [i18n.language]);
 

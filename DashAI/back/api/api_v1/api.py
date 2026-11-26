@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from DashAI.back.api.api_v1.endpoints.app_config import router as app_config
 from DashAI.back.api.api_v1.endpoints.auth import router as auth
@@ -35,34 +35,44 @@ from DashAI.back.api.api_v1.endpoints.statistical_tests import (
     router as statistical_tests,
 )
 from DashAI.back.api.api_v1.endpoints.system import router as system
+from DashAI.back.auth.dependencies import get_current_user
+
+# Every route needs a session, including the websockets (refused with 401
+# before they are accepted). Endpoints that check permissions still ask for
+# the user themselves; FastAPI resolves it once per request.
+private = APIRouter(dependencies=[Depends(get_current_user)])
+private.include_router(converters, prefix="/converter")
+private.include_router(components, prefix="/component")
+private.include_router(datasets, prefix="/dataset")
+private.include_router(documents, prefix="/document")
+private.include_router(model_sessions, prefix="/model-session")
+private.include_router(explainers, prefix="/explainer")
+private.include_router(reports, prefix="/report")
+private.include_router(explorers, prefix="/explorer")
+private.include_router(jobs, prefix="/job")
+private.include_router(runs, prefix="/run")
+private.include_router(predict, prefix="/predict")
+private.include_router(generative_session, prefix="/generative-session")
+private.include_router(generative_process, prefix="/generative-process")
+private.include_router(pipelines, prefix="/pipelines")
+private.include_router(plugins, prefix="/plugin")
+private.include_router(prompts, prefix="/prompt")
+private.include_router(notebook, prefix="/notebook")
+private.include_router(metrics, prefix="/metrics")
+private.include_router(hardware, prefix="/hardware")
+private.include_router(dataset_source, prefix="/dataset-source")
+private.include_router(datafile_router, prefix="/datafile")
+private.include_router(statistical_tests, prefix="/statistical-tests")
+private.include_router(folders, prefix="/folder")
+private.include_router(credentials, prefix="/credential")
+private.include_router(rag, prefix="/rag")
+private.include_router(system, prefix="/system")
+private.include_router(projects, prefix="/project")
 
 api_router_v1 = APIRouter()
-api_router_v1.include_router(converters, prefix="/converter")
-api_router_v1.include_router(components, prefix="/component")
-api_router_v1.include_router(datasets, prefix="/dataset")
-api_router_v1.include_router(documents, prefix="/document")
-api_router_v1.include_router(model_sessions, prefix="/model-session")
-api_router_v1.include_router(explainers, prefix="/explainer")
-api_router_v1.include_router(reports, prefix="/report")
-api_router_v1.include_router(explorers, prefix="/explorer")
-api_router_v1.include_router(jobs, prefix="/job")
-api_router_v1.include_router(runs, prefix="/run")
-api_router_v1.include_router(predict, prefix="/predict")
-api_router_v1.include_router(generative_session, prefix="/generative-session")
-api_router_v1.include_router(generative_process, prefix="/generative-process")
-api_router_v1.include_router(pipelines, prefix="/pipelines")
-api_router_v1.include_router(plugins, prefix="/plugin")
-api_router_v1.include_router(prompts, prefix="/prompt")
-api_router_v1.include_router(notebook, prefix="/notebook")
-api_router_v1.include_router(metrics, prefix="/metrics")
-api_router_v1.include_router(hardware, prefix="/hardware")
-api_router_v1.include_router(dataset_source, prefix="/dataset-source")
-api_router_v1.include_router(datafile_router, prefix="/datafile")
-api_router_v1.include_router(statistical_tests, prefix="/statistical-tests")
-api_router_v1.include_router(folders, prefix="/folder")
-api_router_v1.include_router(credentials, prefix="/credential")
-api_router_v1.include_router(rag, prefix="/rag")
-api_router_v1.include_router(system, prefix="/system")
+api_router_v1.include_router(private)
+# The only routes open without a session, used by the login and register
+# screens. Inside /auth, the routes about the current account (/me,
+# /logout-all, /change-password) ask for the session themselves.
 api_router_v1.include_router(app_config, prefix="/app-config")
 api_router_v1.include_router(auth, prefix="/auth")
-api_router_v1.include_router(projects, prefix="/project")
