@@ -12,10 +12,20 @@ from packaging.version import Version
 
 logger = logging.getLogger(__name__)
 
-try:
-    import llama_cpp
-except ImportError:
-    llama_cpp = None
+
+def _get_llama_cpp():
+    """Import ``llama_cpp`` on first use, or return ``None`` if not installed.
+
+    The import is deliberately lazy: in a CUDA build, importing ``llama_cpp``
+    before ``torch`` makes torch skip its NCCL preload and ``import torch``
+    then fails with "undefined symbol: ncclCommShrink". Importing this module
+    must therefore never import ``llama_cpp`` (see issue #1043).
+    """
+    try:
+        import llama_cpp
+    except ImportError:
+        return None
+    return llama_cpp
 
 
 # llama_log_callback signature: void (*)(ggml_log_level level,
@@ -445,13 +455,14 @@ def _capturing_log_cb(level, msg, user_data):
 
 
 def _lib_dir() -> Path:
-    return Path(os.path.dirname(llama_cpp.__file__)) / "lib"
+    return Path(os.path.dirname(_get_llama_cpp().__file__)) / "lib"
 
 
 @lru_cache(maxsize=1)
 def _load_llama_lib():
     """Load llama.dll and install our own log callback so CUDA init output
     can be captured in _log_capture instead of printed to the real stderr."""
+    llama_cpp = _get_llama_cpp()
     if llama_cpp is None:
         return None
     lib = llama_cpp.llama_cpp.load_shared_library("llama", _lib_dir())
@@ -468,7 +479,7 @@ def _load_llama_lib():
 @lru_cache(maxsize=1)
 def _all_ggml_libs() -> tuple:
     """Load every shared lib in llama_cpp/lib/ so backend symbols are reachable."""
-    if llama_cpp is None:
+    if _get_llama_cpp() is None:
         return ()
     if sys.platform.startswith("win"):
         patterns = ("*.dll",)
@@ -582,7 +593,7 @@ def get_llama_gpu_devices_formatted() -> list[str]:
     """GPU device strings visible to llama_cpp (not torch).
     Example: ["GPU 0: NVIDIA GeForce RTX 5080 - Compute Capability 12.0"]
     """
-    if llama_cpp is None:
+    if _get_llama_cpp() is None:
         return []
 
     try:
@@ -620,6 +631,7 @@ def is_gpu_available_for_llama_cpp() -> bool:
         ``True`` if GPU offloading is available; ``False`` if ``llama-cpp-python``
         is not installed or if the check raises an unexpected exception.
     """
+    llama_cpp = _get_llama_cpp()
     if llama_cpp is None:
         return False
     try:
@@ -665,5 +677,5 @@ def __is_gpu_available_for_llama_cpp_v02() -> bool:
         ``True`` if the ``ggml_init_cublas`` attribute is found in the loaded
         library, ``False`` otherwise.
     """
-    lib = llama_cpp.llama_cpp._load_shared_library("llama")
+    lib = _get_llama_cpp().llama_cpp._load_shared_library("llama")
     return hasattr(lib, "ggml_init_cublas")

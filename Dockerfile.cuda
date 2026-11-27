@@ -29,21 +29,38 @@ COPY --from=ghcr.io/astral-sh/uv:0.11 /uv /bin/uv
 
 # cuda extra = cu128 torch wheels + llama-cpp-python compiled with CUDA offload
 COPY pyproject.toml uv.lock ./
-ENV UV_PROJECT_ENVIRONMENT=/opt/venv
-ENV CMAKE_ARGS="-DGGML_CUDA=on"
+# Pin a uv-managed interpreter and install it under /opt/python so the
+# runtime stage can copy it next to the venv (the venv symlinks point at it).
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
+    UV_PYTHON=3.12 \
+    UV_PYTHON_PREFERENCE=only-managed \
+    UV_PYTHON_INSTALL_DIR=/opt/python
+# Build llama.cpp kernels for several GPU generations instead of only the
+# build host's GPU: T4 (75), A100 (80), A10/RTX 30xx (86), L4/RTX 40xx (89),
+# plus PTX for 89 so newer cards can JIT compile.
+ENV CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES=75-real;80-real;86-real;89-real;89-virtual"
 RUN uv sync --locked --extra cuda --no-dev --no-install-project --no-cache
 
 # -------- Stage 3: runtime (CUDA runtime, no build tools) --------
 FROM nvidia/cuda:12.8.0-runtime-ubuntu22.04
 WORKDIR /app
 
+# libgomp1: OpenMP runtime required by every llama-cpp-python shared library
 RUN apt-get update && apt-get install -y \
-    python3 \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# copy the resolved virtualenv only (not build tools)
+# copy the managed interpreter and the resolved virtualenv (not build tools)
+COPY --from=builder /opt/python /opt/python
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
+
+# libtorch_cuda.so has no DT_NEEDED entry for libnccl and relies on torch
+# preloading it, which is skipped when llama_cpp is imported first
+# ("undefined symbol: ncclCommShrink"). Preload it explicitly.
+RUN ln -s "$(ls /opt/venv/lib/python3.*/site-packages/nvidia/nccl/lib/libnccl.so.2)" \
+    /usr/local/lib/libnccl.so.2
+ENV LD_PRELOAD=/usr/local/lib/libnccl.so.2
 
 # application code
 COPY . .

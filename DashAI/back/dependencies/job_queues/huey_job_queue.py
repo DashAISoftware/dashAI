@@ -462,17 +462,12 @@ class HueyJobQueue(BaseJobQueue):
         if self._worker_proc is not None and self._worker_proc.is_alive():
             return
 
-        # A worker killed by a cancel or a crash leaves its rows behind
-        try:
-            from kink import di
-
-            from DashAI.back.dependencies.model_cache_status import (
-                clear_loaded_models,
-            )
-
-            clear_loaded_models(di["session_factory"])
-        except Exception:
-            log.exception("Could not clear stale loaded model rows")
+        # A worker killed by a cancel or a crash leaves its rows behind. The
+        # first worker has nothing to clear: the app clears the table right
+        # after running migrations, and since this consumer starts alongside
+        # the app, on a fresh database the table may not exist yet.
+        if self._worker_proc is not None:
+            self._clear_model_rows()
 
         ctx = multiprocessing.get_context("spawn")
         self._worker_in_q = ctx.Queue()
