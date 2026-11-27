@@ -68,6 +68,16 @@ class FitModelOverNestedFoldsUnit(FitModelOverFoldsUnit):
     That also means the inner trials record nothing: their partitions belong to
     one outer fold, and rows from them would sit alongside rows describing the
     kept model as if they were comparable.
+
+    References
+    ----------
+    - Varma, S., & Simon, R. (2006). Bias in Error Estimation When Using
+      Cross-Validation for Model Selection. BMC Bioinformatics, 7, 91.
+    - Cawley, G. C., & Talbot, N. L. C. (2010). On Over-fitting in Model
+      Selection and Subsequent Selection Bias in Performance Evaluation.
+      Journal of Machine Learning Research, 11, 2079-2107.
+    - Raschka, S. (2020). Model Evaluation, Model Selection, and Algorithm
+      Selection in Machine Learning. arXiv:1811.12808.
     """
 
     SCHEMA = FitModelOverNestedFoldsSchema

@@ -44,6 +44,26 @@ class CrossValidationEvaluationStrategy(FoldEvaluationStrategy):
     The ordinary cross-validation evaluation. Not offered for
     ``SingleSeriesForecastingTask``, whose folds have no in-sample score to report;
     ``ForecastingCrossValidationEvaluationStrategy`` handles that.
+
+    References
+    ----------
+    - Kohavi, R. (1995). A Study of Cross-Validation and Bootstrap for
+      Accuracy Estimation and Model Selection. Proceedings of the 14th
+      International Joint Conference on Artificial Intelligence (IJCAI),
+      1137-1143.
+    - Hastie, T., Tibshirani, R., & Friedman, J. (2009). The Elements of
+      Statistical Learning (2nd ed.), ch. 7: Model Assessment and Selection.
+      Springer.
+    - James, G., Witten, D., Hastie, T., & Tibshirani, R. (2021). An
+      Introduction to Statistical Learning (2nd ed.), ch. 5: Resampling
+      Methods. Springer.
+    - Raschka, S. (2020). Model Evaluation, Model Selection, and Algorithm
+      Selection in Machine Learning. arXiv:1811.12808.
+    - Cawley, G. C., & Talbot, N. L. C. (2010). On Over-fitting in Model
+      Selection and Subsequent Selection Bias in Performance Evaluation.
+      Journal of Machine Learning Research, 11, 2079-2107.
+    - Varma, S., & Simon, R. (2006). Bias in Error Estimation When Using
+      Cross-Validation for Model Selection. BMC Bioinformatics, 7, 91.
     """
 
     DESCRIPTION = MultilingualString(
