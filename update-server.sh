@@ -106,5 +106,5 @@ success "Service restarted."
 echo ""
 echo -e "${GREEN}✓ DashAI updated successfully.${NC}"
 if [[ -f "$ENV_LOCAL" ]]; then
-  echo -e "  API URL: ${CYAN}$(grep VITE_API_URL"$ENV_LOCAL" | cut -d= -f2-)${NC}"
+  echo -e "  API URL: ${CYAN}$(grep VITE_API_URL "$ENV_LOCAL" | cut -d= -f2-)${NC}"
 fi
