@@ -6,7 +6,7 @@ definitions in ``pipeline`` and the execution tracking in ``pipeline_run``,
 or writes them. The downgrade recreates them empty.
 
 Revision ID: b1e5c3a7d9f2
-Revises: d8f3b1c6e2a4
+Revises: 83bd5b526fac
 Create Date: 2026-11-24 00:00:00.000000
 """
 
@@ -17,7 +17,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "b1e5c3a7d9f2"
-down_revision: Union[str, None] = "d8f3b1c6e2a4"
+down_revision: Union[str, None] = "83bd5b526fac"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
