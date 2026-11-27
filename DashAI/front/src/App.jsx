@@ -8,7 +8,6 @@ import {
   Routes,
 } from "react-router-dom";
 import { TourRegistryProvider } from "./contexts/TourRegistryContext";
-import ModuleThemeWrapper from "./components/ModuleThemeWrapper";
 
 import "./App.css";
 import DatasetsPage from "./pages/datasets/Datasets";

@@ -24,12 +24,8 @@ export default function FormConverterSection({
   const [targetColumn, setTargetColumn] = useState(null);
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
-  const {
-    explorersAndConverters,
-    setExplorersAndConverters,
-    setColumnTypes,
-    setLastAddedItemId,
-  } = useExplorersAndConverters();
+  const { setExplorersAndConverters, setColumnTypes, setLastAddedItemId } =
+    useExplorersAndConverters();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["common", "datasets"]);
 

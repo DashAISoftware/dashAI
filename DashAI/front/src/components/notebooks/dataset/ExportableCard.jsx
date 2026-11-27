@@ -135,7 +135,6 @@ export default function ExportableCard({
     URL.revokeObjectURL(url);
   }, [exportData, filename]);
 
-  const hasChart = true; // Charts are detected at runtime
   const hasData = Boolean(exportData);
 
   return (

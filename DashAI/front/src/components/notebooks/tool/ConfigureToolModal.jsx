@@ -17,7 +17,6 @@ import DatasetTable from "../dataset/DatasetTable";
 import api from "../../../api/api";
 import { getDatasetFile, getDatasetFileFiltered } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
-import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import DocumentComposition from "../documentNotebook/DocumentComposition";
 import { isDocumentNotebook } from "../notebookColumns";

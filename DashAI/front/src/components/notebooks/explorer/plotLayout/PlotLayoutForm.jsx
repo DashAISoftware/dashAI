@@ -61,8 +61,6 @@ const PlotLayoutForm = memo(function PlotLayoutForm({
     ? activeSection
     : "general";
 
-  if (!layout) return null;
-
   const handleTraceChange = useCallback(
     (index, path, value) => {
       const newData = [...data];
@@ -113,6 +111,8 @@ const PlotLayoutForm = memo(function PlotLayoutForm({
     },
     [layout, setLayout],
   );
+
+  if (!layout) return null;
 
   const renderActiveTrace = () => {
     const idx = parseInt(validSection.split("-")[1], 10);

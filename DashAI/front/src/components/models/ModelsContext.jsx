@@ -92,7 +92,6 @@ export function ModelsProvider({ children }) {
   const [configOpen, setConfigOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [activeRunId, setActiveRunId] = useState(null);
-  const [selectedOption, setSelectedOption] = useState(OptionsEnum.NEW);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [datasetTab, setDatasetTab] = useState(0);
   const [sessionRightContent, setSessionRightContent] = useState(null);

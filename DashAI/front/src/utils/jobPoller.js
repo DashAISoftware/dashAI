@@ -1,4 +1,4 @@
-import { getJobs, getJobStatus, isQueueEmpty, getJobChanges } from "../api/job";
+import { getJobs, isQueueEmpty, getJobChanges } from "../api/job";
 
 const POLL_INTERVAL = 1000; // Default polling interval (2 seconds)
 
@@ -268,7 +268,7 @@ export function cleanupJobPoller() {
   }
 
   // Clear all job watcher intervals
-  for (const [jobId, watcher] of state.jobWatchers.entries()) {
+  for (const watcher of state.jobWatchers.values()) {
     if (watcher.intervalId) {
       clearInterval(watcher.intervalId);
     }

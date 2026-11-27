@@ -52,7 +52,6 @@ function HubContentInner() {
     addDownload,
     updateDownload,
     downloads: contextDownloads,
-    deleteDownloadById,
   } = useDatasetsAndNotebooks();
   const { sourceName: sourceNameParam } = useParams();
   const threePanelLayout = useThreePanelLayout({ storageKey: "datasets" });
@@ -60,7 +59,6 @@ function HubContentInner() {
   useTourStageSync(tourContext, sourceNameParam ? "grid" : "source");
 
   const [sources, setSources] = useState([]);
-  const [sourcesLoading, setSourcesLoading] = useState(true);
   const [selectedDataset, setSelectedDataset] = useState(null);
 
   const [pendingSource, setPendingSource] = useState(null);
@@ -78,8 +76,7 @@ function HubContentInner() {
   useEffect(() => {
     getComponents({ selectTypes: "DatasetSource" })
       .then(setSources)
-      .catch(() => setSources([]))
-      .finally(() => setSourcesLoading(false));
+      .catch(() => setSources([]));
   }, [t]);
 
   // Reset dataset selection when source changes
@@ -172,20 +169,6 @@ function HubContentInner() {
     } finally {
       setDownloadLoading(false);
     }
-  };
-
-  const handleDeleteDownload = async (downloadId) => {
-    const name = contextDownloads.find((d) => d.id === downloadId)?.name ?? "";
-    const success = await deleteDownloadById(downloadId);
-    if (success) {
-      enqueueSnackbar(t("hub:deleteSuccess", { name }), { variant: "success" });
-    } else {
-      enqueueSnackbar(t("hub:deleteError"), { variant: "error" });
-    }
-  };
-
-  const handleImportDownload = (dl) => {
-    navigate(`/app/data/hub/import/${dl.id}`);
   };
 
   const handleOpenSource = (source) => {

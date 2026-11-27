@@ -36,7 +36,7 @@ function FormSchema({
   hideButtons = false,
   excludeFields = [],
 }) {
-  const { formik, modelSchema, loading, handleUpdateSchema } = useFormSchema({
+  const { formik, modelSchema, handleUpdateSchema } = useFormSchema({
     model,
     initialValues,
     formSubmitRef,

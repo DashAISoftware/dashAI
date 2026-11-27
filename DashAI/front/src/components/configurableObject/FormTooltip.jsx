@@ -9,30 +9,33 @@ import ReactMarkdown from "react-markdown";
  * providing users with additional information to better understand the purpose of each input field.
  * @param {string} contentStr content of the tooltip that describes the parameter
  */
+function TooltipParagraph({ children }) {
+  return <span style={{ margin: 0 }}>{children}</span>;
+}
+
+function TooltipLink({ href, children }) {
+  return (
+    <Link
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      color="inherit"
+      underline="always"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {children}
+    </Link>
+  );
+}
+
+const MARKDOWN_COMPONENTS = { p: TooltipParagraph, a: TooltipLink };
+
 function FormTooltip({ contentStr = "", error }) {
   return (
     <Tooltip
       title={
         <Typography variant="body2" component="div">
-          <ReactMarkdown
-            components={{
-              p: ({ children }) => (
-                <span style={{ margin: 0 }}>{children}</span>
-              ),
-              a: ({ href, children }) => (
-                <Link
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  color="inherit"
-                  underline="always"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {children}
-                </Link>
-              ),
-            }}
-          >
+          <ReactMarkdown components={MARKDOWN_COMPONENTS}>
             {contentStr}
           </ReactMarkdown>
         </Typography>
@@ -46,6 +49,15 @@ function FormTooltip({ contentStr = "", error }) {
     </Tooltip>
   );
 }
+
+TooltipParagraph.propTypes = {
+  children: PropTypes.node,
+};
+
+TooltipLink.propTypes = {
+  href: PropTypes.string,
+  children: PropTypes.node,
+};
 
 FormTooltip.propTypes = {
   contentStr: PropTypes.string,

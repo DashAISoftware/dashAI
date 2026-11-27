@@ -53,7 +53,6 @@ function ColumnSelector({
 }) {
   const [rows, setRows] = useState([]);
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
-  const [datasetColumns, setDatasetColumns] = useState([]);
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
   const localization = useTableLocalization();
@@ -153,7 +152,6 @@ function ColumnSelector({
 
     if (columnTypes !== null) {
       const cols = toColumns(columnTypes);
-      setDatasetColumns(cols);
       setRows(cols);
       return;
     }
@@ -164,7 +162,6 @@ function ColumnSelector({
         const types = await getDatasetTypesByFilePath(file_path);
         if (!isMounted) return;
         const cols = toColumns(types);
-        setDatasetColumns(cols);
         setRows(cols);
       } catch (error) {
         console.error("Error fetching dataset info/types:", error);

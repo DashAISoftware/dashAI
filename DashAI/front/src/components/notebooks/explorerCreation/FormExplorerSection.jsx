@@ -33,11 +33,8 @@ export default function FormExplorerSection({
     },
   });
 
-  const {
-    explorersAndConverters,
-    setExplorersAndConverters,
-    setLastAddedItemId,
-  } = useExplorersAndConverters();
+  const { setExplorersAndConverters, setLastAddedItemId } =
+    useExplorersAndConverters();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["datasets", "common"]);
 

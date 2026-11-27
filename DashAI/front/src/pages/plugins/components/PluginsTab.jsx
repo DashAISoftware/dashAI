@@ -8,6 +8,7 @@ import usePluginsTab from "../hooks/usePluginsTab";
 import { Update as UpdateIcon } from "@mui/icons-material";
 import { updatePluginsDBFromPypi as updatePluginsFromPypi } from "../../../api/plugins";
 import { useTranslation } from "react-i18next";
+import { useSnackbar } from "notistack";
 
 /**
  * component to display plugins main tabs
@@ -22,6 +23,7 @@ function PluginsTab({ refreshPluginsFlag, setRefreshPluginsFlag }) {
       setRefreshPluginsFlag,
     });
   const { t } = useTranslation(["plugins"]);
+  const { enqueueSnackbar } = useSnackbar();
 
   return (
     <Box sx={{ width: "100%" }}>

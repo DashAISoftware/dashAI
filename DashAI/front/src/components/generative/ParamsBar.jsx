@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Box, Typography, Button, IconButton, Divider } from "@mui/material";
+import { Box, Typography, Button, IconButton } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useFormik } from "formik";
 import FormSchemaRenderFields from "../shared/FormSchemaRenderFields";
@@ -41,9 +41,18 @@ export default function ParamsBar({ onToggle }) {
   };
 
   useEffect(() => {
-    if (!selectedSessionId) return;
-    getHistory();
-  }, []);
+    if (!selectedSessionId) {
+      setHistory([]);
+      return undefined;
+    }
+    let cancelled = false;
+    getHistoryBySessionId(selectedSessionId).then((response) => {
+      if (!cancelled) setHistory(response);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSessionId]);
 
   useEffect(() => {
     if (!selectedSessionId) return;

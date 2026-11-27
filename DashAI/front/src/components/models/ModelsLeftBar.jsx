@@ -20,11 +20,6 @@ export default function ModelsLeftBar({ onToggle }) {
   const {
     deleteSessionById,
     deleteSessionsByIds,
-    setSelectedSessionId,
-    setSelectedSession,
-    setSelectedTask,
-    setStep,
-    selectDataset,
     datasets,
     selectedDatasetId,
     replaceDatasets,

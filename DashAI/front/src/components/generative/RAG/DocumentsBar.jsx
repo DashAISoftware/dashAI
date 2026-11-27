@@ -15,11 +15,9 @@ import {
 import LibraryAddIcon from "@mui/icons-material/LibraryAdd";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import DescriptionIcon from "@mui/icons-material/Description";
 import { useTheme } from "@mui/material/styles";
 import { useSnackbar } from "notistack";
-import SearchBar from "../../threeSectionLayout/SearchBar";
 import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
 import DocumentGroupList from "./DocumentGroupList";
 import DocumentPreviewModal from "./DocumentPreviewModal";
@@ -65,7 +63,7 @@ export default function DocumentsBar({
 
   const [documents, setDocuments] = useState([]);
   const [status, setStatus] = useState(LOAD_STATUS.LOADING);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);

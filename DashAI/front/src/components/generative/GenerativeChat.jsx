@@ -1,5 +1,4 @@
 import { Box, Button, Divider, IconButton, Typography } from "@mui/material";
-import InfoIcon from "@mui/icons-material/Info";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { ChatBubble } from "./ChatBubble";
@@ -34,13 +33,9 @@ import VpnKeyOutlinedIcon from "@mui/icons-material/VpnKeyOutlined";
 import { useSnackbar } from "notistack";
 import { getApiErrorMessage } from "../../utils/apiError";
 import { MediaInput } from "./MediaInput";
-import JobQueueWidget from "../jobs/JobQueueWidget";
-import { getRunStatus } from "../../utils/runStatus";
-import TemplateModal from "../custom/TemplateModal";
 import SourcesDisplay from "./SourcesDisplay";
 import { Trans, useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
-import { useTheme } from "@mui/material/styles";
 import {
   parseRAGTraceRow,
   resolveRAGProgressText,
@@ -90,8 +85,6 @@ export default function GenerativeChat({
   generatorName,
   onProcessSettled,
 }) {
-  const theme = useTheme();
-
   const {
     selectedSessionId: sessionId,
     selectedTaskName: taskName,
@@ -124,7 +117,6 @@ export default function GenerativeChat({
   const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative", "credentials"]);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const pollingProcessIdsRef = useRef(new Set());
 
   const scrollToBottom = (force = false) => {
@@ -137,12 +129,6 @@ export default function GenerativeChat({
     if (force || distanceFromBottom <= 100) {
       el.scrollTop = el.scrollHeight;
     }
-  };
-
-  const isAtBottom = () => {
-    if (!chatContainerRef.current) return true;
-    const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
-    return Math.abs(scrollHeight - clientHeight - scrollTop) < 5; // 5px threshold
   };
 
   const handleScroll = () => {
@@ -238,7 +224,6 @@ export default function GenerativeChat({
 
   const handleSendMessage = (input) => {
     setIsLoadingMessage(true);
-    setShouldAutoScroll(true); // Enable auto-scroll when sending new message
 
     // Without the error handling the composer stays disabled forever and says
     // nothing. A RAG session starts with no documents, so the backend refusing
@@ -288,7 +273,6 @@ export default function GenerativeChat({
   };
 
   const handleRetryFailed = (processId) => {
-    setShouldAutoScroll(true);
     retryProcessById(processId)
       .then((process) => {
         setMessages((prev) =>
@@ -413,7 +397,6 @@ export default function GenerativeChat({
         // Look for the Dict type output that contains reference information
         const referenceItem = referenceRow;
         if (referenceItem) {
-          console.log("Raw reference data:", referenceItem.data);
           try {
             // The data might be a Python dict string, try to parse it as JSON
             let dataStr = referenceItem.data;
@@ -429,7 +412,6 @@ export default function GenerativeChat({
                 .replace(/None/g, "null"); // Replace Python None with JSON null
             }
 
-            console.log("Processed data string:", dataStr);
             const parsedData = JSON.parse(dataStr);
             referenceOutput = parsedData;
           } catch (e) {
@@ -443,7 +425,6 @@ export default function GenerativeChat({
                   /(\d+):\s*\{\s*['"]?document_id['"]?\s*:\s*(\d+).*?['"]?document_name['"]?\s*:\s*['"]([^'"]*)['"]\s*.*?['"]?document_position['"]?\s*:\s*(\d+).*?['"]?text['"]?\s*:\s*['"]([^'"]*)['"]/gs,
                 ),
               ];
-              console.log("Regex matches for references:", matches);
 
               if (matches.length > 0) {
                 referenceOutput = {};
@@ -456,7 +437,6 @@ export default function GenerativeChat({
                     text: match[5],
                   };
                 });
-                console.log("Fallback parsing successful:", referenceOutput);
               }
             } catch (fallbackError) {
               console.log("Fallback parsing also failed:", fallbackError);

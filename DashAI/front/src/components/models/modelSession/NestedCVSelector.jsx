@@ -13,7 +13,7 @@ import {
   Divider,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { getComponentById, getComponents } from "../../../api/component";
+import { getComponentById } from "../../../api/component";
 import { useSnackbar } from "notistack";
 
 /**
@@ -66,11 +66,6 @@ function NestedCVSelector({
 
     getInnerSplitters();
   }, [outerSplit, enqueueSnackbar, t]);
-
-  console.log("outerSplit:", outerSplit);
-  console.log("innerConfig:", innerConfig);
-  console.log("splitterType:", innerConfig?.splitterType);
-  console.log("useNestedCV:", useNestedCV);
 
   const learnMoreLink = (
     <Link

@@ -6,7 +6,6 @@ import ColumnSelector from "../ColumnSelector";
 import DocumentItemScope from "../documentNotebook/DocumentItemScope";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { isDocumentNotebook } from "../notebookColumns";
-import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
 
 export default function ScopeStepExplorer({
@@ -21,7 +20,6 @@ export default function ScopeStepExplorer({
   const allowedDtypes = tool?.metadata?.allowed_dtypes || [];
   const inputCardinality = tool?.metadata?.input_cardinality || {};
   const nonAllowedDtypes = tool?.metadata?.non_allowed_dtypes || [];
-  const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
   const { columnTypes, itemSelection, explorersAndConverters } =
     useExplorersAndConverters();

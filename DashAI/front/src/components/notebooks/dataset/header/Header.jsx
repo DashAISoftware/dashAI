@@ -1,9 +1,8 @@
 import React from "react";
-import { Box, Typography, Tooltip } from "@mui/material";
+import { Box } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
 import TagIcon from "@mui/icons-material/Tag";
 import DescriptionIcon from "@mui/icons-material/Description";
-import InfoIcon from "@mui/icons-material/Info";
 import { HeaderBox } from "./HeaderBox";
 import { useTranslation } from "react-i18next";
 

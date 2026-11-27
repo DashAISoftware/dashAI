@@ -28,6 +28,21 @@ const UPDATE_COMMANDS = {
 
 const INSTALLER_CHANNELS = ["windows", "macos", "appimage"];
 
+function ReleaseNotesLink({ href, children }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  );
+}
+
+ReleaseNotesLink.propTypes = {
+  href: PropTypes.string,
+  children: PropTypes.node,
+};
+
+const RELEASE_NOTES_COMPONENTS = { a: ReleaseNotesLink };
+
 function VersionRow({ label, value }) {
   return (
     <Stack direction="row" justifyContent="space-between" spacing={2}>
@@ -142,15 +157,7 @@ export default function UpdatesDialog({ open, onClose, info }) {
                   },
                 })}
               >
-                <ReactMarkdown
-                  components={{
-                    a: ({ href, children }) => (
-                      <a href={href} target="_blank" rel="noopener noreferrer">
-                        {children}
-                      </a>
-                    ),
-                  }}
-                >
+                <ReactMarkdown components={RELEASE_NOTES_COMPONENTS}>
                   {info.release_notes}
                 </ReactMarkdown>
               </Box>
