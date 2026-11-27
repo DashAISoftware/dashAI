@@ -31,6 +31,20 @@
       "logo": "img/institutions/fcfm-logo.png"
     },
     {
+      "id": "idia",
+      "name": "IDIA",
+      "fullName": "Iniciativa de Datos e Inteligencia Artificial",
+      "role": {
+        "en": "Associated Institution",
+        "es": "Institución Asociada",
+        "pt": "Instituição Associada",
+        "de": "Assoziierte Institution",
+        "zh": "联合机构"
+      },
+      "url": "https://idia.uchile.cl/",
+      "logo": "img/institutions/idia-logo.png"
+    },
+    {
       "id": "cenia",
       "name": "CENIA",
       "fullName": "National Center for Artificial Intelligence",

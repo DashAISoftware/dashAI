@@ -116,7 +116,8 @@ def build_logos_png(data):
 
     width = 2 * CANVAS_MARGIN + len(cells) * CELL_WIDTH + (len(cells) - 1) * CELL_GAP
     height = 2 * CANVAS_MARGIN + CELL_HEIGHT
-    canvas = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    # Opaque white so dark logos stay visible on GitHub's dark theme.
+    canvas = Image.new("RGB", (width, height), BACKGROUND)
     x = CANVAS_MARGIN
     for cell in cells:
         canvas.paste(

@@ -617,6 +617,7 @@ This project is developed in collaboration with:
 
 * `University of Chile <https://uchile.cl/>`_ - Leading Institution
 * `Fcfm <https://www.fcfm.uchile.cl/>`_ - Leading Institution
+* `IDIA <https://idia.uchile.cl/>`_ - Associated Institution
 * `CENIA <https://www.cenia.cl/>`_ - Associated Institution
 * `IMFD <https://imfd.cl/en/>`_ - Collaborator
 * `Unholster <https://unholster.com/>`_ - Industry Partner
