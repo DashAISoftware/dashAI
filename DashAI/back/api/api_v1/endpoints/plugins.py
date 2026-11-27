@@ -10,6 +10,7 @@ from DashAI.back.api.api_v1.schemas.plugin_params import (
     PluginParams,
     PluginUpdateParams,
 )
+from DashAI.back.auth.dependencies import require_permission
 from DashAI.back.core.enums.status import PluginStatus
 from DashAI.back.dependencies.database.models import Plugin, Tag
 from DashAI.back.job.sync_components_job import SyncComponentsJob
@@ -25,6 +26,9 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Plugins are installed with pip, so changing them runs code on the server
+MANAGE_INSTANCE = [Depends(require_permission("instance.manage"))]
 
 
 @router.get("/")
@@ -113,7 +117,7 @@ async def get_plugin(
     return plugin
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED, dependencies=MANAGE_INSTANCE)
 async def upload_plugin(params: List[PluginParams]):
     """Create a new batch of plugins in the DB.
 
@@ -140,7 +144,9 @@ async def upload_plugin(params: List[PluginParams]):
         ) from e
 
 
-@router.post("/index", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/index", status_code=status.HTTP_201_CREATED, dependencies=MANAGE_INSTANCE
+)
 async def refresh_plugins_record():
     """Request all DashAI plugins from index (for now PyPI) and add it to the DB.
 
@@ -170,7 +176,7 @@ async def refresh_plugins_record():
         ) from e
 
 
-@router.delete("/{plugin_id}")
+@router.delete("/{plugin_id}", dependencies=MANAGE_INSTANCE)
 @inject
 async def delete_plugin(
     plugin_id: int,
@@ -215,7 +221,7 @@ async def delete_plugin(
             ) from e
 
 
-@router.patch("/{plugin_id}")
+@router.patch("/{plugin_id}", dependencies=MANAGE_INSTANCE)
 @inject
 async def update_plugin(
     plugin_id: int,
@@ -306,7 +312,7 @@ async def update_plugin(
             ) from e
 
 
-@router.patch("/{plugin_id}/upgrade")
+@router.patch("/{plugin_id}/upgrade", dependencies=MANAGE_INSTANCE)
 @inject
 async def upgrade_plugin(
     plugin_id: int,

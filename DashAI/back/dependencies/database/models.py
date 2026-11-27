@@ -104,6 +104,12 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default=true()
     )
+    # The administration account created on the first start. It cannot be
+    # deleted, deactivated or lose its role, so the instance always keeps an
+    # administrator
+    is_system: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
     global_role_id: Mapped[int] = mapped_column(
         ForeignKey("role.id", ondelete="RESTRICT"), nullable=False
     )

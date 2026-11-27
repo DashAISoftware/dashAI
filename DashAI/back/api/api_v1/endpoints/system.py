@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from kink import di
 from pydantic import BaseModel
 
+from DashAI.back.auth.dependencies import require_permission
 from DashAI.back.updates.checker import (
     UpdateAsset,
     UpdateInfo,
@@ -23,6 +24,9 @@ from DashAI.back.updates.installation import detect_install_channel
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Downloading and installing an update replaces dashAI and closes it
+MANAGE_INSTANCE = [Depends(require_permission("instance.manage"))]
 
 
 class UpdateDownloadStatus(BaseModel):
@@ -98,7 +102,11 @@ def get_update_download(
     )
 
 
-@router.post("/update/download", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/update/download",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=MANAGE_INSTANCE,
+)
 def start_update_download(
     config: Dict[str, Any] = Depends(lambda: di["config"]),
     job_queue=Depends(lambda: di["job_queue"]),
@@ -136,7 +144,11 @@ def start_update_download(
     return {"id": job_id}
 
 
-@router.post("/update/install", status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/update/install",
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=MANAGE_INSTANCE,
+)
 def install_downloaded_update(
     request: UpdateInstallRequest,
     config: Dict[str, Any] = Depends(lambda: di["config"]),

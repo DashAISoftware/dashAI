@@ -1,6 +1,10 @@
 from unittest.mock import Mock, patch
 
+import pytest
 from fastapi.testclient import TestClient
+
+# Changing plugins needs instance.manage
+pytestmark = pytest.mark.usefixtures("system_admin")
 
 
 def test_post_plugin(client: TestClient):

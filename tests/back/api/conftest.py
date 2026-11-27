@@ -107,6 +107,19 @@ def admin_project(client) -> int:
     return response.json()["id"]
 
 
+@pytest.fixture(scope="module")
+def system_admin(client) -> None:
+    """Log the client in as the administration account created on start."""
+    config = client.app.container["config"]
+    password = config["ADMIN_PASSWORD_PATH"].read_text(encoding="utf-8").strip()
+    client.cookies.clear()
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"identifier": config["ADMIN_USERNAME"], "password": password},
+    )
+    assert response.status_code == 200, response.text
+
+
 @pytest.fixture(name="dataset_1", scope="module")
 def create_dataset_1(client) -> Dataset:
     """Create testing dataset 1 using job system."""

@@ -13,6 +13,7 @@ from DashAI.back.api.api_v1.api import api_router_v1
 from DashAI.back.api.front_api import router as app_router
 from DashAI.back.auth.acting_user import SessionTokenMiddleware
 from DashAI.back.auth.catalog import sync_auth_catalog
+from DashAI.back.auth.system_account import ensure_system_account
 from DashAI.back.container import build_container
 from DashAI.back.dependencies.config_builder import build_config_dict
 from DashAI.back.dependencies.database.backfill import (
@@ -110,6 +111,8 @@ def create_app(
     # Not tied to enable_seeding: registration needs the built-in roles
     logger.debug("4a. Syncing built-in roles and permissions.")
     sync_auth_catalog(di["session_factory"])
+    # Needs the admin role created just above
+    ensure_system_account(di["session_factory"], config)
 
     logger.debug("4b. Backfilling dataset row/column counts.")
     backfill_dataset_counts(di["session_factory"])

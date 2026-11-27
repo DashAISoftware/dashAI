@@ -34,6 +34,14 @@ class DefaultSettings(BaseSettings):
     # AUTH_COOKIE_SECURE=true environment variable when served behind HTTPS.
     # Has to be false in order to be used in localhost
     AUTH_COOKIE_SECURE: bool = False
+    # Administration account created on the first start (see
+    # auth/system_account.py). Changed with the ADMIN_USERNAME and ADMIN_EMAIL
+    # environment variables before that start; later changes are ignored.
+    # The password comes from DASHAI_ADMIN_PASSWORD, or is generated and
+    # written to ADMIN_PASSWORD_PATH until the administrator changes it.
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_EMAIL: str = "admin@dashai.local"
+    ADMIN_PASSWORD_PATH: str = "initial_admin_password"
     # Browser origins allowed to call the API with the session cookie. The
     # built frontend is served by the API itself and needs no entry; the
     # default covers the development server. Overridden with the

@@ -24,6 +24,7 @@ from DashAI.back.auth.dependencies import (
     load_user,
 )
 from DashAI.back.auth.passwords import hash_password, verify_password
+from DashAI.back.auth.system_account import forget_initial_password
 from DashAI.back.auth.tokens import create_access_token
 from DashAI.back.dependencies.database.models import Role, User
 
@@ -285,4 +286,7 @@ def change_password(
             db.rollback()
             raise _database_error(e) from e
 
+        # The generated password no longer works, so it is not left on disk
+        if user.is_system:
+            forget_initial_password(config)
         _start_session(response, user, config)
