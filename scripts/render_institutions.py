@@ -3,8 +3,9 @@
 The canonical institution and funding data lives in
 ``docs/static/institutions/institutions.json``. This script regenerates:
 
-* ``images/logos.png``: a single banner image with every institution logo
-  trimmed and scaled to a uniform cell size, and
+* ``images/institutions/<id>.png``: one image per logo, trimmed and
+  centered on a white cell of uniform size, so every logo can link to
+  its institution and stays visible on GitHub's dark theme, and
 * the README.rst section delimited by the markers::
 
       .. INSTITUTIONS-BLOCK:START
@@ -17,7 +18,7 @@ Run it after editing the JSON file or any logo image:
     python scripts/render_institutions.py
 
 Use ``--check`` (e.g. in CI) to fail without writing when README.rst is
-out of date. The check does not cover images/logos.png, because PNG
+out of date. The check does not cover the logo images, because PNG
 bytes vary across platforms and Pillow versions.
 """
 
@@ -32,7 +33,7 @@ from PIL import Image, ImageChops
 REPO_ROOT = Path(__file__).resolve().parent.parent
 JSON_PATH = REPO_ROOT / "docs" / "static" / "institutions" / "institutions.json"
 README_PATH = REPO_ROOT / "README.rst"
-LOGOS_PNG_PATH = REPO_ROOT / "images" / "logos.png"
+LOGOS_DIR = REPO_ROOT / "images" / "institutions"
 
 # Logo paths in the JSON are relative to the docs site root (docs/static/).
 DOCS_STATIC = REPO_ROOT / "docs" / "static"
@@ -40,11 +41,12 @@ DOCS_STATIC = REPO_ROOT / "docs" / "static"
 START_MARKER = ".. INSTITUTIONS-BLOCK:START"
 END_MARKER = ".. INSTITUTIONS-BLOCK:END"
 
-# Each logo is trimmed and scaled to fit one cell of the banner.
-CELL_WIDTH = 280
-CELL_HEIGHT = 120
-CELL_GAP = 40
-CANVAS_MARGIN = 20
+# Each logo is trimmed and scaled to fit a cell of this size, with padding.
+# GitHub strips the ``style`` attribute that RST's ``:width:`` turns into,
+# so the cell size is also the size at which the README shows each logo.
+CELL_WIDTH = 200
+CELL_HEIGHT = 86
+CELL_PADDING = 10
 BACKGROUND = (255, 255, 255)
 
 
@@ -89,46 +91,37 @@ def _trim(img):
     return rgba.crop(bbox) if bbox else rgba
 
 
-def build_logos_png(data):
-    """Compose the combined logo banner.
+def build_logo_png(inst):
+    """Render one logo as a PNG cell.
 
-    Every logo is trimmed, scaled (preserving aspect ratio) to fit a
-    CELL_WIDTH x CELL_HEIGHT cell, and centered in its cell on a white
-    banner.
+    The logo is trimmed, scaled (preserving aspect ratio) to fit the cell
+    minus its padding, and centered on an opaque white background, so
+    dark logos stay visible on GitHub's dark theme.
 
     Parameters
     ----------
-    data : dict
-        Parsed content of institutions.json.
+    inst : dict
+        An institution or acknowledgment entry with a ``logo`` path.
 
     Returns
     -------
     bytes
-        The banner encoded as PNG.
+        The cell encoded as PNG.
     """
-    cells = []
-    for inst in _logo_entries(data):
-        with Image.open(DOCS_STATIC / inst["logo"]) as img:
-            logo = _trim(img)
-        scale = min(CELL_WIDTH / logo.width, CELL_HEIGHT / logo.height)
-        size = (max(1, round(logo.width * scale)), max(1, round(logo.height * scale)))
-        cells.append(logo.resize(size, Image.LANCZOS))
+    with Image.open(DOCS_STATIC / inst["logo"]) as img:
+        logo = _trim(img)
+    max_width = CELL_WIDTH - 2 * CELL_PADDING
+    max_height = CELL_HEIGHT - 2 * CELL_PADDING
+    scale = min(max_width / logo.width, max_height / logo.height)
+    size = (max(1, round(logo.width * scale)), max(1, round(logo.height * scale)))
+    logo = logo.resize(size, Image.LANCZOS)
 
-    width = 2 * CANVAS_MARGIN + len(cells) * CELL_WIDTH + (len(cells) - 1) * CELL_GAP
-    height = 2 * CANVAS_MARGIN + CELL_HEIGHT
-    canvas = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-    x = CANVAS_MARGIN
-    for cell in cells:
-        canvas.paste(
-            cell,
-            (
-                x + (CELL_WIDTH - cell.width) // 2,
-                CANVAS_MARGIN + (CELL_HEIGHT - cell.height) // 2,
-            ),
-            cell,
-        )
-        x += CELL_WIDTH + CELL_GAP
-
+    canvas = Image.new("RGB", (CELL_WIDTH, CELL_HEIGHT), BACKGROUND)
+    canvas.paste(
+        logo,
+        ((CELL_WIDTH - logo.width) // 2, (CELL_HEIGHT - logo.height) // 2),
+        logo,
+    )
     buffer = io.BytesIO()
     canvas.save(buffer, format="PNG", optimize=True)
     return buffer.getvalue()
@@ -136,6 +129,9 @@ def build_logos_png(data):
 
 def render_block(data):
     """Render the institutions section as reStructuredText.
+
+    Each logo is an inline substitution with a ``:target:``, so GitHub
+    shows the logos side by side and each one links to its institution.
 
     Parameters
     ----------
@@ -167,19 +163,48 @@ def render_block(data):
     lines.append(data["acknowledgments"]["text"]["en"])
     lines.append("")
 
-    lines.extend(
-        [
-            ".. image:: images/logos.png",
-            "   :alt: Logos of collaborating institutions",
-            "",
-            END_MARKER,
-        ]
-    )
+    entries = _logo_entries(data)
+    lines.append(" ".join(f"|logo-{inst['id']}|" for inst in entries))
+    lines.append("")
+    for inst in entries:
+        lines.extend(
+            [
+                f".. |logo-{inst['id']}| image:: images/institutions/{inst['id']}.png",
+                f"   :target: {inst['url']}",
+                f"   :alt: {inst.get('fullName') or inst['name']}",
+                "",
+            ]
+        )
+
+    lines.append(END_MARKER)
     return "\n".join(lines)
 
 
+def write_logo_images(data):
+    """Write one PNG per logo and remove images no longer listed.
+
+    Parameters
+    ----------
+    data : dict
+        Parsed content of institutions.json.
+    """
+    LOGOS_DIR.mkdir(parents=True, exist_ok=True)
+    expected = set()
+    for inst in _logo_entries(data):
+        path = LOGOS_DIR / f"{inst['id']}.png"
+        expected.add(path.name)
+        png = build_logo_png(inst)
+        if not path.exists() or path.read_bytes() != png:
+            path.write_bytes(png)
+            print(f"{path.relative_to(REPO_ROOT)} updated.")
+    for path in LOGOS_DIR.glob("*.png"):
+        if path.name not in expected:
+            path.unlink()
+            print(f"{path.relative_to(REPO_ROOT)} removed.")
+
+
 def main():
-    """Regenerate the institutions block in README.rst and images/logos.png.
+    """Regenerate the institutions block in README.rst and the logo images.
 
     Returns
     -------
@@ -227,10 +252,7 @@ def main():
     else:
         print("README.rst is up to date.")
 
-    png = build_logos_png(data)
-    if not LOGOS_PNG_PATH.exists() or LOGOS_PNG_PATH.read_bytes() != png:
-        LOGOS_PNG_PATH.write_bytes(png)
-        print("images/logos.png updated.")
+    write_logo_images(data)
     return 0
 
 
