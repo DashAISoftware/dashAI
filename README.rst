@@ -624,8 +624,35 @@ This project is developed in collaboration with:
 
 Supported by ANID through Fondef IDEA ID25I10330, Fondef VIU23P 0110, and grants supporting the centers CENIA (FB210017) and IMFD (ICN17_002). Developed by students of DCC UChile and UTFSM.
 
-.. image:: images/logos.png
-   :alt: Logos of collaborating institutions
+|logo-uchile| |logo-fcfm| |logo-idia| |logo-cenia| |logo-imfd| |logo-unholster| |logo-anid|
+
+.. |logo-uchile| image:: images/institutions/uchile.png
+   :target: https://uchile.cl/
+   :alt: Universidad de Chile
+
+.. |logo-fcfm| image:: images/institutions/fcfm.png
+   :target: https://www.fcfm.uchile.cl/
+   :alt: Facultad de Ciencias Físicas y Matemáticas Universidad de Chile
+
+.. |logo-idia| image:: images/institutions/idia.png
+   :target: https://idia.uchile.cl/
+   :alt: Iniciativa de Datos e Inteligencia Artificial
+
+.. |logo-cenia| image:: images/institutions/cenia.png
+   :target: https://www.cenia.cl/
+   :alt: National Center for Artificial Intelligence
+
+.. |logo-imfd| image:: images/institutions/imfd.png
+   :target: https://imfd.cl/en/
+   :alt: Millennium Institute for Foundational Data Research
+
+.. |logo-unholster| image:: images/institutions/unholster.png
+   :target: https://unholster.com/
+   :alt: Unholster
+
+.. |logo-anid| image:: images/institutions/anid.png
+   :target: https://anid.cl/
+   :alt: Agencia Nacional de Investigación y Desarrollo
 
 .. INSTITUTIONS-BLOCK:END
 
