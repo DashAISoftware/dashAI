@@ -11,7 +11,6 @@ from DashAI.back.dependencies.database.models import Metric, Run
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 router = APIRouter()

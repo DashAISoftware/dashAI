@@ -10,7 +10,6 @@ from DashAI.back.plugins.utils import (
     unregister_plugin_components,
 )
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 

@@ -59,7 +59,6 @@ if TYPE_CHECKING:
     from DashAI.back.tasks.base_task import BaseTask
 
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()

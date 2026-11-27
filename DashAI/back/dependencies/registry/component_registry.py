@@ -7,7 +7,6 @@ from beartype.typing import Dict, List, Type
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.registry.relationship_manager import RelationshipManager
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

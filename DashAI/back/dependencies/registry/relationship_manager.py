@@ -5,7 +5,6 @@ from typing import Any
 from beartype import beartype
 from beartype.typing import DefaultDict, Dict, List
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 DEFAULT_RELATION_TYPE = "compatible_components"

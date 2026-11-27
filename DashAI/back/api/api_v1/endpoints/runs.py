@@ -34,7 +34,6 @@ if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()

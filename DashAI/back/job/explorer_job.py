@@ -15,7 +15,6 @@ from DashAI.back.units.save_exploration_unit import SaveExplorationUnit
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 

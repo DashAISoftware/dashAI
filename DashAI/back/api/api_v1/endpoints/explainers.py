@@ -41,7 +41,6 @@ if TYPE_CHECKING:
 
     from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()

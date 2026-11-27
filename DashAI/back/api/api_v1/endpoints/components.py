@@ -15,7 +15,6 @@ from DashAI.back.core.utils import MultilingualString, localize
 if TYPE_CHECKING:
     from DashAI.back.dependencies.registry import ComponentRegistry
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()

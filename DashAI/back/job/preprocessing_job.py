@@ -21,7 +21,6 @@ from DashAI.back.tasks.session_roles import session_io, session_roles
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 

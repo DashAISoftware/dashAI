@@ -22,7 +22,6 @@ if TYPE_CHECKING:
     from DashAI.back.dependencies.registry import ComponentRegistry
     from DashAI.back.exploration.base_explorer import BaseExplorer
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()

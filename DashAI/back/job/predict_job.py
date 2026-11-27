@@ -45,7 +45,6 @@ if TYPE_CHECKING:
 
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 

@@ -33,7 +33,6 @@ from DashAI.back.dependencies.database.models import (
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session, sessionmaker
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()

@@ -7,7 +7,6 @@ import sqlite3
 import sys
 import threading
 import time
-import warnings
 from contextlib import suppress
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,41 +21,15 @@ from huey.signals import (
     SIGNAL_EXECUTING,
 )
 
+from DashAI.back.core.warning_filters import silence_startup_warnings
 from DashAI.back.dependencies.job_queues.base_job_queue import (
     BaseJobQueue,
     JobQueueError,
 )
 from DashAI.back.job.base_job import BaseJob
 
-warnings.filterwarnings(
-    "ignore",
-    message=".*mediapipe.*",
-    category=UserWarning,
-    module="controlnet_aux",
-)
-warnings.filterwarnings(
-    "ignore",
-    message=".*Importing from timm.models.layers.*",
-    category=FutureWarning,
-)
-warnings.filterwarnings(
-    "ignore",
-    message=".*Importing from timm.models.registry.*",
-    category=FutureWarning,
-)
-warnings.filterwarnings(
-    "ignore",
-    message=".*Overwriting tiny_vit.*",
-    category=UserWarning,
-    module="controlnet_aux",
-)
-warnings.filterwarnings(
-    "ignore",
-    message=".*found in sys.modules after import.*",
-    category=RuntimeWarning,
-)
+silence_startup_warnings()
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
@@ -93,6 +66,8 @@ def _worker_loop(in_q, out_q) -> None:
             _Path(_os.path.expanduser(_lp_env)) if _lp_env else _Path.home() / ".DashAI"
         )
         _logging_level = _os.environ.get("DASHAI_LOGGING_LEVEL", "INFO")
+        # A spawned worker inherits no logging setup from the consumer
+        logging.basicConfig(level=_logging_level)
         _config = build_config_dict(local_path=_lp, logging_level=_logging_level)
         build_container(_config)
     except Exception as _e:

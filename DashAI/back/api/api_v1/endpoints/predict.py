@@ -28,7 +28,6 @@ if TYPE_CHECKING:
 
     from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 #: How many future rows a run that read exogenous variables takes typed in.
