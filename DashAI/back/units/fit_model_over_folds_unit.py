@@ -63,6 +63,21 @@ class FitModelOverFoldsUnit(BaseUnit, ModelFitScopeMixin):
     required component field, and a component field cannot be made optional
     without leaving the user without a selector, so it is a further sibling
     rather than a flag on this one.
+
+    References
+    ----------
+    - Kohavi, R. (1995). A Study of Cross-Validation and Bootstrap for
+      Accuracy Estimation and Model Selection. Proceedings of the 14th
+      International Joint Conference on Artificial Intelligence (IJCAI),
+      1137-1143.
+    - Raschka, S. (2020). Model Evaluation, Model Selection, and Algorithm
+      Selection in Machine Learning. arXiv:1811.12808.
+    - Hastie, T., Tibshirani, R., & Friedman, J. (2009). The Elements of
+      Statistical Learning (2nd ed.), ch. 7: Model Assessment and Selection.
+      Springer.
+    - James, G., Witten, D., Hastie, T., & Tibshirani, R. (2021). An
+      Introduction to Statistical Learning (2nd ed.), ch. 5: Resampling
+      Methods. Springer.
     """
 
     SCHEMA = FitModelOverFoldsSchema

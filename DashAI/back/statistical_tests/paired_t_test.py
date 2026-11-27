@@ -19,7 +19,9 @@ class PairedTTest(BaseStatisticalTest):
     References
     ----------
     - https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_rel.html
-    - Student. (1908). The probable error of a mean. Biometrika, 6(1), 1-25.
+    - Dietterich, T. G. (1998). Approximate Statistical Tests for Comparing
+      Supervised Classification Learning Algorithms. Neural Computation,
+      10(7), 1895-1923.
     """
 
     DISPLAY_NAME: str = MultilingualString(

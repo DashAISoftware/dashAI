@@ -19,9 +19,11 @@ class BartlettTest(BaseStatisticalTest):
 
     References
     ----------
-    Bartlett, M. S. (1937). Properties of Sufficiency and Statistical Tests.
-    Proceedings of the Royal Society of London. Series A, Mathematical and
-    Physical Sciences, 160(901), 268-282.
+    - Bartlett, M. S. (1937). Properties of Sufficiency and Statistical
+      Tests. Proceedings of the Royal Society of London. Series A,
+      Mathematical and Physical Sciences, 160(901), 268-282.
+    - Montgomery, D. C. (2017). Design and Analysis of Experiments
+      (9th ed.). Wiley.
     """
 
     DISPLAY_NAME: str = MultilingualString(

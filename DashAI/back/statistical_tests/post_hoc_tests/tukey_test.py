@@ -25,6 +25,8 @@ class TukeyHSDTest(BaseStatisticalTest):
     ----------
     - Tukey, J. W. (1949). Comparing individual means in the analysis of
       variance. Biometrics, 5(2), 99-114.
+    - Montgomery, D. C. (2017). Design and Analysis of Experiments
+      (9th ed.). Wiley.
     """
 
     DISPLAY_NAME: str = MultilingualString(

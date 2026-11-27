@@ -34,6 +34,20 @@ class HoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
     the model the recorded metrics describe. The validation partition is handed
     to the fit, which models use to watch training and stop early -- being
     given it to watch is not the same as being fitted on it.
+
+    References
+    ----------
+    - Hastie, T., Tibshirani, R., & Friedman, J. (2009). The Elements of
+      Statistical Learning (2nd ed.), ch. 7: Model Assessment and Selection.
+      Springer.
+    - James, G., Witten, D., Hastie, T., & Tibshirani, R. (2021). An
+      Introduction to Statistical Learning (2nd ed.), ch. 5: Resampling
+      Methods. Springer.
+    - Raschka, S. (2020). Model Evaluation, Model Selection, and Algorithm
+      Selection in Machine Learning. arXiv:1811.12808.
+    - Cawley, G. C., & Talbot, N. L. C. (2010). On Over-fitting in Model
+      Selection and Subsequent Selection Bias in Performance Evaluation.
+      Journal of Machine Learning Research, 11, 2079-2107.
     """
 
     DEFAULT_SPLITTER = "HoldoutSplitter"

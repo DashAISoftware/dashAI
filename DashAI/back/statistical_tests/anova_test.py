@@ -20,6 +20,8 @@ class AnovaTest(BaseStatisticalTest):
     ----------
     - https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.f_oneway.html
     - Fisher, R. A. (1925). Statistical Methods for Research Workers.
+    - Montgomery, D. C. (2017). Design and Analysis of Experiments
+      (9th ed.). Wiley.
     """
 
     DISPLAY_NAME: str = MultilingualString(

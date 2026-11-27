@@ -22,8 +22,8 @@ class WilcoxonSRTest(BaseStatisticalTest):
     References
     ----------
     - https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html
-    - Wilcoxon, F. (1945). Individual comparisons by ranking methods.
-      Biometrics Bulletin, 1(6), 80-83.
+    - Demšar, J. (2006). Statistical Comparisons of Classifiers over
+      Multiple Data Sets. Journal of Machine Learning Research, 7, 1-30.
     """
 
     DISPLAY_NAME: str = MultilingualString(
