@@ -4,7 +4,7 @@ import { Box, Autocomplete, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
-import { resolveLabel } from "../../../../components/generative/RAG/QueryTransformationPicker";
+import { resolveLabel } from "../../../../utils/ragQueryTransformation";
 import { getGeneratorComponents } from "../../../../api/rag";
 import { resolveDefaults } from "../../../../utils/schema";
 

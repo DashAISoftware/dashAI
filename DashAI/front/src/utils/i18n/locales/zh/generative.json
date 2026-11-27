@@ -231,6 +231,7 @@
     },
     "chatProgress": {
       "generatingAnswer": "正在根据来源生成回答",
+      "loadingModel": "正在加载模型...",
       "searchingSources": "正在使用查询搜索来源：{{queries}}",
       "transformingQuery": "正在转换查询…"
     },
@@ -247,19 +248,17 @@
     },
     "composite": {
       "addChild": "添加检索节点",
-      "allChunks": "所有块",
       "chunkFusion": "分块融合",
       "compositeInstructions": "点击 + 按钮向此组合添加子检索器。点击检索器卡片以编辑其参数或选择其他模型。",
       "configureNode": "配置节点",
       "mergeStrategyInterleave": "交错合并",
       "mergeStrategyRoundRobin": "轮询",
-      "nestedCompositeNote": "这是一个组合检索器。其子节点可以在下方的树中配置。",
+      "nestedCompositeNote": "这是一个组合检索器。其子节点在此对话框之外的树中配置。",
       "parameters": "参数",
       "removeNode": "删除节点",
       "reranking": "重新排序",
       "retrieverDescription": "选择一个检索器来配置其参数。关键词检索器（BM25、TF-IDF）通过词频查找文档。嵌入检索器通过稠密向量捕获语义含义。组合检索器按顺序或并行地链接多个检索器。",
-      "selectModel": "选择检索模型",
-      "selectedChunks": "已选块"
+      "selectModel": "选择检索模型"
     },
     "config": {
       "advanced": "高级配置",
@@ -273,11 +272,16 @@
         "language": "语言",
         "llm": "语言模型",
         "maxSubqueries": "最大子查询数",
+        "needsDownloadedModel": "请先下载一个语言模型，然后再启用此阶段。",
         "nQueries": "查询数量",
         "noneAvailable": "未注册任何查询转换技术。",
         "off": "已关闭",
         "prompt": "提示词",
-        "unknownComponent": "此转换器未注册；请选择提示词和模型以继续。"
+        "incomplete": "保存前请选择提示词和语言模型。",
+        "loadFailed": "无法加载查询转换选项：{{reason}}",
+        "promptRequired": "该技术没有默认提示词，无法启用。",
+        "unknownComponent": "{{component}}: 此转换器未注册；请选择提示词和模型以继续。",
+        "compositeIncomplete": "保存前，请为每个复合组件至少添加一个子组件。"
       },
       "unsavedIn": "以下部分有未保存的更改：{{sections}}"
     },
@@ -413,9 +417,13 @@
         "seedLanguage": "模板语言",
         "sessionOnlyHelp": "此处的更改仅应用于当前会话。共享提示词请在提示词库中编辑。",
         "startFrom": "以此为起点",
+        "selectPrompt": "提示词",
+        "defaultPrompts": "默认提示词",
         "startFromHelp": "会替换下方的模板。在你选择之前，你的内容会保留。",
         "template": "模板",
-        "templatePlaceholder": "每条用户消息以 {input} 传入\n检索到的片段以 {chunks} 传入"
+        "templatePlaceholder": "每条用户消息以 {input} 传入\n检索到的片段以 {chunks} 传入",
+        "unnamedPrompt": "提示词 {{id}}",
+        "malformedData": "服务器返回的部分提示词不完整，已被省略：{{names}}"
       },
       "field": {
         "edit": "编辑模板",
@@ -571,6 +579,7 @@
     "queryCandidates_one": "{{count}} 个候选",
     "queryCandidates_other": "{{count}} 个候选",
     "queryTooltip": "查询 {{index}}",
+    "rerankTitle": "候选池重排序（{{pool}} 个候选 → 保留 {{kept}} 个）",
     "receivedCount_one": "来自 {{documents}} 个文档的 {{chunks}} 个内容块",
     "receivedCount_other": "来自 {{documents}} 个文档的 {{chunks}} 个内容块",
     "receivedTitle": "用于此回答的内容块",
@@ -586,7 +595,8 @@
     "storyRewritten_one": "你的消息被改写为 {{count}} 个搜索查询。",
     "storyRewritten_other": "你的消息被改写为 {{count}} 个搜索查询。",
     "title": "消息来源",
-    "yourMessage": "你的消息是"
+    "yourMessage": "你的消息是",
+    "rerankMalformed": "此追踪的重排序条目不完整：缺少候选或保留的片段。"
   },
   "validation": {
     "apiKeyMissingDescription": "此模型需要 API 密钥才能运行。打开高级配置以添加您的 API 密钥。",

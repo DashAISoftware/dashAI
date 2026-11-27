@@ -3,7 +3,7 @@ import { Button } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
 import ChunkingConfigurationStep from "./ChunkingConfigurationStep";
-import RAGAdvancedDialog from "./RAGAdvancedDialog";
+import RAGAdvancedDialog from "../../../../components/shared/RAGAdvancedDialog";
 import { getModelFromSubform } from "../../../../utils/schema";
 
 /**

@@ -1,5 +1,6 @@
 {
   "actions": "Actions",
+  "copyFailed": "Could not copy: {{reason}}",
   "copy": "Copy",
   "copied": "Copied",
   "holdout": "Holdout",
@@ -90,6 +91,19 @@
     "connecting": "Connecting to hardware monitor...",
     "cpu": "CPU",
     "gpu": "GPU",
+    "loadedModels": {
+      "empty": "No models loaded",
+      "error": "Could not unload the model",
+      "inUse": "In use",
+      "lastUsed": "Last used: {{time}}",
+      "params": {
+        "context_window": "Context window",
+        "device": "Device"
+      },
+      "title": "Loaded models",
+      "unload": "Unload",
+      "unloading": "Unloading..."
+    },
     "overall": "Overall",
     "ram": "RAM",
     "title": "Hardware Monitor",
@@ -287,5 +301,21 @@
     "document": "Document",
     "localExplainer": "Explainer_local",
     "globalExplainer": "Explainer_global"
-  }
+  },
+  "componentTree": {
+    "configureNode": "Configure component",
+    "addChild": "Add child component",
+    "removeNode": "Remove component",
+    "selectComponent": "Component",
+    "parameters": "Parameters",
+    "containerNote": "This component contains other components. Its children are configured in the tree, outside this dialog.",
+    "loadFailed": "Could not load the components: {{reason}}",
+    "unknownComponent": "The component {{component}} is not available, so its tree cannot be shown.",
+    "unknownChild": "The component {{component}} is not available. Replace or remove it before saving.",
+    "configureNodeNamed": "Configure component {{name}}",
+    "noSchema": "The component {{component}} has no configuration schema, so it cannot be selected.",
+    "formUnavailable": "The settings form is not ready yet. Try again in a moment."
+  },
+  "component": "Component",
+  "null": "Null"
 }

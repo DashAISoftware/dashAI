@@ -23,6 +23,7 @@ FORECASTING_TASK = "SingleSeriesForecastingTask"
 #: Forecasting components outside the forecasting modules.
 NAMED = {
     FORECASTING_TASK,
+    "DateRangeConverter",
     "RollingOriginSplitter",
     "TemporalHoldoutSplitter",
     "MAPE",

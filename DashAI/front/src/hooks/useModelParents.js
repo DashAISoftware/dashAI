@@ -9,17 +9,20 @@ import { getComponents } from "../api/component";
 export default function useModelParents({ parent }) {
   const [models, setModels] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const getModels = async () => {
       try {
         setLoading(true);
+        setError(null);
         const result = await getComponents({
           componentParent: parent,
         });
 
         setModels(result);
-      } catch (error) {
+      } catch (loadError) {
+        setError(loadError);
       } finally {
         setLoading(false);
       }
@@ -46,5 +49,5 @@ export default function useModelParents({ parent }) {
     );
   }, []);
 
-  return { models, loading, markDownloaded };
+  return { models, loading, error, markDownloaded };
 }

@@ -1,0 +1,220 @@
+"""Tests for the in-process model cache."""
+
+import pytest
+
+from DashAI.back.dependencies.model_cache import (
+    ModelCache,
+    cache_key,
+    prepare_cache_for_job,
+    split_params,
+)
+
+
+class FakeModel:
+    GENERATION_PARAMS = {"temperature"}
+    builds = 0
+
+    def __init__(self):
+        type(self).builds += 1
+        self.closed = 0
+
+    def close(self):
+        self.closed += 1
+
+
+@pytest.fixture(autouse=True)
+def reset_builds():
+    FakeModel.builds = 0
+
+
+class Clock:
+    def __init__(self):
+        self.now = 1000.0
+
+    def __call__(self):
+        return self.now
+
+
+def _acquire(cache, params, slot="model"):
+    load, _ = split_params(FakeModel, params)
+    return cache.acquire(
+        slot,
+        cache_key(FakeModel, load),
+        FakeModel,
+        label="fake",
+        load_params=load,
+    )
+
+
+def test_same_key_builds_once():
+    cache = ModelCache(enabled=True, idle_seconds=300)
+    params = {"context_window": 512}
+    first = _acquire(cache, params)
+    cache.release(first)
+    second = _acquire(cache, params)
+    cache.release(second)
+    assert FakeModel.builds == 1
+    assert first.obj is second.obj
+
+
+def test_load_param_change_rebuilds_and_closes_previous():
+    cache = ModelCache(enabled=True, idle_seconds=300)
+    first = _acquire(cache, {"context_window": 512})
+    first_obj = first.obj
+    cache.release(first)
+    second = _acquire(cache, {"context_window": 1024})
+    cache.release(second)
+    assert FakeModel.builds == 2
+    assert first_obj.closed == 1
+
+
+def test_generation_param_change_reuses():
+    cache = ModelCache(enabled=True, idle_seconds=300)
+    a = _acquire(cache, {"context_window": 512, "temperature": 0.1})
+    cache.release(a)
+    b = _acquire(cache, {"context_window": 512, "temperature": 0.7})
+    cache.release(b)
+    assert a.key == b.key
+    assert FakeModel.builds == 1
+
+
+def test_idle_entry_evicted():
+    clock = Clock()
+    cache = ModelCache(enabled=True, idle_seconds=300, clock=clock)
+    entry = _acquire(cache, {"context_window": 512})
+    obj = entry.obj
+    cache.release(entry)
+    clock.now += 301
+    assert cache.evict_idle() == 1
+    assert obj.closed == 1
+    assert cache.entries() == []
+
+
+def test_job_scope_discards_on_error():
+    cache = ModelCache(enabled=True, idle_seconds=300)
+    holder = {}
+
+    def failing_job():
+        with cache.job_scope():
+            entry = _acquire(cache, {"context_window": 512})
+            holder["obj"] = entry.obj
+            raise RuntimeError("boom")
+
+    with pytest.raises(RuntimeError):
+        failing_job()
+    assert holder["obj"].closed == 1
+    assert cache.entries() == []
+
+
+def test_disabled_cache_builds_and_closes_every_time():
+    cache = ModelCache(enabled=False, idle_seconds=300)
+    objs = []
+    for _ in range(2):
+        entry = _acquire(cache, {"context_window": 512})
+        objs.append(entry.obj)
+        cache.release(entry)
+    assert FakeModel.builds == 2
+    assert [o.closed for o in objs] == [1, 1]
+
+
+def test_in_use_entry_not_evicted_second_key_bypasses():
+    cache = ModelCache(enabled=True, idle_seconds=300)
+    a = _acquire(cache, {"context_window": 512})
+    b = _acquire(cache, {"context_window": 1024})
+    assert a.cached is True
+    assert b.cached is False
+    assert a.obj.closed == 0
+    assert [e.key for e in cache.entries()] == [a.key]
+    b_obj = b.obj
+    cache.release(b)
+    assert b_obj.closed == 1
+
+
+def test_prepare_for_job_clears_cache_for_other_jobs():
+    class ChatJob:
+        USES_MODEL_CACHE = True
+
+    cache = ModelCache(enabled=True, idle_seconds=300)
+    entry = _acquire(cache, {"context_window": 512})
+    obj = entry.obj
+    cache.release(entry)
+
+    prepare_cache_for_job(ChatJob(), cache)
+    assert obj.closed == 0
+    assert len(cache.entries()) == 1
+
+    prepare_cache_for_job(object(), cache)
+    assert obj.closed == 1
+    assert cache.entries() == []
+
+
+class FakeReporter:
+    def __init__(self):
+        self.pending = []
+        self.unloads = []
+
+    def on_load(self, entry):
+        pass
+
+    def on_use(self, entry):
+        pass
+
+    def on_unload(self, entry, reason):
+        self.unloads.append((entry.key, reason))
+
+    def pending_unloads(self):
+        return list(self.pending)
+
+
+def test_unload_request_closes_idle_entry():
+    reporter = FakeReporter()
+    cache = ModelCache(enabled=True, idle_seconds=300, reporter=reporter)
+    entry = _acquire(cache, {"context_window": 512})
+    obj, key = entry.obj, entry.key
+    cache.release(entry)
+
+    cache.apply_pending_unloads()
+    assert obj.closed == 0
+
+    reporter.pending = [key]
+    cache.apply_pending_unloads()
+    assert obj.closed == 1
+    assert cache.entries() == []
+    assert reporter.unloads == [(key, "panel")]
+
+
+def test_unload_request_deferred_while_in_use():
+    reporter = FakeReporter()
+    cache = ModelCache(enabled=True, idle_seconds=300, reporter=reporter)
+    entry = _acquire(cache, {"context_window": 512})
+    obj, key = entry.obj, entry.key
+    reporter.pending = [key]
+
+    cache.apply_pending_unloads()
+    assert obj.closed == 0
+    assert len(cache.entries()) == 1
+
+    cache.release(entry)
+    cache.apply_pending_unloads()
+    assert obj.closed == 1
+    assert cache.entries() == []
+    assert reporter.unloads == [(key, "panel")]
+
+
+def test_validated_generation_params_coerces_reused_values():
+    from pydantic import BaseModel
+
+    from DashAI.back.dependencies.model_cache import validated_generation_params
+
+    class Schema(BaseModel):
+        temperature: float = 0.7
+        context_window: int = 512
+
+    class Model:
+        SCHEMA = Schema
+        GENERATION_PARAMS = {"temperature"}
+
+    result = validated_generation_params(
+        Model, {"temperature": "0.3", "context_window": 512}
+    )
+    assert result == {"temperature": 0.3}

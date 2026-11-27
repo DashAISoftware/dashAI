@@ -21,3 +21,7 @@ class RAGRetrieverEmptyChildrenError(RAGRetrieverError):
 
 class RAGRetrieverEvaluationError(RAGRetrieverError):
     """An LLM retrieval evaluation was malformed or could not be parsed."""
+
+
+class RAGRetrieverRerankError(RAGRetrieverError):
+    """A chunk scorer could not rank any chunk of the pool it was given."""

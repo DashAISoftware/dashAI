@@ -44,6 +44,10 @@ from DashAI.back.models.RAG.RAG_defaults import (
     default_hybrid_retriever,
 )
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
+from DashAI.back.models.RAG.retrievers.capabilities import (
+    ChunkScorer,
+    ScoringChild,
+)
 from DashAI.back.models.RAG.retrievers.composite.agentic_retriever_support import (
     LLM_RETRIEVER_CATEGORY,
     close_llm,
@@ -227,7 +231,7 @@ class AgenticRerankerRetrieverSchema(RetrievalExpansionSchema):
     )  # type: ignore
 
 
-class AgenticRerankerRetriever(CompositeRetriever):
+class AgenticRerankerRetriever(CompositeRetriever, ChunkScorer):
     """Selects the best ``top_k`` candidates from a child with an LLM.
 
     The child is queried with ``k1`` as a retrieval-size hint. Its output is
@@ -239,6 +243,7 @@ class AgenticRerankerRetriever(CompositeRetriever):
     """
 
     SCHEMA = AgenticRerankerRetrieverSchema
+    SCORING_CHILD = ScoringChild.FIRST
     CATEGORY: MultilingualString = LLM_RETRIEVER_CATEGORY
     DISPLAY_NAME: str = MultilingualString(
         en="Agentic Reranker Retriever",

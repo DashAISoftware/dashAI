@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, Final, List, Optional, Tuple, Union
 
 from DashAI.back.config_object import ConfigObject
+from DashAI.back.models.generation_result import GenerationResult
 
 
 class BaseGenerativeModel(ConfigObject, metaclass=ABCMeta):
@@ -85,3 +86,22 @@ class BaseGenerativeModel(ConfigObject, metaclass=ABCMeta):
             ``(context_window, max_tokens)``, or ``None`` if unknown.
         """
         return None
+
+    def generate_result(self, input: Union[Any, Tuple[Any, Any]]) -> GenerationResult:
+        """Generate a typed result from the model given an input.
+
+        The default implementation wraps the output of ``generate`` and
+        carries no usage, finish reason or extra parts. Models that can
+        report usage, finish reason or other parts override this method.
+
+        Parameters
+        ----------
+        input : Any or Tuple[Any, Any]
+            The input data or prompt, as accepted by ``generate``.
+
+        Returns
+        -------
+        GenerationResult
+            The result of the generation.
+        """
+        return GenerationResult.from_outputs(self.generate(input))

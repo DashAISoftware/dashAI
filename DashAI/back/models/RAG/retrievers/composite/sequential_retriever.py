@@ -8,6 +8,10 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.exceptions import RAGRetrieverError
+from DashAI.back.models.RAG.retrievers.capabilities import (
+    ChunkScorer,
+    ScoringChild,
+)
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
@@ -50,7 +54,7 @@ class SequentialRetrieverSchema(RetrievalExpansionSchema):
     )  # type: ignore
 
 
-class SequentialRetriever(CompositeRetriever):
+class SequentialRetriever(CompositeRetriever, ChunkScorer):
     """Queries multiple retrievers in sequence, re-ranking at each step.
 
     Each stage narrows the result set by requiring strictly decreasing
@@ -58,6 +62,7 @@ class SequentialRetriever(CompositeRetriever):
     """
 
     SCHEMA = SequentialRetrieverSchema
+    SCORING_CHILD = ScoringChild.LAST
     DISPLAY_NAME: str = MultilingualString(
         en="Sequential Retriever",
         es="Recuperador Secuencial",

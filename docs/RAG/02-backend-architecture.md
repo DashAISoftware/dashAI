@@ -553,7 +553,8 @@ extend them.
    after its timing is taken.
 3. Per-query retrieve through the single `multi_query_retrieval` path. Every
    retriever's `retrieve()` returns a `(chunks, trace)` tuple, so this step
-   collects one trace node per query (`{"query", "retriever"}`) and merges the
+   collects one trace node per query (`{"query", "retriever"}`), appends a
+   `{"stage": "rerank", "reranker"}` entry when the pool is reranked, and merges the
    per-query chunk lists round-robin by `merge_round_robin`, de-duplicating by
    `(document_id, document_position)`; a one-element list is effectively a
    no-op, preserving its content and order. The retriever is closed after its
@@ -885,7 +886,8 @@ JSON comparison (pending migration).
 - Prepares input by folding chat history into the message list.
 - Processes output into five typed `ProcessData` rows, in pipeline order:
   `Queries` (JSON list of the queries used for retrieval), `Dict` (JSON map of
-  the retrieved chunks), `Trace` (JSON list of per-query retrieval trace nodes),
+  the retrieved chunks), `Trace` (JSON list of per-query retrieval trace nodes plus an optional
+  trailing rerank entry),
   `Timings` (JSON object of per-stage wall-clock milliseconds) and `str` (the
   answer message). The `Queries` row is always emitted; without the
   transformation stage it holds the one-element `[input message]` list. The

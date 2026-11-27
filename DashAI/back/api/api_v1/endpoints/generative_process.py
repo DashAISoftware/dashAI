@@ -316,6 +316,7 @@ async def retry_generative_process(
             process.start_time = None
             process.end_time = None
             process.progress = None
+            process.generation_metadata = None
             db.commit()
         except exc.SQLAlchemyError as e:
             log.exception(e)

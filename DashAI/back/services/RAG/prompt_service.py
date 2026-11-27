@@ -27,7 +27,11 @@ from DashAI.back.models.RAG.prompts.generation.RAG_generation_prompt import (
 from DashAI.back.models.RAG.prompts.transformation.transformation_prompt import (
     QueryTransformationPrompt,
 )
-from DashAI.back.models.RAG.RAG_constants import RAG_WORKFLOW_NAME
+from DashAI.back.models.RAG.RAG_constants import (
+    COMPONENT_KEY,
+    PARAMS_KEY,
+    RAG_WORKFLOW_NAME,
+)
 from DashAI.back.services.RAG.exceptions import (
     RAGDatabaseError,
     RAGPromptValidationError,
@@ -65,8 +69,6 @@ _DEFAULT_GENERATION_LANGUAGE = "en"
 
 _PROMPT_KEY = "prompt"
 _PROMPT_ID_KEY = "prompt_id"
-_COMPONENT_KEY = "component"
-_PARAMS_KEY = "params"
 _TEMPLATE_KEY = "template"
 _TEMPLATES_KEY = "templates"
 _LANGUAGE_KEY = "language"
@@ -1373,8 +1375,8 @@ class PromptService:
             resolved[_LANGUAGE_KEY] = language
 
         return {
-            _COMPONENT_KEY: prompt.class_name,
-            _PARAMS_KEY: resolved,
+            COMPONENT_KEY: prompt.class_name,
+            PARAMS_KEY: resolved,
         }
 
     def validate_component_ref(self, prompt_ref: dict[str, Any]) -> None:
@@ -1493,7 +1495,7 @@ class PromptService:
                     continue
                 if not self._is_component_ref(value):
                     continue
-                if self._is_prompt_component(value.get(_COMPONENT_KEY)):
+                if self._is_prompt_component(value.get(COMPONENT_KEY)):
                     continue
                 self._discover_slots_in_reference(value, key, slots)
         return [generation, *sorted(slots[1:], key=lambda slot: slot.slot_path)]
@@ -1607,8 +1609,8 @@ class PromptService:
                 current_prompt_id=current_prompt_id,
             )
 
-        component = prompt_input.get(_COMPONENT_KEY)
-        params = prompt_input.get(_PARAMS_KEY) or {}
+        component = prompt_input.get(COMPONENT_KEY)
+        params = prompt_input.get(PARAMS_KEY) or {}
         if not component:
             raise RAGPromptValidationError(
                 "A prompt input must include 'prompt_id' or 'component'."
@@ -1832,7 +1834,7 @@ class PromptService:
             )
 
         prompt_id = prompt_input.get(_PROMPT_ID_KEY)
-        params = prompt_input.get(_PARAMS_KEY)
+        params = prompt_input.get(PARAMS_KEY)
         if prompt_id is not None:
             reference = self.resolve_prompt_id_to_component(prompt_id)
             if params is not None:
@@ -1842,11 +1844,11 @@ class PromptService:
                     params, allow_missing=True, allow_blank_template=False
                 )
                 reference = {
-                    _COMPONENT_KEY: reference[_COMPONENT_KEY],
-                    _PARAMS_KEY: {**reference[_PARAMS_KEY], **params},
+                    COMPONENT_KEY: reference[COMPONENT_KEY],
+                    PARAMS_KEY: {**reference[PARAMS_KEY], **params},
                 }
         else:
-            component = prompt_input.get(_COMPONENT_KEY)
+            component = prompt_input.get(COMPONENT_KEY)
             if not isinstance(component, str) or not component:
                 raise RAGPromptValidationError(
                     "A prompt input must include 'prompt_id' or 'component'."
@@ -1858,12 +1860,12 @@ class PromptService:
             self.validate_prompt_params_shape(
                 params, allow_missing=True, allow_blank_template=False
             )
-            reference = {_COMPONENT_KEY: component, _PARAMS_KEY: dict(params)}
+            reference = {COMPONENT_KEY: component, PARAMS_KEY: dict(params)}
 
-        component = reference[_COMPONENT_KEY]
+        component = reference[COMPONENT_KEY]
         self._validate_component_class(component, slot.expected_base)
 
-        reference_params = reference[_PARAMS_KEY]
+        reference_params = reference[PARAMS_KEY]
         templates = reference_params.get(_TEMPLATES_KEY)
         if isinstance(templates, dict) and templates:
             for template in templates.values():
@@ -2074,7 +2076,7 @@ class PromptService:
                 params = {_TEMPLATE_KEY: templates.get(selected)}
                 if selected is not None:
                     params[_LANGUAGE_KEY] = selected
-        return {_COMPONENT_KEY: class_name, _PARAMS_KEY: params}
+        return {COMPONENT_KEY: class_name, PARAMS_KEY: params}
 
     def inject_prompt_slots(
         self,
@@ -2192,8 +2194,8 @@ class PromptService:
         if not isinstance(prompt_input, dict):
             raise RAGPromptValidationError("Prompt input must be a dict.")
 
-        component = prompt_input.get(_COMPONENT_KEY)
-        params = prompt_input.get(_PARAMS_KEY)
+        component = prompt_input.get(COMPONENT_KEY)
+        params = prompt_input.get(PARAMS_KEY)
         if component and isinstance(params, dict):
             return copy.deepcopy(prompt_input)
 
@@ -2274,8 +2276,8 @@ class PromptService:
         slots : list of PromptSlot
             Accumulator receiving the discovered slots.
         """
-        component = reference.get(_COMPONENT_KEY)
-        params = reference.get(_PARAMS_KEY)
+        component = reference.get(COMPONENT_KEY)
+        params = reference.get(PARAMS_KEY)
         if params is None:
             params = {}
         if not isinstance(params, dict):
@@ -2286,14 +2288,14 @@ class PromptService:
         for key, value in params.items():
             child_path = f"{path}.{key}"
             if self._is_component_ref(value):
-                if self._is_prompt_component(value.get(_COMPONENT_KEY)):
+                if self._is_prompt_component(value.get(COMPONENT_KEY)):
                     continue
                 self._discover_slots_in_reference(value, child_path, slots)
             elif isinstance(value, list):
                 for index, item in enumerate(value):
                     if not self._is_component_ref(item):
                         continue
-                    if self._is_prompt_component(item.get(_COMPONENT_KEY)):
+                    if self._is_prompt_component(item.get(COMPONENT_KEY)):
                         continue
                     self._discover_slots_in_reference(
                         item, f"{child_path}[{index}]", slots
@@ -2337,7 +2339,7 @@ class PromptService:
             placeholder = prop.get("placeholder")
             if not isinstance(placeholder, dict):
                 continue
-            default_component = placeholder.get(_COMPONENT_KEY)
+            default_component = placeholder.get(COMPONENT_KEY)
             if not default_component:
                 continue
             default_entry = self._component_entry(default_component)
@@ -2371,7 +2373,7 @@ class PromptService:
     def _is_component_ref(value: Any) -> bool:
         """Whether ``value`` is a ``{"component", "params"}`` reference."""
         return (
-            isinstance(value, dict) and _COMPONENT_KEY in value and _PARAMS_KEY in value
+            isinstance(value, dict) and COMPONENT_KEY in value and PARAMS_KEY in value
         )
 
     def _component_entry(self, component: Any) -> Optional[dict[str, Any]]:
@@ -2580,7 +2582,7 @@ class PromptService:
                 f"Prompt {prompt_id} is not valid for slot {slot.slot_path}."
             )
 
-        params = prompt_input.get(_PARAMS_KEY)
+        params = prompt_input.get(PARAMS_KEY)
         has_params = isinstance(params, dict)
         is_draft = not row.is_default and not row.is_library
         # Drafts are content-addressed and session-local. Only the session that
@@ -2866,14 +2868,14 @@ class PromptService:
         """
         if slot.slot_path == _GENERATION_SLOT_PATH:
             reference = generation_default or {
-                _COMPONENT_KEY: _DEFAULT_GENERATION_COMPONENT,
-                _PARAMS_KEY: {_LANGUAGE_KEY: _DEFAULT_GENERATION_LANGUAGE},
+                COMPONENT_KEY: _DEFAULT_GENERATION_COMPONENT,
+                PARAMS_KEY: {_LANGUAGE_KEY: _DEFAULT_GENERATION_LANGUAGE},
             }
             if _PROMPT_ID_KEY in reference:
                 return self.materialize_prompt_input(slot, reference)
 
-            component = reference.get(_COMPONENT_KEY)
-            params = reference.get(_PARAMS_KEY) or {}
+            component = reference.get(COMPONENT_KEY)
+            params = reference.get(PARAMS_KEY) or {}
             if (
                 component
                 and self._is_default_component(component)
@@ -2928,7 +2930,7 @@ class PromptService:
                 resolved: dict[str, Any] = {_TEMPLATE_KEY: template}
                 if selected is not None:
                     resolved[_LANGUAGE_KEY] = selected
-                return {_COMPONENT_KEY: prompt.class_name, _PARAMS_KEY: resolved}
+                return {COMPONENT_KEY: prompt.class_name, PARAMS_KEY: resolved}
 
         # Legacy default rows may predate the templates map and only store the
         # text that was active when they were written. Returning it keeps old
@@ -2939,7 +2941,7 @@ class PromptService:
             legacy_language = parameters.get(_LANGUAGE_KEY)
             if legacy_language is not None:
                 resolved[_LANGUAGE_KEY] = legacy_language
-            return {_COMPONENT_KEY: prompt.class_name, _PARAMS_KEY: resolved}
+            return {COMPONENT_KEY: prompt.class_name, PARAMS_KEY: resolved}
 
         if self._is_default_component(prompt.class_name):
             # The row lost its body (a language-only legacy default), but the
@@ -2951,7 +2953,7 @@ class PromptService:
                 resolved = {_TEMPLATE_KEY: template}
                 if selected is not None:
                     resolved[_LANGUAGE_KEY] = selected
-                return {_COMPONENT_KEY: prompt.class_name, _PARAMS_KEY: resolved}
+                return {COMPONENT_KEY: prompt.class_name, PARAMS_KEY: resolved}
 
         raise RAGPromptValidationError(
             f"Default prompt {prompt.class_name} has no language templates."
