@@ -680,7 +680,6 @@ from DashAI.back.units.store_uploaded_document_source_unit import (
 from DashAI.back.units.transform_dataset_unit import TransformDatasetUnit
 from DashAI.back.workflows import InferenceWorkflow, RAGWorkflow
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 

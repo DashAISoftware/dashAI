@@ -5,7 +5,6 @@ from fastapi import status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 

@@ -33,7 +33,6 @@ from DashAI.back.units.prepare_explanation_data_unit import PrepareExplanationDa
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 

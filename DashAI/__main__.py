@@ -12,7 +12,6 @@ import signal
 import subprocess
 import sys
 import threading
-import warnings
 import webbrowser
 from contextlib import suppress
 
@@ -20,35 +19,9 @@ import typer
 from typing_extensions import Annotated
 
 from DashAI.back.core.enums.logging_levels import LoggingLevel
+from DashAI.back.core.warning_filters import silence_startup_warnings
 
-# Suppress noisy third-party startup warnings
-warnings.filterwarnings(
-    "ignore",
-    message=".*mediapipe.*",
-    category=UserWarning,
-    module="controlnet_aux",
-)
-warnings.filterwarnings(
-    "ignore",
-    message=".*Importing from timm.models.layers.*",
-    category=FutureWarning,
-)
-warnings.filterwarnings(
-    "ignore",
-    message=".*Importing from timm.models.registry.*",
-    category=FutureWarning,
-)
-warnings.filterwarnings(
-    "ignore",
-    message=".*Overwriting tiny_vit.*",
-    category=UserWarning,
-    module="controlnet_aux",
-)
-warnings.filterwarnings(
-    "ignore",
-    message=".*found in sys.modules after import.*",
-    category=RuntimeWarning,
-)
+silence_startup_warnings()
 
 
 def _print_banner() -> None:
@@ -306,7 +279,7 @@ def main(
     ] = False,
 ) -> None:
     _print_banner()
-    logging.getLogger(name=__package__).setLevel(level=logging_level.value)
+    logging.basicConfig(level=logging_level.value)
     logger = logging.getLogger(__name__)
     logger.info("Starting dashAI application.")
     huey_process = None
