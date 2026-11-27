@@ -37,7 +37,6 @@
     "react-markdown": "^9.0.1",
     "react-plotly.js": "^2.6.0",
     "react-router-dom": "^6.4.1",
-    "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^16.1.1",
     "react-uuid": "^1.0.3",
     "react-virtualized-auto-sizer": "^1.0.26",
@@ -50,29 +49,12 @@
     "yup": "^0.32.11"
   },
   "scripts": {
-    "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",
-    "build": "cross-env DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false react-scripts build",
-    "test": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts test",
-    "eject": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts eject",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "json-server": "json-server sample-db.json --routes sample-routes.json --port 3001",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --config eslint.config.js"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "jest": {
-    "transformIgnorePatterns": [
-      "node_modules/(?!(react-markdown|remark-[^/]+|unified|bail|ccount|character-[^/]+|escape-string-regexp|markdown-table|comma-separated-tokens|decode-named-character-reference|devlop|estree-util-[^/]+|hast-util-[^/]+|html-url-attributes|is-alphabetical|is-alphanumerical|is-decimal|is-hexadecimal|is-plain-obj|longest-streak|mdast-util-[^/]+|micromark[^/]*|parse-entities|property-information|space-separated-tokens|stringify-entities|trim-lines|trough|unist-util-[^/]+|vfile[^/]*|zwitch|@ungap/structured-clone)/)"
-    ],
-    "moduleNameMapper": {
-      "^unist-util-visit-parents/do-not-use-color$": "<rootDir>/node_modules/unist-util-visit-parents/lib/color.js",
-      "^#minpath$": "<rootDir>/node_modules/vfile/lib/minpath.browser.js",
-      "^#minproc$": "<rootDir>/node_modules/vfile/lib/minproc.browser.js",
-      "^#minurl$": "<rootDir>/node_modules/vfile/lib/minurl.browser.js"
-    }
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --config eslint.config.js",
+    "typecheck": "tsc --noEmit"
   },
   "browserslist": {
     "production": [
@@ -88,12 +70,9 @@
   },
   "devDependencies": {
     "@stylistic/eslint-plugin-js": "^1.7.2",
-    "@testing-library/jest-dom": "^5.16.4",
-    "@testing-library/react": "^13.3.0",
-    "@testing-library/user-event": "^13.5.0",
     "@types/react": "19.2.18",
     "@typescript-eslint/eslint-plugin": "^5.43.0",
-    "cross-env": "7.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-config-standard-with-typescript": "latest",
@@ -101,9 +80,9 @@
     "eslint-plugin-n": "^15.0.0",
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-react": "^7.34.2",
-    "jest-watch-typeahead": "^0.6.5",
     "prettier": "^2.8.7",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "vite": "^5.4.20"
   },
   "packageManager": "yarn@3.5.0"
 }

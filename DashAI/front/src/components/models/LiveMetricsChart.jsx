@@ -105,7 +105,7 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
 
   useEffect(() => {
     const wsOrigin = new URL(
-      process.env.REACT_APP_API_URL || "/",
+      import.meta.env.VITE_API_URL || "/",
       window.location.origin,
     ).origin;
     let wsUrl;

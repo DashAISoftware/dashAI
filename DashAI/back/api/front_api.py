@@ -1,3 +1,4 @@
+import mimetypes
 import os
 from pathlib import Path
 from typing import Any, Dict
@@ -5,6 +6,8 @@ from typing import Any, Dict
 from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse, RedirectResponse
 from kink import di, inject
+
+mimetypes.add_type("text/javascript", ".js")
 
 router = APIRouter()
 

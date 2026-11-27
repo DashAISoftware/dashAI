@@ -1,28 +1,137 @@
 import React from "react";
-import * as Icons from "@mui/icons-material";
+import {
+  AccountTree,
+  Article,
+  AutoAwesome,
+  AutoGraph,
+  Balance,
+  BarChart,
+  Bolt,
+  BubbleChart,
+  Build,
+  Casino,
+  CompareArrows,
+  ControlPoint,
+  Description,
+  Dns,
+  ElectricBolt,
+  EventRepeat,
+  Extension,
+  FilterList,
+  FlashOn,
+  Forest,
+  Functions,
+  Grain,
+  GridOn,
+  History,
+  Hub,
+  ImageSearch,
+  Insights,
+  Inventory,
+  Key,
+  Language,
+  Layers,
+  Leaderboard,
+  LinearScale,
+  MultilineChart,
+  Park,
+  Psychology,
+  Radar,
+  RecordVoiceOver,
+  RocketLaunch,
+  ScatterPlot,
+  Science,
+  Search,
+  SelectAll,
+  ShowChart,
+  Shuffle,
+  SmartToy,
+  Speed,
+  TableChart,
+  TextFields,
+  TextSnippet,
+  Timeline,
+  Translate,
+  TrendingDown,
+  TrendingFlat,
+  TrendingUp,
+  Tune,
+  Waves,
+} from "@mui/icons-material";
 
-const DEFAULT_ICON = Icons.Science;
+const ICONS = {
+  AccountTree,
+  Article,
+  AutoAwesome,
+  AutoGraph,
+  Balance,
+  BarChart,
+  Bolt,
+  BubbleChart,
+  Build,
+  Casino,
+  CompareArrows,
+  ControlPoint,
+  Description,
+  Dns,
+  ElectricBolt,
+  EventRepeat,
+  Extension,
+  FilterList,
+  FlashOn,
+  Forest,
+  Functions,
+  Grain,
+  GridOn,
+  History,
+  Hub,
+  ImageSearch,
+  Insights,
+  Inventory,
+  Key,
+  Language,
+  Layers,
+  Leaderboard,
+  LinearScale,
+  MultilineChart,
+  Park,
+  Psychology,
+  Radar,
+  RecordVoiceOver,
+  RocketLaunch,
+  ScatterPlot,
+  Science,
+  Search,
+  SelectAll,
+  ShowChart,
+  Shuffle,
+  SmartToy,
+  Speed,
+  TableChart,
+  TextFields,
+  TextSnippet,
+  Timeline,
+  Translate,
+  TrendingDown,
+  TrendingFlat,
+  TrendingUp,
+  Tune,
+  Waves,
+};
 
-/**
- * Renders an icon component for a given model.
- *
- * @param {Object} props - Component props.
- * @param {string} props.iconName - Icon name from Material-UI (comes from backend metadata.icon).
- * @param {string} [props.color] - CSS color applied to the rendered icon.
- * @returns {JSX.Element} The selected icon component.
- *
- * @remarks
- * - Falls back to DEFAULT_ICON (Science) if the icon name is not found.
- * - The iconName should match a Material-UI icon name (e.g., "Forest", "Timeline", "ScatterPlot").
- */
+const DEFAULT_ICON = Science;
+
 /**
  * The Material UI icon a component declares by name in its metadata.
+ *
+ * The lookup covers every icon name the backend declares; an unknown name
+ * falls back to DEFAULT_ICON so plugin components always render something.
  *
  * @param {string} iconName - Icon name from Material-UI (backend metadata.icon).
  * @returns {React.ComponentType} The icon, or DEFAULT_ICON when there is no
  * icon by that name.
  */
-export const iconByName = (iconName) => Icons[iconName] || DEFAULT_ICON;
+export const iconByName = (iconName) => ICONS[iconName] || DEFAULT_ICON;
 
 export function ModelIcon({ iconName, color }) {
   const IconComponent = iconByName(iconName);

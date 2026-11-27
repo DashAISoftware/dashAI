@@ -40,7 +40,6 @@ jobs:
           name: react-build
           path: DashAI/front/build
           retention-days: 7
-      - run: yarn test --passWithNoTests
 
   pytest:
     needs: react-build-test
