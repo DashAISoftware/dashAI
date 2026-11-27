@@ -179,26 +179,6 @@ class RetrieverDBService:
             raise
         return record
 
-    def find_sparse_by_bridge_id(
-        self, bridge_id: int
-    ) -> Optional[SparseRetrieverDBModel]:
-        """Look up a sparse retriever sub-table record by its bridge_id.
-
-        Args:
-            bridge_id: FK to the bridge record.
-
-        Returns:
-            The sparse detail record, or ``None`` if not found.
-        """
-        try:
-            return (
-                self.db.query(SparseRetrieverDBModel)
-                .filter_by(bridge_id=bridge_id)
-                .first()
-            )
-        except SQLAlchemyError:
-            raise
-
     # ── Dense retriever ────────────────────────────────────────────────
 
     def find_dense(
@@ -272,26 +252,6 @@ class RetrieverDBService:
             self.db.rollback()
             raise
         return record
-
-    def find_dense_by_bridge_id(
-        self, bridge_id: int
-    ) -> Optional[DenseRetrieverDBModel]:
-        """Look up a dense retriever sub-table record by its bridge_id.
-
-        Args:
-            bridge_id: FK to the bridge record.
-
-        Returns:
-            The dense detail record, or ``None`` if not found.
-        """
-        try:
-            return (
-                self.db.query(DenseRetrieverDBModel)
-                .filter_by(bridge_id=bridge_id)
-                .first()
-            )
-        except SQLAlchemyError:
-            raise
 
     # ── Composite retriever ────────────────────────────────────────────
 
@@ -433,41 +393,6 @@ class RetrieverDBService:
 
     # NOTE: All embedding matrices are loaded into memory via np.load()
     # for simplicity -- not suitable for very large document collections.
-    def find_embedding_matrices(
-        self,
-        doc_ids: List[int],
-        chunk_set_id: int,
-        embedding_model_id: int,
-    ) -> Dict[int, EmbeddingMatrixDBModel]:
-        """Return existing embedding matrices keyed by document_id.
-
-        Only matrices that actually exist in the database are returned.
-
-        Args:
-            doc_ids: List of document ids to look up.
-            chunk_set_id: FK to the chunk set.
-            embedding_model_id: FK to the embedding model.
-
-        Returns:
-            Dict mapping document_id to existing matrix records.
-        """
-        result: Dict[int, EmbeddingMatrixDBModel] = {}
-        for doc_id in doc_ids:
-            try:
-                matrix = (
-                    self.db.query(EmbeddingMatrixDBModel)
-                    .filter_by(
-                        document_id=doc_id,
-                        chunk_set_id=chunk_set_id,
-                        embedding_model_id=embedding_model_id,
-                    )
-                    .first()
-                )
-            except SQLAlchemyError:
-                raise
-            if matrix is not None:
-                result[doc_id] = matrix
-        return result
 
     def find_embedding_matrix(
         self,
@@ -540,88 +465,3 @@ class RetrieverDBService:
         return record
 
     # ── Deletion helpers ───────────────────────────────────────────────
-
-    def delete_embedding_matrices_by_ids(self, matrix_ids: List[int]) -> None:
-        """Bulk-delete embedding matrices by their primary keys.
-
-        Args:
-            matrix_ids: List of primary keys to delete.
-        """
-        try:
-            self.db.query(EmbeddingMatrixDBModel).filter(
-                EmbeddingMatrixDBModel.id.in_(matrix_ids)
-            ).delete(synchronize_session="fetch")
-            self.db.commit()
-        except SQLAlchemyError:
-            self.db.rollback()
-            raise
-
-    def delete_embedding_model(self, embedding_model_id: int) -> None:
-        """Delete a single embedding model record by its primary key.
-
-        Args:
-            embedding_model_id: Primary key of the embedding model to delete.
-        """
-        try:
-            model = (
-                self.db.query(EmbeddingDBModel).filter_by(id=embedding_model_id).first()
-            )
-            if model is not None:
-                self.db.delete(model)
-                self.db.commit()
-        except SQLAlchemyError:
-            self.db.rollback()
-            raise
-
-    def delete_dense_detail(self, bridge_id: int) -> None:
-        """Delete the dense retriever sub-table row linked by bridge_id.
-
-        Args:
-            bridge_id: FK to the bridge record whose detail should be deleted.
-        """
-        try:
-            detail = (
-                self.db.query(DenseRetrieverDBModel)
-                .filter_by(bridge_id=bridge_id)
-                .first()
-            )
-            if detail is not None:
-                self.db.delete(detail)
-                self.db.commit()
-        except SQLAlchemyError:
-            self.db.rollback()
-            raise
-
-    def delete_sparse_detail(self, bridge_id: int) -> None:
-        """Delete the sparse retriever sub-table row linked by bridge_id.
-
-        Args:
-            bridge_id: FK to the bridge record whose detail should be deleted.
-        """
-        try:
-            detail = (
-                self.db.query(SparseRetrieverDBModel)
-                .filter_by(bridge_id=bridge_id)
-                .first()
-            )
-            if detail is not None:
-                self.db.delete(detail)
-                self.db.commit()
-        except SQLAlchemyError:
-            self.db.rollback()
-            raise
-
-    def delete_bridge(self, bridge_id: int) -> None:
-        """Delete a bridge record (RAG_retriever row) by its primary key.
-
-        Args:
-            bridge_id: Primary key of the bridge record to delete.
-        """
-        try:
-            bridge = self.db.query(RetrieverDBModel).get(bridge_id)
-            if bridge is not None:
-                self.db.delete(bridge)
-                self.db.commit()
-        except SQLAlchemyError:
-            self.db.rollback()
-            raise

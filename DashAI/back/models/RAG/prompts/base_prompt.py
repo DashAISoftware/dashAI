@@ -59,21 +59,6 @@ class BasePrompt(ConfigObject):
             )
         return cls.required_placeholders
 
-    def get_optional_placeholders(self) -> List[str]:
-        """
-        Get the list of optional placeholders for the prompt template.
-        Returns:
-            List[str]: List of optional placeholders.
-        Raises:
-            AttributeError: If the subclass does not define 'optional_placeholders'.
-        """
-        if not hasattr(self, "optional_placeholders"):
-            raise AttributeError(
-                f"Prompt subclass {type(self).__name__} must define "
-                "'optional_placeholders' class attribute."
-            )
-        return self.optional_placeholders
-
     @classmethod
     def validate_template(cls, template: str) -> bool:
         """

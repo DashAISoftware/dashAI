@@ -3,13 +3,7 @@
 import logging
 import os
 import shutil
-from typing import List
 
-import numpy as np
-
-from DashAI.back.core.atomic import atomic_open
-from DashAI.back.dependencies.database.models import RAGEmbeddingMatrix
-from DashAI.back.models.RAG.exceptions import RAGEmbeddingLoadError
 from DashAI.back.services.RAG.retriever_db_service import RetrieverDBService
 
 logger = logging.getLogger(__name__)
@@ -103,96 +97,6 @@ class EmbeddingStorageService:
     # Public API
     # ------------------------------------------------------------------
 
-    def save_embeddings(
-        self,
-        doc_id: int,
-        content_key: str,
-        chunk_set_id: int,
-        embedding_model_id: int,
-        embeddings: np.ndarray,
-    ) -> RAGEmbeddingMatrix:
-        """Save embeddings to disk and create / return a DB record.
-
-        Steps
-        -----
-        1. Create the directory via :meth:`_matrix_dir`.
-        2. Write the array to ``embeddings.npy`` atomically, so a killed
-           indexing job never leaves a truncated matrix behind.
-        3. Persist a matching ``RAGEmbeddingMatrix`` record through
-           :meth:`RetrieverDBService.save_embedding_matrix`.
-
-        The directory is keyed by *content_key*, while the record keeps the
-        owning ``chunk_set_id``: the file is shared between sessions, the row is
-        not.
-
-        Parameters
-        ----------
-        doc_id : int
-            Owning document id.
-        content_key : str
-            Content hash of the document's chunks.
-        chunk_set_id : int
-            Chunk set identifier, stored on the DB row only.
-        embedding_model_id : int
-            Embedding model identifier.
-        embeddings : np.ndarray
-            2-D embedding matrix (num_chunks x embedding_dimension).
-
-        Returns
-        -------
-        RAGEmbeddingMatrix
-            The newly persisted database record.
-        """
-        matrix_dir = self._matrix_dir(doc_id, content_key, embedding_model_id)
-        os.makedirs(matrix_dir, exist_ok=True)
-
-        matrix_path = self._matrix_path(doc_id, content_key, embedding_model_id)
-        # np.save appends '.npy' to a path but not to a file object, which is
-        # what keeps the temp file and the final name in agreement.
-        with atomic_open(matrix_path, "wb") as f:
-            np.save(f, embeddings)
-
-        record = self._db_service.save_embedding_matrix(
-            document_id=doc_id,
-            chunk_set_id=chunk_set_id,
-            embedding_model_id=embedding_model_id,
-            storage_folder=matrix_dir,
-            matrix_shape=list(embeddings.shape),
-        )
-        return record
-
-    def load_embeddings(
-        self, doc_id: int, content_key: str, embedding_model_id: int
-    ) -> np.ndarray | None:
-        """Load an embedding matrix from disk as a numpy array.
-
-        Returns ``None`` when the file does not exist (not an error).
-
-        Parameters
-        ----------
-        doc_id : int
-            Owning document id.
-        content_key : str
-            Content hash of the document's chunks.
-        embedding_model_id : int
-            Embedding model identifier.
-
-        Returns
-        -------
-        np.ndarray or None
-            The loaded embedding matrix, or ``None`` if not found.
-        """
-        matrix_path = self._matrix_path(doc_id, content_key, embedding_model_id)
-        if not os.path.isfile(matrix_path):
-            return None
-        try:
-            return np.load(matrix_path)
-        except (IOError, OSError, ValueError) as exc:
-            logger.warning("Failed to load embeddings from %s: %s", matrix_path, exc)
-            raise RAGEmbeddingLoadError(
-                f"Failed to load embeddings from {matrix_path}: {exc}"
-            ) from exc
-
     def exists(self, doc_id: int, content_key: str, embedding_model_id: int) -> bool:
         """Check whether an ``embeddings.npy`` file exists on disk.
 
@@ -213,34 +117,6 @@ class EmbeddingStorageService:
         return os.path.isfile(
             self._matrix_path(doc_id, content_key, embedding_model_id)
         )
-
-    def delete_all_for_document(
-        self, doc_id: int, matrices: List[RAGEmbeddingMatrix]
-    ) -> None:
-        """Delete embedding directories and DB records for a document.
-
-        For each provided matrix record, the corresponding on-disk directory
-        is removed recursively.  DB records are bulk-deleted via
-        :meth:`RetrieverDBService.delete_embedding_matrices_by_ids`.
-
-        Callers that must keep folders shared with another session should use
-        :meth:`CleanupService._embedding_folder_in_use` first; this method is
-        the unconditional document-level variant.
-
-        Parameters
-        ----------
-        doc_id : int
-            Document whose embeddings are being deleted.
-        matrices : list[RAGEmbeddingMatrix]
-            Embedding matrix records to delete.
-        """
-        matrix_ids = []
-        for m in matrices:
-            if m.document_id == doc_id:
-                matrix_ids.append(m.id)
-                self.delete_storage(m.storage_folder)
-        if matrix_ids:
-            self._db_service.delete_embedding_matrices_by_ids(matrix_ids)
 
     @staticmethod
     def delete_storage(storage_folder: str) -> None:
