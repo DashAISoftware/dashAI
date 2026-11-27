@@ -42,6 +42,11 @@ RUN uv sync --locked --extra cuda --no-dev --no-install-project --no-cache
 FROM nvidia/cuda:12.8.0-runtime-ubuntu22.04
 WORKDIR /app
 
+# libgomp1: OpenMP runtime required by every llama-cpp-python shared library
+RUN apt-get update && apt-get install -y \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
 # copy the managed interpreter and the resolved virtualenv (not build tools)
 COPY --from=builder /opt/python /opt/python
 COPY --from=builder /opt/venv /opt/venv
