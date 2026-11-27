@@ -16,11 +16,9 @@ import ModelsPage from "./pages/models/Models";
 import Home from "./pages/home/Home";
 import ResponsiveAppBar from "./components/ResponsiveAppBar";
 import PluginsPage from "./pages/plugins/Plugins";
-import PipelinesPage from "./pages/pipelines/Pipelines";
 import PluginsDetails from "./pages/plugins/components/PluginsDetails";
 import Generative from "./pages/generative/Generative";
 import { GenerativeProvider } from "./components/generative/GenerativeContext";
-import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 import HubContent from "./pages/hub/HubContent";
 import HubImportPage from "./pages/hub/HubImportPage";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
@@ -172,15 +170,6 @@ function App() {
                 <Route
                   path="/app/generative/sessions/:id"
                   element={<SessionRouter />}
-                />
-                <Route path="/app/pipelines" element={<PipelinesPage />} />
-                <Route
-                  path="/app/pipelines/new"
-                  element={<NewPipelineWrapper />}
-                />
-                <Route
-                  path="/app/pipelines/:pipelineId"
-                  element={<NewPipelineWrapper />}
                 />
                 <Route path="/app/plugins">
                   <Route index element={<PluginsPage />} />

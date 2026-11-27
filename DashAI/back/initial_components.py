@@ -238,7 +238,6 @@ from DashAI.back.job.explainer_job import ExplainerJob
 from DashAI.back.job.explorer_job import ExplorerJob
 from DashAI.back.job.generative_job import GenerativeJob
 from DashAI.back.job.model_job import ModelJob
-from DashAI.back.job.pipeline_job import PipelineJob
 from DashAI.back.job.predict_job import PredictJob
 from DashAI.back.job.RAG_job import RAGJob
 from DashAI.back.job.report_job import ReportJob
@@ -530,12 +529,6 @@ from DashAI.back.optimizers.hyperopt_optimizer import HyperOptOptimizer
 from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
 
 # Pipeline nodes
-from DashAI.back.pipeline.data_selector_node import DataSelector
-from DashAI.back.pipeline.exploration_node import DataExploration
-from DashAI.back.pipeline.prediction_node import Prediction
-from DashAI.back.pipeline.retrieve_model_node import RetrieveModel
-from DashAI.back.pipeline.train_node import Train
-
 # Plugins
 from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.reports.classification.confusion_matrix import ConfusionMatrix
@@ -889,7 +882,6 @@ def get_initial_components():
         DatasetJob,
         DocumentJob,
         GenerativeJob,
-        PipelineJob,
         # Units
         LoadDatasetUnit,
         PrepareAndSplitUnit,
@@ -1059,11 +1051,6 @@ def get_initial_components():
         SelectFdr,
         SelectFwe,
         Nystroem,
-        DataSelector,
-        DataExploration,
-        Train,
-        RetrieveModel,
-        Prediction,
         SMOTEConverter,
         SMOTEENNConverter,
         RandomUnderSamplerConverter,
