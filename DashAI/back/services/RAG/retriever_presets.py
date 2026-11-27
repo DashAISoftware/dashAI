@@ -18,7 +18,11 @@ from DashAI.back.models.RAG.RAG_defaults import (
     default_keyword_retriever,
     default_semantic_retriever,
 )
-from DashAI.back.models.RAG.retrievers.ref_utils import CHILDREN_KEY, PARAMS_KEY
+from DashAI.back.models.RAG.retrievers.ref_utils import (
+    CHILDREN_KEY,
+    COMPONENT_KEY,
+    PARAMS_KEY,
+)
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     ENABLE_FIELD,
     TOP_K_FIELD,
@@ -118,8 +122,51 @@ def _semantic_preset(top_k: int, registry) -> Dict[str, Any]:
     }
 
 
+def _with_schema_defaults(
+    component: str, params: Dict[str, Any], registry
+) -> Dict[str, Any]:
+    """Complete a retriever's params with its schema defaults, children included.
+
+    Every child of a composite is completed with its own defaults as well. The
+    startup backfill that translates retrievers stored by earlier versions
+    (``translate_legacy_retriever``) completes every level this way, so a
+    recipe completed only at the top would never equal a converted session.
+
+    Parameters
+    ----------
+    component : str
+        Retriever class name.
+    params : Dict[str, Any]
+        Parameters the recipe sets. They win over the schema defaults.
+    registry : ComponentRegistry
+        Registry used to resolve each component's schema defaults.
+
+    Returns
+    -------
+    Dict[str, Any]
+        A new params dict; ``params`` itself is not modified.
+    """
+    completed = {**resolve_component_defaults(component, registry), **params}
+    children = completed.get(CHILDREN_KEY)
+    if isinstance(children, list):
+        completed[CHILDREN_KEY] = [
+            {
+                **child,
+                PARAMS_KEY: _with_schema_defaults(
+                    child[COMPONENT_KEY], child[PARAMS_KEY], registry
+                ),
+            }
+            for child in children
+        ]
+    return completed
+
+
 def _hybrid_preset(top_k: int, registry) -> Dict[str, Any]:
     """Build the hybrid preset from the centralized parallel default.
+
+    Its children carry their schema defaults too, so a hybrid session stored
+    with them, such as one converted from an earlier version at startup, still
+    matches the preset.
 
     Parameters
     ----------
@@ -135,7 +182,7 @@ def _hybrid_preset(top_k: int, registry) -> Dict[str, Any]:
         The hybrid preset recipe with its display metadata.
     """
     ref = default_hybrid_retriever(top_k)
-    params = {**resolve_component_defaults(ref["component"], registry), **ref["params"]}
+    params = _with_schema_defaults(ref[COMPONENT_KEY], ref[PARAMS_KEY], registry)
     return {
         "key": HYBRID_PRESET_KEY,
         "display_name": _HYBRID_NAME,
