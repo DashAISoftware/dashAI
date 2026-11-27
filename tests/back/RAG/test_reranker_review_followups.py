@@ -30,6 +30,7 @@ from DashAI.back.services.RAG.session_configuration_service import (
     SessionConfigurationService,
 )
 from tests.back.RAG.conftest import _insert_rag_session
+from tests.back.RAG.test_retriever_identity import _registry
 
 BM25 = "BM25Retriever"
 TFIDF = "TFIDFRetriever"
@@ -37,8 +38,8 @@ DENSE = "DenseEmbeddingRetriever"
 SEQUENTIAL = "SequentialRetriever"
 
 
-def _bm25(top_k: int) -> Dict[str, Any]:
-    return {"component": BM25, "params": {"top_k": top_k}}
+def _bm25(k1: int) -> Dict[str, Any]:
+    return {"component": BM25, "params": {"k1": k1}}
 
 
 def _parameters(
@@ -156,66 +157,76 @@ def _index(orm_db, tmp_path, name: str):
 class TestCleanupDoesNotMixTheTwoStages:
     """The retriever stage and the reranker keep their rows in one pipeline."""
 
-    def test_changing_the_retriever_keeps_a_same_class_reranker(self, orm_db, tmp_path):
+    def test_changing_the_retriever_keeps_a_same_class_reranker(
+        self, client, orm_db, tmp_path
+    ):
         session, index = _index(orm_db, tmp_path, "mix_a")
         # The reranker's row is the lowest id, so a lookup by class name alone
         # would return it instead of the retriever's own row.
-        reranker_bridge = index.sparse(BM25, {"top_k": 3})
-        main_bridge = index.sparse(BM25, {"top_k": 5})
+        reranker_bridge = index.sparse(BM25, {"k1": 3})
+        main_bridge = index.sparse(BM25, {"k1": 5})
         old = _parameters(_bm25(5), _bm25(3))
-        new = _parameters({"component": TFIDF, "params": {"top_k": 5}}, _bm25(3))
+        new = _parameters({"component": TFIDF, "params": {"k1": 5}}, _bm25(3))
 
-        CleanupService(orm_db).cleanup_orphaned_resources(session.id, old, new)
+        CleanupService(orm_db, _registry(client)).cleanup_orphaned_resources(
+            session.id, old, new
+        )
 
         assert not index.exists(main_bridge)
         assert index.exists(reranker_bridge)
 
     def test_a_row_shared_by_both_stages_survives_a_retriever_change(
-        self, orm_db, tmp_path
+        self, client, orm_db, tmp_path
     ):
         session, index = _index(orm_db, tmp_path, "mix_shared")
-        shared = index.sparse(BM25, {"top_k": 5})
+        shared = index.sparse(BM25, {"k1": 5})
         old = _parameters(_bm25(5), _bm25(5))
-        new = _parameters({"component": TFIDF, "params": {"top_k": 5}}, _bm25(5))
+        new = _parameters({"component": TFIDF, "params": {"k1": 5}}, _bm25(5))
 
-        CleanupService(orm_db).cleanup_orphaned_resources(session.id, old, new)
+        CleanupService(orm_db, _registry(client)).cleanup_orphaned_resources(
+            session.id, old, new
+        )
 
         assert index.exists(shared)
 
     def test_changing_only_the_reranker_deletes_its_rows_and_not_the_retrievers(
-        self, orm_db, tmp_path
+        self, client, orm_db, tmp_path
     ):
         session, index = _index(orm_db, tmp_path, "mix_rerank_only")
-        main_bridge = index.sparse(BM25, {"top_k": 5})
-        reranker_bridge = index.sparse(BM25, {"top_k": 3})
+        main_bridge = index.sparse(BM25, {"k1": 5})
+        reranker_bridge = index.sparse(BM25, {"k1": 3})
         old = _parameters(_bm25(5), _bm25(3))
         new = _parameters(_bm25(5), None)
 
-        CleanupService(orm_db).cleanup_orphaned_resources(session.id, old, new)
+        CleanupService(orm_db, _registry(client)).cleanup_orphaned_resources(
+            session.id, old, new
+        )
 
         assert index.exists(main_bridge)
         assert not index.exists(reranker_bridge)
         assert orm_db.query(RAGSparseRetriever).count() == 1
 
-    def test_an_unchanged_reranker_is_left_alone(self, orm_db, tmp_path):
+    def test_an_unchanged_reranker_is_left_alone(self, client, orm_db, tmp_path):
         session, index = _index(orm_db, tmp_path, "mix_unchanged")
-        main_bridge = index.sparse(BM25, {"top_k": 5})
-        reranker_bridge = index.sparse(BM25, {"top_k": 3})
+        main_bridge = index.sparse(BM25, {"k1": 5})
+        reranker_bridge = index.sparse(BM25, {"k1": 3})
         parameters = _parameters(_bm25(5), _bm25(3))
 
-        CleanupService(orm_db).cleanup_orphaned_resources(
+        CleanupService(orm_db, _registry(client)).cleanup_orphaned_resources(
             session.id, parameters, _parameters(_bm25(5), _bm25(3))
         )
 
         assert index.exists(main_bridge)
         assert index.exists(reranker_bridge)
 
-    def test_deleting_the_session_removes_the_reranker_rows_too(self, orm_db, tmp_path):
+    def test_deleting_the_session_removes_the_reranker_rows_too(
+        self, client, orm_db, tmp_path
+    ):
         session, index = _index(orm_db, tmp_path, "mix_delete")
-        main_bridge = index.sparse(BM25, {"top_k": 5})
-        reranker_bridge = index.sparse(BM25, {"top_k": 3})
+        main_bridge = index.sparse(BM25, {"k1": 5})
+        reranker_bridge = index.sparse(BM25, {"k1": 3})
 
-        CleanupService(orm_db).cleanup_orphaned_resources(
+        CleanupService(orm_db, _registry(client)).cleanup_orphaned_resources(
             session.id, _parameters(_bm25(5), _bm25(3)), None
         )
 
@@ -223,25 +234,45 @@ class TestCleanupDoesNotMixTheTwoStages:
         assert not index.exists(reranker_bridge)
 
 
-def _dense(top_k: int) -> Dict[str, Any]:
-    return {"component": DENSE, "params": {"top_k": top_k}}
+#: Embedding component of the dense references, registered in the application.
+DENSE_EMBEDDING = "AllMiniLML6V2Embedding"
+#: A second registered embedding, for a reranker that embeds differently.
+OTHER_EMBEDDING = "ParaphraseMultilingualMiniLML12V2Embedding"
+
+
+def _dense(label: str, embedding: str = DENSE_EMBEDDING) -> Dict[str, Any]:
+    """Return a dense reference over one embedding, told apart by ``label``.
+
+    ``top_k`` is query-time and no longer separates two rows, so ``label``
+    stands in for a second persistent parameter: two rows over one chunk set
+    and embedding model must still be two rows.
+    """
+    return {
+        "component": DENSE,
+        "params": {
+            "embedding_model": {"component": embedding, "params": {}},
+            "label": label,
+        },
+    }
 
 
 class TestCleanupKeepsSharedDenseMatrices:
-    """Dense retrievers with one embedding over one chunk set share matrices."""
+    """Dense retrievers over one chunk set and embedding model share matrices."""
 
     def test_dropping_the_reranker_keeps_the_matrices_the_retriever_reads(
-        self, orm_db, tmp_path
+        self, client, orm_db, tmp_path
     ):
         session, index = _index(orm_db, tmp_path, "dense_shared")
         embedding = index.embedding_model("E")
-        main_bridge = index.dense({"top_k": 5}, embedding)
-        reranker_bridge = index.dense({"top_k": 3}, embedding)
+        main_bridge = index.dense(_dense("main")["params"], embedding)
+        reranker_bridge = index.dense(_dense("rerank")["params"], embedding)
         folder = index.matrix(1, embedding)
-        old = _parameters(_dense(5), _dense(3), documents=[1])
-        new = _parameters(_dense(5), None, documents=[1])
+        old = _parameters(_dense("main"), _dense("rerank"), documents=[1])
+        new = _parameters(_dense("main"), None, documents=[1])
 
-        CleanupService(orm_db).cleanup_orphaned_resources(session.id, old, new)
+        CleanupService(orm_db, _registry(client)).cleanup_orphaned_resources(
+            session.id, old, new
+        )
 
         assert index.exists(main_bridge)
         assert not index.exists(reranker_bridge)
@@ -249,33 +280,41 @@ class TestCleanupKeepsSharedDenseMatrices:
         assert os.path.isdir(folder)
 
     def test_a_reranker_with_its_own_embedding_takes_its_matrices_with_it(
-        self, orm_db, tmp_path
+        self, client, orm_db, tmp_path
     ):
         session, index = _index(orm_db, tmp_path, "dense_own")
         main_embedding = index.embedding_model("E_main")
         reranker_embedding = index.embedding_model("E_rerank")
-        index.dense({"top_k": 5}, main_embedding)
-        index.dense({"top_k": 3}, reranker_embedding)
+        index.dense(_dense("main")["params"], main_embedding)
+        index.dense(_dense("rerank", OTHER_EMBEDDING)["params"], reranker_embedding)
         main_folder = index.matrix(1, main_embedding)
         reranker_folder = index.matrix(1, reranker_embedding)
-        old = _parameters(_dense(5), _dense(3), documents=[1])
-        new = _parameters(_dense(5), None, documents=[1])
+        old = _parameters(
+            _dense("main"), _dense("rerank", OTHER_EMBEDDING), documents=[1]
+        )
+        new = _parameters(_dense("main"), None, documents=[1])
 
-        CleanupService(orm_db).cleanup_orphaned_resources(session.id, old, new)
+        CleanupService(orm_db, _registry(client)).cleanup_orphaned_resources(
+            session.id, old, new
+        )
 
         assert orm_db.query(RAGEmbeddingMatrix).count() == 1
         assert os.path.isdir(main_folder)
         assert not os.path.isdir(reranker_folder)
 
-    def test_deleting_the_session_removes_the_shared_matrices(self, orm_db, tmp_path):
+    def test_deleting_the_session_removes_the_shared_matrices(
+        self, client, orm_db, tmp_path
+    ):
         session, index = _index(orm_db, tmp_path, "dense_delete")
         embedding = index.embedding_model("E")
-        index.dense({"top_k": 5}, embedding)
-        index.dense({"top_k": 3}, embedding)
+        index.dense(_dense("main")["params"], embedding)
+        index.dense(_dense("rerank")["params"], embedding)
         folder = index.matrix(1, embedding)
-        old = _parameters(_dense(5), _dense(3), documents=[1])
+        old = _parameters(_dense("main"), _dense("rerank"), documents=[1])
 
-        CleanupService(orm_db).cleanup_orphaned_resources(session.id, old, None)
+        CleanupService(orm_db, _registry(client)).cleanup_orphaned_resources(
+            session.id, old, None
+        )
 
         assert orm_db.query(RAGEmbeddingMatrix).count() == 0
         assert not os.path.isdir(folder)
@@ -285,22 +324,29 @@ class TestCompositeCleanupMatchesByStoredShape:
     """A composite is found by its ordered children, not by class alone."""
 
     def test_only_the_composite_with_the_old_children_is_deleted(
-        self, orm_db, tmp_path
+        self, client, orm_db, tmp_path
     ):
         session, index = _index(orm_db, tmp_path, "composite_match")
-        bm25_child = index.sparse(BM25, {"top_k": 5})
-        tfidf_child = index.sparse(TFIDF, {"top_k": 5})
+        bm25_child = index.sparse(BM25, {"k1": 5})
+        tfidf_child = index.sparse(TFIDF, {"k1": 5})
         old_composite = index.composite(SEQUENTIAL, [bm25_child, tfidf_child])
         other_composite = index.composite(SEQUENTIAL, [tfidf_child, bm25_child])
         old_reference = {
             "component": SEQUENTIAL,
             "params": {
-                "children": [_bm25(5), {"component": TFIDF, "params": {"top_k": 5}}]
+                "children": [_bm25(5), {"component": TFIDF, "params": {"k1": 5}}]
             },
         }
-        new_reference = {"component": TFIDF, "params": {"top_k": 5}}
+        # The new retriever is the other composite's shape, so only that row is
+        # protected; the same class's composite with the old children goes.
+        new_reference = {
+            "component": SEQUENTIAL,
+            "params": {
+                "children": [{"component": TFIDF, "params": {"k1": 5}}, _bm25(5)]
+            },
+        }
 
-        CleanupService(orm_db).cleanup_orphaned_resources(
+        CleanupService(orm_db, _registry(client)).cleanup_orphaned_resources(
             session.id,
             _parameters(old_reference, None),
             _parameters(new_reference, None),
@@ -308,20 +354,24 @@ class TestCompositeCleanupMatchesByStoredShape:
 
         assert not index.exists(old_composite)
         assert index.exists(other_composite)
+        assert index.exists(bm25_child)
+        assert index.exists(tfidf_child)
 
-    def test_a_composite_that_matches_no_row_is_swept_by_class(self, orm_db, tmp_path):
+    def test_a_composite_that_matches_no_row_is_swept_by_class(
+        self, client, orm_db, tmp_path
+    ):
         session, index = _index(orm_db, tmp_path, "composite_sweep")
-        child = index.sparse(BM25, {"top_k": 9})
+        child = index.sparse(BM25, {"k1": 9})
         stale = index.composite(SEQUENTIAL, [child])
         old_reference = {
             "component": SEQUENTIAL,
             "params": {"children": [_bm25(5), _bm25(3)]},
         }
 
-        CleanupService(orm_db).cleanup_orphaned_resources(
+        CleanupService(orm_db, _registry(client)).cleanup_orphaned_resources(
             session.id,
             _parameters(old_reference, None),
-            _parameters({"component": TFIDF, "params": {"top_k": 5}}, None),
+            _parameters({"component": TFIDF, "params": {"k1": 5}}, None),
         )
 
         assert not index.exists(stale)
@@ -330,40 +380,44 @@ class TestCompositeCleanupMatchesByStoredShape:
 class TestCleanupRejectsMalformedStoredStructure:
     """A stored reference of the wrong shape fails instead of matching nothing."""
 
-    def test_a_composite_reference_without_children_is_rejected(self, orm_db, tmp_path):
+    def test_a_composite_reference_without_children_is_rejected(
+        self, client, orm_db, tmp_path
+    ):
         _, index = _index(orm_db, tmp_path, "malformed_composite")
         index.composite(SEQUENTIAL, [])
 
         with pytest.raises(RAGPipelineConfigError, match="no list of children"):
-            CleanupService(orm_db)._matching_bridges(
+            CleanupService(orm_db, _registry(client))._matching_bridges(
                 index.pipeline_id, {"component": SEQUENTIAL, "params": {}}
             )
 
-    def test_non_dict_params_are_rejected(self, orm_db, tmp_path):
+    def test_non_dict_params_are_rejected(self, client, orm_db, tmp_path):
         _, index = _index(orm_db, tmp_path, "malformed_params")
 
-        with pytest.raises(RAGPipelineConfigError, match="not a dict"):
-            CleanupService(orm_db)._matching_bridges(
+        with pytest.raises(RAGPipelineConfigError, match="must be a dict"):
+            CleanupService(orm_db, _registry(client))._matching_bridges(
                 index.pipeline_id, {"component": BM25, "params": "abc"}
             )
 
-    def test_a_reranker_that_is_not_a_reference_is_rejected(self, orm_db, tmp_path):
+    def test_a_reranker_that_is_not_a_reference_is_rejected(
+        self, client, orm_db, tmp_path
+    ):
         session, _ = _index(orm_db, tmp_path, "malformed_reranker")
         old = _parameters(_bm25(5), None)
         old["query_transformation"]["params"]["reranker"] = "BM25Retriever"
 
         with pytest.raises(RAGPipelineConfigError, match="reranker"):
-            CleanupService(orm_db).cleanup_orphaned_resources(
+            CleanupService(orm_db, _registry(client)).cleanup_orphaned_resources(
                 session.id, old, _parameters(_bm25(5), None)
             )
 
     def test_a_reference_without_params_is_the_minimal_reference(
-        self, orm_db, tmp_path
+        self, client, orm_db, tmp_path
     ):
         _, index = _index(orm_db, tmp_path, "minimal_reference")
         bridge = index.sparse(BM25, {})
 
-        matches = CleanupService(orm_db)._matching_bridges(
+        matches = CleanupService(orm_db, _registry(client))._matching_bridges(
             index.pipeline_id, {"component": BM25}
         )
 
@@ -375,8 +429,8 @@ class TestCompositeRowsAreReused:
 
     def test_same_children_reuse_the_composite_row(self, orm_db, tmp_path):
         _, index = _index(orm_db, tmp_path, "composite_reuse")
-        first_child = index.sparse(BM25, {"top_k": 5})
-        second_child = index.sparse(TFIDF, {"top_k": 5})
+        first_child = index.sparse(BM25, {"k1": 5})
+        second_child = index.sparse(TFIDF, {"k1": 5})
         service = RetrieverDBService(orm_db)
 
         first = service.save_composite(
@@ -391,8 +445,8 @@ class TestCompositeRowsAreReused:
 
     def test_other_children_or_order_create_a_new_composite(self, orm_db, tmp_path):
         _, index = _index(orm_db, tmp_path, "composite_new")
-        first_child = index.sparse(BM25, {"top_k": 5})
-        second_child = index.sparse(TFIDF, {"top_k": 5})
+        first_child = index.sparse(BM25, {"k1": 5})
+        second_child = index.sparse(TFIDF, {"k1": 5})
         service = RetrieverDBService(orm_db)
 
         first = service.save_composite(

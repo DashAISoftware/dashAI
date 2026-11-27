@@ -1,9 +1,12 @@
 import gc
 import logging
+from collections.abc import Iterable, Mapping
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict
 
 from kink import di, inject
 from sqlalchemy import exc
+from sqlalchemy.orm import Session
 
 from DashAI.back.core.enums.status import RunStatus
 from DashAI.back.dependencies.database.models import (
@@ -23,11 +26,26 @@ from DashAI.back.models.RAG.RAG_pipeline import (
     RAGPipeline,
     RAGPipelineConfig,
 )
+from DashAI.back.services.RAG.cleanup_service import (
+    IndexFootprint,
+    capture_index_footprint,
+    has_stale_index_rows,
+    run_post_index_cleanup,
+)
 from DashAI.back.services.RAG.prompt_service import PromptService
+from DashAI.back.services.RAG.session_params import filter_pipeline_params
 from DashAI.back.services.RAG.setup_service import SetupService
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
+
+    from DashAI.back.dependencies.registry.component_registry import (
+        ComponentRegistry,
+    )
+    from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
+    from DashAI.back.workflows.base_generative_workflow import (
+        BaseGenerativeWorkflow,
+    )
 
 #: Session parameters the pipeline understands: the required model keys plus
 #: the optional (but still pipeline-shaped) model keys such as the query
@@ -131,6 +149,388 @@ def _make_progress_reporter(
             log.warning("Failed to report progress for process %s: %s", process_id, e)
 
     return report
+
+
+def _load_turn_rows(
+    db: Session, generative_process_id: int
+) -> tuple[GenerativeProcess, GenerativeSession]:
+    """Load a chat turn's process and its session, checking the session is RAG.
+
+    Parameters
+    ----------
+    db : Session
+        Session the rows are read in.
+    generative_process_id : int
+        The turn being run.
+
+    Returns
+    -------
+    tuple[GenerativeProcess, GenerativeSession]
+        The process and the session it belongs to.
+
+    Raises
+    ------
+    JobError
+        If the process or its session is missing, or the session is not a RAG one.
+    """
+    generative_process = db.get(GenerativeProcess, generative_process_id)
+    if not generative_process:
+        raise JobError(f"Generative process {generative_process_id} not found in DB.")
+    generative_session = db.get(GenerativeSession, generative_process.session_id)
+    if not generative_session:
+        raise JobError(f"Session {generative_process.session_id} not found in DB.")
+    if generative_session.workflow_name != RAG_WORKFLOW_NAME:
+        raise JobError(
+            f"Session {generative_session.id} is run by "
+            f"{generative_session.workflow_name}, not "
+            f"{RAG_WORKFLOW_NAME}."
+        )
+    return generative_process, generative_session
+
+
+def _run_cleanup_if_rebuilt(
+    db: Session,
+    component_registry: "ComponentRegistry",
+    session_id: int,
+    footprint_before: "IndexFootprint",
+    model: RAGPipeline,
+    rag_path: str | Path,
+) -> None:
+    """Run the post-index cleanup when a build changed the index, or left stale rows.
+
+    A build adds chunk sets and bridges only when it creates something new, so a
+    footprint that differs from the one taken before the build means the cleanup
+    has work to do. A cleanup that failed earlier leaves stale rows behind a build
+    that reused everything, so those are checked as well.
+
+    Parameters
+    ----------
+    db : Session
+        Session the cleanup runs in.
+    component_registry : ComponentRegistry
+        Component registry, passed through to the cleanup.
+    session_id : int
+        The generative session being built.
+    footprint_before : IndexFootprint
+        The session's footprint captured before the build.
+    model : RAGPipeline
+        The pipeline the build returned; its root retriever and its reranker, if
+        any, are the live index.
+    rag_path : str | Path
+        The RAG storage root (``RAG_PATH``).
+    """
+    footprint_after = capture_index_footprint(db, session_id)
+    if footprint_after == footprint_before and not has_stale_index_rows(
+        db, session_id, component_registry
+    ):
+        return
+    run_post_index_cleanup(
+        db,
+        component_registry,
+        session_id,
+        model.retriever.get_id(),
+        rag_path,
+        _reranker_root_id(model),
+    )
+
+
+def _reranker_root_id(model: RAGPipeline) -> int | None:
+    """Return the bridge id of the reranker a built pipeline holds.
+
+    Parameters
+    ----------
+    model : RAGPipeline
+        The pipeline the build returned.
+
+    Returns
+    -------
+    int | None
+        The reranker's bridge id, or ``None`` when the transformation stage is
+        disabled or carries no reranker.
+    """
+    transformation = model.query_transformation
+    if transformation is None or transformation.reranker is None:
+        return None
+    return transformation.reranker.get_id()
+
+
+def _build_turn_pipeline(
+    db: Session,
+    component_registry: "ComponentRegistry",
+    config: Mapping[str, Any],
+    generative_session: GenerativeSession,
+) -> RAGPipeline:
+    """Build the session's pipeline for one turn, then clean up after a rebuild.
+
+    Parameters
+    ----------
+    db : Session
+        Session the pipeline is built in.
+    component_registry : ComponentRegistry
+        Component registry used to resolve the stored components.
+    config : Mapping[str, Any]
+        Application configuration, which holds the ``RAG_PATH`` setting.
+    generative_session : GenerativeSession
+        The RAG session whose parameters describe the pipeline.
+
+    Returns
+    -------
+    RAGPipeline
+        The built pipeline.
+    """
+    # Whitelist-only: accept only known RAG pipeline keys.
+    # Prompts live in their own table, so materialize them
+    # back into the configuration before building the pipeline.
+    if generative_session.parameters is None:
+        raise JobError(f"Session {generative_session.id} has no stored parameters.")
+    raw_params = PromptService(db, component_registry).materialize_session_parameters(
+        generative_session.id,
+        dict(generative_session.parameters),
+    )
+    extra_keys: set[str] = set(raw_params) - _RAG_PARAM_KEYS
+    if extra_keys:
+        log.debug("Filtered extra session parameter keys: %s", sorted(extra_keys))
+    clean_params = filter_pipeline_params(raw_params, _RAG_PARAM_KEYS)
+    pipeline_config = RAGPipelineConfig.from_kwargs(
+        db=db,
+        component_registry=component_registry,
+        session_id=generative_session.id,
+        env_RAG_path=config["RAG_PATH"],
+        **clean_params,
+    )
+    setup_service = SetupService(db, component_registry, config["RAG_PATH"])
+    # The build reuses the stored index unless its configuration changed. Only a
+    # build that created rows can leave stale ones behind, so the cleanup runs
+    # after such a build.
+    footprint_before = capture_index_footprint(db, generative_session.id)
+    model: RAGPipeline = setup_service.build_pipeline(pipeline_config)
+    _run_cleanup_if_rebuilt(
+        db,
+        component_registry,
+        generative_session.id,
+        footprint_before,
+        model,
+        config["RAG_PATH"],
+    )
+    return model
+
+
+def _load_history(
+    db: Session, task: "BaseGenerativeTask", session_id: int, process_id: int
+) -> list[tuple[str, str]]:
+    """Build the conversation history from the finished turns before this one.
+
+    A retried turn keeps its place in the conversation (#969), so later turns are
+    not its history. Each prior answer is resolved by its row type, not its
+    position, and a finished process with no message row is skipped.
+
+    Parameters
+    ----------
+    db : Session
+        Session the finished processes are read in.
+    task : BaseGenerativeTask
+        The task that knows how to read the message out of a process's output.
+    session_id : int
+        The generative session of the turn.
+    process_id : int
+        The turn being run; only processes with a lower id are history.
+
+    Returns
+    -------
+    list[tuple[str, str]]
+        ``(user message, assistant message)`` pairs, oldest first.
+    """
+    finished_processes: list[GenerativeProcess] = (
+        db.query(GenerativeProcess)
+        .filter(
+            GenerativeProcess.session_id == session_id,
+            GenerativeProcess.status == RunStatus.FINISHED,
+            GenerativeProcess.id < process_id,
+        )
+        .order_by(GenerativeProcess.id)
+        .all()
+    )
+    history: list[tuple[str, str]] = []
+    for prior in finished_processes:
+        message = task.extract_message_from_output(prior.output)
+        if message is None:
+            log.debug(
+                "Skipping process %d from history: no %r output row.",
+                prior.id,
+                RAG_OUTPUT_MESSAGE_TYPE,
+            )
+            continue
+        history.append((prior.input[0].data, message))
+    return history
+
+
+def _prepare_turn(
+    db: Session,
+    component_registry: "ComponentRegistry",
+    config: Mapping[str, Any],
+    generative_process_id: int,
+) -> tuple[RAGPipeline, Any, int, "BaseGenerativeWorkflow"]:
+    """Run the setup stage of a turn and mark the process as started.
+
+    Builds the pipeline, prepares the input with the conversation history, and
+    commits the started status. The caller generates with the returned pipeline.
+
+    Parameters
+    ----------
+    db : Session
+        Session the setup runs in.
+    component_registry : ComponentRegistry
+        Component registry used to resolve the stored components.
+    config : Mapping[str, Any]
+        Application configuration.
+    generative_process_id : int
+        The turn being run.
+
+    Returns
+    -------
+    tuple[RAGPipeline, Any, int, BaseGenerativeWorkflow]
+        The built pipeline, the prepared input, the process id and the workflow
+        that saves the output.
+
+    Raises
+    ------
+    JobError
+        If the process or session is missing, or the session is not a RAG one.
+    """
+    generative_process, generative_session = _load_turn_rows(db, generative_process_id)
+    model = _build_turn_pipeline(db, component_registry, config, generative_session)
+    input_data = generative_process.input
+    task: BaseGenerativeTask = component_registry[generative_session.task_name][
+        "class"
+    ]()
+    workflow: BaseGenerativeWorkflow = component_registry[
+        generative_session.workflow_name
+    ]["class"]()
+    history = _load_history(db, task, generative_session.id, generative_process.id)
+    input_data = task.prepare_for_task(input_data, history=history)
+
+    generative_process.set_status_as_started()
+    generative_process.set_progress(None)
+    db.commit()
+    log.debug("Pipeline built and ready for process %d", generative_process_id)
+    return model, input_data, generative_process.id, workflow
+
+
+def _process_data_rows(
+    output_data: Iterable[Any], process_id: int
+) -> list[ProcessData]:
+    """Turn the workflow's ``(data, type)`` output pairs into process rows.
+
+    Parameters
+    ----------
+    output_data : Iterable[Any]
+        The pairs the workflow produced.
+    process_id : int
+        The process the rows belong to.
+
+    Returns
+    -------
+    list[ProcessData]
+        One output row per pair, in order.
+
+    Raises
+    ------
+    JobError
+        If an item is not a ``(data, type)`` pair.
+    """
+    rows: list[ProcessData] = []
+    for item in output_data:
+        if not isinstance(item, tuple) or len(item) != 2:
+            raise JobError("Output from task must be a list of tuples (data, type).")
+        data, data_type = item
+        rows.append(
+            ProcessData(
+                data=data,
+                data_type=data_type,
+                process_id=process_id,
+                is_input=False,
+            )
+        )
+    return rows
+
+
+def _save_turn_output(
+    db: Session,
+    workflow: "BaseGenerativeWorkflow",
+    output: Any,
+    process_id: int,
+    images_path: str | Path,
+) -> None:
+    """Save a generated answer and mark its process as finished.
+
+    Parameters
+    ----------
+    db : Session
+        Session the output is saved in.
+    workflow : BaseGenerativeWorkflow
+        The workflow that turns the raw generation into ``(data, type)`` pairs.
+    output : Any
+        The raw generation result.
+    process_id : int
+        The process that produced the output.
+    images_path : str | Path
+        The ``IMAGES_PATH`` setting, where generated images are written.
+
+    Raises
+    ------
+    JobError
+        If the process is missing, or the workflow output is malformed.
+    """
+    generative_process = db.get(GenerativeProcess, process_id)
+    if not generative_process:
+        raise JobError(f"Generative process {process_id} not found when saving output.")
+    output_data = workflow.process_output(output, images_path=images_path)
+    db.add_all(_process_data_rows(output_data, process_id))
+    db.commit()
+
+    db.refresh(generative_process)
+    generative_process.set_progress(None)
+    generative_process.set_status_as_finished()
+    db.commit()
+    log.debug("Output saved for process %d", process_id)
+
+
+def _stage_error(prefix: str, error: Exception) -> JobError:
+    """Log a stage failure and wrap it in a job error that carries the stage prefix.
+
+    Parameters
+    ----------
+    prefix : str
+        Human-readable stage description, e.g. ``"Error during RAG pipeline
+        setup"``.
+    error : Exception
+        The exception that ended the stage. It is logged with its traceback.
+
+    Returns
+    -------
+    JobError
+        The job error to store and raise, built by :func:`_job_error`.
+    """
+    log.exception(error)
+    return _job_error(prefix, error)
+
+
+def _release_run_resources(failure: BaseException | None) -> None:
+    """Release what a run held, once its failure has left the except block.
+
+    The frame release runs first, then ``gc.collect()`` so ``empty_cache()`` can
+    hand the freed blocks back to CUDA. Every step is best-effort and must not
+    replace the failure that ended the run.
+
+    Parameters
+    ----------
+    failure : BaseException | None
+        The failure that ended the run, or ``None`` when the run completed.
+    """
+    if failure is not None:
+        _release_frames(failure)
+    gc.collect()
+    _empty_accelerator_cache()
 
 
 class RAGJob(BaseJob):
@@ -252,6 +652,132 @@ class RAGJob(BaseJob):
 
         return f"RAG Process #{generative_process_id}"
 
+    def _run_setup(
+        self,
+        session_factory: "sessionmaker",
+        component_registry: "ComponentRegistry",
+        config: Mapping[str, Any],
+        generative_process_id: int,
+    ) -> tuple[RAGPipeline, Any, int, "BaseGenerativeWorkflow"]:
+        """Run session 1: load, build, prepare and mark the turn as started.
+
+        A ``JobError`` is stored on the process and re-raised unchanged. Any
+        other exception is logged, wrapped with the setup prefix, stored and
+        raised.
+
+        Parameters
+        ----------
+        session_factory : sessionmaker
+            Factory for the short-lived setup session.
+        component_registry : ComponentRegistry
+            Component registry used to resolve the stored components.
+        config : Mapping[str, Any]
+            Application configuration.
+        generative_process_id : int
+            The turn being run.
+
+        Returns
+        -------
+        tuple[RAGPipeline, Any, int, BaseGenerativeWorkflow]
+            The built pipeline, the prepared input, the process id and the
+            workflow that saves the output.
+
+        Raises
+        ------
+        JobError
+            If the setup fails.
+        """
+        try:
+            with session_factory() as db:
+                return _prepare_turn(
+                    db, component_registry, config, generative_process_id
+                )
+        except JobError as e:
+            self._fail(e)
+            raise
+        except Exception as e:
+            error = _stage_error("Error during RAG pipeline setup", e)
+            self._fail(error)
+            raise error from e
+
+    def _run_generation(
+        self,
+        session_factory: "sessionmaker",
+        model: RAGPipeline,
+        input_data: Any,
+        process_id: int,
+    ) -> Any:
+        """Run the generation stage, with no database session held open.
+
+        Parameters
+        ----------
+        session_factory : sessionmaker
+            Factory for the progress reporter's short-lived sessions.
+        model : RAGPipeline
+            The pipeline built by the setup stage.
+        input_data : Any
+            The prepared input the pipeline generates from.
+        process_id : int
+            The process whose live progress the reporter writes.
+
+        Returns
+        -------
+        Any
+            The raw generation result, saved by the output stage.
+
+        Raises
+        ------
+        JobError
+            If the generation fails.
+        """
+        reporter = _make_progress_reporter(session_factory, process_id)
+        try:
+            output: Any = model.generate(input_data, progress_callback=reporter)
+            log.debug("Generation completed for process %d", process_id)
+        except Exception as e:
+            error = _stage_error("Error during RAG pipeline execution", e)
+            self._fail(error)
+            raise error from e
+        return output
+
+    def _run_save(
+        self,
+        session_factory: "sessionmaker",
+        workflow: "BaseGenerativeWorkflow",
+        output: Any,
+        process_id: int,
+        config: Mapping[str, Any],
+    ) -> None:
+        """Run session 2: save the generated output and mark the turn finished.
+
+        Parameters
+        ----------
+        session_factory : sessionmaker
+            Factory for the short-lived save session.
+        workflow : BaseGenerativeWorkflow
+            The workflow that turns the raw generation into ``(data, type)`` pairs.
+        output : Any
+            The raw generation result.
+        process_id : int
+            The process that produced the output.
+        config : Mapping[str, Any]
+            Application configuration, which holds the ``IMAGES_PATH`` setting.
+
+        Raises
+        ------
+        JobError
+            If the output cannot be saved.
+        """
+        try:
+            with session_factory() as db:
+                _save_turn_output(
+                    db, workflow, output, process_id, config["IMAGES_PATH"]
+                )
+        except Exception as e:
+            error = _stage_error("Error processing and saving RAG generation output", e)
+            self._fail(error)
+            raise error from e
+
     @inject
     def run(self) -> None:
         """Execute the full RAG pipeline lifecycle as a background job.
@@ -285,185 +811,19 @@ class RAGJob(BaseJob):
         # failure is propagating its traceback still pins the model (and the
         # half-built pipeline), so cleanup must run after the except block.
         try:
-            # ── Session 1: Load, build, prepare ────────────────────────
-            try:
-                with session_factory() as db:
-                    generative_process = db.get(
-                        GenerativeProcess, generative_process_id
-                    )
-                    if not generative_process:
-                        raise JobError(
-                            f"Generative process {generative_process_id} "
-                            "not found in DB."
-                        )
-                    generative_session = db.get(
-                        GenerativeSession, generative_process.session_id
-                    )
-                    if not generative_session:
-                        raise JobError(
-                            f"Session {generative_process.session_id} not found in DB."
-                        )
-                    if generative_session.workflow_name != RAG_WORKFLOW_NAME:
-                        raise JobError(
-                            f"Session {generative_session.id} is run by "
-                            f"{generative_session.workflow_name}, not "
-                            f"{RAG_WORKFLOW_NAME}."
-                        )
-
-                    # Whitelist-only: accept only known RAG pipeline keys.
-                    # Prompts live in their own table, so materialize them
-                    # back into the configuration before building the pipeline.
-                    raw_params = PromptService(
-                        db, component_registry
-                    ).materialize_session_parameters(
-                        generative_session.id,
-                        dict(generative_session.parameters or {}),
-                    )
-                    extra_keys: set[str] = set(raw_params) - _RAG_PARAM_KEYS
-                    if extra_keys:
-                        log.debug(
-                            "Filtered extra session parameter keys: %s",
-                            sorted(extra_keys),
-                        )
-                    clean_params = {
-                        k: v for k, v in raw_params.items() if k in _RAG_PARAM_KEYS
-                    }
-                    pipeline_config = RAGPipelineConfig.from_kwargs(
-                        db=db,
-                        component_registry=component_registry,
-                        session_id=generative_session.id,
-                        env_RAG_path=config["RAG_PATH"],
-                        **clean_params,
-                    )
-                    setup_service = SetupService(
-                        db,
-                        component_registry,
-                        config["RAG_PATH"],
-                    )
-                    model: RAGPipeline = setup_service.build_pipeline(pipeline_config)
-
-                    # Build conversation history from the finished turns before
-                    # this one: a retried turn keeps its place in the
-                    # conversation (#969), so later turns are not its history.
-                    input_data = generative_process.input
-                    task = component_registry[generative_session.task_name]["class"]()
-                    workflow = component_registry[generative_session.workflow_name][
-                        "class"
-                    ]()
-                    finished_processes: list[GenerativeProcess] = (
-                        db.query(GenerativeProcess)
-                        .filter(
-                            GenerativeProcess.session_id == generative_session.id,
-                            GenerativeProcess.status == RunStatus.FINISHED,
-                            GenerativeProcess.id < generative_process.id,
-                        )
-                        .order_by(GenerativeProcess.id)
-                        .all()
-                    )
-                    # Resolve each prior answer by row TYPE rather than position:
-                    # a finished process now stores its message last (after the
-                    # Queries and Dict rows), so ``output[0]`` is no longer the
-                    # message. A process whose output has no message row is
-                    # malformed; skip it instead of crashing the whole job.
-                    history: list[tuple[str, str]] = []
-                    for prior in finished_processes:
-                        message = task.extract_message_from_output(prior.output)
-                        if message is None:
-                            log.debug(
-                                "Skipping process %d from history: no %r output row.",
-                                prior.id,
-                                RAG_OUTPUT_MESSAGE_TYPE,
-                            )
-                            continue
-                        history.append((prior.input[0].data, message))
-                    input_data = task.prepare_for_task(input_data, history=history)
-
-                    generative_process.set_status_as_started()
-                    generative_process.set_progress(None)
-                    db.commit()
-
-                    process_id = generative_process.id
-                    log.debug(
-                        "Pipeline built and ready for process %d",
-                        generative_process_id,
-                    )
-            except JobError as e:
-                self._fail(e)
-                raise
-            except Exception as e:
-                log.exception(e)
-                error = _job_error("Error during RAG pipeline setup", e)
-                self._fail(error)
-                raise error from e
-
-            # ── Generation (no DB session) ─────────────────────────────
-            reporter = _make_progress_reporter(session_factory, process_id)
-            try:
-                output: Any = model.generate(input_data, progress_callback=reporter)
-                log.debug("Generation completed for process %d", generative_process_id)
-            except Exception as e:
-                log.exception(e)
-                error = _job_error("Error during RAG pipeline execution", e)
-                self._fail(error)
-                raise error from e
-
-            # ── Session 2: Save output ─────────────────────────────────
-            try:
-                with session_factory() as db:
-                    generative_process = db.get(GenerativeProcess, process_id)
-                    if not generative_process:
-                        raise JobError(
-                            f"Generative process {process_id} not found when "
-                            "saving output."
-                        )
-
-                    output_data = workflow.process_output(
-                        output, images_path=config["IMAGES_PATH"]
-                    )
-                    outputs_for_database = []
-                    for o in output_data:
-                        if not isinstance(o, tuple) or len(o) != 2:
-                            raise JobError(
-                                "Output from task must be a list of tuples "
-                                "(data, type)."
-                            )
-                        data, data_type = o
-                        outputs_for_database.append(
-                            ProcessData(
-                                data=data,
-                                data_type=data_type,
-                                process_id=generative_process.id,
-                                is_input=False,
-                            )
-                        )
-
-                    db.add_all(outputs_for_database)
-                    db.commit()
-
-                    db.refresh(generative_process)
-                    generative_process.set_progress(None)
-                    generative_process.set_status_as_finished()
-                    db.commit()
-                    log.debug("Output saved for process %d", generative_process_id)
-            except Exception as e:
-                log.exception(e)
-                error = _job_error(
-                    "Error processing and saving RAG generation output", e
-                )
-                self._fail(error)
-                raise error from e
+            model, input_data, process_id, workflow = self._run_setup(
+                session_factory, component_registry, config, generative_process_id
+            )
+            output = self._run_generation(
+                session_factory, model, input_data, process_id
+            )
+            self._run_save(session_factory, workflow, output, process_id, config)
         except BaseException as error:
             failure = error
 
         # Cleanup runs here, after the except block, because while an exception
         # is propagating its traceback still references the model and pipeline.
-        # The frame release runs first, then gc.collect() so empty_cache() can
-        # hand the freed blocks back to CUDA. All steps are best-effort and must
-        # not replace the original failure.
         model = None
-        if failure is not None:
-            _release_frames(failure)
-        gc.collect()
-        _empty_accelerator_cache()
+        _release_run_resources(failure)
         if failure is not None:
             raise failure

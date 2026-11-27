@@ -321,6 +321,16 @@ class AgenticRerankerRetriever(CompositeRetriever, ChunkScorer):
         "required": [SELECTED_CHUNKS_KEY],
     }
 
+    #: The candidate size, the selection size, prompt, language model and retry
+    #: budget act at query time; the child is the only persisted state.
+    NON_PERSISTENT_PARAMS = CompositeRetriever.NON_PERSISTENT_PARAMS + (
+        _PARAM_K1,
+        _PARAM_TOP_K,
+        _PARAM_PROMPT,
+        _PARAM_LLM_MODEL,
+        _PARAM_FUNCTION_CALL_MAX_TRIALS,
+    )
+
     @classmethod
     def _get_main_parameters(cls) -> Dict[str, str]:
         """Return the candidate and final budget paths."""

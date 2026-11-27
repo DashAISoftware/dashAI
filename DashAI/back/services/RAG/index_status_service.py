@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
+from DashAI.back.core.schema_fields.utils import normalize_payload
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import (
     DataDocument,
@@ -28,7 +29,12 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.dependencies.job_queues.base_job_queue import BaseJobQueue
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+from DashAI.back.models.RAG.exceptions import (
+    RAGComponentNotFoundError,
+    RAGPipelineConfigError,
+)
 from DashAI.back.models.RAG.RAG_constants import (
+    COMPOSITE_RETRIEVER_NAMES,
     RAG_PARAM_CHUNKING_MODEL,
     RAG_PARAM_DOCUMENTS,
     RAG_PARAM_RETRIEVER_MODEL,
@@ -36,11 +42,17 @@ from DashAI.back.models.RAG.RAG_constants import (
 from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
     DenseEmbeddingRetriever,
 )
-from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
-    strip_expansion_options,
+from DashAI.back.models.RAG.retrievers.persistence_signature import (
+    persistence_signature,
+)
+from DashAI.back.models.RAG.retrievers.ref_utils import (
+    CHILDREN_KEY,
+    COMPONENT_KEY,
+    PARAMS_KEY,
 )
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 from DashAI.back.services.RAG.chunking_service import ChunkingService
+from DashAI.back.services.RAG.config_equality import configs_equal
 from DashAI.back.services.RAG.index_job_service import get_index_job, get_live_index_job
 from DashAI.back.services.RAG.retriever_db_service import RetrieverDBService
 
@@ -162,9 +174,10 @@ class IndexStatusService:
         # Read from the parameters rather than the session's documents
         # relationship: _was_indexed_before compares against historized
         # parameters, and both sides have to come from the same source.
-        document_ids = [
-            doc_id for doc_id in parameters.get(RAG_PARAM_DOCUMENTS) or [] if doc_id
-        ]
+        document_ids: list[int] = []
+        for doc_id in parameters.get(RAG_PARAM_DOCUMENTS) or []:
+            if doc_id:
+                document_ids.append(doc_id)
 
         chunk_set = self._find_chunk_set(session_id, document_ids, parameters)
         counts = self._chunk_counts(chunk_set.id, document_ids) if chunk_set else {}
@@ -238,10 +251,16 @@ class IndexStatusService:
         chunking = parameters.get(RAG_PARAM_CHUNKING_MODEL)
         if not isinstance(chunking, dict) or not chunking.get("component"):
             return None
+        params = chunking.get(PARAMS_KEY, {})
+        if not isinstance(params, dict):
+            raise RAGPipelineConfigError(
+                "Stored 'params' of the chunking model is not a dict, got "
+                f"{type(params).__name__}."
+            )
         return {
             RAG_PARAM_CHUNKING_MODEL: {
                 "component": chunking["component"],
-                "params": chunking.get("params") or {},
+                "params": params,
             }
         }
 
@@ -298,11 +317,12 @@ class IndexStatusService:
         for entry in history:
             parameters = dict(entry.parameters or {})
             config = self._pipeline_config(parameters)
-            if config is None or config == current:
+            if config is None or configs_equal(config, current):
                 continue
-            document_ids = [
-                doc_id for doc_id in parameters.get(RAG_PARAM_DOCUMENTS) or [] if doc_id
-            ]
+            document_ids: List[int] = []
+            for doc_id in parameters.get(RAG_PARAM_DOCUMENTS) or []:
+                if doc_id:
+                    document_ids.append(doc_id)
             chunk_set = self._find_chunk_set(session_id, document_ids, parameters)
             if chunk_set and self._chunk_counts(chunk_set.id, document_ids):
                 return True
@@ -366,36 +386,101 @@ class IndexStatusService:
 
         Composite retrievers are never cached by the pipeline — only their
         children are — so a composite is ready exactly when all of its leaves
-        are. The retrieve-then-expand options are stripped before the lookup:
-        they are post-processing knobs, so toggling them must not report a
-        stale index.
+        are. A composite without children has no leaves to check, so it is not
+        ready.
+
+        Parameters
+        ----------
+        retriever : Optional[Dict[str, Any]]
+            A stored ``{component, params}`` retriever reference, possibly
+            wrapped in the frontend's ``properties`` form.
+        chunk_set_id : int
+            The chunk set the retriever was fitted on.
+
+        Returns
+        -------
+        bool
+            ``True`` when the retriever and all of its children are fitted.
         """
-        if not isinstance(retriever, dict) or not retriever.get("component"):
+        if not isinstance(retriever, dict):
             return False
-        params = retriever.get("params") or {}
-
-        children = params.get("children")
-        if isinstance(children, list) and children:
-            return all(
-                self._retriever_ready(child, chunk_set_id)
-                for child in children
-                if isinstance(child, dict)
+        # A stored session may still hold the frontend's ``properties`` wrapper;
+        # reading the canonical form keeps the lookup key the same as setup's.
+        canonical = normalize_payload(retriever)
+        component = canonical.get(COMPONENT_KEY)
+        if not isinstance(component, str) or not component:
+            return False
+        params = canonical.get(PARAMS_KEY)
+        if not isinstance(params, dict):
+            return False
+        if component in COMPOSITE_RETRIEVER_NAMES or CHILDREN_KEY in params:
+            return self._composite_children_ready(
+                params.get(CHILDREN_KEY), chunk_set_id
             )
+        return self._unit_ready(component, params, chunk_set_id)
 
-        component = retriever["component"]
+    def _composite_children_ready(self, children: Any, chunk_set_id: int) -> bool:
+        """Whether a composite's child list is non-empty and every child is fitted.
+
+        Parameters
+        ----------
+        children : Any
+            The ``children`` parameter of a composite. Anything other than a
+            non-empty list is not ready.
+        chunk_set_id : int
+            The chunk set the children were fitted on.
+
+        Returns
+        -------
+        bool
+            ``True`` when every child is a fitted retriever.
+        """
+        if not isinstance(children, list) or not children:
+            return False
+        return all(self._retriever_ready(child, chunk_set_id) for child in children)
+
+    def _unit_ready(
+        self, component: str, params: Dict[str, Any], chunk_set_id: int
+    ) -> bool:
+        """Whether a unit retriever has a fitted row matching its signature.
+
+        The lookup uses the retriever's persistence signature, so query-time
+        knobs (``top_k``, the distance metric, retrieve-then-expand) never report
+        a stale index.
+
+        Parameters
+        ----------
+        component : str
+            Registered name of the retriever.
+        params : Dict[str, Any]
+            The retriever's configuration parameters.
+        chunk_set_id : int
+            The chunk set the retriever was fitted on.
+
+        Returns
+        -------
+        bool
+            ``False`` when the component is unregistered, its configuration is
+            unresolvable, or no matching dense or sparse row exists.
+        """
         if component not in self._registry:
             return False
         model_class = self._registry[component]["class"]
-        sorted_params = dict(sorted(strip_expansion_options(params).items()))
+        try:
+            signature = persistence_signature(model_class, params, self._registry)
+        except (RAGComponentNotFoundError, ValueError):
+            # An unresolvable nested component means nothing fitted can match it.
+            log.warning("Retriever %s has an unresolvable configuration.", component)
+            return False
         try:
             if issubclass(model_class, DenseEmbeddingRetriever):
                 return (
-                    self._retrievers.find_dense(component, sorted_params, chunk_set_id)
+                    self._retrievers.find_dense(component, signature, chunk_set_id)
                     is not None
                 )
             if issubclass(model_class, SparseRetriever):
                 return (
-                    self._retrievers.find_sparse(component, sorted_params, chunk_set_id)
+                    self._retrievers.find_sparse(component, signature, chunk_set_id)
                     is not None
                 )
         except Exception:  # pragma: no cover - defensive, status must not 500

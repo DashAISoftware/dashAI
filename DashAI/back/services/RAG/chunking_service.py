@@ -25,11 +25,10 @@ from DashAI.back.models.RAG.documents.chunk import Chunk
 from DashAI.back.models.RAG.documents.source_document import SourceDocument
 from DashAI.back.models.RAG.RAG_models_factory import RAGModelsFactory
 from DashAI.back.models.RAG.utils import hash_function
+from DashAI.back.services.RAG.storage_layout import CHUNK_SETS_DIRNAME
 from DashAI.back.types.value_types import Text
 
 log = logging.getLogger(__name__)
-
-CHUNK_SETS_DIRNAME = "chunk_sets"
 
 
 def chunk_document_dir(

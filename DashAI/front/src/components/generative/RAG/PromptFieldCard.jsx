@@ -21,6 +21,7 @@ import PromptTemplateDialog, {
   PROMPT_DIALOG_MODES,
 } from "./PromptTemplateDialog";
 import usePromptOptions from "./usePromptOptions";
+import { deepEqual } from "./configEquality";
 import { getLibraryPrompts } from "../../../api/rag";
 import {
   DEFAULT_PROMPT_LANGUAGE,
@@ -42,12 +43,15 @@ const SELECTOR_MIN_WIDTH = 220;
 /**
  * Whether two prompt parameter objects carry the same values.
  *
+ * Compared with the configuration contract in `configEquality.js`: key order is
+ * irrelevant, and a boolean never equals a number.
+ *
  * @param {object} left - First parameters object.
  * @param {object} right - Second parameters object.
- * @returns {boolean} True when their serialized values match.
+ * @returns {boolean} True when the two hold the same values.
  */
 function sameParameters(left, right) {
-  return JSON.stringify(left ?? {}) === JSON.stringify(right ?? {});
+  return deepEqual(left ?? {}, right ?? {});
 }
 
 /**

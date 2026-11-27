@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Final, List, Tuple
 
 from DashAI.back.core.schema_fields import (
     component_field,
@@ -20,6 +20,9 @@ from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     prefer_wider_chunk,
 )
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
+
+#: Schema param name of the strategy used to merge the children's results.
+MERGE_STRATEGY_FIELD: Final[str] = "merge_strategy"
 
 
 class ParallelRetrieverSchema(RetrievalExpansionSchema):
@@ -91,6 +94,12 @@ class ParallelRetriever(CompositeRetriever):
         pt="mesclagem {merge_strategy}",
         de="Zusammenführung {merge_strategy}",
         zh="合并 {merge_strategy}",
+    )
+
+    #: Merging combines the children's results at query time; only the children
+    #: are persisted.
+    NON_PERSISTENT_PARAMS = CompositeRetriever.NON_PERSISTENT_PARAMS + (
+        MERGE_STRATEGY_FIELD,
     )
 
     @classmethod

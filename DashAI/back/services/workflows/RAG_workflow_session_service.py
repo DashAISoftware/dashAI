@@ -16,6 +16,7 @@ from DashAI.back.models.RAG.RAG_constants import (
     RAG_PARAM_GENERATION_MODEL,
 )
 from DashAI.back.services.RAG.cleanup_service import CleanupService
+from DashAI.back.services.RAG.config_equality import configs_equal
 from DashAI.back.services.RAG.index_job_service import cancel_live_index_job
 from DashAI.back.services.RAG.prompt_service import (
     PromptConflictError,
@@ -445,7 +446,14 @@ class RAGWorkflowSessionService(WorkflowSessionService):
         bool
             True when the save would record nothing new.
         """
-        if updated_parameters != old_parameters:
+        try:
+            same_configuration = configs_equal(old_parameters, updated_parameters)
+        except (TypeError, ValueError):
+            # A value outside the comparison contract, such as an integer beyond
+            # the safe range, cannot be shown equal. The save then proceeds as a
+            # change instead of failing the request.
+            same_configuration = False
+        if not same_configuration:
             return False
         with self._write_errors():
             preview = self.prompts.preview_session_bindings(
@@ -492,7 +500,7 @@ class RAGWorkflowSessionService(WorkflowSessionService):
         """
         changes = changes or {}
         cancel_live_index_job(session, self.job_queue)
-        CleanupService(self.db).cleanup_orphaned_resources(
+        CleanupService(self.db, self.component_registry).cleanup_orphaned_resources(
             session.id, old_parameters, updated_parameters, commit=False
         )
         with self._write_errors():

@@ -11,10 +11,10 @@ from DashAI.back.core.atomic import atomic_open
 from DashAI.back.dependencies.database.models import RAGEmbeddingMatrix
 from DashAI.back.models.RAG.exceptions import RAGEmbeddingLoadError
 from DashAI.back.services.RAG.retriever_db_service import RetrieverDBService
+from DashAI.back.services.RAG.storage_layout import EMBEDDINGS_DIRNAME
 
 logger = logging.getLogger(__name__)
 
-EMBEDDINGS_DIRNAME = "embeddings"
 EMBEDDINGS_FILENAME = "embeddings.npy"
 
 

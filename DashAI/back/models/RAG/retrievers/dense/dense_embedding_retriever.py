@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Final, List, Tuple
 
 import numpy as np
 
@@ -17,6 +17,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    TOP_K_FIELD,
     RetrievalExpansionSchema,
 )
 from DashAI.back.models.RAG.retrievers.similarity import (
@@ -26,6 +27,9 @@ from DashAI.back.models.RAG.retrievers.similarity import (
 )
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
+
+#: Schema param name of the distance metric compared against stored embeddings.
+SIMILARITY_METRIC_FIELD: Final[str] = "similarity_metric"
 
 
 class DenseEmbeddingRetrieverSchema(RetrievalExpansionSchema):
@@ -88,6 +92,13 @@ class DenseEmbeddingRetriever(UnitRetriever, ChunkScorer):
     """
 
     SCHEMA = DenseEmbeddingRetrieverSchema
+
+    #: The distance metric and ``top_k`` are applied to the stored embeddings at
+    #: query time; only the embedding model shapes what is persisted.
+    NON_PERSISTENT_PARAMS = UnitRetriever.NON_PERSISTENT_PARAMS + (
+        SIMILARITY_METRIC_FIELD,
+        TOP_K_FIELD,
+    )
 
     DISPLAY_NAME: str = MultilingualString(
         en="Dense Embedding Retriever",

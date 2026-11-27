@@ -84,13 +84,14 @@ export default function CompositeRetrieverBuilder({
   const renderCaption = ({ node, info, findComponent, i18n }) => {
     const translateLabel = (label) =>
       t(`rag.schemaSummary.labels.${label}`, { defaultValue: label });
+    const renderComponentName = buildComponentNameRenderer(findComponent, i18n);
     return (
       resolveRetrieverSchemaSummary(
         info,
         node.params,
         findComponent,
         translateLabel,
-        buildComponentNameRenderer(findComponent, i18n),
+        renderComponentName,
       ) ||
       resolveRetrieverRepresentation(info, node.params, i18n, findComponent) ||
       resolveLocalizedText(info?.description, i18n)

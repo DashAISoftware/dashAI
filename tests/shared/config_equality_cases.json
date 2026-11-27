@@ -1,0 +1,625 @@
+{
+  "description": "Shared cases for the RAG configuration equality contract. Each case gives two values a and b, the ignored_keys collection, and whether configs_equal(a, b, ignored_keys) must be true. The backend (DashAI/back/services/RAG/config_equality.py) and the frontend (DashAI/front, mirrored implementation) both read this file, so the cases use only plain JSON values: null, booleans, numbers, strings, arrays and objects with string keys. Values that JSON cannot express (tuples, sets, bytes, NaN, Infinity, custom objects, non-string keys) are tested in the backend only. Numbers beyond the safe range are outside the contract: any number, integer or float, whose value is integral and whose absolute value exceeds 2**53 - 1 is malformed and both the backend and the frontend raise an error for it. Non-integral floats (for example 0.5 or 1e-9) and integral values within the bound are ordinary numbers. The top-level malformed_cases list holds entries of the form {name, a, b, ignored_keys}; each pair must make the comparison raise an error in both argument orders, and no equality expectation is given for them. Object keys are plain strings, so a key named __proto__ is an ordinary key. Strings compare by Unicode code point with no normalization. Equality rules: objects are equal when, after dropping the ignored keys at every object level, they have exactly the same keys and equal values, in any key order; arrays are equal when they have the same length and equal elements in order; booleans never equal numbers; null never equals an absent key; numbers compare by value (1 equals 1.0); strings never equal numbers.",
+  "cases": [
+    {
+      "name": "flat objects differing only in key order",
+      "a": {"a": 1, "b": 2},
+      "b": {"b": 2, "a": 1},
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "escaped surrogate pair equals the literal emoji as a value",
+      "a": "😀",
+      "b": "😀",
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "escaped surrogate pair equals the literal emoji as a key",
+      "a": {"😀": 1},
+      "b": {"😀": 1},
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "nested objects differing only in key order",
+      "a": {"x": {"p": 1, "q": [1, {"m": 1, "n": 2}]}},
+      "b": {"x": {"q": [1, {"n": 2, "m": 1}], "p": 1}},
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "extra key on one side",
+      "a": {"a": 1},
+      "b": {"a": 1, "b": 2},
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "missing key on one side",
+      "a": {"a": 1, "b": 2},
+      "b": {"b": 2},
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "extra key nested inside an object",
+      "a": {"x": {"a": 1}},
+      "b": {"x": {"a": 1, "b": null}},
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "integer zero versus false",
+      "a": 0,
+      "b": false,
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "integer one versus true",
+      "a": 1,
+      "b": true,
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "float zero versus false",
+      "a": 0.0,
+      "b": false,
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "integer one equals float one",
+      "a": 1,
+      "b": 1.0,
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "negative zero equals zero by value",
+      "a": -0.0,
+      "b": 0,
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "whole float equals its integer",
+      "a": 1000.0,
+      "b": 1000,
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "fractional floats compare by value",
+      "a": 0.1,
+      "b": 0.1,
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "different numbers",
+      "a": 0.1,
+      "b": 0.2,
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "false versus null",
+      "a": false,
+      "b": null,
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "null value versus absent key",
+      "a": {"a": null},
+      "b": {},
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "null versus null",
+      "a": null,
+      "b": null,
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "nested null on both sides",
+      "a": {"a": {"b": null}},
+      "b": {"a": {"b": null}},
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "nested objects with equal values",
+      "a": {"a": {"b": {"c": [1, 2, {"d": "e"}]}}},
+      "b": {"a": {"b": {"c": [1, 2, {"d": "e"}]}}},
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "nested objects with one changed leaf",
+      "a": {"a": {"b": {"c": [1, 2, {"d": "e"}]}}},
+      "b": {"a": {"b": {"c": [1, 2, {"d": "f"}]}}},
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "objects inside arrays with reordered keys",
+      "a": [{"a": 1, "b": 2}],
+      "b": [{"b": 2, "a": 1}],
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "objects inside arrays with an extra key",
+      "a": [{"a": 1}],
+      "b": [{"a": 1, "b": 2}],
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "arrays with different order",
+      "a": [1, 2],
+      "b": [2, 1],
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "arrays with different length",
+      "a": [1, 2],
+      "b": [1, 2, 3],
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "empty arrays",
+      "a": [],
+      "b": [],
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "empty objects",
+      "a": {},
+      "b": {},
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "empty object versus empty array",
+      "a": {},
+      "b": [],
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "empty object versus null",
+      "a": {},
+      "b": null,
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "empty string versus null",
+      "a": "",
+      "b": null,
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "numeric string versus number",
+      "a": "1",
+      "b": 1,
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "string zero versus false",
+      "a": "0",
+      "b": false,
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "string true versus boolean true",
+      "a": "true",
+      "b": true,
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "equal strings",
+      "a": "abc",
+      "b": "abc",
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "strings differing in case",
+      "a": "Keyword",
+      "b": "keyword",
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "boolean inside a nested list versus zero",
+      "a": [false],
+      "b": [0],
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "boolean inside nested objects versus one",
+      "a": {"a": {"b": [{"c": true}]}},
+      "b": {"a": {"b": [{"c": 1}]}},
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "arrays of arrays with equal contents",
+      "a": [[1, 2], [3]],
+      "b": [[1, 2], [3]],
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "arrays of arrays with regrouped contents",
+      "a": [[1, 2], [3]],
+      "b": [[1], [2, 3]],
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "ignored top-level key with different values",
+      "a": {"top_k": 5, "a": 1},
+      "b": {"top_k": 3, "a": 1},
+      "ignored_keys": ["top_k"],
+      "equal": true
+    },
+    {
+      "name": "ignored nested key with different values",
+      "a": {"x": {"top_k": 5, "a": 1}},
+      "b": {"x": {"top_k": 2, "a": 1}},
+      "ignored_keys": ["top_k"],
+      "equal": true
+    },
+    {
+      "name": "ignored key inside arrays",
+      "a": {"children": [{"top_k": 5}, {"top_k": 5}]},
+      "b": {"children": [{"top_k": 2}, {"top_k": 2}]},
+      "ignored_keys": ["top_k"],
+      "equal": true
+    },
+    {
+      "name": "ignored key inside nested component references",
+      "a": {
+        "component": "ParallelRetriever",
+        "params": {
+          "merge_strategy": "round_robin",
+          "children": [
+            {"component": "BM25Retriever", "params": {"top_k": 5, "k1": 1.5}}
+          ]
+        }
+      },
+      "b": {
+        "component": "ParallelRetriever",
+        "params": {
+          "merge_strategy": "round_robin",
+          "children": [
+            {"component": "BM25Retriever", "params": {"top_k": 2, "k1": 1.5}}
+          ]
+        }
+      },
+      "ignored_keys": ["top_k"],
+      "equal": true
+    },
+    {
+      "name": "ignored key present on one side only",
+      "a": {"top_k": 5, "a": 1},
+      "b": {"a": 1},
+      "ignored_keys": ["top_k"],
+      "equal": true
+    },
+    {
+      "name": "ignored nested key present on one side only",
+      "a": {"x": {"top_k": 1}},
+      "b": {"x": {}},
+      "ignored_keys": ["top_k"],
+      "equal": true
+    },
+    {
+      "name": "ignored key with a null value on one side",
+      "a": {"top_k": null, "a": 1},
+      "b": {"a": 1},
+      "ignored_keys": ["top_k"],
+      "equal": true
+    },
+    {
+      "name": "ignored key on one side and a non-ignored key on the other",
+      "a": {"top_k": 5},
+      "b": {"other": 5},
+      "ignored_keys": ["top_k"],
+      "equal": false
+    },
+    {
+      "name": "ignored key equal but another key differs",
+      "a": {"top_k": 5, "a": 1},
+      "b": {"top_k": 5, "a": 2},
+      "ignored_keys": ["top_k"],
+      "equal": false
+    },
+    {
+      "name": "same key with different values when nothing is ignored",
+      "a": {"top_k": 5},
+      "b": {"top_k": 3},
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "nested ignored key counts when it is not ignored",
+      "a": {"x": {"top_k": 1}},
+      "b": {"x": {}},
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "ignored key is matched case sensitively",
+      "a": {"Top_K": 1},
+      "b": {"top_k": 1},
+      "ignored_keys": ["top_k"],
+      "equal": false
+    },
+    {
+      "name": "ignored name that never occurs changes nothing",
+      "a": {"a": 1},
+      "b": {"a": 1},
+      "ignored_keys": ["zzz"],
+      "equal": true
+    },
+    {
+      "name": "ignored key whose value has a different shape",
+      "a": {"top_k": [1]},
+      "b": {"top_k": {"a": 1}},
+      "ignored_keys": ["top_k"],
+      "equal": true
+    },
+    {
+      "name": "realistic hybrid recipe with reordered keys and a different top_k",
+      "a": {
+        "component": "ParallelRetriever",
+        "params": {
+          "merge_strategy": "round_robin",
+          "top_k": 10,
+          "children": [
+            {
+              "component": "BM25Retriever",
+              "params": {
+                "top_k": 5,
+                "k1": 1.5,
+                "b": 0.75,
+                "enable_retrieve_then_expand": false,
+                "expand_window": 1
+              }
+            },
+            {
+              "component": "DenseRetriever",
+              "params": {
+                "top_k": 5,
+                "enable_retrieve_then_expand": false,
+                "expand_window": 1,
+                "embedding_model": {
+                  "component": "SentenceTransformerEmbeddingModel",
+                  "params": {"model_name": "example/embedding", "device": "cpu", "batch_size": 32}
+                }
+              }
+            }
+          ]
+        }
+      },
+      "b": {
+        "params": {
+          "children": [
+            {
+              "component": "BM25Retriever",
+              "params": {
+                "b": 0.75,
+                "k1": 1.5,
+                "top_k": 3,
+                "expand_window": 1,
+                "enable_retrieve_then_expand": false
+              }
+            },
+            {
+              "params": {
+                "expand_window": 1,
+                "enable_retrieve_then_expand": false,
+                "embedding_model": {
+                  "params": {"batch_size": 32, "device": "cpu", "model_name": "example/embedding"},
+                  "component": "SentenceTransformerEmbeddingModel"
+                },
+                "top_k": 3
+              },
+              "component": "DenseRetriever"
+            }
+          ],
+          "merge_strategy": "round_robin",
+          "top_k": 6
+        },
+        "component": "ParallelRetriever"
+      },
+      "ignored_keys": ["top_k"],
+      "equal": true
+    },
+    {
+      "name": "realistic hybrid recipe with expansion enabled on one child",
+      "a": {
+        "component": "ParallelRetriever",
+        "params": {
+          "merge_strategy": "round_robin",
+          "children": [
+            {"component": "BM25Retriever", "params": {"top_k": 5, "enable_retrieve_then_expand": false, "expand_window": 1}},
+            {"component": "DenseRetriever", "params": {"top_k": 5, "enable_retrieve_then_expand": false, "expand_window": 1}}
+          ]
+        }
+      },
+      "b": {
+        "component": "ParallelRetriever",
+        "params": {
+          "merge_strategy": "round_robin",
+          "children": [
+            {"component": "BM25Retriever", "params": {"top_k": 5, "enable_retrieve_then_expand": true, "expand_window": 1}},
+            {"component": "DenseRetriever", "params": {"top_k": 5, "enable_retrieve_then_expand": false, "expand_window": 1}}
+          ]
+        }
+      },
+      "ignored_keys": ["top_k"],
+      "equal": false
+    },
+    {
+      "name": "realistic hybrid recipe with children in a different order",
+      "a": {
+        "component": "ParallelRetriever",
+        "params": {
+          "merge_strategy": "round_robin",
+          "children": [
+            {"component": "BM25Retriever", "params": {"top_k": 5}},
+            {"component": "DenseRetriever", "params": {"top_k": 5}}
+          ]
+        }
+      },
+      "b": {
+        "component": "ParallelRetriever",
+        "params": {
+          "merge_strategy": "round_robin",
+          "children": [
+            {"component": "DenseRetriever", "params": {"top_k": 5}},
+            {"component": "BM25Retriever", "params": {"top_k": 5}}
+          ]
+        }
+      },
+      "ignored_keys": ["top_k"],
+      "equal": false
+    },
+    {
+      "name": "realistic chunking recipe with reordered keys",
+      "a": {"component": "CharacterChunkModel", "params": {"chunk_size": 500, "chunk_overlap": 50, "length_function": "characters"}},
+      "b": {"component": "CharacterChunkModel", "params": {"length_function": "characters", "chunk_overlap": 50, "chunk_size": 500}},
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "realistic chunking recipe with one extra parameter",
+      "a": {"component": "CharacterChunkModel", "params": {"chunk_size": 500, "chunk_overlap": 50}},
+      "b": {"component": "CharacterChunkModel", "params": {"chunk_size": 500, "chunk_overlap": 50, "length_function": "characters"}},
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "realistic chunking recipe with a changed chunk size",
+      "a": {"component": "CharacterChunkModel", "params": {"chunk_size": 500, "chunk_overlap": 50}},
+      "b": {"component": "CharacterChunkModel", "params": {"chunk_size": "500", "chunk_overlap": 50}},
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "proto key with the same value on both sides",
+      "a": {"__proto__": {"x": 1}},
+      "b": {"__proto__": {"x": 1}},
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "proto key with different values",
+      "a": {"__proto__": 1},
+      "b": {"__proto__": 2},
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "proto key is not the same as an empty object",
+      "a": {"__proto__": {}},
+      "b": {},
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "proto key next to an ignored key",
+      "a": {"__proto__": 1, "top_k": 1},
+      "b": {"__proto__": 1, "top_k": 2},
+      "ignored_keys": ["top_k"],
+      "equal": true
+    },
+    {
+      "name": "precomposed and decomposed e-acute are not equal",
+      "a": "\u00e9",
+      "b": "e\u0301",
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "the same decomposed string is equal",
+      "a": "e\u0301",
+      "b": "e\u0301",
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "precomposed and decomposed object keys are not equal",
+      "a": {"\u00e9": 1},
+      "b": {"e\u0301": 1},
+      "ignored_keys": [],
+      "equal": false
+    },
+    {
+      "name": "astral character compared with itself is equal",
+      "a": "\ud83d\ude00",
+      "b": "\ud83d\ude00",
+      "ignored_keys": [],
+      "equal": true
+    },
+    {
+      "name": "negative zero float equals integer zero",
+      "a": -0.0,
+      "b": 0,
+      "ignored_keys": [],
+      "equal": true
+    }
+  ],
+  "malformed_cases": [
+    {
+      "name": "integral float 1e20 is beyond the safe range",
+      "a": 1e20,
+      "b": 1e20,
+      "ignored_keys": []
+    },
+    {
+      "name": "negative integral float -1e20 is beyond the safe range",
+      "a": {"x": -1e20},
+      "b": {"x": -1e20},
+      "ignored_keys": []
+    },
+    {
+      "name": "float 2 to the power 53 is beyond the safe range",
+      "a": {"x": [9007199254740992.0]},
+      "b": {"x": [1]},
+      "ignored_keys": []
+    },
+    {
+      "name": "integer 2 to the power 53 is beyond the safe range",
+      "a": 9007199254740992,
+      "b": 1,
+      "ignored_keys": []
+    },
+    {
+      "name": "unsafe integral float under an ignored key still raises",
+      "a": {"top_k": 1e20},
+      "b": {},
+      "ignored_keys": ["top_k"]
+    }
+  ]
+}

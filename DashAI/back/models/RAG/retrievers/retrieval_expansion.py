@@ -30,6 +30,9 @@ ENABLE_FIELD: Final[str] = "enable_retrieve_then_expand"
 #: Schema param name of the expansion window size.
 WINDOW_FIELD: Final[str] = "expand_window"
 
+#: Schema param name of the number of chunks a retriever returns.
+TOP_K_FIELD: Final[str] = "top_k"
+
 #: Whether retrievers expand their final output by default.
 DEFAULT_ENABLE_RETRIEVE_THEN_EXPAND: Final[bool] = False
 
@@ -74,35 +77,28 @@ def _strip_ignored_keys(value: Any, ignored_keys: Tuple[str, ...]) -> Any:
     return value
 
 
-def strip_expansion_options(
-    params: Dict[str, Any], extra_keys: Tuple[str, ...] = ()
-) -> Dict[str, Any]:
+def strip_expansion_options(params: Dict[str, Any]) -> Dict[str, Any]:
     """Return a copy of *params* without the retrieve-then-expand options.
 
     The two options are post-processing knobs: they never change what is
     indexed nor which stored model a configuration resolves to. They must
     therefore be excluded wherever a configuration acts as an *identity* — the
-    sparse persistence hash, the retriever table's natural key, the preset
-    match and the cleanup decision — or toggling them would force a re-index.
-    Removal is recursive so a composite's children are stripped too.
+    sparse persistence hash, the retriever table's natural key and the cleanup
+    decision — or toggling them would force a re-index. Removal is recursive so
+    a composite's children are stripped too.
 
     Parameters
     ----------
     params : Dict[str, Any]
         Retriever parameters, possibly holding nested ``children`` refs.
-    extra_keys : Tuple[str, ...], optional
-        Additional parameter names to drop at every level, for callers whose
-        identity ignores more than the expansion options (for example
-        ``top_k`` in the preset match).
 
     Returns
     -------
     Dict[str, Any]
-        A copy with ``ENABLE_FIELD`` and ``WINDOW_FIELD`` (and any
-        ``extra_keys``) removed at every level. The input mapping is never
-        mutated.
+        A copy with ``ENABLE_FIELD`` and ``WINDOW_FIELD`` removed at every
+        level. The input mapping is never mutated.
     """
-    return _strip_ignored_keys(params, (ENABLE_FIELD, WINDOW_FIELD) + extra_keys)
+    return _strip_ignored_keys(params, (ENABLE_FIELD, WINDOW_FIELD))
 
 
 def expansion_span(chunk: Chunk) -> int:

@@ -257,8 +257,8 @@ def test_index_job_releases_the_retriever_and_the_reranker(
     index = SimpleNamespace(
         chunk_set_id=1,
         total_chunks=1,
-        retriever=SimpleNamespace(model=retriever),
-        reranker=SimpleNamespace(model=reranker),
+        retriever=SimpleNamespace(model=retriever, db_record_id=None),
+        reranker=SimpleNamespace(model=reranker, db_record_id=None),
     )
     monkeypatch.setattr(
         SetupService, "build_index", lambda self, config, progress=None: index

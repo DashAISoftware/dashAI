@@ -17,6 +17,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    TOP_K_FIELD,
     RetrievalExpansionSchema,
 )
 from DashAI.back.models.RAG.retrievers.similarity import (
@@ -24,7 +25,10 @@ from DashAI.back.models.RAG.retrievers.similarity import (
     CosineSimilarity,
     require_similarity_metric,
 )
-from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
+from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import (
+    SIMILARITY_FUNCTION_FIELD,
+    SparseRetriever,
+)
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 
 log = logging.getLogger(__name__)
@@ -152,6 +156,13 @@ class BM25Retriever(SparseRetriever, ChunkScorer):
     )
 
     SCHEMA = BM25RetrieverSchema
+
+    #: The distance metric and ``top_k`` are applied at query time; the
+    #: vectorizer and the BM25 weights shape the fitted matrix.
+    NON_PERSISTENT_PARAMS = SparseRetriever.NON_PERSISTENT_PARAMS + (
+        SIMILARITY_FUNCTION_FIELD,
+        TOP_K_FIELD,
+    )
 
     @classmethod
     def _get_main_parameters(cls) -> Dict[str, str]:

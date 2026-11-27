@@ -14,6 +14,7 @@ import {
   MAX_SUBQUERIES_KEY,
   RERANKER_KEY,
 } from "../../../../constants/rag";
+import { deepEqual } from "../../../../components/generative/RAG/configEquality";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
@@ -69,7 +70,7 @@ function llmParamsToPersist(carriedParams, seedDefaults, values) {
 
     const wasCarried = Object.prototype.hasOwnProperty.call(carriedParams, key);
     const isUntouchedDefault =
-      JSON.stringify(value) === JSON.stringify(seedDefaults[key]);
+      seedDefaults[key] !== undefined && deepEqual(value, seedDefaults[key]);
     if (!wasCarried && isUntouchedDefault) continue;
 
     result[key] = value;

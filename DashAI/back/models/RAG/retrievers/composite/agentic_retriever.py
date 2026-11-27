@@ -328,6 +328,16 @@ class AgenticRetriever(CompositeRetriever, ABC):
         zh="最大迭代 {max_iters} · 最大片段 {max_chunks} · {prompt}",
     )
 
+    #: The agentic loop, its pool cap, prompt, language model and retry budget
+    #: act at query time; the children are the only persisted state.
+    NON_PERSISTENT_PARAMS = CompositeRetriever.NON_PERSISTENT_PARAMS + (
+        _PARAM_MAX_ITERS,
+        _PARAM_MAX_CHUNKS,
+        _PARAM_PROMPT,
+        _PARAM_LLM_MODEL,
+        _PARAM_FUNCTION_CALL_MAX_TRIALS,
+    )
+
     @classmethod
     def _get_main_parameters(cls) -> Dict[str, str]:
         """Return the round and pool budget paths."""

@@ -1,8 +1,11 @@
-from typing import Dict, List
+from typing import Dict, Final, List
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
+
+#: Schema param name of the distance function applied to the fitted matrix.
+SIMILARITY_FUNCTION_FIELD: Final[str] = "similarity_function"
 
 
 class SparseRetriever(UnitRetriever):

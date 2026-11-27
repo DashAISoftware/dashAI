@@ -36,6 +36,10 @@ if TYPE_CHECKING:
 
 TRUNCATE = "truncate"
 AGGREGATE = "aggregate"
+#: Schema param name of the number of texts encoded together.
+BATCH_SIZE_FIELD = "batch_size"
+#: Schema param name of the device the checkpoint runs on.
+DEVICE_FIELD = "device"
 SPECIAL_TOKENS = 2
 #: Keeps a vector of zeros from dividing by zero while normalizing.
 NORMALIZATION_EPSILON = 1e-12
@@ -245,6 +249,10 @@ class TextEmbeddingConverter(AdvancedPreprocessingConverter, PretrainedTool):
     HF_IGNORE_PATTERNS = [*HFDownloadableMixin.HF_IGNORE_PATTERNS, "pytorch_model.bin"]
     QUERY_PROMPT: Optional[str] = None
     PASSAGE_PROMPT: Optional[str] = None
+    #: The batch size and the device only trade memory and speed for hardware
+    #: and never change the vectors, so they stay out of the persistence
+    #: signature of any retriever that embeds with this converter.
+    NON_PERSISTENT_PARAMS = (BATCH_SIZE_FIELD, DEVICE_FIELD)
 
     def pretrained(self) -> Any:
         """Return the loaded checkpoint, using the model cache inside a job.

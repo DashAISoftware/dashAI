@@ -95,15 +95,18 @@ class FakeValidator:
 class FakeCleanup:
     """Stands in for ``CleanupService``, recording every call."""
 
-    def __init__(self, db: Any) -> None:
-        """Keep the database session.
+    def __init__(self, db: Any, registry: Any = None) -> None:
+        """Keep the database session and registry.
 
         Parameters
         ----------
         db : Any
             Database session.
+        registry : Any
+            Component registry, as passed by the real ``CleanupService``.
         """
         self.db = db
+        self.registry = registry
 
     def cleanup_orphaned_resources(
         self,
@@ -440,6 +443,13 @@ def test_rag_validate_update_reports_validation_errors(db, session, error):
 
     with pytest.raises(WorkflowSessionError, match=str(error)):
         _rag_service(db).validate_update(session, {"prompt": {}})
+
+
+def test_rag_is_unchanged_treats_a_boolean_as_different_from_a_number(db, session):
+    """Strict configuration equality: ``false`` is not the number ``0``."""
+    service = _rag_service(db)
+
+    assert service.is_unchanged(session, {"a": 0}, {"a": False}, {}) is False
 
 
 def test_rag_apply_update_cancels_the_index_before_cleaning_up(db, session):

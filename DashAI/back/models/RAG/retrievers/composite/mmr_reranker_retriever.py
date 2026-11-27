@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Final, List, Tuple
 
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
@@ -25,11 +25,16 @@ from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
     unpack_retrieval_result,
 )
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    TOP_K_FIELD,
     RetrievalExpansionSchema,
 )
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 
 log = logging.getLogger(__name__)
+
+
+#: Schema param name of the trade-off between relevance and diversity.
+MMR_LAMBDA_FIELD: Final[str] = "mmr_lambda"
 
 
 class MMRRerankerRetrieverSchema(RetrievalExpansionSchema):
@@ -119,6 +124,13 @@ class MMRRerankerRetriever(CompositeRetriever, ChunkScorer):
         pt="MMR λ {mmr_lambda} · top-k {top_k}",
         de="MMR λ {mmr_lambda} · top-k {top_k}",
         zh="MMR λ {mmr_lambda} · top-k {top_k}",
+    )
+
+    #: The final selection size and the MMR trade-off act on the candidates the
+    #: child returns at query time; only the child is persisted.
+    NON_PERSISTENT_PARAMS = CompositeRetriever.NON_PERSISTENT_PARAMS + (
+        MMR_LAMBDA_FIELD,
+        TOP_K_FIELD,
     )
 
     @classmethod

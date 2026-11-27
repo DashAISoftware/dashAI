@@ -12,18 +12,76 @@ import logging
 from typing import Dict
 
 from kink import di, inject
+from sqlalchemy.orm import Session
 
 from DashAI.back.dependencies.database.models import GenerativeSession
+from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_KEYS as _RAG_PARAM_KEYS
 from DashAI.back.models.RAG.RAG_pipeline import RAGPipelineConfig
+from DashAI.back.services.RAG.cleanup_service import run_post_index_cleanup
 from DashAI.back.services.RAG.prompt_service import PromptService
+from DashAI.back.services.RAG.session_params import filter_pipeline_params
 from DashAI.back.services.RAG.session_validation_service import (
     SessionValidationService,
 )
-from DashAI.back.services.RAG.setup_service import SetupService
+from DashAI.back.services.RAG.setup_service import IndexResult, SetupService
 
 log = logging.getLogger(__name__)
+
+
+def _cleanup_and_summarize(
+    db: Session,
+    component_registry: ComponentRegistry,
+    session_id: int,
+    result: IndexResult,
+    rag_path: str,
+) -> Dict[str, int]:
+    """Run the post-index cleanup of a built index, then summarise it.
+
+    The ids are read before the cleanup, which may roll the session back. A
+    cleanup failure is logged by :func:`run_post_index_cleanup` and never fails
+    the job, since the index is complete by now.
+
+    Parameters
+    ----------
+    db : Session
+        Session the cleanup runs in.
+    component_registry : ComponentRegistry
+        Component registry, passed through to the cleanup.
+    session_id : int
+        The session that was just indexed.
+    result : IndexResult
+        The index the build returned, before it is released.
+    rag_path : str
+        The RAG storage root (``RAG_PATH``).
+
+    Returns
+    -------
+    Dict[str, int]
+        ``{"chunk_set_id": int, "total_chunks": int}`` of the index.
+    """
+    chunk_set_id = result.chunk_set_id
+    total_chunks = result.total_chunks
+    root_bridge_id = result.retriever.db_record_id
+    reranker_bridge_id: int | None = None
+    if result.reranker is not None:
+        reranker_bridge_id = result.reranker.db_record_id
+    run_post_index_cleanup(
+        db,
+        component_registry,
+        session_id,
+        root_bridge_id,
+        rag_path,
+        reranker_bridge_id,
+    )
+    log.debug(
+        "Indexed session %d: chunk set %d, %d chunks",
+        session_id,
+        chunk_set_id,
+        total_chunks,
+    )
+    return {"chunk_set_id": chunk_set_id, "total_chunks": total_chunks}
 
 
 class RAGIndexJob(BaseJob):
@@ -96,6 +154,8 @@ class RAGIndexJob(BaseJob):
                 session = db.get(GenerativeSession, session_id)
                 if not session:
                     raise JobError(f"Session {session_id} not found in DB.")
+                if session.parameters is None:
+                    raise JobError(f"Session {session_id} has no stored parameters.")
 
                 # Whitelist-only, same as RAGJob: session parameters may carry
                 # keys the pipeline config would reject. Prompts are stored in
@@ -104,11 +164,9 @@ class RAGIndexJob(BaseJob):
                     db, component_registry
                 ).materialize_session_parameters(
                     session_id,
-                    dict(session.parameters or {}),
+                    dict(session.parameters),
                 )
-                clean_params = {
-                    k: v for k, v in raw_params.items() if k in _RAG_PARAM_KEYS
-                }
+                clean_params = filter_pipeline_params(raw_params, _RAG_PARAM_KEYS)
                 if not (clean_params.get("documents") or []):
                     raise JobError(f"Session {session_id} has no documents to index.")
 
@@ -136,16 +194,13 @@ class RAGIndexJob(BaseJob):
                     progress=self.report_progress,
                 )
                 try:
-                    log.debug(
-                        "Indexed session %d: chunk set %d, %d chunks",
+                    return _cleanup_and_summarize(
+                        db,
+                        component_registry,
                         session_id,
-                        result.chunk_set_id,
-                        result.total_chunks,
+                        result,
+                        config["RAG_PATH"],
                     )
-                    return {
-                        "chunk_set_id": result.chunk_set_id,
-                        "total_chunks": result.total_chunks,
-                    }
                 finally:
                     SetupService.release_index(result)
         except JobError:

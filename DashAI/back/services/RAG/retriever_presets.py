@@ -1,4 +1,11 @@
-"""Retriever preset recipes resolved from the component registry."""
+"""Retriever preset recipes resolved from the component registry.
+
+A stored retriever configuration belongs to a preset when it equals the preset
+recipe, except for ``top_k``, which is ignored at every level because it is a
+slider. Every other parameter, including the retrieve-then-expand options, must
+match exactly. A legacy session stored without those options therefore counts
+as a custom configuration; this is deliberate.
+"""
 
 from typing import Any, Dict, Final, List, Optional, Tuple
 
@@ -11,11 +18,17 @@ from DashAI.back.models.RAG.RAG_defaults import (
     default_keyword_retriever,
     default_semantic_retriever,
 )
+from DashAI.back.models.RAG.retrievers.ref_utils import (
+    CHILDREN_KEY,
+    COMPONENT_KEY,
+    PARAMS_KEY,
+)
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     ENABLE_FIELD,
+    TOP_K_FIELD,
     WINDOW_FIELD,
-    strip_expansion_options,
 )
+from DashAI.back.services.RAG.config_equality import configs_equal
 
 _SEMANTIC_MODEL_SHORT = DEFAULT_SEMANTIC_MODEL_NAME.rsplit("/", 1)[-1]
 
@@ -23,10 +36,11 @@ KEYWORD_PRESET_KEY = "keyword"
 SEMANTIC_PRESET_KEY = "semantic"
 HYBRID_PRESET_KEY = "hybrid"
 
-#: Keys that never decide which preset a configuration belongs to. ``top_k`` is
-#: a slider, and the retrieve-then-expand options are post-processing knobs, so
-#: a legacy session (without them) and one that set them still match a preset.
-_IGNORED_MATCH_KEYS: Final[Tuple[str, ...]] = ("top_k", ENABLE_FIELD, WINDOW_FIELD)
+#: Parameter names that never decide which preset a configuration belongs to.
+#: ``top_k`` is a slider: a composite splits it across its children, so it is
+#: dropped at every level. Every other parameter, including the expansion
+#: options, takes part in the match.
+_MATCH_IGNORED_KEYS: Final[Tuple[str, ...]] = (TOP_K_FIELD,)
 
 #: Preset a session gets when it does not choose one. Keyword retrieval is the
 #: only paradigm that needs no model download, so it is the one default that can
@@ -108,8 +122,51 @@ def _semantic_preset(top_k: int, registry) -> Dict[str, Any]:
     }
 
 
+def _with_schema_defaults(
+    component: str, params: Dict[str, Any], registry
+) -> Dict[str, Any]:
+    """Complete a retriever's params with its schema defaults, children included.
+
+    Every child of a composite is completed with its own defaults as well. The
+    startup backfill that translates retrievers stored by earlier versions
+    (``translate_legacy_retriever``) completes every level this way, so a
+    recipe completed only at the top would never equal a converted session.
+
+    Parameters
+    ----------
+    component : str
+        Retriever class name.
+    params : Dict[str, Any]
+        Parameters the recipe sets. They win over the schema defaults.
+    registry : ComponentRegistry
+        Registry used to resolve each component's schema defaults.
+
+    Returns
+    -------
+    Dict[str, Any]
+        A new params dict; ``params`` itself is not modified.
+    """
+    completed = {**resolve_component_defaults(component, registry), **params}
+    children = completed.get(CHILDREN_KEY)
+    if isinstance(children, list):
+        completed[CHILDREN_KEY] = [
+            {
+                **child,
+                PARAMS_KEY: _with_schema_defaults(
+                    child[COMPONENT_KEY], child[PARAMS_KEY], registry
+                ),
+            }
+            for child in children
+        ]
+    return completed
+
+
 def _hybrid_preset(top_k: int, registry) -> Dict[str, Any]:
     """Build the hybrid preset from the centralized parallel default.
+
+    Its children carry their schema defaults too, so a hybrid session stored
+    with them, such as one converted from an earlier version at startup, still
+    matches the preset.
 
     Parameters
     ----------
@@ -125,7 +182,7 @@ def _hybrid_preset(top_k: int, registry) -> Dict[str, Any]:
         The hybrid preset recipe with its display metadata.
     """
     ref = default_hybrid_retriever(top_k)
-    params = {**resolve_component_defaults(ref["component"], registry), **ref["params"]}
+    params = _with_schema_defaults(ref[COMPONENT_KEY], ref[PARAMS_KEY], registry)
     return {
         "key": HYBRID_PRESET_KEY,
         "display_name": _HYBRID_NAME,
@@ -172,33 +229,64 @@ def get_default_retriever(registry, top_k: int = DEFAULT_TOP_K) -> Dict[str, Any
     -------
     Dict[str, Any]
         The default retriever configuration.
+
+    Raises
+    ------
+    ValueError
+        If no preset carries the default key.
     """
-    recipe = next(
-        preset
-        for preset in get_retriever_presets(top_k, registry)
-        if preset["key"] == DEFAULT_PRESET_KEY
-    )
-    return {"component": recipe["component"], "params": recipe["params"]}
+    for preset in get_retriever_presets(top_k, registry):
+        if preset["key"] == DEFAULT_PRESET_KEY:
+            return {"component": preset["component"], "params": preset["params"]}
+    raise ValueError(f"No retriever preset is keyed {DEFAULT_PRESET_KEY!r}.")
 
 
-def _strip_match_ignored_keys(value: Dict[str, Any]) -> Dict[str, Any]:
-    """Drop the keys that never decide a preset match, at every level.
+def _check_children(params: Dict[str, Any]) -> None:
+    """Check that every composite ``children`` entry is a well-formed ref.
 
-    A preset keeps its shape when the user only moves the Top-K slider or
-    toggles retrieve-then-expand, so matching a stored config against a recipe
-    has to ignore those keys at every level (composite presets split ``top_k``
-    across their children, and expansion options may sit on the parent, on a
-    child, or on neither in a legacy session).
+    Nested children are checked too, through each child's own ``params``.
+
+    Parameters
+    ----------
+    params : Dict[str, Any]
+        Retriever parameters, possibly holding ``children``.
+
+    Raises
+    ------
+    ValueError
+        If ``children`` is present but is not a list of dicts that each hold a
+        ``params`` dict.
     """
-    return strip_expansion_options(value, _IGNORED_MATCH_KEYS)
+    if CHILDREN_KEY not in params:
+        return
+    children = params[CHILDREN_KEY]
+    if not isinstance(children, list):
+        raise ValueError(
+            f"'{CHILDREN_KEY}' must be a list of component refs, "
+            f"got {type(children).__name__}"
+        )
+    for child in children:
+        if not isinstance(child, dict) or not isinstance(child.get(PARAMS_KEY), dict):
+            raise ValueError(
+                f"each entry of '{CHILDREN_KEY}' must be a dict with a "
+                f"'{PARAMS_KEY}' dict, got {child!r}"
+            )
+        _check_children(child[PARAMS_KEY])
 
 
 def match_preset_key(component: str, params: Dict[str, Any], registry) -> Optional[str]:
     """Return the preset key a retriever config corresponds to, if any.
 
-    ``top_k`` and the retrieve-then-expand options are ignored at every level,
-    so a session created before those options existed still matches its preset,
-    and so does the same recipe with them set to any value.
+    The stored configuration and each candidate recipe are compared with
+    :func:`DashAI.back.services.RAG.config_equality.configs_equal`, ignoring
+    ``top_k`` at every level. Moving the slider keeps a preset, while any other
+    difference (expansion enabled or its window changed, a different similarity
+    metric, a different batch size) makes the configuration custom.
+
+    This is deliberate for the expansion options: a legacy session stored before
+    they existed has no ``enable_retrieve_then_expand`` or ``expand_window`` key,
+    so it no longer equals a preset recipe and counts as a custom configuration.
+    Explicitly stating the default values does match.
 
     Parameters
     ----------
@@ -213,12 +301,20 @@ def match_preset_key(component: str, params: Dict[str, Any], registry) -> Option
     -------
     str | None
         The matching preset key, or ``None`` for a custom configuration.
+
+    Raises
+    ------
+    ValueError
+        If the configuration's ``children`` are not well-formed component refs,
+        or it holds a non-finite number or an integer beyond the safe range.
+    TypeError
+        If the configuration holds a value outside the configuration contract.
     """
-    stripped = _strip_match_ignored_keys(params)
+    _check_children(params)
     for preset in get_retriever_presets(DEFAULT_TOP_K, registry):
         if preset["component"] != component:
             continue
-        if _strip_match_ignored_keys(preset["params"]) == stripped:
+        if configs_equal(preset["params"], params, _MATCH_IGNORED_KEYS):
             return preset["key"]
     return None
 
@@ -229,6 +325,7 @@ def effective_top_k(component: str, params: Dict[str, Any]) -> int:
     A composite retriever's own ``top_k`` (when it has one) bounds the result;
     otherwise the children's values add up.
     """
+    _check_children(params)
     if "top_k" in params and isinstance(params["top_k"], int):
         return params["top_k"]
     if "max_chunks" in params and isinstance(params["max_chunks"], int):
@@ -236,9 +333,8 @@ def effective_top_k(component: str, params: Dict[str, Any]) -> int:
     children = params.get("children")
     if isinstance(children, list) and children:
         return sum(
-            effective_top_k(child.get("component", ""), child.get("params", {}) or {})
+            effective_top_k(child.get("component", ""), child[PARAMS_KEY])
             for child in children
-            if isinstance(child, dict)
         )
     return 0
 
@@ -284,14 +380,13 @@ def max_expansion_factor(params: Dict[str, Any]) -> int:
     int
         The maximum ``_expansion_factor`` over this node and its descendants.
     """
+    _check_children(params)
     factor = _expansion_factor(params)
     children = params.get("children")
     if not isinstance(children, list):
         return factor
     for child in children:
-        if not isinstance(child, dict):
-            continue
-        child_factor = max_expansion_factor(child.get("params", {}) or {})
+        child_factor = max_expansion_factor(child[PARAMS_KEY])
         if child_factor > factor:
             factor = child_factor
     return factor
@@ -346,6 +441,7 @@ def effective_chunk_count(component: str, params: Dict[str, Any]) -> int:
     int
         The context cost of this retriever in chunks, expansion included.
     """
+    _check_children(params)
     cap = _own_chunk_cap(params)
     if cap is not None:
         return cap * max_expansion_factor(params)
@@ -353,10 +449,6 @@ def effective_chunk_count(component: str, params: Dict[str, Any]) -> int:
     if isinstance(children, list) and children:
         base = 0
         for child in children:
-            if not isinstance(child, dict):
-                continue
-            base += effective_chunk_count(
-                child.get("component", ""), child.get("params", {}) or {}
-            )
+            base += effective_chunk_count(child.get("component", ""), child[PARAMS_KEY])
         return base * _expansion_factor(params)
     return effective_top_k(component, params) * _expansion_factor(params)

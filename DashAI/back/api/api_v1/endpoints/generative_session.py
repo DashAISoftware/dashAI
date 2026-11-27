@@ -26,6 +26,7 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
+from DashAI.back.services.RAG.config_equality import configs_equal
 from DashAI.back.services.workflows import (
     WorkflowConflictError,
     WorkflowSessionError,
@@ -1306,7 +1307,7 @@ async def get_parameter_history_entry(
                     for key in curr_params:
                         old_val = prev_params.get(key)
                         new_val = curr_params[key]
-                        if old_val != new_val:
+                        if not configs_equal(old_val, new_val):
                             changes.append(
                                 {
                                     "parameter": key,

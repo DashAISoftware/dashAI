@@ -11,7 +11,6 @@ translation table of its own.
 Everything it returns is read-only and derived; nothing here mutates a session.
 """
 
-import logging
 from typing import Any, Dict, List, Optional
 
 from DashAI.back.core.utils import MultilingualString
@@ -36,8 +35,6 @@ from DashAI.back.services.RAG.session_defaults_service import (
     RAG_CONTEXT_WINDOW,
     RAG_MAX_TOKENS,
 )
-
-log = logging.getLogger(__name__)
 
 #: Characters per token, for turning prompt text into a token estimate.
 CHARS_PER_TOKEN = 4
@@ -93,39 +90,6 @@ def _stage_params(transformation: Dict[str, Any]) -> Dict[str, Any]:
     return params
 
 
-def _reference_params(reference: Dict[str, Any], what: str) -> Dict[str, Any]:
-    """Return a stored component reference's ``params``.
-
-    A reference without ``params`` is the minimal ``{"component": name}`` the
-    form stores for a component chosen by name alone, so it has no parameters.
-
-    Parameters
-    ----------
-    reference : Dict[str, Any]
-        A stored component reference.
-    what : str
-        What the reference is, for the error message.
-
-    Returns
-    -------
-    Dict[str, Any]
-        The parameters, empty for the minimal reference.
-
-    Raises
-    ------
-    RAGPipelineConfigError
-        If ``params`` is present and not a dict.
-    """
-    params = reference.get(PARAMS_KEY)
-    if params is None:
-        return {}
-    if not isinstance(params, dict):
-        raise RAGPipelineConfigError(
-            f"Stored 'params' of {what} is not a dict, got {type(params).__name__}."
-        )
-    return params
-
-
 _SECTION_NAMES = {
     RAG_PARAM_CHUNKING_MODEL: MultilingualString(
         en="Chunking",
@@ -165,6 +129,121 @@ _SECTION_NAMES = {
 }
 
 
+class RAGSessionNotFoundError(ValueError):
+    """Raised when the RAG session whose configuration is requested does not exist."""
+
+
+def _reference_component(ref: Dict[str, Any]) -> str:
+    """Return the component name of a reference, or ``""`` for an empty one.
+
+    Only an empty reference (``{}``) describes as a custom configuration, so it
+    has the empty name. Any non-empty reference must name its component with a
+    string. One that does not is malformed, and it raises rather than being read
+    as an empty component.
+
+    Parameters
+    ----------
+    ref : Dict[str, Any]
+        A ``{"component", "params"}`` reference, or an empty ``{}``.
+
+    Returns
+    -------
+    str
+        The component name, or ``""`` for an empty reference.
+
+    Raises
+    ------
+    ValueError
+        If the reference is not empty and its component is missing or not a
+        string.
+    """
+    if not ref:
+        return ""
+    component = ref.get(COMPONENT_KEY)
+    if not isinstance(component, str):
+        raise ValueError(
+            f"Component reference with keys {sorted(ref)} must name its "
+            f"{COMPONENT_KEY!r} as a string."
+        )
+    return component
+
+
+def _reference_params(ref: Dict[str, Any]) -> Dict[str, Any]:
+    """Return the ``params`` object of a component reference.
+
+    An empty reference names no component, so it has no parameters. A reference
+    that names a component may omit ``params``: the minimal ``{"component": name}``
+    the form stores for a component chosen by name alone has none, and it is not
+    malformed. When the ``params`` key is present its value must be a dict, so
+    any other value raises rather than being read as an empty configuration.
+
+    Parameters
+    ----------
+    ref : Dict[str, Any]
+        A ``{"component", "params"}`` reference, the minimal
+        ``{"component"}`` reference, or an empty ``{}``.
+
+    Returns
+    -------
+    Dict[str, Any]
+        The parameters, or an empty dict when the reference carries none.
+
+    Raises
+    ------
+    ValueError
+        If the reference is not empty and does not name its component as a
+        string (see :func:`_reference_component`).
+    RAGPipelineConfigError
+        If the ``params`` key is present and its value is not a dict.
+    """
+    if not ref:
+        return {}
+    component = _reference_component(ref)
+    if PARAMS_KEY not in ref:
+        return {}
+    params = ref[PARAMS_KEY]
+    if not isinstance(params, dict):
+        raise RAGPipelineConfigError(
+            f"Stored 'params' of component {component!r} is not a dict, "
+            f"got {type(params).__name__}."
+        )
+    return params
+
+
+def _prompt_template(ref: Dict[str, Any]) -> str:
+    """Return the template text of a prompt reference, or ``""`` for an empty one.
+
+    An empty reference (``{}``) has no prompt, so it contributes no template
+    text. A reference that names a component must carry its template as a
+    string. One that does not is malformed, and it raises rather than being
+    priced as an empty prompt.
+
+    Parameters
+    ----------
+    ref : Dict[str, Any]
+        A ``{"component", "params"}`` prompt reference, or an empty ``{}``.
+
+    Returns
+    -------
+    str
+        The template text, or ``""`` for an empty reference.
+
+    Raises
+    ------
+    ValueError
+        If the reference names a component but its ``template`` is missing or
+        not a string.
+    """
+    if not ref:
+        return ""
+    template = _reference_params(ref).get("template")
+    if not isinstance(template, str):
+        raise ValueError(
+            f"Prompt reference {_reference_component(ref)!r} has no string template."
+        )
+    return template
+
+
 class SessionConfigurationService:
     """Resolves a stored RAG configuration into labels the UI can render."""
 
@@ -200,12 +279,16 @@ class SessionConfigurationService:
 
         Raises
         ------
-        ValueError
+        RAGSessionNotFoundError
             If the session does not exist.
+        ValueError
+            If the stored configuration is malformed.
         """
         session = self._db.get(GenerativeSession, session_id)
         if session is None:
-            raise ValueError(f"Generative session {session_id} does not exist.")
+            raise RAGSessionNotFoundError(
+                f"Generative session {session_id} does not exist."
+            )
 
         parameters = PromptService(
             self._db, self._registry
@@ -234,9 +317,11 @@ class SessionConfigurationService:
     def _describe_chunking(self, ref: Dict[str, Any]) -> Dict[str, Any]:
         """Describe the chunking component, naming its preset when it has one."""
         section = self._describe_component(RAG_PARAM_CHUNKING_MODEL, ref)
-        component = ref.get("component") or ""
-        params = ref.get("params") or {}
-        preset_key = chunking_presets.match_preset_key(component, params)
+        component = _reference_component(ref)
+        params = _reference_params(ref)
+        preset_key = chunking_presets.match_preset_key(
+            component, params, self._registry
+        )
         section["preset_key"] = preset_key
         section["preset_display_name"] = self._chunking_preset_name(preset_key)
         chunk_size = params.get("chunk_size")
@@ -247,15 +332,11 @@ class SessionConfigurationService:
     def _describe_retriever(self, ref: Dict[str, Any]) -> Dict[str, Any]:
         """Describe the retriever component, naming its preset when it has one."""
         section = self._describe_component(RAG_PARAM_RETRIEVER_MODEL, ref)
-        component = ref.get("component") or ""
-        params = ref.get("params") or {}
-        preset_key: Optional[str] = None
-        try:
-            preset_key = retriever_presets.match_preset_key(
-                component, params, self._registry
-            )
-        except Exception:  # pragma: no cover - a stale preset must not 500
-            log.exception("Retriever preset matching failed for %s", component)
+        component = _reference_component(ref)
+        params = _reference_params(ref)
+        preset_key = retriever_presets.match_preset_key(
+            component, params, self._registry
+        )
         section["preset_key"] = preset_key
         section["preset_display_name"] = self._retriever_preset_name(preset_key)
         section["top_k"] = retriever_presets.effective_top_k(component, params)
@@ -273,7 +354,7 @@ class SessionConfigurationService:
         guessing from the class name.
         """
         section = self._describe_component(RAG_PARAM_GENERATION_MODEL, ref)
-        component = ref.get("component") or ""
+        component = _reference_component(ref)
         entry = self._registry_entry(component)
         if entry is None:
             section["requires_download"] = False
@@ -324,8 +405,7 @@ class SessionConfigurationService:
             runs. Multilingual values are returned as
             :class:`MultilingualString`; the caller localizes them.
         """
-        enabled = isinstance(ref, dict) and bool(ref.get("component"))
-        if not enabled:
+        if not _reference_component(ref):
             return {
                 "section_name": _SECTION_NAMES[RAG_PARAM_QUERY_TRANSFORMATION],
                 "component": None,
@@ -355,8 +435,8 @@ class SessionConfigurationService:
 
     def _describe_component(self, key: str, ref: Dict[str, Any]) -> Dict[str, Any]:
         """Build the common part of a section: names, description, parameters."""
-        component = ref.get("component") or ""
-        params = ref.get("params") or {}
+        component = _reference_component(ref)
+        params = _reference_params(ref)
         entry = self._registry_entry(component)
 
         if entry is None:
@@ -398,7 +478,7 @@ class SessionConfigurationService:
                     "label": prop.get("title") or name,
                     "description": prop.get("description"),
                     "value": value,
-                    "is_component": isinstance(value, dict) and "component" in value,
+                    "is_component": isinstance(value, dict) and COMPONENT_KEY in value,
                 }
             )
         return described
@@ -455,11 +535,11 @@ class SessionConfigurationService:
 
     def _chunk_tokens(self, chunking: Dict[str, Any]) -> int:
         """Return the token cost of a single retrieved chunk."""
-        params = chunking.get("params") or {}
+        params = _reference_params(chunking)
         chunk_size = params.get("chunk_size")
         if not isinstance(chunk_size, int):
             return 0
-        if self._chunk_unit(chunking.get("component") or "") == "tokens":
+        if self._chunk_unit(_reference_component(chunking)) == "tokens":
             return chunk_size
         return chunking_presets.estimate_tokens(chunk_size)
 
@@ -490,9 +570,9 @@ class SessionConfigurationService:
             The number of chunks the prompt can hold, expansion and reranker cap
             included.
         """
-        retriever_params = _reference_params(retriever, "the retriever")
+        retriever_params = _reference_params(retriever)
         retrieved = retriever_presets.effective_chunk_count(
-            retriever[COMPONENT_KEY], retriever_params
+            _reference_component(retriever), retriever_params
         )
         queries = self._query_count(transformation)
         if queries <= SINGLE_QUERY:
@@ -645,7 +725,7 @@ class SessionConfigurationService:
                 "reference."
             )
         return retriever_presets.effective_top_k(
-            reranker[COMPONENT_KEY], _reference_params(reranker, "the reranker")
+            reranker[COMPONENT_KEY], _reference_params(reranker)
         )
 
     def _context_budget(
@@ -684,7 +764,7 @@ class SessionConfigurationService:
             The window, the tokens already committed and what is left, plus
             whether the configuration fits.
         """
-        generation_params = generation.get("params") or {}
+        generation_params = _reference_params(generation)
         context_window = generation_params.get("context_window")
         if not isinstance(context_window, int):
             context_window = RAG_CONTEXT_WINDOW
@@ -695,8 +775,7 @@ class SessionConfigurationService:
         chunk_count = self._retrieval_chunk_count(retriever, transformation)
         used_by_chunks = self._chunk_tokens(chunking) * chunk_count
 
-        template = (prompt.get("params") or {}).get("template") or ""
-        used_by_prompt = len(template) // CHARS_PER_TOKEN
+        used_by_prompt = len(_prompt_template(prompt)) // CHARS_PER_TOKEN
 
         available = context_window - used_by_chunks - used_by_prompt - max_tokens
         return {
