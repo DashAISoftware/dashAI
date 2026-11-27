@@ -55,6 +55,13 @@ COPY --from=builder /opt/python /opt/python
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+# libtorch_cuda.so has no DT_NEEDED entry for libnccl and relies on torch
+# preloading it, which is skipped when llama_cpp is imported first
+# ("undefined symbol: ncclCommShrink"). Preload it explicitly.
+RUN ln -s "$(ls /opt/venv/lib/python3.*/site-packages/nvidia/nccl/lib/libnccl.so.2)" \
+    /usr/local/lib/libnccl.so.2
+ENV LD_PRELOAD=/usr/local/lib/libnccl.so.2
+
 # application code
 COPY . .
 # built frontend from stage 1
