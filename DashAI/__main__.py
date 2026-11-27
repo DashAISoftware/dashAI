@@ -25,6 +25,9 @@ silence_startup_warnings()
 
 
 def _print_banner() -> None:
+    # Redirected output on Windows is cp1252, which has no box-drawing characters
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="replace")
     print()
     print("  ╔═══════════════════════════════════════════════════════╗")
     print("  ║                                                       ║")
