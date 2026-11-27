@@ -61,6 +61,7 @@ Core (core/)
 | `exceptions/`                               | Unified exception hierarchy (RAGWorkflowError + 10 sub-trees) |
 | `retrievers/enums.py`                       | `MergeStrategy` enum for parallel retriever merge behavior    |
 | `retrievers/persistence.py`                 | `SparsePersistence` / `DensePersistence` dataclasses          |
+| `retrievers/similarity/`                   | `BaseSimilarityMetric` components (cosine, euclidean, manhattan distances) |
 ```
 
 ## Service Layer

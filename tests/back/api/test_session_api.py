@@ -247,7 +247,10 @@ def test_update_generative_session_params_merges_and_logs_history(client: TestCl
                         "component": "TFIDFConverter",
                         "params": dict(TFIDF_PARAMS),
                     },
-                    "similarity_function": "cosine",
+                    "similarity_function": {
+                        "component": "CosineSimilarity",
+                        "params": {},
+                    },
                     "top_k": 5,
                 },
             },

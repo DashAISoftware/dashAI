@@ -5,7 +5,10 @@ import { useTranslation } from "react-i18next";
 import SchemaIcon from "@mui/icons-material/Schema";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import { resolveLocalizedText } from "../../../utils/localize";
-import { resolveRetrieverRepresentation } from "./retrieverRepresentation";
+import {
+  buildComponentNameRenderer,
+  resolveRetrieverRepresentation,
+} from "./retrieverRepresentation";
 import {
   renderSchemaSummaryText,
   resolveRetrieverSchemaSummary,
@@ -239,9 +242,14 @@ function RetrieverTraceTree({
       : (name) => retrieverComponents?.[name];
   const effectiveConfig =
     configNode?.component === node.name ? configNode : null;
+  const renderComponentName = buildComponentNameRenderer(
+    componentResolver,
+    i18n,
+  );
   const traceSchemaSummary = renderSchemaSummaryText(
     node.schema_summary,
     translateLabel,
+    renderComponentName,
   );
   let configSchemaSummary = null;
   if (!traceSchemaSummary && effectiveConfig) {
@@ -250,6 +258,7 @@ function RetrieverTraceTree({
       effectiveConfig?.params ?? configNode?.params,
       componentResolver,
       translateLabel,
+      renderComponentName,
     );
   }
   const traceRepresentation = resolveLocalizedText(node.representation, i18n);
@@ -257,6 +266,7 @@ function RetrieverTraceTree({
     component,
     effectiveConfig?.params,
     i18n,
+    componentResolver,
   );
   const representation =
     traceSchemaSummary ||

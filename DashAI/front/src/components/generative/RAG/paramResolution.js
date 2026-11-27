@@ -72,9 +72,13 @@ function renderPrimitive(value) {
  * @param {*} params - Node parameters (may be missing or malformed).
  * @param {string|string[]|undefined} path - Dotted path or path segments, e.g.
  *   `"embedding_model.model_name"` or `["embedding_model", "model_name"]`.
+ * @param {function(string): (string|null|undefined)} [renderComponentName] -
+ *   Optional lookup returning the text shown for a component class name (its
+ *   localized display name). Used only when the path ends on a component
+ *   reference; the class name is rendered when it is absent or returns nothing.
  * @returns {string} The resolved value, or {@link MISSING_VALUE}.
  */
-export function resolveParamValue(params, path) {
+export function resolveParamValue(params, path, renderComponentName) {
   if (!params || typeof params !== "object" || Array.isArray(params)) {
     return MISSING_VALUE;
   }
@@ -92,9 +96,10 @@ export function resolveParamValue(params, path) {
 
   const ref = normalizeComponentRef(raw);
   if (rest.length === 0) {
-    return ref ? ref.component : renderPrimitive(raw);
+    if (!ref) return renderPrimitive(raw);
+    return renderComponentName?.(ref.component) || ref.component;
   }
   if (!ref) return MISSING_VALUE;
 
-  return resolveParamValue(ref.params, rest);
+  return resolveParamValue(ref.params, rest, renderComponentName);
 }

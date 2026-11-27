@@ -4,7 +4,10 @@ import { useTranslation } from "react-i18next";
 import ComponentTreeBuilder from "../../../../components/shared/componentTree/ComponentTreeBuilder";
 import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import { resolveLocalizedText } from "../../../../utils/localize";
-import { resolveRetrieverRepresentation } from "../../../../components/generative/RAG/retrieverRepresentation";
+import {
+  buildComponentNameRenderer,
+  resolveRetrieverRepresentation,
+} from "../../../../components/generative/RAG/retrieverRepresentation";
 import { resolveRetrieverSchemaSummary } from "../../../../components/generative/RAG/schemaSummary";
 import { isCompositeTreeComplete } from "../../../../components/generative/RAG/compositeTreeValidity";
 import { RETRIEVER_PARENT } from "../../../../components/generative/RAG/retrieverParents";
@@ -87,8 +90,9 @@ export default function CompositeRetrieverBuilder({
         node.params,
         findComponent,
         translateLabel,
+        buildComponentNameRenderer(findComponent, i18n),
       ) ||
-      resolveRetrieverRepresentation(info, node.params, i18n) ||
+      resolveRetrieverRepresentation(info, node.params, i18n, findComponent) ||
       resolveLocalizedText(info?.description, i18n)
     );
   };

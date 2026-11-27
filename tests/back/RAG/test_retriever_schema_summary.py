@@ -17,6 +17,7 @@ from DashAI.back.models.RAG.retrievers.composite.parallel_retriever import (
 from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
     DenseEmbeddingRetriever,
 )
+from DashAI.back.models.RAG.retrievers.similarity import CosineSimilarity
 from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import BM25Retriever
 from DashAI.back.models.RAG.retrievers.sparse.tfidf_retriever import TFIDFRetriever
 
@@ -28,10 +29,11 @@ def test_base_retriever_declares_no_schema_summary_parameters():
 
 
 def test_bm25_metadata_exposes_schema_summary_parameters():
-    """BM25 publishes the k1/b/top-k display labels and dotted paths."""
+    """BM25 publishes the k1/b/similarity/top-k display labels and paths."""
     assert BM25Retriever.get_metadata()["schema_summary_parameters"] == {
         "k1": "k1",
         "b": "b",
+        "similarity_function": "similarity_function",
         "top_k": "top_k",
     }
 
@@ -173,20 +175,25 @@ def test_unresolvable_path_is_omitted():
     assert summary["params"] == {"top_k": 3}
 
 
-def test_direct_bm25_summary_includes_top_k():
-    """Directly constructed BM25 resolves its weighting and top-k paths."""
+def test_direct_bm25_summary_includes_similarity_and_top_k():
+    """Directly constructed BM25 resolves weighting, similarity and top-k."""
     retriever = BM25Retriever(
         vectorizer=SimpleNamespace(vectorizer=object()),
         k1=1.5,
         b=0.75,
         delta=0.0,
-        similarity_function="cosine",
+        similarity_function=CosineSimilarity(),
         top_k=5,
     )
 
     summary = retriever.get_schema_summary()
 
-    assert summary["params"] == {"k1": 1.5, "b": 0.75, "top_k": 5}
+    assert summary["params"] == {
+        "k1": 1.5,
+        "b": 0.75,
+        "similarity_function": "CosineSimilarity",
+        "top_k": 5,
+    }
 
 
 def test_direct_tfidf_summary_resolves_similarity_and_top_k():
@@ -194,13 +201,13 @@ def test_direct_tfidf_summary_resolves_similarity_and_top_k():
     vectorizer = SimpleNamespace(model=object())
     retriever = TFIDFRetriever(
         vectorizer=vectorizer,
-        similarity_function="cosine",
+        similarity_function=CosineSimilarity(),
         top_k=7,
     )
 
     summary = retriever.get_schema_summary()
 
-    assert summary["params"] == {"similarity_function": "cosine", "top_k": 7}
+    assert summary["params"] == {"similarity_function": "CosineSimilarity", "top_k": 7}
 
 
 def test_direct_dense_embedding_summary_resolves_nested_and_top_k():
@@ -211,7 +218,7 @@ def test_direct_dense_embedding_summary_resolves_nested_and_top_k():
     """
     retriever = DenseEmbeddingRetriever(
         embedding_model=ParaphraseMultilingualMiniLML12V2Embedding(),
-        similarity_metric="cosine",
+        similarity_metric=CosineSimilarity(),
         top_k=3,
     )
 
@@ -219,7 +226,7 @@ def test_direct_dense_embedding_summary_resolves_nested_and_top_k():
 
     assert summary["params"] == {
         "embedding_model": "ParaphraseMultilingualMiniLML12V2Embedding",
-        "similarity_metric": "cosine",
+        "similarity_metric": "CosineSimilarity",
         "top_k": 3,
     }
 

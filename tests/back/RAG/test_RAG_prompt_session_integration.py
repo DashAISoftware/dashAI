@@ -44,7 +44,10 @@ def _base_session_params() -> dict:
                     "k1": 1.5,
                     "b": 0.75,
                     "delta": 0.0,
-                    "similarity_function": "cosine",
+                    "similarity_function": {
+                        "component": "CosineSimilarity",
+                        "params": {},
+                    },
                     "top_k": 5,
                 },
             },

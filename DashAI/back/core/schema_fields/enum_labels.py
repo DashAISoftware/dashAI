@@ -132,51 +132,6 @@ SHARED_ENUM_LABELS: Dict[Tuple[str, ...], Dict[str, MultilingualString]] = {
         "es": _m("Spanish", "Español", "Espanhol", "Spanisch", "西班牙语"),
         "pt": _m("Portuguese", "Portugués", "Português", "Portugiesisch", "葡萄牙语"),
     },
-    # -- distance metrics, where three names mean the same thing ----------- #
-    ("cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"): {
-        "cityblock": _m(
-            "Manhattan distance",
-            "Distancia Manhattan",
-            "Distância de Manhattan",
-            "Manhattan-Distanz",
-            "曼哈顿距离",
-        ),
-        "cosine": _m(
-            "Cosine distance",
-            "Distancia del coseno",
-            "Distância do cosseno",
-            "Kosinus-Distanz",
-            "余弦距离",
-        ),
-        "euclidean": _m(
-            "Euclidean distance",
-            "Distancia euclidiana",
-            "Distância euclidiana",
-            "Euklidische Distanz",
-            "欧几里得距离",
-        ),
-        "l1": _m(
-            "Manhattan distance (L1)",
-            "Distancia Manhattan (L1)",
-            "Distância de Manhattan (L1)",
-            "Manhattan-Distanz (L1)",
-            "曼哈顿距离 (L1)",
-        ),
-        "l2": _m(
-            "Euclidean distance (L2)",
-            "Distancia euclidiana (L2)",
-            "Distância euclidiana (L2)",
-            "Euklidische Distanz (L2)",
-            "欧几里得距离 (L2)",
-        ),
-        "manhattan": _m(
-            "Manhattan distance",
-            "Distancia Manhattan",
-            "Distância de Manhattan",
-            "Manhattan-Distanz",
-            "曼哈顿距离",
-        ),
-    },
     # -- time series components -------------------------------------------- #
     ("none", "add", "mul"): {
         "none": _m("None", "Ninguno", "Nenhum", "Keine", "无"),

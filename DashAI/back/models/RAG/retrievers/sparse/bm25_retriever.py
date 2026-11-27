@@ -5,12 +5,10 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from scipy.sparse import lil_matrix
-from sklearn.metrics.pairwise import pairwise_distances
 
 from DashAI.back.core.atomic import atomic_open
 from DashAI.back.core.schema_fields import (
     component_field,
-    enum_field,
     float_field,
     int_field,
     schema_field,
@@ -20,6 +18,11 @@ from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.retrievers.capabilities import ChunkScorer
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     RetrievalExpansionSchema,
+)
+from DashAI.back.models.RAG.retrievers.similarity import (
+    BaseSimilarityMetric,
+    CosineSimilarity,
+    require_similarity_metric,
 )
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
@@ -35,7 +38,7 @@ class BM25RetrieverSchema(RetrievalExpansionSchema):
         k1: BM25 term frequency saturation parameter.
         b: BM25 length normalisation parameter.
         delta: BM25 IDF smoothing parameter.
-        similarity_function: Distance metric for vector comparison.
+        similarity_function: Distance metric component for vector comparison.
         top_k: Number of chunks to select.
     """
 
@@ -91,8 +94,8 @@ class BM25RetrieverSchema(RetrievalExpansionSchema):
     )  # type: ignore
 
     similarity_function: schema_field(
-        enum_field(["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]),
-        placeholder="cosine",
+        component_field(parent=BaseSimilarityMetric.__name__),
+        placeholder={"component": CosineSimilarity.__name__, "params": {}},
         description=MultilingualString(
             en="Distance metric for comparing BM25-weighted vectors.",
             es="Métrica de distancia para comparar vectores ponderados BM25.",
@@ -152,8 +155,13 @@ class BM25Retriever(SparseRetriever, ChunkScorer):
 
     @classmethod
     def _get_main_parameters(cls) -> Dict[str, str]:
-        """Return the BM25 weighting and top-k parameter paths."""
-        return {"k1": "k1", "b": "b", "top_k": "top_k"}
+        """Return the BM25 weighting, similarity function and top-k paths."""
+        return {
+            "k1": "k1",
+            "b": "b",
+            "similarity_function": "similarity_function",
+            "top_k": "top_k",
+        }
 
     def __init__(self, **kwargs):
         """Initialize the BM25 retriever.
@@ -167,10 +175,26 @@ class BM25Retriever(SparseRetriever, ChunkScorer):
         self.k1 = self.params.pop("k1")
         self.b = self.params.pop("b")
         self.delta = self.params.pop("delta")
-        self.similarity_function_name = self.params.pop("similarity_function")
+        self._similarity_metric = require_similarity_metric(
+            self.params.pop("similarity_function")
+        )
         self._top_k = self.params.pop("top_k")
 
         self._converter = self.params.pop("vectorizer")
+
+    @property
+    def similarity_function(self) -> str:
+        """Return the name of the configured similarity metric component.
+
+        The raw configuration key is ``similarity_function``; the live metric is
+        stored as ``_similarity_metric`` during construction. Exposing its name
+        under the configuration key lets the schema-summary resolver find it on
+        directly constructed instances.
+
+        Returns:
+            Class name of the configured distance metric component.
+        """
+        return type(self._similarity_metric).__name__
 
     def init_model(self) -> None:
         """Restore saved state or fit BM25 from scratch."""
@@ -297,10 +321,8 @@ class BM25Retriever(SparseRetriever, ChunkScorer):
         self._check_infra()
         k = top_k if top_k is not None else self._top_k
         query_vec = self._converter.transform_matrix([query])
-        distances = pairwise_distances(
-            query_vec,
-            self._bm25_matrix,
-            metric=self.similarity_function_name,
+        distances = self._similarity_metric.distances(
+            query_vec, self._bm25_matrix
         ).flatten()
         top_indices = np.argsort(distances)[:k]
         results = [
@@ -333,10 +355,8 @@ class BM25Retriever(SparseRetriever, ChunkScorer):
         if not rows:
             return []
         chunk_vectors = self._bm25_matrix[rows]
-        distances = pairwise_distances(
-            query_vec,
-            chunk_vectors,
-            metric=self.similarity_function_name,
+        distances = self._similarity_metric.distances(
+            query_vec, chunk_vectors
         ).flatten()
         scored = list(zip(valid_ids, distances.tolist(), strict=True))
         scored.sort(key=lambda x: x[1])

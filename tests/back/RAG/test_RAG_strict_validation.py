@@ -58,7 +58,10 @@ def _complete_params(name="strict_valid"):
                     "k1": 1.5,
                     "b": 0.75,
                     "delta": 0.0,
-                    "similarity_function": "cosine",
+                    "similarity_function": {
+                        "component": "CosineSimilarity",
+                        "params": {},
+                    },
                     "top_k": 5,
                 },
             },
@@ -92,7 +95,7 @@ def _bm25_retriever_ref(vectorizer_params: dict) -> dict:
             "k1": 1.5,
             "b": 0.75,
             "delta": 0.0,
-            "similarity_function": "cosine",
+            "similarity_function": {"component": "CosineSimilarity", "params": {}},
             "top_k": 5,
         },
     }

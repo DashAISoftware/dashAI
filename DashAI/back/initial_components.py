@@ -442,6 +442,11 @@ from DashAI.back.models.RAG.retrievers.cross_encoder import (
 from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
     DenseEmbeddingRetriever,
 )
+from DashAI.back.models.RAG.retrievers.similarity import (
+    CosineSimilarity,
+    EuclideanSimilarity,
+    ManhattanSimilarity,
+)
 from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import (
     BM25Retriever,
 )
@@ -1112,6 +1117,10 @@ def get_initial_components():
         # Agentic Reranker Prompts
         DefaultAgenticRerankerPrompt,
         CustomAgenticRerankerPrompt,
+        # Similarity metrics
+        CosineSimilarity,
+        EuclideanSimilarity,
+        ManhattanSimilarity,
         # Retrievers
         BM25Retriever,
         TFIDFRetriever,

@@ -47,7 +47,13 @@ function toPathSegments(path) {
  * @returns {{class: string, params: object, children?: object[]}|null} The
  *   summary, or null when the component cannot be summarised.
  */
-function buildSchemaSummaryNode(component, params, resolveComponent, depth) {
+function buildSchemaSummaryNode(
+  component,
+  params,
+  resolveComponent,
+  depth,
+  renderComponentName,
+) {
   if (depth > MAX_SCHEMA_SUMMARY_DEPTH) return null;
   if (!isPlainObject(component)) return null;
   if (typeof component.name !== "string" || component.name.length === 0) {
@@ -65,7 +71,7 @@ function buildSchemaSummaryNode(component, params, resolveComponent, depth) {
 
       let value;
       try {
-        value = resolveParamValue(params, segments);
+        value = resolveParamValue(params, segments, renderComponentName);
       } catch {
         return;
       }
@@ -108,6 +114,7 @@ function buildSchemaSummaryNode(component, params, resolveComponent, depth) {
       ref.params,
       resolver,
       depth + 1,
+      renderComponentName,
     );
     if (childSummary) childSummaries.push(childSummary);
   });
@@ -128,15 +135,29 @@ function buildSchemaSummaryNode(component, params, resolveComponent, depth) {
  * @param {*} params - Current parameters of the retriever node.
  * @param {function(string): (object|null|undefined)} [resolveComponent] -
  *   Lookup for child component definitions by class name.
+ * @param {function(string): (string|null|undefined)} [renderComponentName] -
+ *   Optional lookup returning the localized display name of a component class
+ *   name, applied to summary values that are component references.
  * @returns {{class: string, params: object, children?: object[]}|null} The
  *   summary, or null when the component cannot be summarised (invalid
  *   definition or nesting beyond the depth guard). A component that declares
  *   no summary spec still yields a node with an empty `params` map, so its
  *   children stay visible.
  */
-export function buildSchemaSummary(component, params, resolveComponent) {
+export function buildSchemaSummary(
+  component,
+  params,
+  resolveComponent,
+  renderComponentName,
+) {
   try {
-    return buildSchemaSummaryNode(component, params, resolveComponent, 0);
+    return buildSchemaSummaryNode(
+      component,
+      params,
+      resolveComponent,
+      0,
+      renderComponentName,
+    );
   } catch {
     return null;
   }
@@ -151,10 +172,18 @@ export function buildSchemaSummary(component, params, resolveComponent) {
  *   summary to render.
  * @param {function(string): string} [translateLabel] - Optional translator for
  *   parameter labels; raw labels are used when it is absent or returns empty.
+ * @param {function(string): (string|null|undefined)} [renderComponentName] -
+ *   Optional lookup returning the localized display name of a component class
+ *   name. Backend summaries carry component references as class names; a value
+ *   that is a known component name is shown by its display name.
  * @returns {string|null} The rendered text, or null when the summary is
  *   malformed or has no primitive params to show.
  */
-export function renderSchemaSummaryText(summary, translateLabel) {
+export function renderSchemaSummaryText(
+  summary,
+  translateLabel,
+  renderComponentName,
+) {
   if (!isPlainObject(summary)) return null;
 
   const className = summary.class;
@@ -172,8 +201,12 @@ export function renderSchemaSummaryText(summary, translateLabel) {
       typeof value === "boolean";
     if (!isPrimitive) return;
 
-    const text = String(value);
-    if (text.length === 0) return;
+    const rawText = String(value);
+    if (rawText.length === 0) return;
+    const text =
+      typeof value === "string"
+        ? renderComponentName?.(rawText) || rawText
+        : rawText;
 
     let displayLabel = label;
     if (typeof translateLabel === "function") {
@@ -205,6 +238,9 @@ export function renderSchemaSummaryText(summary, translateLabel) {
  *   Lookup for child component definitions by class name.
  * @param {function(string): string} [translateLabel] - Optional translator for
  *   parameter labels.
+ * @param {function(string): (string|null|undefined)} [renderComponentName] -
+ *   Optional lookup returning the localized display name of a component class
+ *   name.
  * @returns {string|null} The rendered summary text, or null when unavailable.
  */
 export function resolveRetrieverSchemaSummary(
@@ -212,11 +248,18 @@ export function resolveRetrieverSchemaSummary(
   params,
   resolveComponent,
   translateLabel,
+  renderComponentName,
 ) {
   try {
     return renderSchemaSummaryText(
-      buildSchemaSummary(component, params, resolveComponent),
+      buildSchemaSummary(
+        component,
+        params,
+        resolveComponent,
+        renderComponentName,
+      ),
       translateLabel,
+      renderComponentName,
     );
   } catch {
     return null;

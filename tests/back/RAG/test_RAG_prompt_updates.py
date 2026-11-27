@@ -25,7 +25,7 @@ def _create_rag_session(session_factory, prompt_id: int, name: str):
                     "component": "TFIDFConverter",
                     "params": dict(TFIDF_PARAMS),
                 },
-                "similarity_function": "cosine",
+                "similarity_function": {"component": "CosineSimilarity", "params": {}},
                 "top_k": 1,
                 "similarity_threshold": None,
             },

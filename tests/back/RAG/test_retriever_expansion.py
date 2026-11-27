@@ -71,6 +71,7 @@ from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     WINDOW_FIELD,
     RetrievalExpansionSchema,
 )
+from DashAI.back.models.RAG.retrievers.similarity import CosineSimilarity
 from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import (
     BM25Retriever,
     BM25RetrieverSchema,
@@ -746,7 +747,7 @@ def _bm25_retriever(corpus: Dict[int, Dict[int, Chunk]], **overrides) -> BM25Ret
         "k1": 1.5,
         "b": 0.75,
         "delta": 0.0,
-        "similarity_function": "cosine",
+        "similarity_function": CosineSimilarity(),
         "top_k": 1,
     }
     params.update(overrides)
@@ -902,7 +903,7 @@ def _dense_retriever(
     )
     retriever = DenseEmbeddingRetriever(
         embedding_model=embedding,
-        similarity_metric="cosine",
+        similarity_metric=CosineSimilarity(),
         top_k=1,
         enable_retrieve_then_expand=enabled,
         expand_window=window,
