@@ -35,7 +35,10 @@ ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
     UV_PYTHON=3.12 \
     UV_PYTHON_PREFERENCE=only-managed \
     UV_PYTHON_INSTALL_DIR=/opt/python
-ENV CMAKE_ARGS="-DGGML_CUDA=on"
+# Build llama.cpp kernels for several GPU generations instead of only the
+# build host's GPU: T4 (75), A100 (80), A10/RTX 30xx (86), L4/RTX 40xx (89),
+# plus PTX for 89 so newer cards can JIT compile.
+ENV CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES=75-real;80-real;86-real;89-real;89-virtual"
 RUN uv sync --locked --extra cuda --no-dev --no-install-project --no-cache
 
 # -------- Stage 3: runtime (CUDA runtime, no build tools) --------
