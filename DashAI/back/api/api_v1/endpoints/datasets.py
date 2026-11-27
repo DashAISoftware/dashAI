@@ -10,6 +10,7 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile, status
 from fastapi.encoders import jsonable_encoder
@@ -1719,6 +1720,11 @@ def _iter_buffer(buf: io.BytesIO, chunk_size: int = 65536):
         yield chunk
 
 
+def _attachment(filename: str) -> Dict[str, str]:
+    """Download header for any file name (RFC 5987, header values are latin-1)."""
+    return {"Content-Disposition": f"attachment; filename*=utf-8''{quote(filename)}"}
+
+
 async def _build_export_response(
     table: "pa.Table", dataset_name: str
 ) -> StreamingResponse:
@@ -1758,7 +1764,7 @@ async def _build_export_response(
         return StreamingResponse(
             _iter_buffer(zip_buffer),
             media_type="application/zip",
-            headers={"Content-Disposition": f"attachment; filename={dataset_name}.zip"},
+            headers=_attachment(f"{dataset_name}.zip"),
         )
     else:
         drop_cols = [
@@ -1780,7 +1786,7 @@ async def _build_export_response(
         return StreamingResponse(
             _iter_buffer(csv_buffer),
             media_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename={dataset_name}.csv"},
+            headers=_attachment(f"{dataset_name}.csv"),
         )
 
 
